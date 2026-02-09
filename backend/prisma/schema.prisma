@@ -13,6 +13,23 @@ enum UserRole {
   VENDOR
 }
 
+enum VendorType {
+  MANUFACTURER
+  DISTRIBUTOR
+  PHARMACY
+}
+
+enum BuyerType {
+  RETAIL
+  WHOLESALE
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 enum OrderStatus {
   PENDING
   PAID
@@ -27,24 +44,54 @@ enum PaymentStatus {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  name      String
-  role      UserRole  @default(CUSTOMER)
-  orders    Order[]
-  vendor    Vendor?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                String    @id @default(uuid())
+  email             String    @unique
+  mobile            String?
+  passwordHash      String
+  name              String?
+  role              UserRole  @default(CUSTOMER)
+  isProfileComplete Boolean   @default(false)
+  orders            Order[]
+  vendor            Vendor?
+  customer          Customer?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 model Vendor {
-  id        String     @id @default(uuid())
-  name      String
-  userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id])
-  inventory Inventory[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  companyName        String
+  vendorType         VendorType
+  country            String
+  state              String
+  gstinNumber        String             @unique
+  drugLicenseNumber  String             @unique
+  businessAddress    String
+  bankAccountDetails Json?
+  contactPersonName  String
+  contactNumber      String
+  verificationStatus VerificationStatus @default(PENDING)
+  user               User               @relation(fields: [userId], references: [id])
+  inventory          Inventory[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model Customer {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  fullName        String
+  buyerType       BuyerType
+  businessName    String?
+  gstin           String?
+  country         String
+  city            String
+  deliveryAddress String
+  contactNumber   String
+  user            User      @relation(fields: [userId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Medicine {

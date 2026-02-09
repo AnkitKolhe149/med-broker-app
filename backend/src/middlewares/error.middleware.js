@@ -1,9 +1,53 @@
-const errorHandler = (err, req, res, next) => {
-  console.error(err);
+const { AppError } = require('../utils/errors');
 
-  res.status(500).json({
-    message: "Unexpected server error",
-    error: err.message
+const errorHandler = (err, req, res, next) => {
+  console.error('Error:', err);
+
+  // Handle custom app errors
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message
+    });
+  }
+
+  // Handle Prisma unique constraint error
+  if (err.code === 'P2002') {
+    return res.status(409).json({
+      success: false,
+      message: 'A record with this data already exists'
+    });
+  }
+
+  // Handle Prisma not found error
+  if (err.code === 'P2025') {
+    return res.status(404).json({
+      success: false,
+      message: 'Record not found'
+    });
+  }
+
+  // Handle JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Token expired'
+    });
+  }
+
+  // Default error response
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    success: false,
+    message: err.message || 'Unexpected server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 };
 
