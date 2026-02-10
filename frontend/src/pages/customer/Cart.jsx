@@ -82,11 +82,16 @@ function Cart() {
 	return (
 		<main className="page">
 			<div className="container">
-				<h1 className="section-title">Shopping Cart</h1>
+				<div className="page-header">
+					<div className="title-group">
+						<h1 className="section-title">Shopping Cart</h1>
+						<p className="section-subtitle">Review items and proceed to checkout</p>
+					</div>
+				</div>
 
 				<div style={styles.mainContent}>
 					{/* Cart Items */}
-					<div style={styles.cartItemsSection}>
+					<section className="section" style={{ padding: '1.5rem' }}>
 						<div style={styles.cartHeader}>
 							<p style={styles.itemCount}>
 								{cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in cart
@@ -141,7 +146,7 @@ function Cart() {
 								</div>
 							</div>
 						))}
-					</div>
+					</section>
 
 					{/* Order Summary */}
 					<div style={styles.summarySection}>

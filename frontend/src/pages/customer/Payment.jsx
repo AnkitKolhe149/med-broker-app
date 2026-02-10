@@ -115,11 +115,16 @@ function Payment() {
 	return (
 		<main className="page">
 			<div className="container">
-				<h1 className="section-title">Payment</h1>
+				<div className="page-header">
+					<div className="title-group">
+						<h1 className="section-title">Payment</h1>
+						<p className="section-subtitle">Select a payment method to complete your order</p>
+					</div>
+				</div>
 
 				<div style={styles.mainContent}>
 					{/* Left: Payment Methods */}
-					<div style={styles.paymentSection}>
+					<section className="section" style={{ padding: '2rem' }}>
 						<form onSubmit={handlePaymentProcess} style={styles.formContainer}>
 							{/* UPI Payment */}
 							<div style={styles.paymentMethodCard}>
@@ -281,7 +286,7 @@ function Payment() {
 								By proceeding, you agree to our terms. Your payment is secure and encrypted.
 							</p>
 						</form>
-					</div>
+					</section>
 
 					{/* Right: Order Summary */}
 					<div style={styles.summarySection}>

@@ -150,11 +150,16 @@ function Checkout() {
 	return (
 		<main className="page">
 			<div className="container">
-				<h1 className="section-title">Checkout</h1>
+				<div className="page-header">
+					<div className="title-group">
+						<h1 className="section-title">Checkout</h1>
+						<p className="section-subtitle">Complete your delivery and payment details</p>
+					</div>
+				</div>
 
 				<div style={styles.mainContent}>
 					{/* Left: Delivery & Payment Form */}
-					<div style={styles.formSection}>
+					<section className="section" style={{ padding: '2rem' }}>
 						<form onSubmit={handlePlaceOrder} style={styles.formContainer}>
 							{/* Delivery Type */}
 							<div style={styles.formCard}>
@@ -327,7 +332,7 @@ function Checkout() {
 								{isSubmitting ? 'Processing...' : 'Continue to Payment'}
 							</button>
 						</form>
-					</div>
+					</section>
 
 					{/* Right: Order Summary */}
 					<div style={styles.summarySection}>

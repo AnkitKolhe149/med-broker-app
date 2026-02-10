@@ -29,15 +29,18 @@ function CustomerDashboard() {
 	return (
 		<main className="page">
 			<div className="container">
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-					<div>
+				<div className="page-header">
+					<div className="title-group">
 						<h1 className="section-title">Customer Dashboard</h1>
 						<p className="section-subtitle">Welcome back, {user?.customer?.fullName || user?.email}!</p>
 					</div>
-					<button className="button-outline" onClick={handleLogout}>Logout</button>
+					<div className="page-actions">
+						<button className="button-outline" onClick={handleLogout}>Logout</button>
+					</div>
 				</div>
 
-				<div className="grid grid-3">
+				<section className="section">
+					<div className="section-grid">
 					<div className="card">
 						<h3>Welcome</h3>
 						<p className="section-subtitle">Buyer Type: {user?.customer?.buyerType || 'N/A'}</p>
@@ -64,8 +67,10 @@ function CustomerDashboard() {
 						<button className="button-outline" onClick={() => navigate('/customer/orders')}>Track Order</button>
 					</div>
 				</div>
+			</section>
 
-				<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
+			<section className="section">
+				<div className="section-grid">
 					<div className="card">
 						<h3>Saved Address</h3>
 						<p className="section-subtitle">{savedAddress || 'No saved address'}</p>
@@ -90,8 +95,9 @@ function CustomerDashboard() {
 						</p>
 					</div>
 				)}
-			</div>
-		</main>
+			</section>
+		</div>
+	</main>
 	);
 }
 

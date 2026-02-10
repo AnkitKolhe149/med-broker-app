@@ -218,17 +218,19 @@ function MedicineDetail() {
 	return (
 		<main className="page">
 			<div className="container">
-				{/* Navigation */}
-				<button 
-					onClick={() => navigate('/customer/catalog')}
-					style={styles.backButton}
-				>
-					← Back to Catalog
-				</button>
+				{/* Navigation & Header */}
+				<div style={styles.headerNav}>
+					<button 
+						onClick={() => navigate('/customer/catalog')}
+						style={styles.backButton}
+					>
+						← Back to Catalog
+					</button>
+				</div>
 
 				<div style={styles.mainContent}>
 					{/* Left: Medicine Info */}
-					<div style={styles.leftSection}>
+					<section className="section" style={{ padding: '2rem' }}>
 						<div style={styles.medicineImagePlaceholder}>
 					<span style={styles.medicineEmoji}>💊</span>
 						</div>
@@ -313,12 +315,12 @@ function MedicineDetail() {
 								</div>
 							)}
 						</div>
-					</div>
+					</section>
 
 					{/* Right: Detailed Info */}
 					<div style={styles.rightSection}>
 						{/* Composition & Details */}
-						<div style={styles.infoCard}>
+					<section className="section">
 							<h2 style={styles.cardTitle}>Composition & Details</h2>
 							<table style={styles.infoTable}>
 								<tbody>
@@ -356,19 +358,19 @@ function MedicineDetail() {
 									</tr>
 								</tbody>
 							</table>
-						</div>
+					</section>
 
-						{/* Description */}
-						<div style={styles.infoCard}>
+					{/* Description */}
+					<section className="section">
 							<h2 style={styles.cardTitle}>About This Medicine</h2>
 							<p style={styles.description}>{medicine.description}</p>
 
 							<h3 style={styles.subTitle}>Usage</h3>
 							<p style={styles.description}>{medicine.usage}</p>
-						</div>
+					</section>
 
-						{/* Side Effects & Precautions */}
-						<div style={styles.infoCard}>
+					{/* Side Effects & Precautions */}
+					<section className="section">
 							<h2 style={styles.cardTitle}>Important Information</h2>
 							
 							<h3 style={styles.subTitle}>Possible Side Effects</h3>
@@ -379,20 +381,24 @@ function MedicineDetail() {
 
 							<h3 style={styles.subTitle}>Warnings</h3>
 							<p style={styles.description}>{medicine.warnings}</p>
-						</div>
+					</section>
 
-						{/* Disclaimer */}
-						<div style={styles.disclaimer}>
-							<p>⚠️ <strong>Disclaimer:</strong> This information is for educational purposes only. Always consult a healthcare professional before starting any medication. This product is registered with relevant drug authorities.</p>
-						</div>
+					{/* Disclaimer */}
+					<div style={styles.disclaimer}>
+						<p>⚠️ <strong>Disclaimer:</strong> This information is for educational purposes only. Always consult a healthcare professional before starting any medication. This product is registered with relevant drug authorities.</p>
 					</div>
 				</div>
 			</div>
-		</main>
+		</div>
+	</main>
 	);
 }
 
 const styles = {
+	headerNav: {
+		marginBottom: '1.5rem',
+		width: '100%'
+	},
 	backButton: {
 		background: 'none',
 		border: 'none',
@@ -405,14 +411,17 @@ const styles = {
 	},
 	mainContent: {
 		display: 'grid',
-		gridTemplateColumns: '1fr 1.2fr',
-		gap: '2rem',
-		marginBottom: '2rem'
+		gridTemplateColumns: '1fr 1fr',
+		gap: '1.5rem',
+		marginBottom: '2rem',
+		width: '100%'
 	},
 	leftSection: {
 		display: 'flex',
 		flexDirection: 'column',
-		gap: '1.5rem'
+		gap: '1rem',
+		width: '100%',
+		overflowX: 'hidden'
 	},
 	medicineImagePlaceholder: {
 		width: '100%',
@@ -570,7 +579,9 @@ const styles = {
 	rightSection: {
 		display: 'flex',
 		flexDirection: 'column',
-		gap: '1.5rem'
+		gap: '1rem',
+		width: '100%',
+		overflowX: 'hidden'
 	},
 	infoCard: {
 		backgroundColor: 'white',

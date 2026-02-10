@@ -130,20 +130,20 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 					<p style={styles.successSubtitle}>Your order has been placed successfully</p>
 
 					{/* Order ID Card */}
-					<div style={styles.orderIdCard}>
+					<section className="section" style={{ marginBottom: '2rem', textAlign: 'center' }}>
 						<p style={styles.orderIdLabel}>Order ID</p>
 						<p style={styles.orderIdValue}>{orderData.orderId}</p>
 						<p style={styles.orderIdHint}>
 							Save this ID for tracking and customer service inquiries
 						</p>
-					</div>
+					</section>
 
 					{/* Main Content Grid */}
 					<div style={styles.mainContent}>
 						{/* Left: Order Details */}
 						<div style={styles.detailsSection}>
 							{/* Items */}
-							<div style={styles.card}>
+						<section className="section">
 								<h2 style={styles.cardTitle}>Items Ordered</h2>
 								{orderData.cartItems.map((item, index) => (
 									<div key={index} style={styles.itemDetail}>
@@ -157,10 +157,10 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 										</div>
 									</div>
 								))}
-							</div>
+							</section>
 
 							{/* Delivery Addresss */}
-							<div style={styles.card}>
+							<section className="section">
 								<h2 style={styles.cardTitle}>Delivery Address</h2>
 								<div style={styles.addressBox}>
 									<p style={styles.name}>{orderData.deliveryAddress.fullName}</p>
@@ -178,14 +178,14 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 										</p>
 									</div>
 								)}
-							</div>
+							</section>
 
 							{/* Special Instructions */}
 							{orderData.orderNotes && (
-								<div style={styles.card}>
+								<section className="section">
 									<h2 style={styles.cardTitle}>Special Instructions</h2>
 									<p style={styles.notes}>{orderData.orderNotes}</p>
-								</div>
+								</section>
 							)}
 
 							{/* Actions */}

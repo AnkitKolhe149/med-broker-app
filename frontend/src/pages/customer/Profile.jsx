@@ -126,18 +126,23 @@ function CustomerProfile() {
 	return (
 		<main className="page">
 			<div className="container">
-				<h1 className="section-title">My Profile</h1>
+				<div className="page-header">
+					<div className="title-group">
+						<h1 className="section-title">My Profile</h1>
+						<p className="section-subtitle">Manage your personal information and account settings</p>
+					</div>
+				</div>
 
 				<div style={styles.mainContent}>
 					{/* Left: Profile Form */}
-					<div style={styles.formSection}>
+					<section className="section">
 						{successMessage && (
 							<div style={styles.successAlert}>
 								✓ {successMessage}
 							</div>
 						)}
 
-						<form onSubmit={handleSaveProfile} style={styles.formCard}>
+						<form onSubmit={handleSaveProfile}>
 							<div style={styles.formHeader}>
 								<h2 style={styles.formTitle}>Personal Information</h2>
 								{!isEditing && (
@@ -362,12 +367,12 @@ function CustomerProfile() {
 								</div>
 							)}
 						</form>
-					</div>
+					</section>
 
 					{/* Right: Additional Info & Actions */}
 					<div style={styles.infoSection}>
 						{/* Account Stats */}
-						<div style={styles.card}>
+						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
 							<h2 style={styles.cardTitle}>Account Stats</h2>
 							<div style={styles.stat}>
 								<p style={styles.statLabel}>Member Since</p>
@@ -383,27 +388,27 @@ function CustomerProfile() {
 								<p style={styles.statLabel}>Account Status</p>
 								<p style={{ ...styles.statValue, color: 'var(--success)' }}>✓ Active</p>
 							</div>
-						</div>
+						</section>
 
 						{/* Quick Actions */}
-						<div style={styles.card}>
+						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
 							<h2 style={styles.cardTitle}>Quick Actions</h2>
 							<button style={styles.actionLink}>🛒 Continue Shopping</button>
 							<button style={styles.actionLink}>📦 My Orders</button>
 							<button style={styles.actionLink}>❤️ Wishlist</button>
 							<button style={styles.actionLink}>🔔 Notifications</button>
-						</div>
+						</section>
 
 						{/* Account Security */}
-						<div style={styles.card}>
+						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
 							<h2 style={styles.cardTitle}>Account Security</h2>
 							<button style={styles.actionLink}>🔐 Change Password</button>
 							<button style={styles.actionLink}>📱 Two-Factor Auth</button>
 							<button style={styles.actionLink}>🔗 Linked Accounts</button>
-						</div>
+						</section>
 
 						{/* Preferences */}
-						<div style={styles.card}>
+						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
 							<h2 style={styles.cardTitle}>Preferences</h2>
 							<label style={styles.checkboxLabel}>
 								<input type="checkbox" defaultChecked style={styles.checkbox} />
@@ -417,10 +422,10 @@ function CustomerProfile() {
 								<input type="checkbox" style={styles.checkbox} />
 								<span>Marketing emails</span>
 							</label>
-						</div>
+						</section>
 
 						{/* Danger Zone */}
-						<div style={styles.card}>
+						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
 							<h2 style={{ ...styles.cardTitle, color: 'var(--error)' }}>Danger Zone</h2>
 							<button style={styles.logoutButton} onClick={handleLogout}>
 								🚪 Logout
@@ -431,7 +436,7 @@ function CustomerProfile() {
 							<p style={styles.warningText}>
 								Deleting your account is permanent and cannot be undone.
 							</p>
-						</div>
+						</section>
 					</div>
 				</div>
 			</div>
@@ -446,10 +451,6 @@ const styles = {
 		gap: '2rem',
 		marginTop: '2rem'
 	},
-	formSection: {
-		display: 'flex',
-		flexDirection: 'column'
-	},
 	successAlert: {
 		backgroundColor: '#DCFCE7',
 		color: 'var(--success)',
@@ -459,14 +460,7 @@ const styles = {
 		fontWeight: '600',
 		border: '1px solid var(--green-200)'
 	},
-	formCard: {
-		backgroundColor: 'white',
-		padding: '2rem',
-		borderRadius: 'var(--radius-lg)',
-		border: '1px solid var(--border)',
-		boxShadow: 'var(--shadow-sm)'
-	},
-	formHeader: {
+	editButton: {
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
@@ -648,13 +642,6 @@ const styles = {
 		display: 'flex',
 		flexDirection: 'column',
 		gap: '1rem'
-	},
-	card: {
-		backgroundColor: 'white',
-		padding: '1.5rem',
-		borderRadius: 'var(--radius-lg)',
-		border: '1px solid var(--border)',
-		boxShadow: 'var(--shadow-sm)'
 	},
 	cardTitle: {
 		fontSize: '1rem',

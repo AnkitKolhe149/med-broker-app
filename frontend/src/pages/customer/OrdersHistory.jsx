@@ -135,7 +135,11 @@ function OrdersHistory() {
 		return (
 			<main className="page">
 				<div className="container">
-					<h1 className="section-title">My Orders</h1>
+					<div className="page-header">
+						<div className="title-group">
+							<h1 className="section-title">My Orders</h1>
+						</div>
+					</div>
 					<div style={styles.emptyState}>
 						<div style={styles.emptyIcon}>📦</div>
 						<p style={styles.emptyTitle}>No orders yet</p>
@@ -154,7 +158,11 @@ function OrdersHistory() {
 	return (
 		<main className="page">
 			<div className="container">
-				<h1 className="section-title">My Orders</h1>
+				<div className="page-header">
+					<div className="title-group">
+						<h1 className="section-title">My Orders</h1>
+					</div>
+				</div>
 
 				{/* Filter Buttons */}
 				<div style={styles.filterContainer}>
