@@ -86,7 +86,7 @@ function AuthGuard({ children, requiredRole, requireCompleteProfile = false }) {
 		if (user.role === 'VENDOR') {
 			return <Navigate to="/onboarding/vendor" replace />;
 		} else if (user.role === 'CUSTOMER') {
-			return <Navigate to="/onboarding/customer" replace />;
+			return <Navigate to="/customer/onboarding" replace />;
 		}
 	}
 
