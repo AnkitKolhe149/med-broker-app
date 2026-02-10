@@ -46,7 +46,7 @@ const ContactPage = () => {
       <header className="hero-section">
         <div className="container">
             <h1 className="hero-title">Contact Us</h1>
-            <p className="hero-subtitle">We are building an AI-driven pharmaceutical platform. Reach out to us for partnerships and inquiries.</p>
+            <p className="hero-subtitle">Reach out to us for partnerships and inquiries.</p>
         </div>
       </header>
 
