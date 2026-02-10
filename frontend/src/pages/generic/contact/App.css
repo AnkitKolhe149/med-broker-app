@@ -1,0 +1,173 @@
+/* General Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.page-wrapper {
+  background-color: #121212; /* Dark background per wireframe */
+  color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+/* --- Navbar --- */
+.navbar {
+  display: flex;
+  align-items: center;
+  border: 2px solid #ffffff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.logo-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 150px;
+}
+
+.circle {
+  width: 30px;
+  height: 30px;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.nav-search-bar {
+  flex-grow: 1;
+  border: 1px solid white;
+  padding: 8px 15px;
+  border-radius: 5px;
+  font-style: italic;
+  color: #ccc;
+}
+
+/* --- Main Layout --- */
+.main-container {
+  flex-grow: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-title {
+  text-align: center;
+  margin: 20px 0;
+  font-weight: normal;
+}
+
+.content-grid {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap; /* Allows stacking on mobile */
+}
+
+/* --- Sections (Form & Info) --- */
+.contact-section {
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  padding: 30px;
+  flex: 1; /* Both take equal width */
+  min-width: 300px;
+}
+
+.contact-section h2 {
+  border-bottom: 1px solid #555;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+/* --- Form Styles --- */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 1.1rem;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #555;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4a90e2; /* Blue focus like the button */
+}
+
+.submit-btn {
+  background-color: transparent;
+  border: 2px solid #4a90e2; /* Blue border per wireframe */
+  color: #4a90e2;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #4a90e2;
+  color: white;
+}
+
+/* --- Info Box Styles --- */
+.info-item {
+  margin-bottom: 25px;
+  border: 1px solid #333; /* Inner box look */
+  padding: 15px;
+  border-radius: 8px;
+}
+
+/* --- Additional Links & Footer --- */
+.additional-links {
+  margin-top: 40px;
+  text-align: center;
+  border-top: 1px solid white;
+  padding-top: 10px;
+}
+
+.additional-links hr {
+  margin: 10px 0;
+  border-color: #333;
+}
+
+.faq-portal {
+  font-size: 1.1rem;
+  padding: 20px 0;
+  border-bottom: 1px solid white;
+}
+
+.footer {
+  margin-top: 20px;
+  text-align: center;
+  color: #4a90e2; /* Blue footer text per wireframe */
+  font-size: 1.2rem;
+}
+
+.footer-links a {
+  color: #4a90e2;
+  text-decoration: none;
+  margin: 0 10px;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}
