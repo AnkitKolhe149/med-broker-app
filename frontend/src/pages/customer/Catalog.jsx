@@ -531,9 +531,9 @@ function Catalog() {
 							<div style={styles.filterGroup}>
 								<label style={styles.filterGroupLabel}>Price Range (₹)</label>
 								<div style={styles.priceDisplay}>
-									<span style={styles.priceValue}>₹{minPrice}</span>
+									<span style={styles.filterPriceValue}>₹{minPrice}</span>
 									<span style={styles.priceSeparator}>—</span>
-									<span style={styles.priceValue}>₹{maxPrice}</span>
+									<span style={styles.filterPriceValue}>₹{maxPrice}</span>
 								</div>
 								<div style={styles.sliderContainer}>
 									<label style={styles.sliderLabel}>Min: ₹{minPrice}</label>
@@ -1018,7 +1018,7 @@ const styles = {
 		borderRadius: 'var(--radius)',
 		border: '1px solid var(--green-200)'
 	},
-	priceValue: {
+	filterPriceValue: {
 		fontSize: '0.95rem',
 		fontWeight: '700',
 		color: 'var(--primary)'

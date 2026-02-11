@@ -460,7 +460,7 @@ const styles = {
 		fontWeight: '600',
 		border: '1px solid var(--green-200)'
 	},
-	editButton: {
+	editButtonContainer: {
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
