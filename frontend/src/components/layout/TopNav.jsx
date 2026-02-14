@@ -10,6 +10,7 @@ function TopNav() {
 	const { user } = useUser();
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showProfileMenu, setShowProfileMenu] = useState(false);
+	const [showMobileMenu, setShowMobileMenu] = useState(false);
 
 	const handleSearch = (e) => {
 		e.preventDefault();
@@ -32,7 +33,7 @@ function TopNav() {
 
 	return (
 		<header style={styles.header}>
-			<div style={styles.container}>
+			<div className="topnav-container" style={styles.container}>
 				{/* Logo & Home */}
 				<div style={styles.leftSection}>
 					<button 
@@ -43,24 +44,43 @@ function TopNav() {
 					</button>
 				</div>
 
-				{/* Search Bar - Only on catalog page */}
-				<div style={styles.centerSection}>
-					<form onSubmit={handleSearch} style={styles.searchForm}>
-						<input
-							type="text"
-							placeholder="Search medicines..."
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							style={styles.searchInput}
-						/>
-						<button type="submit" style={styles.searchButton}>
-							🔍
-						</button>
-					</form>
-				</div>
+				{/* Hamburger Menu Button (Mobile Only) */}
+				<button 
+					className="hamburgerMenu"
+					onClick={() => setShowMobileMenu(!showMobileMenu)}
+					style={{
+						display: 'none',
+						background: 'none',
+						border: 'none',
+						fontSize: '1.5rem',
+						cursor: 'pointer',
+						padding: '0.5rem',
+						marginLeft: 'auto'
+					}}
+				>
+					{showMobileMenu ? '✕' : '☰'}
+				</button>
 
-				{/* Cart & Profile */}
-				<div style={styles.rightSection}>
+				{/* Desktop Navigation */}
+				<div className={`topnav-right ${showMobileMenu ? 'show' : ''}`} style={{...styles.desktopNav}}>
+					{/* Search Bar - Only on catalog page */}
+					<div style={styles.centerSection}>
+						<form onSubmit={handleSearch} style={styles.searchForm}>
+							<input
+								type="text"
+								placeholder="Search medicines..."
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								style={styles.searchInput}
+							/>
+							<button type="submit" style={styles.searchButton}>
+								🔍
+							</button>
+						</form>
+					</div>
+
+					{/* Cart & Profile */}
+					<div style={styles.rightSection}>
 					{/* Cart Button */}
 					<button
 						onClick={() => navigate('/customer/cart')}
@@ -124,13 +144,20 @@ function TopNav() {
 						)}
 					</div>
 				</div>
+				</div> {/* Close topnav-right */}
 			</div>
 
-			{/* Click outside to close profile menu */}
+			{/* Click outside to close menus */}
 			{showProfileMenu && (
 				<div
 					style={styles.backdrop}
 					onClick={() => setShowProfileMenu(false)}
+				/>
+			)}
+			{showMobileMenu && (
+				<div
+					style={styles.backdrop}
+					onClick={() => setShowMobileMenu(false)}
 				/>
 			)}
 		</header>
@@ -158,6 +185,12 @@ const styles = {
 	},
 	leftSection: {
 		flex: '0 0 auto'
+	},
+	desktopNav: {
+		display: 'flex',
+		alignItems: 'center',
+		gap: '2rem',
+		flex: 1
 	},
 	logo: {
 		background: 'none',

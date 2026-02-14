@@ -37,6 +37,7 @@ function Catalog() {
 	const [maxPrice, setMaxPrice] = useState(500);
 	const [filterWidth, setFilterWidth] = useState(350);
 	const [isResizing, setIsResizing] = useState(false);
+	const [showMobileFilters, setShowMobileFilters] = useState(false);
 
 	useEffect(() => {
 		// Simulated API call - Replace with real API in production
@@ -478,19 +479,65 @@ function Catalog() {
 							Search
 						</button>
 					</form>
+					
+					{/* Mobile Filter Toggle Button */}
+					<button 
+						className="mobileFilterToggle"
+						onClick={() => setShowMobileFilters(!showMobileFilters)}
+						style={{
+							display: 'none',
+							padding: '0.75rem 1.5rem',
+							background: 'var(--primary-color)',
+							color: 'white',
+							border: 'none',
+							borderRadius: '8px',
+							fontSize: '1rem',
+							fontWeight: '500',
+							cursor: 'pointer',
+							marginTop: '1rem',
+							width: '100%'
+						}}
+					>
+						{showMobileFilters ? '✕ Close Filters' : '🔽 Show Filters'}
+					</button>
 				</div>
 
 				{/* TWO-COLUMN LAYOUT: FILTERS (LEFT) + MEDICINES (RIGHT) */}
-				<div style={{
+				<div className="layoutContainer" style={{
 					...styles.layoutContainer,
 					gridTemplateColumns: `${filterWidth}px 1fr`
 				}}>
 					
 					{/* ===== LEFT SIDEBAR: FILTERS (FIXED) ===== */}
-					<aside style={{
+					<aside className={`filterSidebar ${showMobileFilters ? 'show' : ''}`} style={{
 						...styles.filterSidebar,
 						width: `${filterWidth}px`
 					}}>
+						{/* Mobile close button */}
+						<button 
+							className="mobileFilterClose"
+							onClick={() => setShowMobileFilters(false)}
+							style={{
+								display: 'none',
+								position: 'sticky',
+								top: 0,
+								right: 0,
+								marginLeft: 'auto',
+								marginBottom: '1rem',
+								padding: '0.5rem 1rem',
+								background: 'var(--primary-color)',
+								color: 'white',
+								border: 'none',
+								borderRadius: '8px',
+								fontSize: '1rem',
+								fontWeight: '500',
+								cursor: 'pointer',
+								zIndex: 10
+							}}
+						>
+							✕ Close
+						</button>
+						
 						<section className="section" style={styles.filterContent}>
 
 							{/* FILTERS HEADER */}
@@ -643,6 +690,7 @@ function Catalog() {
 
 						{/* RESIZE HANDLE */}
 						<div 
+							className="resizeHandle"
 							onMouseDown={handleMouseDown}
 							style={{
 								...styles.resizeHandle,
@@ -674,7 +722,7 @@ function Catalog() {
 						{/* MEDICINES GRID */}
 						{paginatedMedicines.length > 0 ? (
 							<>
-								<div className="section-grid" style={styles.medicinesGrid}>
+								<div className="section-grid medicinesGrid" style={styles.medicinesGrid}>
 									{paginatedMedicines.map(medicine => (
 										<article key={medicine.id} style={styles.medicineCard}>
 											{/* HEADER: NAME + CATEGORY */}
@@ -1087,7 +1135,7 @@ const styles = {
 	// MEDICINES GRID
 	medicinesGrid: {
 		display: 'grid',
-		gridTemplateColumns: 'repeat(4, 1fr)',
+		// gridTemplateColumns handled by CSS class for responsive design
 		gap: '1.5rem',
 		marginBottom: '2rem',
 		width: '100%'
