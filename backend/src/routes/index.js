@@ -3,6 +3,7 @@ const { prisma } = require("../database/prisma");
 const authRoutes = require("../modules/auth/auth.routes");
 const onboardingRoutes = require("../modules/onboarding/onboarding.routes");
 const exchangeRateRoutes = require("../modules/exchangeRate/exchangeRate.routes");
+const inventoryRoutes = require("../modules/inventory/inventory.routes");
 
 const router = express.Router();
 
@@ -14,6 +15,9 @@ router.use("/onboarding", onboardingRoutes);
 
 // Exchange rate routes
 router.use("/exchange-rates", exchangeRateRoutes);
+
+// Vendor inventory routes
+router.use("/inventory", inventoryRoutes);
 
 // Legacy user routes (keep for now, can be removed later)
 router.get("/users", async (req, res, next) => {

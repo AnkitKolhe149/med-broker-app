@@ -35,25 +35,81 @@ const fetchRates = async () => {
 };
 
 const upsertRates = async (data) => {
-  return prisma.exchangeRate.upsert({
-    where: { baseCode: data.baseCode },
-    update: {
-      rates: data.rates,
-      fetchedAt: data.fetchedAt,
-      source: "exchangerate-api"
+  const normalizedBaseCode = String(data.baseCode || "").trim().toUpperCase();
+
+  if (!normalizedBaseCode) {
+    throw new Error("Invalid base currency code");
+  }
+
+  const payload = {
+    rates: data.rates,
+    fetchedAt: data.fetchedAt,
+    source: "exchangerate-api"
+  };
+
+  const exactRecord = await prisma.exchangeRate.findUnique({
+    where: { baseCode: normalizedBaseCode },
+    select: { baseCode: true }
+  });
+
+  if (exactRecord) {
+    return prisma.exchangeRate.update({
+      where: { baseCode: normalizedBaseCode },
+      data: payload
+    });
+  }
+
+  const insensitiveMatch = await prisma.exchangeRate.findFirst({
+    where: {
+      baseCode: {
+        equals: normalizedBaseCode,
+        mode: "insensitive"
+      }
     },
-    create: {
-      baseCode: data.baseCode,
-      rates: data.rates,
-      fetchedAt: data.fetchedAt,
-      source: "exchangerate-api"
+    select: { baseCode: true }
+  });
+
+  if (insensitiveMatch) {
+    return prisma.exchangeRate.update({
+      where: { baseCode: insensitiveMatch.baseCode },
+      data: {
+        ...payload,
+        baseCode: normalizedBaseCode
+      }
+    });
+  }
+
+  return prisma.exchangeRate.create({
+    data: {
+      baseCode: normalizedBaseCode,
+      ...payload
     }
   });
 };
 
+const isDatabaseConnectivityError = (error) => {
+  if (!error) {
+    return false;
+  }
+
+  const message = String(error.message || "");
+  return error.code === "P1001" || message.includes("Can't reach database server");
+};
+
 const runExchangeRateSync = async () => {
   const rateData = await fetchRates();
-  await upsertRates(rateData);
+
+  try {
+    await upsertRates(rateData);
+    return { persisted: true, rateData };
+  } catch (error) {
+    if (isDatabaseConnectivityError(error)) {
+      console.warn("⚠ Exchange rates fetched from API but could not be persisted (database unavailable)");
+      return { persisted: false, rateData };
+    }
+
+    throw error;
+  }
 };
 
 const startExchangeRateScheduler = () => {
@@ -61,8 +117,10 @@ const startExchangeRateScheduler = () => {
     CRON_SCHEDULE,
     async () => {
       try {
-        await runExchangeRateSync();
-        console.log("✓ Exchange rates updated");
+        const result = await runExchangeRateSync();
+        if (result.persisted) {
+          console.log("✓ Exchange rates updated");
+        }
       } catch (error) {
         console.error("✗ Exchange rate update failed:", error.message);
       }
