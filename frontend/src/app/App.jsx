@@ -33,6 +33,14 @@ import CustomerProfile from '../pages/customer/Profile';
 
 // Vendor pages
 import VendorDashboard from '../pages/vendor/Dashboard';
+import VendorOrders from '../pages/vendor/Orders';
+import VendorMedicineManager from '../pages/vendor/MedicineManager';
+import VendorShipping from '../pages/vendor/Shipping';
+import VendorPayments from '../pages/vendor/Payments';
+import VendorAnalytics from '../pages/vendor/Analytics';
+import VendorCompliance from '../pages/vendor/Compliance';
+import VendorCommunication from '../pages/vendor/Communication';
+import VendorSettings from '../pages/vendor/Settings';
 
 // Admin pages
 import AdminDashboard from '../pages/admin/Dashboard';
@@ -105,6 +113,46 @@ function App() {
                     <Route path="/vendor/dashboard" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
                             <VendorDashboard />
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/orders" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorOrders />
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/products" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorMedicineManager />
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/shipping" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorShipping />
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/payments" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorPayments />
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/analytics" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorAnalytics />
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/compliance" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorCompliance />
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/chat" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorCommunication />
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/settings" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorSettings />
                         </AuthGuard>
                     } />
                     
