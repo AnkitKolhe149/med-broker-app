@@ -9,6 +9,7 @@ import { NotificationProvider } from '../context/NotificationContext';
 
 // Layout components
 import AppShell from '../components/layout/AppShell';
+import VendorLayout from '../components/layout/VendorLayout';
 
 // Auth guard
 import AuthGuard from './authGuard';
@@ -112,47 +113,47 @@ function App() {
                     {/* Vendor routes (require authentication and complete profile) */}
                     <Route path="/vendor/dashboard" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorDashboard />
+                            <VendorLayout><VendorDashboard /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/orders" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorOrders />
+                            <VendorLayout><VendorOrders /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/products" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorMedicineManager />
+                            <VendorLayout><VendorMedicineManager /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/shipping" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorShipping />
+                            <VendorLayout><VendorShipping /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/payments" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorPayments />
+                            <VendorLayout><VendorPayments /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/analytics" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorAnalytics />
+                            <VendorLayout><VendorAnalytics /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/compliance" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorCompliance />
+                            <VendorLayout><VendorCompliance /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/chat" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorCommunication />
+                            <VendorLayout><VendorCommunication /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/settings" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorSettings />
+                            <VendorLayout><VendorSettings /></VendorLayout>
                         </AuthGuard>
                     } />
                     

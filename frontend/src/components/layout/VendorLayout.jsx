@@ -27,25 +27,27 @@ function VendorLayout({ children }) {
 			<aside
 				style={{
 					width: sidebarOpen ? '280px' : '80px',
-					backgroundColor: '#1a1a2e',
+					background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
 					color: 'white',
 					transition: 'width 0.3s ease',
-					borderRight: '1px solid rgba(255,255,255,0.1)',
+					borderRight: '2px solid rgba(255,255,255,0.15)',
 					overflow: 'hidden',
 					position: 'fixed',
 					height: '100vh',
 					left: 0,
 					top: 0,
-					zIndex: 100
+					zIndex: 100,
+					boxShadow: '2px 0 8px rgba(0,0,0,0.1)'
 				}}
 			>
 				{/* Sidebar Header */}
 				<div style={{
 					padding: '1.5rem',
-					borderBottom: '1px solid rgba(255,255,255,0.1)',
+					borderBottom: '1px solid rgba(255,255,255,0.2)',
 					display: 'flex',
 					alignItems: 'center',
-					justifyContent: 'space-between'
+					justifyContent: 'space-between',
+					background: 'rgba(0,0,0,0.1)'
 				}}>
 					{sidebarOpen && (
 						<div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
@@ -79,19 +81,20 @@ function VendorLayout({ children }) {
 							style={{
 								width: '100%',
 								padding: '1rem 1.5rem',
-								backgroundColor: isActive(item.path) ? 'var(--primary)' : 'transparent',
+								backgroundColor: isActive(item.path) ? 'rgba(255,255,255,0.25)' : 'transparent',
 								border: 'none',
 								color: 'white',
 								cursor: 'pointer',
 								display: 'flex',
 								alignItems: 'center',
 								gap: '1rem',
-								transition: 'background-color 0.2s',
-								borderLeft: isActive(item.path) ? '4px solid white' : 'none'
+								transition: 'all 0.2s',
+								borderLeft: isActive(item.path) ? '4px solid white' : 'none',
+								fontWeight: isActive(item.path) ? '600' : '500'
 							}}
 							onMouseEnter={(e) => {
 								if (!isActive(item.path)) {
-									e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+									e.target.style.backgroundColor = 'rgba(255,255,255,0.15)';
 								}
 							}}
 							onMouseLeave={(e) => {
