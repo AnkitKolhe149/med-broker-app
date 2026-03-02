@@ -1,11 +1,7 @@
 const authService = require('./auth.service');
 
-class AuthController {
-  /**
-   * POST /auth/register
-   * Register a new user
-   */
-  async register(req, res, next) {
+module.exports = {
+  register: async (req, res, next) => {
     try {
       const result = await authService.register(req.body);
       res.status(201).json({
@@ -16,13 +12,9 @@ class AuthController {
     } catch (error) {
       next(error);
     }
-  }
+  },
 
-  /**
-   * POST /auth/login
-   * Login user
-   */
-  async login(req, res, next) {
+  login: async (req, res, next) => {
     try {
       const result = await authService.login(req.body);
       res.status(200).json({
@@ -33,13 +25,9 @@ class AuthController {
     } catch (error) {
       next(error);
     }
-  }
+  },
 
-  /**
-   * GET /auth/profile-status
-   * Get user profile status
-   */
-  async getProfileStatus(req, res, next) {
+  getProfileStatus: async (req, res, next) => {
     try {
       const result = await authService.getProfileStatus(req.user.id);
       res.status(200).json({
@@ -49,13 +37,9 @@ class AuthController {
     } catch (error) {
       next(error);
     }
-  }
+  },
 
-  /**
-   * GET /auth/me
-   * Get current user
-   */
-  async getCurrentUser(req, res, next) {
+  getCurrentUser: async (req, res, next) => {
     try {
       res.status(200).json({
         success: true,
@@ -65,6 +49,4 @@ class AuthController {
       next(error);
     }
   }
-}
-
-module.exports = new AuthController();
+};

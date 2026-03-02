@@ -17,18 +17,21 @@ function TopNav() {
 		if (searchQuery.trim()) {
 			navigate(`/customer/catalog?search=${encodeURIComponent(searchQuery)}`);
 			setSearchQuery('');
+			setShowMobileMenu(false);
 		}
 	};
 
 	const handleLogout = () => {
 		authService.logout();
 		setShowProfileMenu(false);
+		setShowMobileMenu(false);
 		navigate('/login');
 	};
 
 	const handleNavigate = (path) => {
 		navigate(path);
 		setShowProfileMenu(false);
+		setShowMobileMenu(false);
 	};
 
 	return (
@@ -49,14 +52,19 @@ function TopNav() {
 					className="hamburgerMenu"
 					onClick={() => setShowMobileMenu(!showMobileMenu)}
 					style={{
-						display: 'none',
+						display: 'none', /* Will be overridden by media queries in CSS */
 						background: 'none',
 						border: 'none',
-						fontSize: '1.5rem',
+						fontSize: '1.75rem',
 						cursor: 'pointer',
 						padding: '0.5rem',
-						marginLeft: 'auto'
+						marginLeft: 'auto',
+						color: 'var(--primary)',
+						transition: 'transform 0.2s',
+						transform: showMobileMenu ? 'rotate(180deg)' : 'rotate(0deg)'
 					}}
+					aria-label="Toggle mobile menu"
+					aria-expanded={showMobileMenu}
 				>
 					{showMobileMenu ? '✕' : '☰'}
 				</button>
@@ -83,7 +91,10 @@ function TopNav() {
 					<div style={styles.rightSection}>
 					{/* Cart Button */}
 					<button
-						onClick={() => navigate('/customer/cart')}
+						onClick={() => {
+							navigate('/customer/cart');
+							setShowMobileMenu(false);
+						}}
 						style={styles.cartButton}
 						title="View Cart"
 					>

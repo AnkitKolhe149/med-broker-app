@@ -5,8 +5,8 @@ const {
   ForbiddenError
 } = require('../../utils/errors');
 
-class InventoryService {
-  async addMedicineToVendorInventory(userId, data) {
+module.exports = {
+  addMedicineToVendorInventory: async (userId, data) => {
     const {
       medicineId,
       name,
@@ -97,6 +97,4 @@ class InventoryService {
 
     return result;
   }
-}
-
-module.exports = new InventoryService();
+};

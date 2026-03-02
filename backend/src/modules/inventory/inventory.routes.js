@@ -5,6 +5,6 @@ const { authenticate, requireRole } = require('../../middlewares/auth.middleware
 const router = express.Router();
 
 router.use(authenticate, requireRole('VENDOR'));
-router.post('/medicines', inventoryController.addMedicineToInventory.bind(inventoryController));
+router.post('/medicines', inventoryController.addMedicineToInventory);
 
 module.exports = router;

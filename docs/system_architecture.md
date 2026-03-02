@@ -153,7 +153,9 @@ MedBroker is built using a modern, scalable **3-tier architecture** with a clean
 
 ### REST API Structure
 
-**Base URL:** `http://localhost:5000/api`
+**Base URL:** 
+- **Development:** `http://localhost:4000/api`
+- **Production:** `https://api.medbroker.com/api`
 
 **API Endpoints Categories:**
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
+import { validateEmail, validatePassword } from '../../utils/validation';
 
 function Login() {
 	const navigate = useNavigate();
@@ -9,14 +10,23 @@ function Login() {
 		password: '',
 		role: 'CUSTOMER'
 	});
+	const [errors, setErrors] = useState({});
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 
 	const handleInputChange = (e) => {
+		const { name, value } = e.target;
 		setFormData({
 			...formData,
-			[e.target.name]: e.target.value
+			[name]: value
 		});
+		// Clear errors as user types
+		if (errors[name]) {
+			setErrors({
+				...errors,
+				[name]: ''
+			});
+		}
 		setError('');
 	};
 
@@ -28,9 +38,33 @@ function Login() {
 		setError('');
 	};
 
+	const validateForm = () => {
+		const newErrors = {};
+
+		// Validate email
+		const emailValidation = validateEmail(formData.email);
+		if (!emailValidation.isValid) {
+			newErrors.email = emailValidation.error;
+		}
+
+		// Validate password
+		if (!formData.password) {
+			newErrors.password = 'Password is required';
+		}
+
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setError('');
+
+		// Validate before submitting
+		if (!validateForm()) {
+			return;
+		}
+
 		setLoading(true);
 
 		try {
@@ -86,8 +120,13 @@ function Login() {
 								placeholder="name@company.com"
 								value={formData.email}
 								onChange={handleInputChange}
-								required
+								style={errors.email ? { borderColor: '#dc2626' } : {}}
 							/>
+							{errors.email && (
+								<span style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
+									{errors.email}
+								</span>
+							)}
 						</div>
 
 						<div>
@@ -99,8 +138,13 @@ function Login() {
 								placeholder="••••••••"
 								value={formData.password}
 								onChange={handleInputChange}
-								required
+								style={errors.password ? { borderColor: '#dc2626' } : {}}
 							/>
+							{errors.password && (
+								<span style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
+									{errors.password}
+								</span>
+							)}
 						</div>
 
 						<div>

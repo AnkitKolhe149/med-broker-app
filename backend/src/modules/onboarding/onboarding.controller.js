@@ -1,11 +1,7 @@
 const onboardingService = require('./onboarding.service');
 
-class OnboardingController {
-  /**
-   * POST /onboarding/vendor
-   * Complete vendor onboarding
-   */
-  async completeVendorOnboarding(req, res, next) {
+module.exports = {
+  completeVendorOnboarding: async (req, res, next) => {
     try {
       const vendor = await onboardingService.completeVendorOnboarding(
         req.user.id,
@@ -14,19 +10,15 @@ class OnboardingController {
 
       res.status(201).json({
         success: true,
-        message: 'Vendor onboarding completed successfully. Your profile is under verification.',
+        message: 'Vendor onboarding completed successfully. Your profile has been approved.',
         data: vendor
       });
     } catch (error) {
       next(error);
     }
-  }
+  },
 
-  /**
-   * POST /onboarding/customer
-   * Complete customer onboarding
-   */
-  async completeCustomerOnboarding(req, res, next) {
+  completeCustomerOnboarding: async (req, res, next) => {
     try {
       const customer = await onboardingService.completeCustomerOnboarding(
         req.user.id,
@@ -41,13 +33,9 @@ class OnboardingController {
     } catch (error) {
       next(error);
     }
-  }
+  },
 
-  /**
-   * GET /onboarding/status
-   * Get onboarding status
-   */
-  async getStatus(req, res, next) {
+  getStatus: async (req, res, next) => {
     try {
       const status = await onboardingService.getOnboardingStatus(req.user.id);
 
@@ -59,6 +47,4 @@ class OnboardingController {
       next(error);
     }
   }
-}
-
-module.exports = new OnboardingController();
+};

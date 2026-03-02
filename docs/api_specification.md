@@ -4,7 +4,7 @@
 
 MedBroker APIs follow **RESTful** principles with JSON request/response format. All endpoints require authentication via JWT token in the Authorization header (for protected routes).
 
-**Base URL:** `http://localhost:5000/api`  
+**Base URL:** `http://localhost:4000/api` (Development) | `https://api.medbroker.com/api` (Production)  
 **API Version:** v1  
 **Response Format:** JSON  
 **Authentication:** Bearer Token (JWT)

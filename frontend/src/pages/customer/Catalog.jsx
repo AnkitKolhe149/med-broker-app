@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import authService from '../../services/auth.service';
 import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -40,14 +39,11 @@ function Catalog() {
 	const [showMobileFilters, setShowMobileFilters] = useState(false);
 
 	useEffect(() => {
-		// Simulated API call - Replace with real API in production
 		const fetchMedicines = async () => {
 			setLoading(true);
 			try {
-				// Simulate network delay
 				await new Promise(resolve => setTimeout(resolve, 800));
 				
-				// Sample medicine data
 				const medicineData = [
 					{
 						id: 1,
@@ -508,8 +504,8 @@ function Catalog() {
 					gridTemplateColumns: `${filterWidth}px 1fr`
 				}}>
 					
-					{/* ===== LEFT SIDEBAR: FILTERS (FIXED) ===== */}
-					<aside className={`filterSidebar ${showMobileFilters ? 'show' : ''}`} style={{
+					{/* ===== LEFT SIDEBAR: FILTERS (ALWAYS VISIBLE) ===== */}
+					<aside className="filterSidebar" style={{
 						...styles.filterSidebar,
 						width: `${filterWidth}px`
 					}}>
@@ -703,8 +699,63 @@ function Catalog() {
 						</div>
 					</aside>
 
+					{/* Filter drawer backdrop - allows closing filter when tapped */}
+					<div 
+						className="filterBackdrop"
+						onClick={() => setShowMobileFilters(false)}
+						style={{
+							display: showMobileFilters ? 'block' : 'none'
+						}}
+						aria-label="Close filter panel"
+						role="button"
+						tabIndex="0"
+						onKeyDown={(e) => {
+							if (e.key === 'Escape') {
+								setShowMobileFilters(false);
+							}
+						}}
+					/>
+
 					{/* ===== RIGHT SECTION: MEDICINES LISTING ===== */}
 					<section style={styles.mainContent}>
+						{/* ACTIVE FILTERS DISPLAY */}
+						<div className="activeFiltersBadges" style={{
+							display: (categoryFilter !== 'all' || availabilityFilter !== 'all' || prescriptionFilter !== 'all' || minPrice !== 0 || maxPrice !== 500) ? 'flex' : 'none'
+						}}>
+							{categoryFilter !== 'all' && (
+								<span className="filterBadge">
+									Category: {categoryFilter}
+									<button onClick={() => { setCategoryFilter('all'); handleFilterChange(); }}>✕</button>
+								</span>
+							)}
+							{availabilityFilter !== 'all' && (
+								<span className="filterBadge">
+									{availabilityFilter === 'in-stock' ? 'In Stock' : 'Out of Stock'}
+									<button onClick={() => { setAvailabilityFilter('all'); handleFilterChange(); }}>✕</button>
+								</span>
+							)}
+							{prescriptionFilter !== 'all' && (
+								<span className="filterBadge">
+									{prescriptionFilter === 'required' ? 'Prescription Only' : 'No Prescription'}
+									<button onClick={() => { setPrescriptionFilter('all'); handleFilterChange(); }}>✕</button>
+								</span>
+							)}
+							{(minPrice !== 0 || maxPrice !== 500) && (
+								<span className="filterBadge">
+									₹{minPrice}-₹{maxPrice}
+									<button onClick={() => { setMinPrice(0); setMaxPrice(500); handleFilterChange(); }}>✕</button>
+								</span>
+							)}
+							{(categoryFilter !== 'all' || availabilityFilter !== 'all' || prescriptionFilter !== 'all' || minPrice !== 0 || maxPrice !== 500) && (
+								<button 
+									className="clearAllFiltersBtn"
+									onClick={handleClearAllFilters}
+								>
+									Clear All Filters
+								</button>
+							)}
+						</div>
+
 						{/* RESULTS HEADER */}
 						<div style={styles.resultsHeader}>
 							<div>
@@ -720,7 +771,20 @@ function Catalog() {
 						</div>
 
 						{/* MEDICINES GRID */}
-						{paginatedMedicines.length > 0 ? (
+						{loading ? (
+							/* LOADING STATE */
+							<div className="skeletonGrid">
+								{[...Array(6)].map((_, i) => (
+									<div key={i} className="skeletonCard">
+										<div className="skeletonLine title"></div>
+										<div className="skeletonLine text"></div>
+										<div className="skeletonLine text"></div>
+										<div className="skeletonLine text" style={{ width: '60%' }}></div>
+										<div className="skeletonButton"></div>
+									</div>
+								))}
+							</div>
+						) : paginatedMedicines.length > 0 ? (
 							<>
 								<div className="section-grid medicinesGrid" style={styles.medicinesGrid}>
 									{paginatedMedicines.map(medicine => (
@@ -837,24 +901,20 @@ function Catalog() {
 							</>
 						) : (
 							/* EMPTY STATE */
-							<div style={styles.emptyState}>
-								<div style={styles.emptyIcon}>🔍</div>
-								<h3 style={styles.emptyTitle}>No medicines found</h3>
-								<p style={styles.emptyDescription}>
+							<div className="emptyState">
+								<div className="emptyStateIcon">🔍</div>
+								<h3>No medicines found</h3>
+								<p>
 									{searchQuery
-										? `No results for "${searchQuery}". Try different keywords.`
+										? `No results for "${searchQuery}". Try different keywords or adjust your filters.`
 										: 'Try adjusting your filters to find what you need.'}
 								</p>
 								<button
 									onClick={handleClearAllFilters}
-									style={styles.resetButton}
 									aria-label="Reset all filters and search"
 								>
-									Reset Filters & Search
+									Clear All Filters & Search
 								</button>
-								<a href="/customer/catalog" style={styles.backLink}>
-									← Back to all medicines
-								</a>
 							</div>
 						)}
 					</section>
@@ -909,21 +969,24 @@ const styles = {
 	filterSidebar: {
 		display: 'flex',
 		flexDirection: 'column',
-		position: 'sticky',
-		top: '20px',
 		backgroundColor: 'var(--surface)',
 		borderRadius: 'var(--radius-lg)',
 		border: '1px solid var(--border)',
 		userSelect: 'none',
-		maxHeight: 'calc(100vh - 40px)',
 		overflowY: 'auto',
+		maxHeight: 'calc(100vh - 150px)',
+		paddingRight: '0.5rem',
 		boxShadow: 'var(--shadow-md)'
 	},
 	mainContent: {
 		display: 'flex',
 		flexDirection: 'column',
 		minWidth: 0,
-		width: '100%'
+		width: '100%',
+		maxHeight: 'calc(100vh - 150px)',
+		overflowY: 'auto',
+		overflowX: 'hidden',
+		paddingRight: '0.5rem'
 	},
 
 	// TOP SEARCH BAR

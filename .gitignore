@@ -130,6 +130,7 @@ Thumbs.db
 # Database
 *.sqlite
 *.db
+*.md
 
 # AI/ML models and data (if sensitive)
 ai-ml/models/*.pkl

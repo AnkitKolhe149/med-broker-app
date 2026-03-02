@@ -7,8 +7,8 @@ const router = express.Router();
 // All onboarding routes require authentication
 router.use(authenticate);
 
-router.post('/vendor', onboardingController.completeVendorOnboarding.bind(onboardingController));
-router.post('/customer', onboardingController.completeCustomerOnboarding.bind(onboardingController));
-router.get('/status', onboardingController.getStatus.bind(onboardingController));
+router.post('/vendor', onboardingController.completeVendorOnboarding);
+router.post('/customer', onboardingController.completeCustomerOnboarding);
+router.get('/status', onboardingController.getStatus);
 
 module.exports = router;

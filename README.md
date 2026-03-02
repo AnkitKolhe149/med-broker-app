@@ -89,34 +89,65 @@ cd backend
 npm install
 ```
 
-3. Configure environment variables:
+3. Configure environment variables - Backend:
 ```bash
+cd backend
 cp .env.example .env
 ```
 
-Edit `.env` file:
+Edit `backend/.env` file with your actual values:
 ```env
-DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
+# Required variables
+NODE_ENV=development
 PORT=4000
+DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
 JWT_SECRET="your-super-secret-jwt-key"
+
+# Optional variables
+EXCHANGE_RATE_API_KEY="your-api-key"
+CORS_ORIGIN="http://localhost:5173,http://localhost:3000"
 ```
 
-4. Run database migrations:
+4. Configure environment variables - Frontend:
 ```bash
+cd frontend
+cp .env.example .env
+```
+
+Edit `frontend/.env` file:
+```env
+# API endpoint (must match backend PORT)
+VITE_API_URL=http://localhost:4000/api
+VITE_APP_NAME=MedBroker
+```
+
+5. Run database migrations:
+```bash
+cd backend
 npx prisma migrate dev
 ```
 
-5. Generate Prisma client:
+6. Generate Prisma client:
 ```bash
 npx prisma generate
 ```
 
-6. Start development server:
+7. Start development servers:
+
+Backend:
 ```bash
+cd backend
 npm run dev
 ```
 
-Backend will run on `http://localhost:4000`
+Frontend (in another terminal):
+```bash
+cd frontend
+npm run dev
+```
+
+Backend will run on `http://localhost:4000`  
+Frontend will run on `http://localhost:5173` (or `http://localhost:3000`)
 
 ### Frontend Setup
 

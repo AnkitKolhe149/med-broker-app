@@ -1,7 +1,7 @@
 const inventoryService = require('./inventory.service');
 
-class InventoryController {
-  async addMedicineToInventory(req, res, next) {
+module.exports = {
+  addMedicineToInventory: async (req, res, next) => {
     try {
       const result = await inventoryService.addMedicineToVendorInventory(req.user.id, req.body);
 
@@ -16,6 +16,4 @@ class InventoryController {
       next(error);
     }
   }
-}
-
-module.exports = new InventoryController();
+};

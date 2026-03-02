@@ -1,14 +1,12 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 // Setup axios interceptor for error handling
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle authentication errors
     if (error.response?.status === 401) {
-      // Token expired or invalid
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       if (window.location.pathname !== '/login') {
@@ -16,179 +14,127 @@ axios.interceptors.response.use(
       }
     }
     
-    // Return error with message from backend
     const message = error.response?.data?.message || error.message || 'An error occurred';
     return Promise.reject(new Error(message));
   }
 );
 
-class AuthService {
-  constructor() {
-    this.token = localStorage.getItem('token');
-    this.user = JSON.parse(localStorage.getItem('user') || 'null');
-  }
+// Helper functions
+const getToken = () => localStorage.getItem('token');
 
-  /**
-   * Register a new user
-   */
-  async register(data) {
+const getUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
+};
+
+const setAuthData = (token, user) => {
+  localStorage.setItem('token', token);
+  localStorage.setItem('user', JSON.stringify(user));
+};
+
+const clearAuthData = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+};
+
+const getAuthHeaders = () => ({
+  Authorization: `Bearer ${getToken()}`
+});
+
+// Public API
+export default {
+  register: async (data) => {
     const response = await axios.post(`${API_URL}/auth/register`, data);
-    
     if (response.data.success) {
       const { token, user } = response.data.data;
-      this.setAuthData(token, user);
+      setAuthData(token, user);
       return response.data.data;
     }
-    
     throw new Error(response.data.message || 'Registration failed');
-  }
+  },
 
-  /**
-   * Login user
-   */
-  async login(email, password, role) {
+  login: async (email, password, role) => {
     const response = await axios.post(`${API_URL}/auth/login`, {
       email,
       password,
       role
     });
-    
     if (response.data.success) {
       const { token, user } = response.data.data;
-      this.setAuthData(token, user);
+      setAuthData(token, user);
       return response.data.data;
     }
-    
     throw new Error(response.data.message || 'Login failed');
-  }
+  },
 
-  /**
-   * Logout user
-   */
-  logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    this.token = null;
-    this.user = null;
-  }
+  logout: () => {
+    clearAuthData();
+  },
 
-  /**
-   * Get current user
-   */
-  async getCurrentUser() {
-    if (!this.token) {
-      throw new Error('Not authenticated');
-    }
-
+  getCurrentUser: async () => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+    
     const response = await axios.get(`${API_URL}/auth/me`, {
-      headers: this.getAuthHeaders()
+      headers: getAuthHeaders()
     });
-
+    
     if (response.data.success) {
-      this.user = response.data.data;
-      localStorage.setItem('user', JSON.stringify(this.user));
-      return this.user;
+      localStorage.setItem('user', JSON.stringify(response.data.data));
+      return response.data.data;
     }
-
     throw new Error('Failed to fetch user data');
-  }
+  },
 
-  /**
-   * Get profile status
-   */
-  async getProfileStatus() {
-    if (!this.token) {
-      throw new Error('Not authenticated');
-    }
-
+  getProfileStatus: async () => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+    
     const response = await axios.get(`${API_URL}/auth/profile-status`, {
-      headers: this.getAuthHeaders()
+      headers: getAuthHeaders()
     });
-
     return response.data.data;
-  }
+  },
 
-  /**
-   * Complete vendor onboarding
-   */
-  async completeVendorOnboarding(data) {
-    if (!this.token) {
-      throw new Error('Not authenticated');
-    }
-
+  completeVendorOnboarding: async (data) => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+    
     const response = await axios.post(`${API_URL}/onboarding/vendor`, data, {
-      headers: this.getAuthHeaders()
+      headers: getAuthHeaders()
     });
-
+    
     if (response.data.success) {
-      // Refresh user data
       await this.getCurrentUser();
       return response.data.data;
     }
-
     throw new Error(response.data.message || 'Onboarding failed');
-  }
+  },
 
-  /**
-   * Complete customer onboarding
-   */
-  async completeCustomerOnboarding(data) {
-    if (!this.token) {
-      throw new Error('Not authenticated');
-    }
-
+  completeCustomerOnboarding: async (data) => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+    
     const response = await axios.post(`${API_URL}/onboarding/customer`, data, {
-      headers: this.getAuthHeaders()
+      headers: getAuthHeaders()
     });
-
+    
     if (response.data.success) {
-      // Refresh user data
       await this.getCurrentUser();
       return response.data.data;
     }
-
     throw new Error(response.data.message || 'Onboarding failed');
-  }
+  },
 
-  /**
-   * Check if user is authenticated
-   */
-  isAuthenticated() {
-    return !!this.token && !!this.user;
-  }
+  isAuthenticated: () => {
+    return !!getToken() && !!getUser();
+  },
 
-  /**
-   * Get auth headers
-   */
-  getAuthHeaders() {
-    return {
-      Authorization: `Bearer ${this.token}`
-    };
-  }
+  getUserRole: () => {
+    return getUser()?.role || null;
+  },
 
-  /**
-   * Set auth data
-   */
-  setAuthData(token, user) {
-    this.token = token;
-    this.user = user;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+  isProfileComplete: () => {
+    return getUser()?.isProfileComplete || false;
   }
-
-  /**
-   * Get user role
-   */
-  getUserRole() {
-    return this.user?.role || null;
-  }
-
-  /**
-   * Check if profile is complete
-   */
-  isProfileComplete() {
-    return this.user?.isProfileComplete || false;
-  }
-}
-
-export default new AuthService();
+};
