@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../../database/prisma');
 const { ValidationError, ConflictError, NotFoundError } = require('../../utils/errors');
-
-const prisma = new PrismaClient();
 
 // Helper function to validate GSTIN format
 // Format: 22AAAAA0000A1Z5 (15 characters)
@@ -26,8 +24,26 @@ module.exports = {
       contactNumber
     } = data;
 
+    // Validate required fields
+    if (!companyName || !vendorType || !country || !state || !gstinNumber || 
+        !drugLicenseNumber || !businessAddress || !contactPersonName || !contactNumber) {
+      throw new ValidationError('All required fields must be provided');
+    }
+
+    // Validate GSTIN format
     if (!isValidGSTIN(gstinNumber)) {
-      throw new ValidationError('Invalid GSTIN format');
+      throw new ValidationError('Invalid GSTIN format. Must be 15 characters (e.g., 22AAAAA0000A1Z5)');
+    }
+
+    // Validate vendor type
+    const validVendorTypes = ['MANUFACTURER', 'DISTRIBUTOR', 'PHARMACY'];
+    if (!validVendorTypes.includes(vendorType)) {
+      throw new ValidationError('Vendor type must be MANUFACTURER, DISTRIBUTOR, or PHARMACY');
+    }
+
+    // Validate contact number
+    if (!/^\d{10}$/.test(contactNumber)) {
+      throw new ValidationError('Contact number must be exactly 10 digits');
     }
 
     const existingVendor = await prisma.vendor.findUnique({
@@ -91,8 +107,30 @@ module.exports = {
       contactNumber
     } = data;
 
+    // Validate required fields
+    if (!fullName || !buyerType || !country || !city || !deliveryAddress || !contactNumber) {
+      throw new ValidationError('All required fields must be provided');
+    }
+
+    // Validate buyer type
+    const validBuyerTypes = ['RETAIL', 'WHOLESALE'];
+    if (!validBuyerTypes.includes(buyerType)) {
+      throw new ValidationError('Buyer type must be RETAIL or WHOLESALE');
+    }
+
+    // Validate GSTIN if provided (required for WHOLESALE)
     if (gstin && !isValidGSTIN(gstin)) {
-      throw new ValidationError('Invalid GSTIN format');
+      throw new ValidationError('Invalid GSTIN format. Must be 15 characters (e.g., 22AAAAA0000A1Z5)');
+    }
+
+    // WHOLESALE buyers must provide business name and GSTIN
+    if (buyerType === 'WHOLESALE' && (!businessName || !gstin)) {
+      throw new ValidationError('Business name and GSTIN are required for wholesale buyers');
+    }
+
+    // Validate contact number
+    if (!/^\d{10}$/.test(contactNumber)) {
+      throw new ValidationError('Contact number must be exactly 10 digits');
     }
 
     const existingCustomer = await prisma.customer.findUnique({

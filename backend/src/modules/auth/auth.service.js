@@ -1,10 +1,14 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../../database/prisma');
 const { ConflictError, AuthenticationError, NotFoundError } = require('../../utils/errors');
 
-const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// Validate JWT_SECRET is set (fail fast in production)
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable must be set');
+}
+
 const JWT_EXPIRES_IN = '7d';
 
 // Helper functions (internal)
@@ -29,17 +33,66 @@ const verifyToken = (token) => {
   }
 };
 
+// Validation helpers
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new ConflictError('Invalid email format');
+  }
+};
+
+const validatePassword = (password) => {
+  if (!password || password.length < 8) {
+    throw new ConflictError('Password must be at least 8 characters long');
+  }
+  
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  
+  if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
+    throw new ConflictError('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+  }
+};
+
+const validateMobile = (mobile) => {
+  if (mobile && !/^\d{10}$/.test(mobile)) {
+    throw new ConflictError('Mobile number must be exactly 10 digits');
+  }
+};
+
 // Public API
 module.exports = {
   register: async (data) => {
     const { email, mobile, password, role } = data;
 
+    // Input validation
+    if (!email || !password) {
+      throw new ConflictError('Email and password are required');
+    }
+
+    validateEmail(email);
+    validatePassword(password);
+    validateMobile(mobile);
+
+    // Check email uniqueness
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
 
     if (existingUser) {
       throw new ConflictError('User with this email already exists');
+    }
+
+    // Check mobile uniqueness if provided
+    if (mobile) {
+      const existingMobile = await prisma.user.findFirst({
+        where: { mobile }
+      });
+
+      if (existingMobile) {
+        throw new ConflictError('Mobile number already registered');
+      }
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -72,6 +125,13 @@ module.exports = {
 
   login: async (data) => {
     const { email, password, role } = data;
+
+    // Input validation
+    if (!email || !password) {
+      throw new AuthenticationError('Email and password are required');
+    }
+
+    validateEmail(email);
 
     const user = await prisma.user.findUnique({
       where: { email },
