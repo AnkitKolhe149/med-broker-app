@@ -1,0 +1,45 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	background-color: white;
+	box-shadow: var(--shadow-md);
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+	cursor: pointer;
+	min-width: 0;
+}
+
+.imageContainer {
+	width: 100%;
+	background-color: #f0f0f0;
+	overflow: hidden;
+	contain: layout style paint;
+}
+
+.infoSection {
+	padding: 1.5rem;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.name {
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0 0 0.5rem 0;
+}
+
+.role {
+	font-size: 0.875rem;
+	color: var(--text-secondary);
+	margin: 0;
+}
+
+@media (max-width: 640px) {
+	.infoSection {
+		padding: 1.25rem;
+	}
+}
