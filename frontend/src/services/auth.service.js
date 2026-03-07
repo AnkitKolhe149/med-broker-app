@@ -41,6 +41,21 @@ const getAuthHeaders = () => ({
   Authorization: `Bearer ${getToken()}`
 });
 
+const fetchCurrentUser = async () => {
+  const token = getToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await axios.get(`${API_URL}/auth/me`, {
+    headers: getAuthHeaders()
+  });
+
+  if (response.data.success) {
+    localStorage.setItem('user', JSON.stringify(response.data.data));
+    return response.data.data;
+  }
+  throw new Error('Failed to fetch user data');
+};
+
 // Public API
 export default {
   register: async (data) => {
@@ -71,20 +86,7 @@ export default {
     clearAuthData();
   },
 
-  getCurrentUser: async () => {
-    const token = getToken();
-    if (!token) throw new Error('Not authenticated');
-    
-    const response = await axios.get(`${API_URL}/auth/me`, {
-      headers: getAuthHeaders()
-    });
-    
-    if (response.data.success) {
-      localStorage.setItem('user', JSON.stringify(response.data.data));
-      return response.data.data;
-    }
-    throw new Error('Failed to fetch user data');
-  },
+  getCurrentUser: fetchCurrentUser,
 
   getProfileStatus: async () => {
     const token = getToken();
@@ -105,7 +107,7 @@ export default {
     });
     
     if (response.data.success) {
-      await this.getCurrentUser();
+      await fetchCurrentUser();
       return response.data.data;
     }
     throw new Error(response.data.message || 'Onboarding failed');
@@ -120,7 +122,7 @@ export default {
     });
     
     if (response.data.success) {
-      await this.getCurrentUser();
+      await fetchCurrentUser();
       return response.data.data;
     }
     throw new Error(response.data.message || 'Onboarding failed');

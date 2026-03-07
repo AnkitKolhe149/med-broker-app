@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
+import Avatar from '../../components/common/Avatar';
+import styles from './Profile.module.css';
 
 function CustomerProfile() {
 	const navigate = useNavigate();
@@ -18,8 +20,11 @@ function CustomerProfile() {
 		city: '',
 		state: '',
 		zipCode: '',
-		buyerType: 'RETAIL'
+		buyerType: 'RETAIL',
+		profileImage: null
 	});
+	const [previewImage, setPreviewImage] = useState(null);
+	const [imageFile, setImageFile] = useState(null);
 
 	useEffect(() => {
 		loadUserData();
@@ -56,6 +61,39 @@ function CustomerProfile() {
 		}));
 	};
 
+	const handleImageChange = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			// Validate file type
+			const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+			if (!validTypes.includes(file.type)) {
+				alert('Please upload a valid image (JPG, PNG, or WebP)');
+				return;
+			}
+			// Validate file size (max 5MB)
+			if (file.size > 5 * 1024 * 1024) {
+				alert('Image size must be less than 5MB');
+				return;
+			}
+			setImageFile(file);
+			// Create preview
+			const reader = new FileReader();
+			reader.onloadend = () => {
+				setPreviewImage(reader.result);
+			};
+			reader.readAsDataURL(file);
+		}
+	};
+
+	const handleRemoveImage = () => {
+		setPreviewImage(null);
+		setImageFile(null);
+		setFormData(prev => ({
+			...prev,
+			profileImage: null
+		}));
+	};
+
 	const handleSaveProfile = async (e) => {
 		e.preventDefault();
 		if (!validateForm()) return;
@@ -65,12 +103,19 @@ function CustomerProfile() {
 			// In real implementation, this would call an API
 			await new Promise(resolve => setTimeout(resolve, 1000));
 
+			// Handle image upload if new image selected
+			if (imageFile) {
+				const imgData = previewImage; // In real app, upload to server
+				formData.profileImage = imgData;
+			}
+
 			// Update local state
 			setUser(prev => ({
 				...prev,
 				customer: { ...prev.customer, ...formData }
 			}));
 
+			setImageFile(null);
 			setIsEditing(false);
 			setSuccessMessage('Profile updated successfully!');
 			setTimeout(() => setSuccessMessage(''), 3000);
@@ -133,159 +178,186 @@ function CustomerProfile() {
 					</div>
 				</div>
 
-				<div style={styles.mainContent}>
+				<div className={styles.mainContent}>
 					{/* Left: Profile Form */}
 					<section className="section">
 						{successMessage && (
-							<div style={styles.successAlert}>
+							<div className={styles.successAlert}>
 								✓ {successMessage}
 							</div>
 						)}
 
 						<form onSubmit={handleSaveProfile}>
-							<div style={styles.formHeader}>
-								<h2 style={styles.formTitle}>Personal Information</h2>
+							<div className={styles.formHeader}>
+								<h2 className={styles.formTitle}>Personal Information</h2>
 								{!isEditing && (
 									<button
 										type="button"
 										onClick={() => setIsEditing(true)}
-										style={styles.editButton}
+										className={styles.editButton}
 									>
 										✏️ Edit Profile
 									</button>
 								)}
 							</div>
 
-							{/* Profile Avatar */}
-							<div style={styles.avatarSection}>
-								<div style={styles.avatar}>
-									{formData.fullName.charAt(0).toUpperCase()}
-								</div>
-								<div>
-									<p style={styles.userName}>{formData.fullName || 'User'}</p>
-									<p style={styles.userEmail}>{user?.email}</p>
-									<p style={styles.buyerTypeInfo}>
-										Buyer Type: <span style={styles.buyerTypeBadge}>{formData.buyerType}</span>
-									</p>
+{/* Profile Avatar Section */}
+						<div className={styles.avatarSection}>
+							<div style={{ position: 'relative' }}>
+								<Avatar 
+									src={previewImage}
+									name={formData.fullName}
+									size={80}
+								/>
+								{isEditing && (
+									<label 
+										className={styles.uploadImageButton}
+										title="Upload profile picture"
+									>
+										📷
+										<input
+											type="file"
+											acccept="image/*"
+											style={{ display: 'none' }}
+											onChange={handleImageChange}
+										/>
+									</label>
+								)}
+							</div>
+							<div>
+								<p className={styles.userName}>{formData.fullName || 'User'}</p>
+								<p className={styles.userEmail}>{user?.email}</p>
+								<p className={styles.buyerTypeInfo}>
+									Buyer Type: <span className={styles.buyerTypeBadge}>{formData.buyerType}</span>
+								</p>
+								{previewImage && isEditing && (
+									<button
+										type="button"
+										className={styles.removeImageButton}
+										onClick={handleRemoveImage}
+									>
+										✕ Remove Image
+									</button>
+								)}
 								</div>
 							</div>
 
-							<hr style={styles.divider} />
+							<hr className={styles.divider} />
 
 							{/* Form Fields */}
-							<div style={styles.formGroup}>
-								<label style={styles.label}>Full Name</label>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Full Name</label>
 								<input
 									type="text"
 									name="fullName"
 									value={formData.fullName}
 									onChange={handleInputChange}
 									disabled={!isEditing}
+									className={styles.input}
 									style={{
-										...styles.input,
 										backgroundColor: isEditing ? 'white' : 'var(--surface)',
 										cursor: isEditing ? 'text' : 'not-allowed'
 									}}
 								/>
 							</div>
 
-							<div style={styles.formGrid}>
-								<div style={styles.formGroup}>
-									<label style={styles.label}>Phone Number</label>
+							<div className={styles.formGrid}>
+								<div className={styles.formGroup}>
+									<label className={styles.label}>Phone Number</label>
 									<input
 										type="tel"
 										name="phoneNumber"
 										value={formData.phoneNumber}
 										onChange={handleInputChange}
 										disabled={!isEditing}
+										className={styles.input}
 										style={{
-											...styles.input,
 											backgroundColor: isEditing ? 'white' : 'var(--surface)',
 											cursor: isEditing ? 'text' : 'not-allowed'
 										}}
 									/>
 								</div>
 
-								<div style={styles.formGroup}>
-									<label style={styles.label}>Email</label>
+								<div className={styles.formGroup}>
+									<label className={styles.label}>Email</label>
 									<input
 										type="email"
 										name="email"
 										value={formData.email}
 										disabled
+										className={styles.input}
 										style={{
-											...styles.input,
 											backgroundColor: 'var(--surface)',
 											cursor: 'not-allowed'
 										}}
 									/>
-									<p style={styles.fieldNote}>Email cannot be changed</p>
+									<p className={styles.fieldNote}>Email cannot be changed</p>
 								</div>
 							</div>
 
 							{/* Address Section */}
-							<div style={styles.sectionDivider} />
-							<h3 style={styles.sectionTitle}>Address</h3>
+							<div className={styles.sectionDivider} />
+							<h3 className={styles.sectionTitle}>Address</h3>
 
-							<div style={styles.formGroup}>
-								<label style={styles.label}>Street Address</label>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Street Address</label>
 								<input
 									type="text"
 									name="address"
 									value={formData.address}
 									onChange={handleInputChange}
 									disabled={!isEditing}
+									className={styles.input}
 									style={{
-										...styles.input,
 										backgroundColor: isEditing ? 'white' : 'var(--surface)',
 										cursor: isEditing ? 'text' : 'not-allowed'
 									}}
 								/>
 							</div>
 
-							<div style={styles.formGrid}>
-								<div style={styles.formGroup}>
-									<label style={styles.label}>City</label>
+							<div className={styles.formGrid}>
+								<div className={styles.formGroup}>
+									<label className={styles.label}>City</label>
 									<input
 										type="text"
 										name="city"
 										value={formData.city}
 										onChange={handleInputChange}
 										disabled={!isEditing}
+										className={styles.input}
 										style={{
-											...styles.input,
 											backgroundColor: isEditing ? 'white' : 'var(--surface)',
 											cursor: isEditing ? 'text' : 'not-allowed'
 										}}
 									/>
 								</div>
 
-								<div style={styles.formGroup}>
-									<label style={styles.label}>State</label>
+								<div className={styles.formGroup}>
+									<label className={styles.label}>State</label>
 									<input
 										type="text"
 										name="state"
 										value={formData.state}
 										onChange={handleInputChange}
 										disabled={!isEditing}
+										className={styles.input}
 										style={{
-											...styles.input,
 											backgroundColor: isEditing ? 'white' : 'var(--surface)',
 											cursor: isEditing ? 'text' : 'not-allowed'
 										}}
 									/>
 								</div>
 
-								<div style={styles.formGroup}>
-									<label style={styles.label}>PIN Code</label>
+								<div className={styles.formGroup}>
+									<label className={styles.label}>PIN Code</label>
 									<input
 										type="text"
 										name="zipCode"
 										value={formData.zipCode}
 										onChange={handleInputChange}
 										disabled={!isEditing}
+										className={styles.input}
 										style={{
-											...styles.input,
 											backgroundColor: isEditing ? 'white' : 'var(--surface)',
 											cursor: isEditing ? 'text' : 'not-allowed'
 										}}
@@ -294,20 +366,20 @@ function CustomerProfile() {
 							</div>
 
 							{/* Buyer Type Section */}
-							<div style={styles.sectionDivider} />
-							<h3 style={styles.sectionTitle}>Buyer Type</h3>
+							<div className={styles.sectionDivider} />
+							<h3 className={styles.sectionTitle}>Buyer Type</h3>
 
-							<div style={styles.buyerTypeSection}>
-								<p style={styles.buyerTypeNote}>
+							<div className={styles.buyerTypeSection}>
+								<p className={styles.buyerTypeNote}>
 									Your current buyer type determines the pricing you receive. Changing this requires verification.
 								</p>
 								{hasOrders && (
-									<p style={styles.buyerTypeWarning}>
+									<p className={styles.buyerTypeWarning}>
 										Buyer type cannot be changed after placing orders.
 									</p>
 								)}
-								<div style={styles.radioGroup}>
-									<label style={styles.radioLabel}>
+								<div className={styles.radioGroup}>
+									<label className={styles.radioLabel}>
 										<input
 											type="radio"
 											name="buyerType"
@@ -315,15 +387,15 @@ function CustomerProfile() {
 											checked={formData.buyerType === 'RETAIL'}
 											onChange={handleInputChange}
 											disabled={!isEditing || hasOrders}
-											style={styles.radioInput}
+											className={styles.radioInput}
 										/>
 										<span>
 											<strong>Retail</strong>
-											<p style={styles.typeDescription}>Regular customer pricing</p>
+											<p className={styles.typeDescription}>Regular customer pricing</p>
 										</span>
 									</label>
 
-									<label style={styles.radioLabel}>
+									<label className={styles.radioLabel}>
 										<input
 											type="radio"
 											name="buyerType"
@@ -331,11 +403,11 @@ function CustomerProfile() {
 											checked={formData.buyerType === 'WHOLESALE'}
 											onChange={handleInputChange}
 											disabled={!isEditing || hasOrders}
-											style={styles.radioInput}
+											className={styles.radioInput}
 										/>
 										<span>
 											<strong>Wholesale</strong>
-											<p style={styles.typeDescription}>Bulk pricing with discounts</p>
+											<p className={styles.typeDescription}>Bulk pricing with discounts</p>
 										</span>
 									</label>
 								</div>
@@ -343,12 +415,12 @@ function CustomerProfile() {
 
 							{/* Form Actions */}
 							{isEditing && (
-								<div style={styles.formActions}>
+								<div className={styles.formActions}>
 									<button
 										type="submit"
 										disabled={isSaving}
+										className={styles.saveButton}
 										style={{
-											...styles.saveButton,
 											opacity: isSaving ? 0.6 : 1
 										}}
 									>
@@ -360,7 +432,7 @@ function CustomerProfile() {
 											setIsEditing(false);
 											loadUserData();
 										}}
-										style={styles.cancelButton}
+										className={styles.cancelButton}
 									>
 										✕ Cancel
 									</button>
@@ -370,70 +442,70 @@ function CustomerProfile() {
 					</section>
 
 					{/* Right: Additional Info & Actions */}
-					<div style={styles.infoSection}>
+					<div className={styles.infoSection}>
 						{/* Account Stats */}
 						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 style={styles.cardTitle}>Account Stats</h2>
-							<div style={styles.stat}>
-								<p style={styles.statLabel}>Member Since</p>
-								<p style={styles.statValue}>
+							<h2 className={styles.cardTitle}>Account Stats</h2>
+							<div className={styles.stat}>
+								<p className={styles.statLabel}>Member Since</p>
+								<p className={styles.statValue}>
 									{new Date(user?.createdAt || Date.now()).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })}
 								</p>
 							</div>
-							<div style={styles.stat}>
-								<p style={styles.statLabel}>Total Orders</p>
-								<p style={styles.statValue}>4</p>
+							<div className={styles.stat}>
+								<p className={styles.statLabel}>Total Orders</p>
+								<p className={styles.statValue}>4</p>
 							</div>
-							<div style={styles.stat}>
-								<p style={styles.statLabel}>Account Status</p>
-								<p style={{ ...styles.statValue, color: 'var(--success)' }}>✓ Active</p>
+							<div className={styles.stat}>
+								<p className={styles.statLabel}>Account Status</p>
+								<p className={styles.statValue} style={{ color: 'var(--success)' }}>✓ Active</p>
 							</div>
 						</section>
 
 						{/* Quick Actions */}
 						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 style={styles.cardTitle}>Quick Actions</h2>
-							<button style={styles.actionLink}>🛒 Continue Shopping</button>
-							<button style={styles.actionLink}>📦 My Orders</button>
-							<button style={styles.actionLink}>❤️ Wishlist</button>
-							<button style={styles.actionLink}>🔔 Notifications</button>
+							<h2 className={styles.cardTitle}>Quick Actions</h2>
+							<button className={styles.actionLink}>🛒 Continue Shopping</button>
+							<button className={styles.actionLink}>📦 My Orders</button>
+							<button className={styles.actionLink}>❤️ Wishlist</button>
+							<button className={styles.actionLink}>🔔 Notifications</button>
 						</section>
 
 						{/* Account Security */}
 						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 style={styles.cardTitle}>Account Security</h2>
-							<button style={styles.actionLink}>🔐 Change Password</button>
-							<button style={styles.actionLink}>📱 Two-Factor Auth</button>
-							<button style={styles.actionLink}>🔗 Linked Accounts</button>
+							<h2 className={styles.cardTitle}>Account Security</h2>
+							<button className={styles.actionLink}>🔐 Change Password</button>
+							<button className={styles.actionLink}>📱 Two-Factor Auth</button>
+							<button className={styles.actionLink}>🔗 Linked Accounts</button>
 						</section>
 
 						{/* Preferences */}
 						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 style={styles.cardTitle}>Preferences</h2>
-							<label style={styles.checkboxLabel}>
-								<input type="checkbox" defaultChecked style={styles.checkbox} />
+							<h2 className={styles.cardTitle}>Preferences</h2>
+							<label className={styles.checkboxLabel}>
+								<input type="checkbox" defaultChecked className={styles.checkbox} />
 								<span>Email notifications</span>
 							</label>
-							<label style={styles.checkboxLabel}>
-								<input type="checkbox" defaultChecked style={styles.checkbox} />
+							<label className={styles.checkboxLabel}>
+								<input type="checkbox" defaultChecked className={styles.checkbox} />
 								<span>SMS updates</span>
 							</label>
-							<label style={styles.checkboxLabel}>
-								<input type="checkbox" style={styles.checkbox} />
+							<label className={styles.checkboxLabel}>
+								<input type="checkbox" className={styles.checkbox} />
 								<span>Marketing emails</span>
 							</label>
 						</section>
 
 						{/* Danger Zone */}
 						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 style={{ ...styles.cardTitle, color: 'var(--error)' }}>Danger Zone</h2>
-							<button style={styles.logoutButton} onClick={handleLogout}>
+							<h2 className={styles.cardTitle} style={{ color: 'var(--error)' }}>Danger Zone</h2>
+							<button className={styles.logoutButton} onClick={handleLogout}>
 								🚪 Logout
 							</button>
-							<button style={styles.deleteButton}>
+							<button className={styles.deleteButton}>
 								🗑️ Delete Account
 							</button>
-							<p style={styles.warningText}>
+							<p className={styles.warningText}>
 								Deleting your account is permanent and cannot be undone.
 							</p>
 						</section>
@@ -444,283 +516,6 @@ function CustomerProfile() {
 	);
 }
 
-const styles = {
-	mainContent: {
-		display: 'grid',
-		gridTemplateColumns: '2fr 1fr',
-		gap: '2rem',
-		marginTop: '2rem'
-	},
-	successAlert: {
-		backgroundColor: '#DCFCE7',
-		color: 'var(--success)',
-		padding: '1rem',
-		borderRadius: 'var(--radius)',
-		marginBottom: '1rem',
-		fontWeight: '600',
-		border: '1px solid var(--green-200)'
-	},
-	editButtonContainer: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		marginBottom: '1.5rem'
-	},
-	formTitle: {
-		fontSize: '1.1rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	editButton: {
-		background: 'none',
-		border: '1px solid var(--primary)',
-		color: 'var(--primary)',
-		padding: '0.5rem 1rem',
-		borderRadius: 'var(--radius)',
-		cursor: 'pointer',
-		fontWeight: '500'
-	},
-	avatarSection: {
-		display: 'flex',
-		gap: '1.5rem',
-		alignItems: 'center',
-		marginBottom: '1.5rem',
-		padding: '1.5rem',
-		backgroundColor: 'var(--primary-light)',
-		borderRadius: 'var(--radius)',
-		border: '1px solid var(--green-200)'
-	},
-	avatar: {
-		width: '60px',
-		height: '60px',
-		borderRadius: 'var(--radius-full)',
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		fontSize: '1.75rem',
-		fontWeight: '700',
-		flexShrink: 0
-	},
-	userName: {
-		fontSize: '1rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	userEmail: {
-		fontSize: '0.85rem',
-		color: 'var(--text-secondary)',
-		margin: '0.25rem 0'
-	},
-	buyerTypeInfo: {
-		fontSize: '0.9rem',
-		color: 'var(--text-secondary)',
-		margin: '0.5rem 0 0 0'
-	},
-	buyerTypeBadge: {
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		padding: '0.2rem 0.6rem',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.8rem',
-		fontWeight: '600'
-	},
-	divider: {
-		border: 'none',
-		borderTop: '1px solid var(--border)',
-		margin: '1.5rem 0'
-	},
-	formGroup: {
-		marginBottom: '1.5rem'
-	},
-	label: {
-		display: 'block',
-		fontSize: '0.9rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		marginBottom: '0.5rem'
-	},
-	input: {
-		width: '100%',
-		padding: '0.75rem',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.9rem',
-		fontFamily: 'inherit',
-		outline: 'none',
-		transition: 'border-color 0.2s'
-	},
-	fieldNote: {
-		fontSize: '0.75rem',
-		color: 'var(--text-secondary)',
-		margin: '0.25rem 0 0 0'
-	},
-	formGrid: {
-		display: 'grid',
-		gridTemplateColumns: '1fr 1fr',
-		gap: '1.5rem'
-	},
-	sectionDivider: {
-		borderTop: '2px solid var(--border)',
-		margin: '2rem 0'
-	},
-	sectionTitle: {
-		fontSize: '1rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: '0 0 1.5rem 0'
-	},
-	buyerTypeSection: {
-		marginBottom: '1.5rem'
-	},
-	buyerTypeNote: {
-		fontSize: '0.85rem',
-		color: 'var(--text-secondary)',
-		marginBottom: '1rem'
-	},
-	buyerTypeWarning: {
-		fontSize: '0.8rem',
-		color: 'var(--error)',
-		marginBottom: '1rem'
-	},
-	radioGroup: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '1rem'
-	},
-	radioLabel: {
-		display: 'flex',
-		gap: '1rem',
-		padding: '1rem',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		cursor: 'pointer',
-		alignItems: 'flex-start'
-	},
-	radioInput: {
-		width: '18px',
-		height: '18px',
-		marginTop: '2px',
-		cursor: 'pointer',
-		accentColor: 'var(--primary)',
-		flexShrink: 0
-	},
-	typeDescription: {
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		margin: '0.25rem 0 0 0'
-	},
-	formActions: {
-		display: 'flex',
-		gap: '0.75rem',
-		marginTop: '2rem'
-	},
-	saveButton: {
-		flex: 1,
-		padding: '0.75rem',
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		border: 'none',
-		borderRadius: 'var(--radius)',
-		fontWeight: '600',
-		cursor: 'pointer'
-	},
-	cancelButton: {
-		flex: 1,
-		padding: '0.75rem',
-		backgroundColor: 'var(--surface)',
-		color: 'var(--text-primary)',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		fontWeight: '600',
-		cursor: 'pointer'
-	},
-	infoSection: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '1rem'
-	},
-	cardTitle: {
-		fontSize: '1rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: '0 0 1rem 0',
-		paddingBottom: '0.75rem',
-		borderBottom: '2px solid var(--primary)'
-	},
-	stat: {
-		marginBottom: '1rem',
-		paddingBottom: '1rem',
-		borderBottom: '1px solid var(--border-light)'
-	},
-	statLabel: {
-		fontSize: '0.85rem',
-		color: 'var(--text-secondary)',
-		margin: '0 0 0.25rem 0'
-	},
-	statValue: {
-		fontSize: '1.1rem',
-		fontWeight: '700',
-		color: 'var(--primary)',
-		margin: 0
-	},
-	actionLink: {
-		width: '100%',
-		padding: '0.75rem',
-		backgroundColor: 'var(--surface)',
-		color: 'var(--text-primary)',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		cursor: 'pointer',
-		fontSize: '0.9rem',
-		fontWeight: '500',
-		marginBottom: '0.5rem',
-		transition: 'all 0.2s'
-	},
-	checkboxLabel: {
-		display: 'flex',
-		alignItems: 'center',
-		gap: '0.75rem',
-		cursor: 'pointer',
-		fontSize: '0.9rem',
-		marginBottom: '0.75rem'
-	},
-	checkbox: {
-		width: '18px',
-		height: '18px',
-		cursor: 'pointer',
-		accentColor: 'var(--primary)'
-	},
-	logoutButton: {
-		width: '100%',
-		padding: '0.75rem',
-		backgroundColor: '#FEE2E2',
-		color: 'var(--error)',
-		border: '1px solid var(--error)',
-		borderRadius: 'var(--radius)',
-		cursor: 'pointer',
-		fontWeight: '600',
-		marginBottom: '0.5rem'
-	},
-	deleteButton: {
-		width: '100%',
-		padding: '0.75rem',
-		backgroundColor: 'var(--error)',
-		color: 'white',
-		border: 'none',
-		borderRadius: 'var(--radius)',
-		cursor: 'pointer',
-		fontWeight: '600',
-		marginBottom: '0.75rem'
-	},
-	warningText: {
-		fontSize: '0.8rem',
-		color: 'var(--error)',
-		margin: 0
-	}
-};
-
 export default CustomerProfile;
+
+
