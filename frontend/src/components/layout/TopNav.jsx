@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
+import Avatar from '../common/Avatar';
+import CurrencySelector from '../common/CurrencySelector';
 
 function TopNav() {
 	const navigate = useNavigate();
@@ -11,6 +13,27 @@ function TopNav() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showProfileMenu, setShowProfileMenu] = useState(false);
 	const [showMobileMenu, setShowMobileMenu] = useState(false);
+	const profileButtonRef = useRef(null);
+	const profileMenuRef = useRef(null);
+
+	// Close menu when clicking outside
+	useEffect(() => {
+		const handleClickOutside = (e) => {
+			if (
+				profileButtonRef.current
+				&& profileMenuRef.current
+				&& !profileButtonRef.current.contains(e.target)
+				&& !profileMenuRef.current.contains(e.target)
+			) {
+				setShowProfileMenu(false);
+			}
+		};
+
+		if (showProfileMenu) {
+			document.addEventListener('mousedown', handleClickOutside);
+			return () => document.removeEventListener('mousedown', handleClickOutside);
+		}
+	}, [showProfileMenu]);
 
 	const handleSearch = (e) => {
 		e.preventDefault();
@@ -34,12 +57,40 @@ function TopNav() {
 		setShowMobileMenu(false);
 	};
 
+	useEffect(() => {
+		if (showMobileMenu) {
+			setShowProfileMenu(false);
+		}
+	}, [showMobileMenu]);
+
+	useEffect(() => {
+		const handleResize = () => {
+			if (window.innerWidth > 992) {
+				setShowMobileMenu(false);
+			}
+		};
+
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+
+	const quickLinks = [
+		{ label: '📊 Dashboard', path: '/customer/dashboard' },
+		{ label: '💊 Browse Medicines', path: '/customer/catalog' },
+		{ label: '🛒 Cart', path: '/customer/cart' },
+		{ label: '📦 My Orders', path: '/customer/orders' },
+		{ label: '💳 Checkout', path: '/customer/checkout' },
+		{ label: '💰 Payment', path: '/customer/payment' },
+		{ label: '⚙️ Profile Settings', path: '/customer/profile' }
+	];
+
 	return (
 		<header style={styles.header}>
 			<div className="topnav-container" style={styles.container}>
 				{/* Logo & Home */}
 				<div style={styles.leftSection}>
 					<button 
+						className="topnav-logo"
 						onClick={() => navigate('/customer/dashboard')}
 						style={styles.logo}
 					>
@@ -52,7 +103,6 @@ function TopNav() {
 					className="hamburgerMenu"
 					onClick={() => setShowMobileMenu(!showMobileMenu)}
 					style={{
-						display: 'none', /* Will be overridden by media queries in CSS */
 						background: 'none',
 						border: 'none',
 						fontSize: '1.75rem',
@@ -70,31 +120,36 @@ function TopNav() {
 				</button>
 
 				{/* Desktop Navigation */}
-				<div className={`topnav-right ${showMobileMenu ? 'show' : ''}`} style={{...styles.desktopNav}}>
+				<div className={`topnav-right ${showMobileMenu ? 'show' : ''}`}>
+				<div className="centerSection" style={styles.centerSection}>
 					{/* Search Bar - Only on catalog page */}
-					<div style={styles.centerSection}>
-						<form onSubmit={handleSearch} style={styles.searchForm}>
+						<form onSubmit={handleSearch} className="searchForm" style={styles.searchForm}>
 							<input
 								type="text"
 								placeholder="Search medicines..."
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
+								className="searchInput"
 								style={styles.searchInput}
 							/>
-							<button type="submit" style={styles.searchButton}>
+							<button type="submit" className="searchButton" style={styles.searchButton}>
 								🔍
 							</button>
 						</form>
 					</div>
 
 					{/* Cart & Profile */}
-					<div style={styles.rightSection}>
+					<div className="topnav-actions" style={styles.rightSection}>
+					{/* Currency Selector */}
+					<CurrencySelector />
+					
 					{/* Cart Button */}
 					<button
 						onClick={() => {
 							navigate('/customer/cart');
 							setShowMobileMenu(false);
 						}}
+						className="cartButton"
 						style={styles.cartButton}
 						title="View Cart"
 					>
@@ -105,52 +160,84 @@ function TopNav() {
 					</button>
 
 					{/* Profile Dropdown */}
-					<div style={styles.profileContainer}>
+					<div className="topnav-profile-container" style={styles.profileContainer}>
 						<button
-							onClick={() => setShowProfileMenu(!showProfileMenu)}
+							ref={profileButtonRef}
+							data-profile-button
+							onClick={() => {
+								setShowProfileMenu(!showProfileMenu);
+							}}
+							className="profileButton"
 							style={styles.profileButton}
-							title="Profile Menu"
+							title="Click to open menu"
+							aria-expanded={showProfileMenu}
+							aria-haspopup="menu"
 						>
-							👤
+							{user?.customer?.fullName ? (
+								<>
+								<Avatar
+									src={user?.customer?.profileImage}
+									name={user?.customer?.fullName}
+									size={36}
+								/>
+									<span style={styles.profileChevron}>▾</span>
+								</>
+							) : (
+								<>
+									<span style={{ fontSize: '20px' }}>👤</span>
+									<span style={styles.profileChevron}>▾</span>
+								</>
+							)}
 						</button>
 
 						{showProfileMenu && (
-							<div style={styles.profileMenu}>
-								<div style={styles.profileMenuHeader}>
-									<p style={styles.profileName}>{user?.customer?.fullName || user?.email}</p>
-									<p style={styles.profileEmail}>{user?.email}</p>
-									{user?.customer?.buyerType && (
-										<span style={styles.buyerTypeBadge}>
-											{user.customer.buyerType}
-										</span>
-									)}
-								</div>
-								<hr style={styles.menuDivider} />
-								<button
-									onClick={() => handleNavigate('/customer/dashboard')}
-									style={styles.menuItem}
-								>
-									📊 Dashboard
-								</button>
-								<button
-									onClick={() => handleNavigate('/customer/profile')}
-									style={styles.menuItem}
-								>
-									⚙️ Profile Settings
-								</button>
-								<button
-									onClick={() => handleNavigate('/customer/orders')}
-									style={styles.menuItem}
-								>
-									📦 My Orders
-								</button>
-								<hr style={styles.menuDivider} />
-								<button
-									onClick={handleLogout}
-									style={{ ...styles.menuItem, ...styles.logoutButton }}
-								>
-									🚪 Logout
-								</button>
+							<div ref={profileMenuRef} className="topnav-profile-menu" data-profile-menu style={styles.profileMenu}>
+								{user ? (
+									<>
+										<div className="topnav-profile-menu-header" style={styles.profileMenuHeader}>
+											<Avatar
+												src={user?.customer?.profileImage}
+												name={user?.customer?.fullName}
+												size={44}
+											/>
+											<div>
+												<p style={styles.profileName}>{user?.customer?.fullName || 'User'}</p>
+												<p style={styles.profileEmail}>{user?.email}</p>
+												{user?.customer?.buyerType && (
+													<span style={styles.buyerTypeBadge}>
+														{user.customer.buyerType}
+													</span>
+												)}
+											</div>
+										</div>
+										<div style={styles.menuDivider} />
+										
+										{quickLinks.map((link) => (
+											<button
+												key={link.path}
+												className="topnav-profile-menu-item"
+												style={styles.menuItem}
+												onClick={() => handleNavigate(link.path)}
+											>
+												{link.label}
+											</button>
+										))}
+										
+										<div style={{...styles.menuDivider, marginTop: '0.5rem', marginBottom: '0.5rem'}} />
+										
+										<button
+											className="topnav-profile-menu-item topnav-profile-menu-logout"
+											style={{...styles.menuItem, ...styles.logoutButton}}
+											onClick={handleLogout}
+										>
+											🚪 Logout
+										</button>
+									</>
+								) : (
+									<div style={{ padding: '1rem', textAlign: 'center' }}>
+										Loading...
+									</div>
+								)}
 							</div>
 						)}
 					</div>
@@ -158,19 +245,6 @@ function TopNav() {
 				</div> {/* Close topnav-right */}
 			</div>
 
-			{/* Click outside to close menus */}
-			{showProfileMenu && (
-				<div
-					style={styles.backdrop}
-					onClick={() => setShowProfileMenu(false)}
-				/>
-			)}
-			{showMobileMenu && (
-				<div
-					style={styles.backdrop}
-					onClick={() => setShowMobileMenu(false)}
-				/>
-			)}
 		</header>
 	);
 }
@@ -183,7 +257,9 @@ const styles = {
 		position: 'sticky',
 		top: 0,
 		zIndex: 100,
-		boxShadow: 'var(--shadow-sm)'
+		boxShadow: 'var(--shadow-sm)',
+		overflow: 'visible',
+		contain: 'none'
 	},
 	container: {
 		maxWidth: '1200px',
@@ -192,7 +268,9 @@ const styles = {
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
-		gap: '2rem'
+		gap: '2rem',
+		overflow: 'visible',
+		contain: 'none'
 	},
 	leftSection: {
 		flex: '0 0 auto'
@@ -216,8 +294,8 @@ const styles = {
 	},
 	centerSection: {
 		flex: 1,
-		minWidth: '300px',
-		maxWidth: '400px'
+		minWidth: 0,
+		maxWidth: '480px'
 	},
 	searchForm: {
 		display: 'flex',
@@ -283,31 +361,50 @@ const styles = {
 	profileContainer: {
 		position: 'relative'
 	},
+	profileMenuContent: {
+		display: 'flex',
+		alignItems: 'center',
+		gap: '1rem'
+	},
 	profileButton: {
 		background: 'none',
-		border: 'none',
-		fontSize: '1.5rem',
+		border: '1px solid var(--border)',
 		cursor: 'pointer',
-		padding: '0.5rem',
-		transition: 'transform 0.2s'
+		padding: '4px',
+		borderRadius: 'var(--radius-full)',
+		transition: 'all 0.2s',
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.4rem',
+		justifyContent: 'center',
+		minHeight: '44px',
+		minWidth: '44px',
+		boxShadow: 'none'
+	},
+	profileChevron: {
+		fontSize: '0.8rem',
+		color: 'var(--text-secondary)',
+		lineHeight: 1
 	},
 	profileMenu: {
 		position: 'absolute',
-		top: '100%',
+		top: 'calc(100% + 0.5rem)',
 		right: 0,
-		marginTop: '0.5rem',
 		backgroundColor: 'white',
 		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		boxShadow: 'var(--shadow-lg)',
-		minWidth: '250px',
-		zIndex: 1000
+		borderRadius: '8px',
+		boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+		minWidth: '320px',
+		maxWidth: 'min(360px, calc(100vw - 1rem))',
+		zIndex: 10000,
+		overflow: 'visible'
 	},
 	profileMenuHeader: {
 		padding: '1rem',
 		backgroundColor: 'var(--primary-light)',
-		borderTopLeftRadius: 'var(--radius)',
-		borderTopRightRadius: 'var(--radius)'
+		display: 'flex',
+		alignItems: 'center',
+		gap: '1rem'
 	},
 	profileName: {
 		margin: '0',
@@ -332,23 +429,26 @@ const styles = {
 	menuDivider: {
 		border: 'none',
 		borderTop: '1px solid var(--border)',
-		margin: '0'
+		margin: 0,
+		padding: 0,
+		height: '1px'
 	},
 	menuItem: {
 		width: '100%',
-		padding: '0.75rem 1rem',
+		padding: '0.85rem 1rem',
 		background: 'none',
 		border: 'none',
 		textAlign: 'left',
 		cursor: 'pointer',
-		fontSize: '0.9rem',
+		fontSize: '0.95rem',
 		color: 'var(--text-primary)',
-		transition: 'background-color 0.2s'
+		transition: 'background-color 0.15s',
+		fontWeight: '500'
 	},
 	logoutButton: {
 		color: 'var(--error)',
-		borderBottomLeftRadius: 'var(--radius)',
-		borderBottomRightRadius: 'var(--radius)'
+		background: 'none',
+		borderColor: 'transparent'
 	},
 	backdrop: {
 		position: 'fixed',
@@ -356,7 +456,7 @@ const styles = {
 		left: 0,
 		right: 0,
 		bottom: 0,
-		zIndex: 999
+		zIndex: 9999
 	}
 };
 

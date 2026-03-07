@@ -6,6 +6,7 @@ import './App.css';
 import { CartProvider } from '../context/CartContext';
 import { UserProvider } from '../context/UserContext';
 import { NotificationProvider } from '../context/NotificationContext';
+import { CurrencyProvider } from '../context/CurrencyContext';
 
 // Layout components
 import AppShell from '../components/layout/AppShell';
@@ -50,9 +51,10 @@ function App() {
     return (
         <NotificationProvider>
             <UserProvider>
-                <CartProvider>
-                    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                        <Routes>
+                <CurrencyProvider>
+                    <CartProvider>
+                        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                            <Routes>
                     {/* Public routes */}
                     <Route path="/" element={<Landing />} />
                     <Route path="/login" element={<Login />} />
@@ -169,6 +171,7 @@ function App() {
                         </Routes>
                     </Router>
                 </CartProvider>
+            </CurrencyProvider>
             </UserProvider>
         </NotificationProvider>
     );
