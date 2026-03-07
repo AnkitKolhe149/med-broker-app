@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Avatar from '../../components/common/Avatar';
+import { useUser } from '../../context/UserContext';
+import styles from './OrderConfirmation.module.css';
 
 function OrderConfirmation() {
 	const { orderId } = useParams();
 	const navigate = useNavigate();
+	const { user } = useUser();
 	const [orderData, setOrderData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
@@ -113,7 +117,7 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 		return (
 			<main className="page">
 				<div className="container">
-					<div style={styles.emptyState}>
+					<div className={styles.emptyState}>
 						<p>Order not found.</p>
 					</div>
 				</div>
@@ -124,36 +128,49 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 	return (
 		<main className="page">
 			<div className="container">
-				<div style={styles.successContainer}>
-					<div style={styles.successIcon}>✓</div>
-					<h1 style={styles.successTitle}>Order Confirmed!</h1>
-					<p style={styles.successSubtitle}>Your order has been placed successfully</p>
+				<div className={styles.successContainer}>
+					<div className={styles.successIcon}>✓</div>
+					<h1 className={styles.successTitle}>Order Confirmed!</h1>
+					<p className={styles.successSubtitle}>Your order has been placed successfully</p>
+
+					{/* User Info Section */}
+					<section className="section" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', justifyContent: 'center' }}>
+						<Avatar 
+							src={user?.customer?.profileImage}
+							name={user?.customer?.fullName}
+							size={50}
+						/>
+						<div style={{ textAlign: 'left' }}>
+							<p style={{ fontWeight: 500 }}>{user?.customer?.fullName || user?.email}</p>
+							<p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{user?.email}</p>
+						</div>
+					</section>
 
 					{/* Order ID Card */}
 					<section className="section" style={{ marginBottom: '2rem', textAlign: 'center' }}>
-						<p style={styles.orderIdLabel}>Order ID</p>
-						<p style={styles.orderIdValue}>{orderData.orderId}</p>
-						<p style={styles.orderIdHint}>
+						<p className={styles.orderIdLabel}>Order ID</p>
+						<p className={styles.orderIdValue}>{orderData.orderId}</p>
+						<p className={styles.orderIdHint}>
 							Save this ID for tracking and customer service inquiries
 						</p>
 					</section>
 
 					{/* Main Content Grid */}
-					<div style={styles.mainContent}>
+					<div className={styles.mainContent}>
 						{/* Left: Order Details */}
-						<div style={styles.detailsSection}>
+						<div className={styles.detailsSection}>
 							{/* Items */}
 						<section className="section">
-								<h2 style={styles.cardTitle}>Items Ordered</h2>
+								<h2 className={styles.cardTitle}>Items Ordered</h2>
 								{orderData.cartItems.map((item, index) => (
-									<div key={index} style={styles.itemDetail}>
-										<div style={styles.itemMeta}>
-											<p style={styles.itemName}>{item.name}</p>
-											<p style={styles.itemVendor}>Vendor: {item.vendor}</p>
+									<div key={index} className={styles.itemDetail}>
+										<div className={styles.itemMeta}>
+											<p className={styles.itemName}>{item.name}</p>
+											<p className={styles.itemVendor}>Vendor: {item.vendor}</p>
 										</div>
-										<div style={styles.itemAmount}>
-											<p style={styles.qty}>Qty: {item.quantity}</p>
-											<p style={styles.amount}>₹{(item.basePrice * item.quantity).toFixed(2)}</p>
+										<div className={styles.itemAmount}>
+											<p className={styles.qty}>Qty: {item.quantity}</p>
+											<p className={styles.amount}>₹{(item.basePrice * item.quantity).toFixed(2)}</p>
 										</div>
 									</div>
 								))}
@@ -161,19 +178,19 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 
 							{/* Delivery Addresss */}
 							<section className="section">
-								<h2 style={styles.cardTitle}>Delivery Address</h2>
-								<div style={styles.addressBox}>
-									<p style={styles.name}>{orderData.deliveryAddress.fullName}</p>
-									<p style={styles.address}>{orderData.deliveryAddress.address}</p>
-									<p style={styles.address}>{orderData.deliveryAddress.city}, {orderData.deliveryAddress.state} {orderData.deliveryAddress.zipCode}</p>
-									<p style={styles.address}>{orderData.deliveryAddress.country}</p>
-									<p style={styles.phone}>📱 {orderData.deliveryAddress.phone}</p>
-									<p style={styles.email}>📧 {orderData.deliveryAddress.email}</p>
+								<h2 className={styles.cardTitle}>Delivery Address</h2>
+								<div className={styles.addressBox}>
+									<p className={styles.name}>{orderData.deliveryAddress.fullName}</p>
+									<p className={styles.address}>{orderData.deliveryAddress.address}</p>
+									<p className={styles.address}>{orderData.deliveryAddress.city}, {orderData.deliveryAddress.state} {orderData.deliveryAddress.zipCode}</p>
+									<p className={styles.address}>{orderData.deliveryAddress.country}</p>
+									<p className={styles.phone}>📱 {orderData.deliveryAddress.phone}</p>
+									<p className={styles.email}>📧 {orderData.deliveryAddress.email}</p>
 								</div>
 
 								{orderData.deliveryType === 'home_delivery' && (
-									<div style={styles.infoBox}>
-										<p style={styles.infoText}>
+									<div className={styles.infoBox}>
+										<p className={styles.infoText}>
 											📍 <strong>Estimated Delivery:</strong> Within 2-3 business days
 										</p>
 									</div>
@@ -183,103 +200,106 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 							{/* Special Instructions */}
 							{orderData.orderNotes && (
 								<section className="section">
-									<h2 style={styles.cardTitle}>Special Instructions</h2>
-									<p style={styles.notes}>{orderData.orderNotes}</p>
+									<h2 className={styles.cardTitle}>Special Instructions</h2>
+									<p className={styles.notes}>{orderData.orderNotes}</p>
 								</section>
 							)}
 
 							{/* Actions */}
-							<div style={styles.actionButtons}>
+							<div className={styles.actionButtons}>
 								<button 
 									onClick={handleDownloadInvoice}
-									style={{...styles.button, backgroundColor: 'var(--primary)'}}
+									className={styles.button}
+									style={{ backgroundColor: 'var(--primary)' }}
 								>
 									📥 Download Invoice
 								</button>
 								<button 
 									onClick={() => navigate('/customer/orders')}
-									style={{...styles.button, backgroundColor: 'var(--secondary)'}}
+									className={styles.button}
+									style={{ backgroundColor: 'var(--secondary)' }}
 								>
 									📦 Track Orders
 								</button>
 								<button 
 									onClick={() => navigate('/customer/catalog')}
-									style={{...styles.button, backgroundColor: 'var(--text-secondary)'}}
+									className={styles.button}
+									style={{ backgroundColor: 'var(--text-secondary)' }}
 								>
 									🛒 Continue Shopping
 								</button>
 							</div>
 
 							{invoiceDownloaded && (
-								<div style={styles.successMessage}>
+								<div className={styles.successMessage}>
 									✓ Invoice downloaded successfully
 								</div>
 							)}
 						</div>
 
 						{/* Right: Summary */}
-						<div style={styles.summarySection}>
-							<div style={styles.summaryCard}>
-								<h2 style={styles.summaryTitle}>Order Summary</h2>
+						<div className={styles.summarySection}>
+							<div className={styles.summaryCard}>
+								<h2 className={styles.summaryTitle}>Order Summary</h2>
 
-								<div style={styles.summaryContent}>
-									<div style={styles.summaryRow}>
+								<div className={styles.summaryContent}>
+									<div className={styles.summaryRow}>
 										<span>Subtotal</span>
 										<span>₹{orderData.subtotal.toFixed(2)}</span>
 									</div>
 									{orderData.discountPercent > 0 && (
-										<div style={{ ...styles.summaryRow, color: 'var(--success)' }}>
+										<div className={styles.summaryRow} style={{ color: 'var(--success)' }}>
 											<span>Discount ({orderData.discountPercent}%)</span>
 											<span>−₹{(orderData.subtotal * orderData.discountPercent / 100).toFixed(2)}</span>
 										</div>
 									)}
-									<div style={styles.summaryRow}>
+									<div className={styles.summaryRow}>
 										<span>Delivery Charge</span>
 										<span>{orderData.subtotal > 500 ? 'Free' : '₹50'}</span>
 									</div>
-									<div style={styles.summaryRow}>
+									<div className={styles.summaryRow}>
 										<span>Tax (5% GST)</span>
 										<span>₹{calculateTax().toFixed(2)}</span>
 									</div>
-									<div style={styles.summaryTotal}>
+									<div className={styles.summaryTotal}>
 										<span>Total Paid</span>
 										<span>₹{orderData.total.toFixed(2)}</span>
 									</div>
 								</div>
 
-								<hr style={styles.divider} />
+								<hr className={styles.divider} />
 
-								<div style={styles.paymentInfo}>
-									<p style={styles.infoLabel}>Payment Method</p>
-									<p style={styles.infoValue}>{orderData.paymentMethod.toUpperCase()}</p>
-									<p style={{ ...styles.infoLabel, marginTop: '1rem' }}>Status</p>
-									<p style={{ ...styles.infoValue, color: 'var(--success)' }}>✓ CONFIRMED</p>
+								<div className={styles.paymentInfo}>
+									<p className={styles.infoLabel}>Payment Method</p>
+									<p className={styles.infoValue}>{orderData.paymentMethod.toUpperCase()}</p>
+									<p className={styles.infoLabel} style={{ marginTop: '1rem' }}>Status</p>
+									<p className={styles.infoValue} style={{ color: 'var(--success)' }}>✓ CONFIRMED</p>
 								</div>
 
-								<div style={styles.trackingCard}>
-									<p style={styles.trackingLabel}>📍 Track Your Order</p>
-									<a href={`#/customer/orders`} style={styles.trackingLink}>
+								<div className={styles.trackingCard}>
+									<p className={styles.trackingLabel}>📍 Track Your Order</p>
+									<a href={`#/customer/orders`} className={styles.trackingLink}>
 										View tracking details →
 									</a>
 								</div>
 
-								<div style={styles.supportBox}>
-									<p style={styles.supportTitle}>Need Help?</p>
-									<a href="mailto:support@medbroker.com" style={styles.supportLink}>
+								<div className={styles.supportBox}>
+									<p className={styles.supportTitle}>Need Help?</p>
+									<a href="mailto:support@medbroker.com" className={styles.supportLink}>
 										📧 support@medbroker.com
 									</a>
-									<p style={styles.supportPhone}>📱 +91-1234-567-890</p>
+									<p className={styles.supportPhone}>📱 +91-1234-567-890</p>
 								</div>
 							</div>
 						</div>
 					</div>
 
 					{/* Footer Message */}
-					<div style={styles.confirmationFooter}>
+					<div className={styles.confirmationFooter}>
 						<p>
 							We've sent a confirmation email to <strong>{orderData.deliveryAddress.email}</strong>
 						</p>
-						<p style={styles.footerNote}>
+						<p className={styles.footerNote}>
 							Keep your Order ID ({orderData.orderId}) for reference
 						</p>
 					</div>
@@ -288,308 +308,4 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 		</main>
 	);
 }
-
-const styles = {
-	emptyState: {
-		textAlign: 'center',
-		padding: '3rem 1rem'
-	},
-	successContainer: {
-		margin: '2rem 0'
-	},
-	successIcon: {
-		fontSize: '4rem',
-		color: 'var(--success)',
-		textAlign: 'center',
-		marginBottom: '1rem'
-	},
-	successTitle: {
-		textAlign: 'center',
-		fontSize: '2rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: '0 0 0.5rem 0'
-	},
-	successSubtitle: {
-		textAlign: 'center',
-		color: 'var(--text-secondary)',
-		fontSize: '1rem',
-		marginBottom: '2rem'
-	},
-	orderIdCard: {
-		backgroundColor: 'var(--primary-light)',
-		border: '2px solid var(--primary)',
-		borderRadius: 'var(--radius-lg)',
-		padding: '1.5rem',
-		textAlign: 'center',
-		marginBottom: '2rem'
-	},
-	orderIdLabel: {
-		fontSize: '0.85rem',
-		color: 'var(--text-secondary)',
-		margin: '0 0 0.5rem 0'
-	},
-	orderIdValue: {
-		fontSize: '1.75rem',
-		fontWeight: '700',
-		color: 'var(--primary)',
-		margin: '0',
-		fontFamily: 'monospace',
-		letterSpacing: '2px'
-	},
-	orderIdHint: {
-		fontSize: '0.85rem',
-		color: 'var(--text-secondary)',
-		margin: '0.75rem 0 0 0'
-	},
-	mainContent: {
-		display: 'grid',
-		gridTemplateColumns: '2fr 1.2fr',
-		gap: '2rem',
-		marginBottom: '2rem'
-	},
-	detailsSection: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '1.5rem'
-	},
-	card: {
-		backgroundColor: 'white',
-		padding: '1.5rem',
-		borderRadius: 'var(--radius-lg)',
-		border: '1px solid var(--border)',
-		boxShadow: 'var(--shadow-sm)'
-	},
-	cardTitle: {
-		fontSize: '1rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: '0 0 1rem 0',
-		paddingBottom: '0.75rem',
-		borderBottom: '2px solid var(--primary)'
-	},
-	itemDetail: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'flex-start',
-		padding: '0.75rem 0',
-		borderBottom: '1px solid var(--border-light)'
-	},
-	itemMeta: {
-		flex: 1
-	},
-	itemName: {
-		fontSize: '0.9rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	itemVendor: {
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		margin: '0.25rem 0 0 0'
-	},
-	itemAmount: {
-		textAlign: 'right'
-	},
-	qty: {
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		margin: 0
-	},
-	amount: {
-		fontSize: '0.95rem',
-		fontWeight: '600',
-		color: 'var(--primary)',
-		margin: '0.25rem 0 0 0'
-	},
-	addressBox: {
-		padding: '1rem',
-		backgroundColor: 'var(--primary-light)',
-		borderRadius: 'var(--radius)',
-		border: '1px solid var(--green-200)'
-	},
-	name: {
-		fontSize: '1rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	address: {
-		fontSize: '0.9rem',
-		color: 'var(--text-secondary)',
-		margin: '0.5rem 0 0 0'
-	},
-	phone: {
-		fontSize: '0.9rem',
-		color: 'var(--text-primary)',
-		margin: '0.75rem 0 0 0',
-		fontWeight: '500'
-	},
-	email: {
-		fontSize: '0.9rem',
-		color: 'var(--text-primary)',
-		margin: '0.25rem 0 0 0',
-		fontWeight: '500'
-	},
-	infoBox: {
-		backgroundColor: '#FEF3C7',
-		border: '1px solid #F59E0B',
-		borderRadius: 'var(--radius)',
-		padding: '0.75rem',
-		marginTop: '1rem'
-	},
-	infoText: {
-		fontSize: '0.85rem',
-		color: '#92400E',
-		margin: 0
-	},
-	notes: {
-		fontSize: '0.9rem',
-		color: 'var(--text-secondary)',
-		margin: 0,
-		lineHeight: '1.6',
-		fontStyle: 'italic'
-	},
-	actionButtons: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '0.75rem'
-	},
-	button: {
-		padding: '0.75rem 1rem',
-		border: 'none',
-		borderRadius: 'var(--radius)',
-		color: 'white',
-		cursor: 'pointer',
-		fontWeight: '600',
-		fontSize: '0.95rem'
-	},
-	successMessage: {
-		backgroundColor: '#DCFCE7',
-		color: 'var(--success)',
-		padding: '0.75rem 1rem',
-		borderRadius: 'var(--radius)',
-		textAlign: 'center',
-		fontWeight: '600'
-	},
-	summarySection: {
-		display: 'flex',
-		flexDirection: 'column'
-	},
-	summaryCard: {
-		backgroundColor: 'white',
-		padding: '1.5rem',
-		borderRadius: 'var(--radius-lg)',
-		border: '1px solid var(--border)',
-		boxShadow: 'var(--shadow-sm)',
-		position: 'sticky',
-		top: '100px'
-	},
-	summaryTitle: {
-		fontSize: '1rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: '0 0 1rem 0',
-		paddingBottom: '0.75rem',
-		borderBottom: '2px solid var(--primary)'
-	},
-	summaryContent: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '0.75rem'
-	},
-	summaryRow: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		fontSize: '0.9rem'
-	},
-	summaryTotal: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		fontSize: '1.1rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		paddingTop: '0.75rem',
-		borderTop: '2px solid var(--primary)',
-		marginTop: '0.5rem'
-	},
-	divider: {
-		border: 'none',
-		borderTop: '1px solid var(--border)',
-		margin: '1rem 0'
-	},
-	paymentInfo: {
-		marginBottom: '1rem'
-	},
-	infoLabel: {
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		margin: 0
-	},
-	infoValue: {
-		fontSize: '0.95rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		margin: '0.25rem 0 0 0'
-	},
-	trackingCard: {
-		backgroundColor: 'var(--primary-light)',
-		padding: '1rem',
-		borderRadius: 'var(--radius)',
-		border: '1px solid var(--green-200)',
-		marginBottom: '1rem'
-	},
-	trackingLabel: {
-		fontSize: '0.9rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	trackingLink: {
-		color: 'var(--primary)',
-		textDecoration: 'none',
-		fontWeight: '500',
-		fontSize: '0.9rem'
-	},
-	supportBox: {
-		backgroundColor: '#F0F9FF',
-		padding: '1rem',
-		borderRadius: 'var(--radius)',
-		border: '1px solid #BFE3FF'
-	},
-	supportTitle: {
-		fontSize: '0.9rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	supportLink: {
-		display: 'block',
-		color: 'var(--secondary)',
-		textDecoration: 'none',
-		fontWeight: '500',
-		fontSize: '0.9rem',
-		marginTop: '0.5rem'
-	},
-	supportPhone: {
-		fontSize: '0.9rem',
-		color: 'var(--secondary)',
-		margin: '0.5rem 0 0 0',
-		fontWeight: '500'
-	},
-	confirmationFooter: {
-		backgroundColor: 'var(--primary-light)',
-		padding: '1.5rem',
-		borderRadius: 'var(--radius-lg)',
-		border: '1px solid var(--green-200)',
-		textAlign: 'center'
-	},
-	footerNote: {
-		fontSize: '0.85rem',
-		color: 'var(--text-secondary)',
-		margin: '0.5rem 0 0 0'
-	}
-};
-
 export default OrderConfirmation;

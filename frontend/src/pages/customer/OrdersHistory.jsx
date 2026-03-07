@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Avatar from '../../components/common/Avatar';
+import { useUser } from '../../context/UserContext';
+import styles from './OrdersHistory.module.css';
 
 function OrdersHistory() {
 	const navigate = useNavigate();
+	const { user } = useUser();
 	const [orders, setOrders] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState('all');
@@ -140,10 +144,10 @@ function OrdersHistory() {
 							<h1 className="section-title">My Orders</h1>
 						</div>
 					</div>
-					<div style={styles.emptyState}>
-						<div style={styles.emptyIcon}>📦</div>
-						<p style={styles.emptyTitle}>No orders yet</p>
-						<p style={styles.emptyText}>
+					<div className={styles.emptyState}>
+						<div className={styles.emptyIcon}>📦</div>
+						<p className={styles.emptyTitle}>No orders yet</p>
+						<p className={styles.emptyText}>
 							Start shopping to see your orders here
 						</p>
 						<button className="button" onClick={() => navigate('/customer/catalog')}>
@@ -161,15 +165,23 @@ function OrdersHistory() {
 				<div className="page-header">
 					<div className="title-group">
 						<h1 className="section-title">My Orders</h1>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+							<Avatar 
+								src={user?.customer?.profileImage}
+								name={user?.customer?.fullName}
+								size={30}
+							/>
+							<p className="section-subtitle">{user?.customer?.fullName || user?.email}</p>
+						</div>
 					</div>
 				</div>
 
 				{/* Filter Buttons */}
-				<div style={styles.filterContainer}>
+				<div className={styles.filterContainer}>
 					<button
 						onClick={() => setFilter('all')}
+						className={styles.filterButton}
 						style={{
-							...styles.filterButton,
 							backgroundColor: filter === 'all' ? 'var(--primary)' : 'var(--surface)',
 							color: filter === 'all' ? 'white' : 'var(--text-primary)',
 							borderColor: filter === 'all' ? 'var(--primary)' : 'var(--border)'
@@ -179,8 +191,8 @@ function OrdersHistory() {
 					</button>
 					<button
 						onClick={() => setFilter('confirmed')}
+						className={styles.filterButton}
 						style={{
-							...styles.filterButton,
 							backgroundColor: filter === 'confirmed' ? '#F59E0B' : 'var(--surface)',
 							color: filter === 'confirmed' ? 'white' : 'var(--text-primary)',
 							borderColor: filter === 'confirmed' ? '#F59E0B' : 'var(--border)'
@@ -190,8 +202,8 @@ function OrdersHistory() {
 					</button>
 					<button
 						onClick={() => setFilter('in_transit')}
+						className={styles.filterButton}
 						style={{
-							...styles.filterButton,
 							backgroundColor: filter === 'in_transit' ? 'var(--secondary)' : 'var(--surface)',
 							color: filter === 'in_transit' ? 'white' : 'var(--text-primary)',
 							borderColor: filter === 'in_transit' ? 'var(--secondary)' : 'var(--border)'
@@ -201,8 +213,8 @@ function OrdersHistory() {
 					</button>
 					<button
 						onClick={() => setFilter('delivered')}
+						className={styles.filterButton}
 						style={{
-							...styles.filterButton,
 							backgroundColor: filter === 'delivered' ? 'var(--success)' : 'var(--surface)',
 							color: filter === 'delivered' ? 'white' : 'var(--text-primary)',
 							borderColor: filter === 'delivered' ? 'var(--success)' : 'var(--border)'
@@ -212,8 +224,8 @@ function OrdersHistory() {
 					</button>
 					<button
 						onClick={() => setFilter('cancelled')}
+						className={styles.filterButton}
 						style={{
-							...styles.filterButton,
 							backgroundColor: filter === 'cancelled' ? 'var(--error)' : 'var(--surface)',
 							color: filter === 'cancelled' ? 'white' : 'var(--text-primary)',
 							borderColor: filter === 'cancelled' ? 'var(--error)' : 'var(--border)'
@@ -224,20 +236,20 @@ function OrdersHistory() {
 				</div>
 
 				{/* Orders List */}
-				<div style={styles.ordersList}>
+				<div className={styles.ordersList}>
 					{filteredOrders.map(order => (
-						<div key={order.orderId} style={styles.orderCard}>
+						<div key={order.orderId} className={styles.orderCard}>
 							{/* Header */}
-							<div style={styles.orderHeader}>
-								<div style={styles.orderInfo}>
-									<p style={styles.orderId}>{order.orderId}</p>
-									<p style={styles.orderDate}>{new Date(order.date).toLocaleDateString('en-IN')}</p>
+							<div className={styles.orderHeader}>
+								<div className={styles.orderInfo}>
+									<p className={styles.orderId}>{order.orderId}</p>
+									<p className={styles.orderDate}>{new Date(order.date).toLocaleDateString('en-IN')}</p>
 								</div>
 
-								<div style={styles.orderStatus}>
+								<div className={styles.orderStatus}>
 									<span
+										className={styles.statusBadge}
 										style={{
-											...styles.statusBadge,
 											backgroundColor: getStatusColor(order.status),
 											color: order.status === 'cancelled' ? 'white' : 'white'
 										}}
@@ -248,87 +260,87 @@ function OrdersHistory() {
 
 								<button
 									onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
-									style={styles.expandButton}
+									className={styles.expandButton}
 								>
 									{expandedOrderId === order.orderId ? '▼' : '▶'}
 								</button>
 							</div>
 
 							{/* Quick Summary */}
-							<div style={styles.orderSummary}>
+							<div className={styles.orderSummary}>
 								<div>
-									<p style={styles.itemCount}>{order.items.length} item(s)</p>
-									<p style={styles.deliveryAddress}>📍 {order.deliveryAddress}</p>
+									<p className={styles.itemCount}>{order.items.length} item(s)</p>
+									<p className={styles.deliveryAddress}>📍 {order.deliveryAddress}</p>
 								</div>
-								<div style={styles.amountSection}>
-									<p style={styles.totalLabel}>Total</p>
-									<p style={styles.totalAmount}>₹{order.total.toFixed(2)}</p>
+								<div className={styles.amountSection}>
+									<p className={styles.totalLabel}>Total</p>
+									<p className={styles.totalAmount}>₹{order.total.toFixed(2)}</p>
 								</div>
 							</div>
 
 							{/* Expanded Details */}
 							{expandedOrderId === order.orderId && (
-								<div style={styles.expandedDetails}>
-									<hr style={styles.divider} />
+								<div className={styles.expandedDetails}>
+									<hr className={styles.divider} />
 
 									{/* Items List */}
-									<div style={styles.itemsSection}>
-										<h3 style={styles.sectionTitle}>Items</h3>
+									<div className={styles.itemsSection}>
+										<h3 className={styles.sectionTitle}>Items</h3>
 										{order.items.map((item, idx) => (
-											<div key={idx} style={styles.itemRow}>
+											<div key={idx} className={styles.itemRow}>
 												<div>
-													<p style={styles.itemName}>{item.name}</p>
-													<p style={styles.itemQty}>Qty: {item.quantity}</p>
+													<p className={styles.itemName}>{item.name}</p>
+													<p className={styles.itemQty}>Qty: {item.quantity}</p>
 												</div>
-												<p style={styles.itemPrice}>₹{(item.price * item.quantity).toFixed(2)}</p>
+												<p className={styles.itemPrice}>₹{(item.price * item.quantity).toFixed(2)}</p>
 											</div>
 										))}
 									</div>
 
-									<hr style={styles.divider} />
+									<hr className={styles.divider} />
 
 									{/* Status Timeline */}
-									<div style={styles.statusSection}>
-										<h3 style={styles.sectionTitle}>Status</h3>
+									<div className={styles.statusSection}>
+										<h3 className={styles.sectionTitle}>Status</h3>
 										{order.status === 'delivered' && (
-											<p style={styles.statusText}>
+											<p className={styles.statusText}>
 												✓ Delivered on {new Date(order.deliveredOn).toLocaleDateString('en-IN')}
 											</p>
 										)}
 										{order.status === 'in_transit' && (
-											<p style={styles.statusText}>
+											<p className={styles.statusText}>
 												📦 Expected delivery by {new Date(order.expectedDelivery).toLocaleDateString('en-IN')}
 											</p>
 										)}
 										{order.status === 'confirmed' && (
-											<p style={styles.statusText}>
+											<p className={styles.statusText}>
 												⏳ Order confirmed. Expected delivery by {new Date(order.expectedDelivery).toLocaleDateString('en-IN')}
 											</p>
 										)}
 										{order.status === 'cancelled' && (
-											<p style={styles.statusText}>
+											<p className={styles.statusText}>
 												✕ Order cancelled on {new Date(order.cancelledOn).toLocaleDateString('en-IN')}
 											</p>
 										)}
 									</div>
 
-									<hr style={styles.divider} />
+									<hr className={styles.divider} />
 
 									{/* Actions */}
-									<div style={styles.actions}>
+									<div className={styles.actions}>
 										{order.status === 'delivered' && (
 											<>
-												<button style={styles.actionButton}>📥 Download Invoice</button>
-												<button style={styles.actionButton}>⭐ Rate Order</button>
+												<button className={styles.actionButton}>📥 Download Invoice</button>
+												<button className={styles.actionButton}>⭐ Rate Order</button>
 											</>
 										)}
 										{order.status === 'in_transit' && (
-											<button style={styles.actionButton}>📍 Track Shipment</button>
+											<button className={styles.actionButton}>📍 Track Shipment</button>
 										)}
 										{order.status === 'cancelled' && (
-											<button style={styles.actionButton}>💬 View Cancellation Reason</button>
+											<button className={styles.actionButton}>💬 View Cancellation Reason</button>
 										)}
-										<button style={styles.helpButton}>❓ Help & Support</button>
+										<button className={styles.helpButton}>❓ Help & Support</button>
 									</div>
 								</div>
 							)}
@@ -337,7 +349,7 @@ function OrdersHistory() {
 				</div>
 
 				{filteredOrders.length === 0 && (
-					<div style={styles.noResults}>
+					<div className={styles.noResults}>
 						<p>No {filter !== 'all' ? filter.replace('_', ' ') : ''} orders found</p>
 					</div>
 				)}
@@ -345,208 +357,5 @@ function OrdersHistory() {
 		</main>
 	);
 }
-
-const styles = {
-	filterContainer: {
-		display: 'flex',
-		gap: '0.75rem',
-		marginBottom: '1.5rem',
-		flexWrap: 'wrap'
-	},
-	filterButton: {
-		padding: '0.5rem 1rem',
-		borderRadius: 'var(--radius)',
-		border: '1px solid var(--border)',
-		cursor: 'pointer',
-		fontWeight: '500',
-		fontSize: '0.9rem',
-		transition: 'all 0.2s'
-	},
-	ordersList: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '1rem'
-	},
-	orderCard: {
-		backgroundColor: 'white',
-		borderRadius: 'var(--radius-lg)',
-		border: '1px solid var(--border)',
-		boxShadow: 'var(--shadow-sm)',
-		overflow: 'hidden'
-	},
-	orderHeader: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		padding: '1.25rem',
-		backgroundColor: 'var(--surface)',
-		borderBottom: '1px solid var(--border)',
-		cursor: 'pointer'
-	},
-	orderInfo: {
-		flex: 1
-	},
-	orderId: {
-		fontSize: '0.95rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: 0,
-		fontFamily: 'monospace',
-		letterSpacing: '0.5px'
-	},
-	orderDate: {
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		margin: '0.25rem 0 0 0'
-	},
-	orderStatus: {
-		flex: 0,
-		marginLeft: '1rem'
-	},
-	statusBadge: {
-		display: 'inline-block',
-		padding: '0.4rem 0.8rem',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.8rem',
-		fontWeight: '600',
-		whiteSpace: 'nowrap'
-	},
-	expandButton: {
-		background: 'none',
-		border: 'none',
-		cursor: 'pointer',
-		fontSize: '1rem',
-		marginLeft: '1rem',
-		color: 'var(--text-secondary)',
-		padding: '0'
-	},
-	orderSummary: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		padding: '1rem 1.25rem'
-	},
-	itemCount: {
-		fontSize: '0.9rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	deliveryAddress: {
-		fontSize: '0.85rem',
-		color: 'var(--text-secondary)',
-		margin: '0.5rem 0 0 0'
-	},
-	amountSection: {
-		textAlign: 'right'
-	},
-	totalLabel: {
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		margin: 0
-	},
-	totalAmount: {
-		fontSize: '1.2rem',
-		fontWeight: '700',
-		color: 'var(--primary)',
-		margin: '0.25rem 0 0 0'
-	},
-	expandedDetails: {
-		padding: '1.25rem',
-		backgroundColor: 'var(--background)'
-	},
-	divider: {
-		border: 'none',
-		borderTop: '1px solid var(--border)',
-		margin: '1rem 0'
-	},
-	itemsSection: {
-		marginBottom: '1rem'
-	},
-	sectionTitle: {
-		fontSize: '0.95rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		margin: '0 0 0.75rem 0'
-	},
-	itemRow: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		padding: '0.5rem 0',
-		fontSize: '0.9rem'
-	},
-	itemName: {
-		fontWeight: '500',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	itemQty: {
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		margin: '0.25rem 0 0 0'
-	},
-	itemPrice: {
-		fontWeight: '600',
-		color: 'var(--primary)',
-		margin: 0
-	},
-	statusSection: {
-		marginBottom: '1rem'
-	},
-	statusText: {
-		fontSize: '0.9rem',
-		color: 'var(--text-secondary)',
-		margin: 0,
-		lineHeight: '1.5'
-	},
-	actions: {
-		display: 'flex',
-		gap: '0.75rem',
-		flexWrap: 'wrap'
-	},
-	actionButton: {
-		padding: '0.5rem 1rem',
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		border: 'none',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.85rem',
-		fontWeight: '500',
-		cursor: 'pointer'
-	},
-	helpButton: {
-		padding: '0.5rem 1rem',
-		backgroundColor: 'var(--surface)',
-		color: 'var(--text-primary)',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.85rem',
-		fontWeight: '500',
-		cursor: 'pointer'
-	},
-	emptyState: {
-		textAlign: 'center',
-		padding: '3rem 1rem'
-	},
-	emptyIcon: {
-		fontSize: '3rem',
-		marginBottom: '1rem'
-	},
-	emptyTitle: {
-		fontSize: '1.2rem',
-		fontWeight: '600',
-		color: 'var(--text-primary)',
-		marginBottom: '0.5rem'
-	},
-	emptyText: {
-		color: 'var(--text-secondary)',
-		marginBottom: '1.5rem'
-	},
-	noResults: {
-		textAlign: 'center',
-		padding: '2rem',
-		color: 'var(--text-secondary)'
-	}
-};
 
 export default OrdersHistory;

@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useCheckoutForm } from '../../hooks/useCheckoutForm';
+import Avatar from '../../components/common/Avatar';
 import { DeliveryTypeSection } from '../../components/checkout/DeliveryTypeSection';
 import { DeliveryAddressForm } from '../../components/checkout/DeliveryAddressForm';
 import { OrderNotesSection } from '../../components/checkout/OrderNotesSection';
@@ -90,6 +91,19 @@ function Checkout() {
 					{/* Left: Delivery & Payment Form */}
 					<section className="section" style={{ padding: '2rem' }}>
 						<form onSubmit={handlePlaceOrder} className={styles.formContainer}>
+							{/* User Info Section */}
+							<div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)' }}>
+								<Avatar 
+									src={user?.customer?.profileImage}
+									name={user?.customer?.fullName}
+									size={50}
+								/>
+								<div>
+									<p style={{ fontWeight: 500 }}>{user?.customer?.fullName || user?.email}</p>
+									<p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{user?.email}</p>
+								</div>
+							</div>
+
 							<DeliveryTypeSection 
 								deliveryType={form.deliveryType}
 								setDeliveryType={form.setDeliveryType}

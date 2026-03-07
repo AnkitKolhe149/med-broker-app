@@ -1,0 +1,363 @@
+.emptyState {
+	text-align: center;
+	padding: 3rem 1rem;
+}
+
+.successContainer {
+	margin: 2rem 0;
+}
+
+.successIcon {
+	font-size: 4rem;
+	color: var(--success);
+	text-align: center;
+	margin-bottom: 1rem;
+}
+
+.successTitle {
+	text-align: center;
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0 0 0.5rem 0;
+}
+
+.successSubtitle {
+	text-align: center;
+	color: var(--text-secondary);
+	font-size: 1rem;
+	margin-bottom: 2rem;
+}
+
+.orderIdCard {
+	background-color: var(--primary-light);
+	border: 2px solid var(--primary);
+	border-radius: var(--radius-lg);
+	padding: 1.5rem;
+	text-align: center;
+	margin-bottom: 2rem;
+}
+
+.orderIdLabel {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	margin: 0 0 0.5rem 0;
+}
+
+.orderIdValue {
+	font-size: 1.75rem;
+	font-weight: 700;
+	color: var(--primary);
+	margin: 0;
+	font-family: monospace;
+	letter-spacing: 2px;
+}
+
+.orderIdHint {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	margin: 0.75rem 0 0 0;
+}
+
+.mainContent {
+	display: grid;
+	grid-template-columns: 2fr 1.2fr;
+	gap: 2rem;
+	margin-bottom: 2rem;
+}
+
+.detailsSection {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.card {
+	background-color: white;
+	padding: 1.5rem;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-sm);
+}
+
+.cardTitle {
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0 0 1rem 0;
+	padding-bottom: 0.75rem;
+	border-bottom: 2px solid var(--primary);
+}
+
+.itemDetail {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	padding: 0.75rem 0;
+	border-bottom: 1px solid var(--border-light);
+}
+
+.itemMeta {
+	flex: 1;
+}
+
+.itemName {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.itemVendor {
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+	margin: 0.25rem 0 0 0;
+}
+
+.itemAmount {
+	text-align: right;
+}
+
+.qty {
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+	margin: 0;
+}
+
+.amount {
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--primary);
+	margin: 0.25rem 0 0 0;
+}
+
+.addressBox {
+	padding: 1rem;
+	background-color: var(--primary-light);
+	border-radius: var(--radius);
+	border: 1px solid var(--green-200);
+}
+
+.name {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.address {
+	font-size: 0.9rem;
+	color: var(--text-secondary);
+	margin: 0.5rem 0 0 0;
+}
+
+.phone {
+	font-size: 0.9rem;
+	color: var(--text-primary);
+	margin: 0.75rem 0 0 0;
+	font-weight: 500;
+}
+
+.email {
+	font-size: 0.9rem;
+	color: var(--text-primary);
+	margin: 0.25rem 0 0 0;
+	font-weight: 500;
+}
+
+.infoBox {
+	background-color: #FEF3C7;
+	border: 1px solid #F59E0B;
+	border-radius: var(--radius);
+	padding: 0.75rem;
+	margin-top: 1rem;
+}
+
+.infoText {
+	font-size: 0.85rem;
+	color: #92400E;
+	margin: 0;
+}
+
+.notes {
+	font-size: 0.9rem;
+	color: var(--text-secondary);
+	margin: 0;
+	line-height: 1.6;
+	font-style: italic;
+}
+
+.actionButtons {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.button {
+	padding: 0.75rem 1rem;
+	border: none;
+	border-radius: var(--radius);
+	color: white;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 0.95rem;
+}
+
+.successMessage {
+	background-color: #DCFCE7;
+	color: var(--success);
+	padding: 0.75rem 1rem;
+	border-radius: var(--radius);
+	text-align: center;
+	font-weight: 600;
+}
+
+.summarySection {
+	display: flex;
+	flex-direction: column;
+}
+
+.summaryCard {
+	background-color: white;
+	padding: 1.5rem;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-sm);
+	position: sticky;
+	top: 100px;
+}
+
+.summaryTitle {
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0 0 1rem 0;
+	padding-bottom: 0.75rem;
+	border-bottom: 2px solid var(--primary);
+}
+
+.summaryContent {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.summaryRow {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.9rem;
+}
+
+.summaryTotal {
+	display: flex;
+	justify-content: space-between;
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	padding-top: 0.75rem;
+	border-top: 2px solid var(--primary);
+	margin-top: 0.5rem;
+}
+
+.divider {
+	border: none;
+	border-top: 1px solid var(--border);
+	margin: 1rem 0;
+}
+
+.paymentInfo {
+	margin-bottom: 1rem;
+}
+
+.infoLabel {
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+	margin: 0;
+}
+
+.infoValue {
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin: 0.25rem 0 0 0;
+}
+
+.trackingCard {
+	background-color: var(--primary-light);
+	padding: 1rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--green-200);
+	margin-bottom: 1rem;
+}
+
+.trackingLabel {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.trackingLink {
+	color: var(--primary);
+	text-decoration: none;
+	font-weight: 500;
+	font-size: 0.9rem;
+}
+
+.supportBox {
+	background-color: #F0F9FF;
+	padding: 1rem;
+	border-radius: var(--radius);
+	border: 1px solid #BFE3FF;
+}
+
+.supportTitle {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.supportLink {
+	display: block;
+	color: var(--secondary);
+	text-decoration: none;
+	font-weight: 500;
+	font-size: 0.9rem;
+	margin-top: 0.5rem;
+}
+
+.supportPhone {
+	font-size: 0.9rem;
+	color: var(--secondary);
+	margin: 0.5rem 0 0 0;
+	font-weight: 500;
+}
+
+.confirmationFooter {
+	background-color: var(--primary-light);
+	padding: 1.5rem;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--green-200);
+	text-align: center;
+}
+
+.footerNote {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	margin: 0.5rem 0 0 0;
+}
+
+@media (max-width: 768px) {
+	.mainContent {
+		grid-template-columns: 1fr;
+	}
+
+	.summaryCard {
+		position: static;
+	}
+
+	.successTitle {
+		font-size: 1.6rem;
+	}
+}

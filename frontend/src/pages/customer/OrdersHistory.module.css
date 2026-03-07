@@ -1,0 +1,309 @@
+/**
+ * Orders History Component Styles
+ * Externalized from inline styles object for better performance
+ */
+
+.filterContainer {
+	display: flex;
+	gap: 0.75rem;
+	margin-bottom: 1.5rem;
+	flex-wrap: wrap;
+}
+
+.filterButton {
+	padding: 0.5rem 1rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--border);
+	cursor: pointer;
+	font-weight: 500;
+	font-size: 0.9rem;
+	transition: all 0.2s;
+	background-color: white;
+}
+
+.filterButton:hover {
+	background-color: var(--primary-light);
+	border-color: var(--primary);
+}
+
+.ordersList {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.orderCard {
+	background-color: white;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-sm);
+	overflow: hidden;
+	transition: box-shadow 0.2s;
+}
+
+.orderCard:hover {
+	box-shadow: var(--shadow-md);
+}
+
+.orderHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1.25rem;
+	background-color: var(--surface);
+	border-bottom: 1px solid var(--border);
+	cursor: pointer;
+}
+
+.orderHeader:hover {
+	background-color: var(--primary-light);
+}
+
+.orderInfo {
+	flex: 1;
+}
+
+.orderId {
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0;
+	font-family: monospace;
+	letter-spacing: 0.5px;
+}
+
+.orderDate {
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+	margin: 0.25rem 0 0 0;
+}
+
+.orderStatus {
+	flex: 0;
+	margin-left: 1rem;
+}
+
+.statusBadge {
+	display: inline-block;
+	padding: 0.4rem 0.8rem;
+	border-radius: var(--radius);
+	font-size: 0.8rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.expandButton {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+	margin-left: 1rem;
+	color: var(--text-secondary);
+	padding: 0;
+	transition: transform 0.2s;
+}
+
+.expandButton:hover {
+	color: var(--primary);
+	transform: scale(1.2);
+}
+
+.orderSummary {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 1.25rem;
+}
+
+.itemCount {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.deliveryAddress {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	margin: 0.5rem 0 0 0;
+}
+
+.amountSection {
+	text-align: right;
+}
+
+.totalLabel {
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+	margin: 0;
+}
+
+.totalAmount {
+	font-size: 1.2rem;
+	font-weight: 700;
+	color: var(--primary);
+	margin: 0.25rem 0 0 0;
+}
+
+.expandedDetails {
+	padding: 1.25rem;
+	background-color: var(--background);
+}
+
+.divider {
+	border: none;
+	border-top: 1px solid var(--border);
+	margin: 1rem 0;
+}
+
+.itemsSection {
+	margin-bottom: 1rem;
+}
+
+.sectionTitle {
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin: 0 0 0.75rem 0;
+}
+
+.itemRow {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.5rem 0;
+	font-size: 0.9rem;
+}
+
+.itemName {
+	font-weight: 500;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.itemQty {
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+	margin: 0.25rem 0 0 0;
+}
+
+.itemPrice {
+	font-weight: 600;
+	color: var(--primary);
+	margin: 0;
+}
+
+.statusSection {
+	margin-bottom: 1rem;
+}
+
+.statusText {
+	font-size: 0.9rem;
+	color: var(--text-secondary);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.actions {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.actionButton {
+	padding: 0.5rem 1rem;
+	background-color: var(--primary);
+	color: white;
+	border: none;
+	border-radius: var(--radius);
+	font-size: 0.85rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: opacity 0.2s;
+}
+
+.actionButton:hover {
+	opacity: 0.9;
+}
+
+.helpButton {
+	padding: 0.5rem 1rem;
+	background-color: var(--surface);
+	color: var(--text-primary);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 0.85rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.helpButton:hover {
+	background-color: var(--primary-light);
+	border-color: var(--primary);
+}
+
+.emptyState {
+	text-align: center;
+	padding: 3rem 1rem;
+}
+
+.emptyIcon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.emptyTitle {
+	font-size: 1.2rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin-bottom: 0.5rem;
+}
+
+.emptyText {
+	color: var(--text-secondary);
+	margin-bottom: 1.5rem;
+}
+
+.noResults {
+	text-align: center;
+	padding: 2rem;
+	color: var(--text-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+	.orderHeader {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.75rem;
+	}
+
+	.orderStatus {
+		margin-left: 0;
+	}
+
+	.expandButton {
+		margin-left: 0;
+		align-self: flex-end;
+	}
+
+	.orderSummary {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.75rem;
+	}
+
+	.amountSection {
+		text-align: left;
+		width: 100%;
+	}
+
+	.actions {
+		flex-direction: column;
+	}
+
+	.actionButton,
+	.helpButton {
+		width: 100%;
+	}
+}

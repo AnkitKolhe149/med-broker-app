@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
+import Avatar from '../../components/common/Avatar';
 
 function CustomerDashboard() {
 	const navigate = useNavigate();
@@ -42,7 +43,17 @@ function CustomerDashboard() {
 				<section className="section">
 					<div className="section-grid">
 					<div className="card">
-						<h3>Welcome</h3>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+							<Avatar 
+								src={user?.customer?.profileImage}
+								name={user?.customer?.fullName}
+								size={60}
+							/>
+							<div>
+								<h3>Welcome</h3>
+								<p className="section-subtitle">{user?.customer?.fullName || user?.email}</p>
+						</div>
+						</div>
 						<p className="section-subtitle">Buyer Type: {user?.customer?.buyerType || 'N/A'}</p>
 						<p className="section-subtitle">Member: {user?.email}</p>
 						<button className="button" onClick={() => navigate('/customer/profile')}>Profile Settings</button>

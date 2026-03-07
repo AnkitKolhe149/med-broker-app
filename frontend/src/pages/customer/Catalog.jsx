@@ -1,8 +1,11 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useReducer } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useCurrency } from '../../context/CurrencyContext';
+import styles from './Catalog.module.css';
+import { catalogReducer, initialCatalogState, CATALOG_ACTIONS } from './catalogReducer';
 
 /**
  * Healthcare-Compliant Medicine Catalog
@@ -20,27 +23,32 @@ function Catalog() {
 	const { addToCart } = useCart();
 	const { user } = useUser();
 	const { showSuccess } = useNotification();
-	const [medicines, setMedicines] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [searching, setSearching] = useState(false);
-	const [currentPage, setCurrentPage] = useState(1);
-	const itemsPerPage = 12;
+  const { convertAndFormat, convert, getCurrencySymbol, formatOriginalPrice, currency: userCurrency } = useCurrency();
 	
-	// Search & Filter State
-	const [searchQuery, setSearchQuery] = useState('');
-	const [categoryFilter, setCategoryFilter] = useState('all');
-	const [availabilityFilter, setAvailabilityFilter] = useState('all');
-	const [prescriptionFilter, setPrescriptionFilter] = useState('all');
-	const [sortBy, setSortBy] = useState('relevance');
-	const [minPrice, setMinPrice] = useState(0);
-	const [maxPrice, setMaxPrice] = useState(500);
-	const [filterWidth, setFilterWidth] = useState(350);
-	const [isResizing, setIsResizing] = useState(false);
-	const [showMobileFilters, setShowMobileFilters] = useState(false);
+	// Consolidated state management with useReducer
+	const [state, dispatch] = useReducer(catalogReducer, initialCatalogState);
+	const {
+		searchQuery,
+		categoryFilter,
+		availabilityFilter,
+		prescriptionFilter,
+		sortBy,
+		minPrice,
+		maxPrice,
+		currentPage,
+		filterWidth,
+		isResizing,
+		showMobileFilters,
+		medicines,
+		loading,
+		searching
+	} = state;
+	
+	const itemsPerPage = 12;
 
 	useEffect(() => {
 		const fetchMedicines = async () => {
-			setLoading(true);
+			dispatch({ type: CATALOG_ACTIONS.SET_LOADING, payload: true });
 			try {
 				await new Promise(resolve => setTimeout(resolve, 800));
 				
@@ -54,7 +62,8 @@ function Catalog() {
 						dosageForm: 'Tablet',
 						retailPrice: 45.00,
 						wholesalePrice: 36.00,
-						popularity: 92,
+						currency: 'INR',
+					popularity: 92,
 						addedAt: '2024-01-12',
 						requiresPrescription: false,
 						vendor: 'PharmaCorp India',
@@ -68,12 +77,13 @@ function Catalog() {
 						composition: 'Amoxicillin Trihydrate',
 						brand: 'MediSupply',
 						dosageForm: 'Capsule',
-						retailPrice: 120.00,
-						wholesalePrice: 98.00,
-						popularity: 78,
-						addedAt: '2024-01-08',
-						requiresPrescription: true,
-						vendor: 'MediSupply Ltd',
+					retailPrice: 1.50,
+					wholesalePrice: 1.20,
+					currency: 'USD',
+					popularity: 78,
+					addedAt: '2024-01-08',
+					requiresPrescription: true,
+					vendor: 'MediSupply Ltd (USA)',
 						inStock: true,
 						stockLevel: 152
 					},
@@ -84,12 +94,13 @@ function Catalog() {
 						composition: 'Cetirizine Hydrochloride',
 						brand: 'AllerFree',
 						dosageForm: 'Tablet',
-						retailPrice: 25.00,
-						wholesalePrice: 20.00,
-						popularity: 85,
-						addedAt: '2024-01-05',
-						requiresPrescription: false,
-						vendor: 'HealthPlus Pharma',
+					retailPrice: 0.30,
+					wholesalePrice: 0.25,
+					currency: 'EUR',
+					popularity: 85,
+					addedAt: '2024-01-05',
+					requiresPrescription: false,
+					vendor: 'HealthPlus Pharma (EU)',
 						inStock: true,
 						stockLevel: 389
 					},
@@ -101,8 +112,7 @@ function Catalog() {
 						brand: 'AcidGuard',
 						dosageForm: 'Capsule',
 						retailPrice: 85.00,
-						wholesalePrice: 70.00,
-						popularity: 74,
+						wholesalePrice: 70.00,					currency: 'INR',						popularity: 74,
 						addedAt: '2024-01-02',
 						requiresPrescription: true,
 						vendor: 'PharmaCorp India',
@@ -116,8 +126,9 @@ function Catalog() {
 						composition: 'Metformin Hydrochloride',
 						brand: 'DiabeCare',
 						dosageForm: 'Tablet',
-						retailPrice: 60.00,
-						wholesalePrice: 49.00,
+					retailPrice: 0.75,
+					wholesalePrice: 0.60,
+					currency: 'GBP',
 						popularity: 88,
 						addedAt: '2023-12-29',
 						requiresPrescription: true,
@@ -134,7 +145,8 @@ function Catalog() {
 						dosageForm: 'Tablet',
 						retailPrice: 95.00,
 						wholesalePrice: 78.00,
-						popularity: 69,
+						currency: 'INR',
+					popularity: 69,
 						addedAt: '2023-12-22',
 						requiresPrescription: true,
 						vendor: 'CardioPharma',
@@ -150,7 +162,8 @@ function Catalog() {
 						dosageForm: 'Tablet',
 						retailPrice: 55.00,
 						wholesalePrice: 44.00,
-						popularity: 81,
+						currency: 'INR',
+					popularity: 81,
 						addedAt: '2023-12-18',
 						requiresPrescription: false,
 						vendor: 'PharmaCorp India',
@@ -166,7 +179,8 @@ function Catalog() {
 						dosageForm: 'Tablet',
 						retailPrice: 110.00,
 						wholesalePrice: 88.00,
-						popularity: 76,
+						currency: 'INR',
+					popularity: 76,
 						addedAt: '2023-12-10',
 						requiresPrescription: true,
 						vendor: 'HealthPlus Pharma',
@@ -182,7 +196,8 @@ function Catalog() {
 						dosageForm: 'Tablet',
 						retailPrice: 80.00,
 						wholesalePrice: 65.00,
-						popularity: 72,
+						currency: 'INR',
+					popularity: 72,
 						addedAt: '2023-12-05',
 						requiresPrescription: true,
 						vendor: 'DiabeCare Inc',
@@ -198,7 +213,8 @@ function Catalog() {
 						dosageForm: 'Tablet',
 						retailPrice: 40.00,
 						wholesalePrice: 32.00,
-						popularity: 84,
+						currency: 'INR',
+					popularity: 84,
 						addedAt: '2023-11-28',
 						requiresPrescription: false,
 						vendor: 'CardioPharma',
@@ -214,7 +230,8 @@ function Catalog() {
 						dosageForm: 'Tablet',
 						retailPrice: 35.00,
 						wholesalePrice: 28.00,
-						popularity: 70,
+						currency: 'INR',
+					popularity: 70,
 						addedAt: '2023-11-20',
 						requiresPrescription: false,
 						vendor: 'PharmaCorp India',
@@ -230,7 +247,8 @@ function Catalog() {
 						dosageForm: 'Capsule',
 						retailPrice: 75.00,
 						wholesalePrice: 60.00,
-						popularity: 79,
+						currency: 'INR',
+					popularity: 79,
 						addedAt: '2023-11-15',
 						requiresPrescription: false,
 						vendor: 'MediSupply Ltd',
@@ -239,11 +257,11 @@ function Catalog() {
 					}
 				];
 				
-				setMedicines(medicineData);
+				dispatch({ type: CATALOG_ACTIONS.SET_MEDICINES, payload: medicineData });
 			} catch (error) {
 				console.error('Failed to load medicines:', error);
 			} finally {
-				setLoading(false);
+				dispatch({ type: CATALOG_ACTIONS.SET_LOADING, payload: false });
 			}
 		};
 		
@@ -252,7 +270,7 @@ function Catalog() {
 
 	useEffect(() => {
 		const query = searchParams.get('search') || '';
-		setSearchQuery(query);
+		dispatch({ type: CATALOG_ACTIONS.SET_SEARCH_QUERY, payload: query });
 	}, [searchParams]);
 
 	// Available filter options (derived from data)
@@ -332,10 +350,12 @@ function Catalog() {
 
 	// Helper functions
 	const buyerType = user?.customer?.buyerType || 'RETAIL';
-	const getDisplayPrice = (medicine) => (
-		buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice
-	);
+	const getDisplayPrice = (medicine) => {
 
+		const vendorPrice = buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice;
+		const vendorCurrency = medicine.currency || 'INR';
+		return convert(vendorPrice, vendorCurrency);
+	};
 	// Get pricing tier label for transparency
 	const getPricingTier = () => {
 		if (buyerType === 'WHOLESALE') return '(Wholesale)';
@@ -364,39 +384,27 @@ function Catalog() {
 
 	const handleSearchChange = (e) => {
 		const query = e.target.value;
-		setSearchQuery(query);
-		setCurrentPage(1); // Reset pagination on search
+		dispatch({ type: CATALOG_ACTIONS.SET_SEARCH_QUERY, payload: query });
 	};
 
 	const handleSearchSubmit = (e) => {
 		e.preventDefault();
-		setSearching(false);
-		setCurrentPage(1);
-	};
-
-	const handleFilterChange = () => {
-		setCurrentPage(1); // Reset pagination when filters change
+		dispatch({ type: CATALOG_ACTIONS.SET_SEARCHING, payload: false });
+		dispatch({ type: CATALOG_ACTIONS.SET_CURRENT_PAGE, payload: 1 });
 	};
 
 	const handleSortChange = (newSort) => {
-		setSortBy(newSort);
-		setCurrentPage(1);
+		dispatch({ type: CATALOG_ACTIONS.SET_SORT_BY, payload: newSort });
+		dispatch({ type: CATALOG_ACTIONS.SET_CURRENT_PAGE, payload: 1 });
 	};
 
 	const handleClearAllFilters = () => {
-		setSearchQuery('');
-		setCategoryFilter('all');
-		setAvailabilityFilter('all');
-		setPrescriptionFilter('all');
-		setSortBy('relevance');
-		setMinPrice(0);
-		setMaxPrice(500);
-		setCurrentPage(1);
+		dispatch({ type: CATALOG_ACTIONS.RESET_FILTERS });
 	};
 
 	const handleMouseDown = (e) => {
 		e.preventDefault();
-		setIsResizing(true);
+		dispatch({ type: CATALOG_ACTIONS.SET_IS_RESIZING, payload: true });
 	};
 
 	useEffect(() => {
@@ -404,12 +412,12 @@ function Catalog() {
 			if (!isResizing) return;
 			const newWidth = e.clientX - 100; // Offset for padding
 			if (newWidth >= 200 && newWidth <= 500) {
-				setFilterWidth(newWidth);
+				dispatch({ type: CATALOG_ACTIONS.SET_FILTER_WIDTH, payload: newWidth });
 			}
 		};
 
 		const handleMouseUp = () => {
-			setIsResizing(false);
+			dispatch({ type: CATALOG_ACTIONS.SET_IS_RESIZING, payload: false });
 		};
 
 		if (isResizing) {
@@ -427,7 +435,7 @@ function Catalog() {
 	}, [isResizing]);
 
 	const handlePageChange = (newPage) => {
-		setCurrentPage(newPage);
+		dispatch({ type: CATALOG_ACTIONS.SET_CURRENT_PAGE, payload: newPage });
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
@@ -436,10 +444,10 @@ function Catalog() {
 		return (
 			<main className="page">
 				<div className="container">
-					<div style={styles.loadingContainer}>
-						<div style={styles.skeleton} />
-						<div style={styles.skeleton} />
-						<div style={styles.skeletonSmall} />
+					<div className={styles.loadingContainer}>
+						<div className={styles.skeleton} />
+						<div className={styles.skeleton} />
+						<div className={styles.skeletonSmall} />
 					</div>
 				</div>
 			</main>
@@ -458,20 +466,20 @@ function Catalog() {
 				</div>
 
 				{/* SEARCH BAR - TOP OF PAGE */}
-				<div style={styles.topSearchContainer}>
-					<form onSubmit={handleSearchSubmit} style={styles.topSearchForm}>
+				<div className={styles.topSearchContainer}>
+					<form onSubmit={handleSearchSubmit} className={styles.topSearchForm}>
 						<div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-							<span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>🔍</span>
+							<span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>ðŸ”</span>
 							<input
 								type="text"
 								placeholder="Search by medicine name, brand, salt composition, category..."
 								value={searchQuery}
 								onChange={handleSearchChange}
-								style={styles.topSearchInput}
+								className={styles.topSearchInput}
 								aria-label="Search medicines"
 							/>
 						</div>
-						<button type="submit" style={styles.topSearchButton}>
+						<button type="submit" className={styles.topSearchButton}>
 							Search
 						</button>
 					</form>
@@ -479,11 +487,11 @@ function Catalog() {
 					{/* Mobile Filter Toggle Button */}
 					<button 
 						className="mobileFilterToggle"
-						onClick={() => setShowMobileFilters(!showMobileFilters)}
+						onClick={() => dispatch({ type: CATALOG_ACTIONS.SET_SHOW_MOBILE_FILTERS, payload: !showMobileFilters })}
 						style={{
 							display: 'none',
 							padding: '0.75rem 1.5rem',
-							background: 'var(--primary-color)',
+							background: 'var(--primary)',
 							color: 'white',
 							border: 'none',
 							borderRadius: '8px',
@@ -494,25 +502,27 @@ function Catalog() {
 							width: '100%'
 						}}
 					>
-						{showMobileFilters ? '✕ Close Filters' : '🔽 Show Filters'}
+						{showMobileFilters ? 'âœ• Close Filters' : 'ðŸ”½ Show Filters'}
 					</button>
 				</div>
 
 				{/* TWO-COLUMN LAYOUT: FILTERS (LEFT) + MEDICINES (RIGHT) */}
-				<div className="layoutContainer" style={{
-					...styles.layoutContainer,
-					gridTemplateColumns: `${filterWidth}px 1fr`
-				}}>
+				<div
+					className={styles.layoutContainer}
+					style={{ '--filter-width': `${filterWidth}px` }}
+				>
 					
-					{/* ===== LEFT SIDEBAR: FILTERS (ALWAYS VISIBLE) ===== */}
-					<aside className="filterSidebar" style={{
-						...styles.filterSidebar,
-						width: `${filterWidth}px`
-					}}>
+					{/* ===== LEFT SIDEBAR: FILTERS (DRAWER ON MOBILE) ===== */}
+					<aside 
+						className={styles.filterSidebar}
+						style={{
+							left: showMobileFilters ? '0' : undefined
+						}}
+					>
 						{/* Mobile close button */}
 						<button 
 							className="mobileFilterClose"
-							onClick={() => setShowMobileFilters(false)}
+						onClick={() => dispatch({ type: CATALOG_ACTIONS.SET_SHOW_MOBILE_FILTERS, payload: false })}
 							style={{
 								display: 'none',
 								position: 'sticky',
@@ -521,7 +531,7 @@ function Catalog() {
 								marginLeft: 'auto',
 								marginBottom: '1rem',
 								padding: '0.5rem 1rem',
-								background: 'var(--primary-color)',
+								background: 'var(--primary)',
 								color: 'white',
 								border: 'none',
 								borderRadius: '8px',
@@ -531,18 +541,18 @@ function Catalog() {
 								zIndex: 10
 							}}
 						>
-							✕ Close
+							âœ• Close
 						</button>
 						
-						<section className="section" style={styles.filterContent}>
+						<section className={styles.filterContent}>
 
 							{/* FILTERS HEADER */}
-							<div style={styles.filtersHeader}>
-								<h3 style={styles.filtersSectionTitle}>Refine Your Search</h3>
+							<div className={styles.filtersHeader}>
+								<h3 className={styles.filtersSectionTitle}>Refine Your Search</h3>
 								{(categoryFilter !== 'all' || availabilityFilter !== 'all' || prescriptionFilter !== 'all' || minPrice !== 0 || maxPrice !== 500 || sortBy !== 'relevance') && (
 									<button
 										onClick={handleClearAllFilters}
-										style={styles.clearFiltersButton}
+										className={styles.clearFiltersButton}
 										aria-label="Clear all filters"
 									>
 										Clear All
@@ -551,15 +561,14 @@ function Catalog() {
 							</div>
 
 							{/* CATEGORY FILTER */}
-							<div style={styles.filterGroup}>
-								<label style={styles.filterGroupLabel}>Category</label>
+							<div className={styles.filterGroup}>
+								<label className={styles.filterGroupLabel}>Category</label>
 								<select
 									value={categoryFilter}
 									onChange={(e) => {
-										setCategoryFilter(e.target.value);
-										handleFilterChange();
+									dispatch({ type: CATALOG_ACTIONS.SET_CATEGORY_FILTER, payload: e.target.value });
 									}}
-									style={styles.filterSelect}
+								className={styles.filterSelect}
 									aria-label="Filter by medicine category"
 								>
 									{categories.map(cat => (
@@ -571,15 +580,15 @@ function Catalog() {
 							</div>
 
 							{/* PRICE RANGE FILTER */}
-							<div style={styles.filterGroup}>
-								<label style={styles.filterGroupLabel}>Price Range (₹)</label>
-								<div style={styles.priceDisplay}>
-									<span style={styles.filterPriceValue}>₹{minPrice}</span>
-									<span style={styles.priceSeparator}>—</span>
-									<span style={styles.filterPriceValue}>₹{maxPrice}</span>
-								</div>
-								<div style={styles.sliderContainer}>
-									<label style={styles.sliderLabel}>Min: ₹{minPrice}</label>
+							<div className={styles.filterGroup}>
+							<label className={styles.filterGroupLabel}>Price Range ({getCurrencySymbol()})</label>
+							<div className={styles.priceDisplay}>
+								<span className={styles.filterPriceValue}>{convertAndFormat(minPrice)}</span>
+								<span className={styles.priceSeparator}>â€”</span>
+								<span className={styles.filterPriceValue}>{convertAndFormat(maxPrice)}</span>
+							</div>
+							<div className={styles.sliderContainer}>
+								<label className={styles.sliderLabel}>Min: {convertAndFormat(minPrice)}</label>
 									<input
 										type="range"
 										min="0"
@@ -589,16 +598,15 @@ function Catalog() {
 										onChange={(e) => {
 											const value = Number(e.target.value);
 											if (value <= maxPrice) {
-												setMinPrice(value);
-												handleFilterChange();
+											dispatch({ type: CATALOG_ACTIONS.SET_MIN_PRICE, payload: value });
 											}
 										}}
-										style={styles.priceSlider}
+										className={styles.priceSlider}
 										aria-label="Minimum price slider"
 									/>
 								</div>
-								<div style={styles.sliderContainer}>
-									<label style={styles.sliderLabel}>Max: ₹{maxPrice}</label>
+								<div className={styles.sliderContainer}>
+								<label className={styles.sliderLabel}>Max: {convertAndFormat(maxPrice)}</label>
 									<input
 										type="range"
 										min="0"
@@ -608,26 +616,24 @@ function Catalog() {
 										onChange={(e) => {
 											const value = Number(e.target.value);
 											if (value >= minPrice) {
-												setMaxPrice(value);
-												handleFilterChange();
+											dispatch({ type: CATALOG_ACTIONS.SET_MAX_PRICE, payload: value });
 											}
 										}}
-										style={styles.priceSlider}
+										className={styles.priceSlider}
 										aria-label="Maximum price slider"
 									/>
 								</div>
 							</div>
 
 							{/* AVAILABILITY FILTER */}
-							<div style={styles.filterGroup}>
-								<label style={styles.filterGroupLabel}>Availability</label>
+							<div className={styles.filterGroup}>
+								<label className={styles.filterGroupLabel}>Availability</label>
 								<select
 									value={availabilityFilter}
 									onChange={(e) => {
-										setAvailabilityFilter(e.target.value);
-										handleFilterChange();
+									dispatch({ type: CATALOG_ACTIONS.SET_AVAILABILITY_FILTER, payload: e.target.value });
 									}}
-									style={styles.filterSelect}
+								className={styles.filterSelect}
 									aria-label="Filter by stock availability"
 								>
 									<option value="all">All Items</option>
@@ -637,33 +643,32 @@ function Catalog() {
 							</div>
 
 							{/* PRESCRIPTION FILTER */}
-							<div style={styles.filterGroup}>
-								<label style={styles.filterGroupLabel}>Prescription Required</label>
+							<div className={styles.filterGroup}>
+								<label className={styles.filterGroupLabel}>Prescription Required</label>
 								<select
 									value={prescriptionFilter}
 									onChange={(e) => {
-										setPrescriptionFilter(e.target.value);
-										handleFilterChange();
+									dispatch({ type: CATALOG_ACTIONS.SET_PRESCRIPTION_FILTER, payload: e.target.value });
 									}}
-									style={styles.filterSelect}
+								className={styles.filterSelect}
 									aria-label="Filter by prescription requirement"
 								>
 									<option value="all">All Medicines</option>
 									<option value="not-required">No Prescription</option>
 									<option value="required">Prescription Required</option>
 								</select>
-								<p style={styles.filterHint}>
+								<p className={styles.filterHint}>
 									Prescription-required medicines will require verification during checkout
 								</p>
 							</div>
 
 							{/* SORT OPTIONS */}
-							<div style={styles.filterGroup}>
-								<label style={styles.filterGroupLabel}>Sort By</label>
+							<div className={styles.filterGroup}>
+								<label className={styles.filterGroupLabel}>Sort By</label>
 								<select
 									value={sortBy}
 									onChange={(e) => handleSortChange(e.target.value)}
-									style={styles.filterSelect}
+									className={styles.filterSelect}
 									aria-label="Sort medicines"
 								>
 									<option value="relevance">Relevance</option>
@@ -676,8 +681,8 @@ function Catalog() {
 							</div>
 
 							{/* BUYER TYPE INFO */}
-							<div style={styles.infoBox}>
-								<p style={styles.infoText}>
+							<div className={styles.infoBox}>
+								<p className={styles.infoText}>
 									<strong>Pricing:</strong> You are viewing <strong>{buyerType}</strong> pricing.
 									{buyerType === 'WHOLESALE' && ' Wholesale discounts applied automatically.'}
 								</p>
@@ -686,38 +691,38 @@ function Catalog() {
 
 						{/* RESIZE HANDLE */}
 						<div 
-							className="resizeHandle"
+							className={styles.resizeHandle}
 							onMouseDown={handleMouseDown}
 							style={{
-								...styles.resizeHandle,
 								cursor: isResizing ? 'col-resize' : 'col-resize',
 								backgroundColor: isResizing ? 'var(--primary)' : 'var(--border)'
 							}}
 							title="Drag to resize filter panel"
 						>
-							<div style={styles.resizeHandleIcon}>⋮</div>
+							<div className={styles.resizeHandleIcon}>â‹®</div>
 						</div>
 					</aside>
 
 					{/* Filter drawer backdrop - allows closing filter when tapped */}
 					<div 
-						className="filterBackdrop"
-						onClick={() => setShowMobileFilters(false)}
+						className={styles.filterBackdrop}
 						style={{
-							display: showMobileFilters ? 'block' : 'none'
+							display: showMobileFilters ? 'block' : 'none',
+							opacity: showMobileFilters ? 1 : 0
 						}}
+						onClick={() => dispatch({ type: CATALOG_ACTIONS.SET_SHOW_MOBILE_FILTERS, payload: false })}
 						aria-label="Close filter panel"
 						role="button"
 						tabIndex="0"
 						onKeyDown={(e) => {
 							if (e.key === 'Escape') {
-								setShowMobileFilters(false);
+								dispatch({ type: CATALOG_ACTIONS.SET_SHOW_MOBILE_FILTERS, payload: false });
 							}
 						}}
 					/>
 
 					{/* ===== RIGHT SECTION: MEDICINES LISTING ===== */}
-					<section style={styles.mainContent}>
+					<section className={styles.mainContent}>
 						{/* ACTIVE FILTERS DISPLAY */}
 						<div className="activeFiltersBadges" style={{
 							display: (categoryFilter !== 'all' || availabilityFilter !== 'all' || prescriptionFilter !== 'all' || minPrice !== 0 || maxPrice !== 500) ? 'flex' : 'none'
@@ -725,25 +730,25 @@ function Catalog() {
 							{categoryFilter !== 'all' && (
 								<span className="filterBadge">
 									Category: {categoryFilter}
-									<button onClick={() => { setCategoryFilter('all'); handleFilterChange(); }}>✕</button>
+								<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_CATEGORY_FILTER, payload: 'all' }); }}>âœ•</button>
 								</span>
 							)}
 							{availabilityFilter !== 'all' && (
 								<span className="filterBadge">
 									{availabilityFilter === 'in-stock' ? 'In Stock' : 'Out of Stock'}
-									<button onClick={() => { setAvailabilityFilter('all'); handleFilterChange(); }}>✕</button>
+								<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_AVAILABILITY_FILTER, payload: 'all' }); }}>âœ•</button>
 								</span>
 							)}
 							{prescriptionFilter !== 'all' && (
 								<span className="filterBadge">
 									{prescriptionFilter === 'required' ? 'Prescription Only' : 'No Prescription'}
-									<button onClick={() => { setPrescriptionFilter('all'); handleFilterChange(); }}>✕</button>
+								<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_PRESCRIPTION_FILTER, payload: 'all' }); }}>âœ•</button>
 								</span>
 							)}
 							{(minPrice !== 0 || maxPrice !== 500) && (
 								<span className="filterBadge">
-									₹{minPrice}-₹{maxPrice}
-									<button onClick={() => { setMinPrice(0); setMaxPrice(500); handleFilterChange(); }}>✕</button>
+									â‚¹{minPrice}-â‚¹{maxPrice}
+								<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.RESET_PRICE_RANGE }); }}>âœ•</button>
 								</span>
 							)}
 							{(categoryFilter !== 'all' || availabilityFilter !== 'all' || prescriptionFilter !== 'all' || minPrice !== 0 || maxPrice !== 500) && (
@@ -757,13 +762,13 @@ function Catalog() {
 						</div>
 
 						{/* RESULTS HEADER */}
-						<div style={styles.resultsHeader}>
+						<div className={styles.resultsHeader}>
 							<div>
-								<h2 style={styles.resultsTitle}>
+								<h2 className={styles.resultsTitle}>
 									{filteredMedicines.length} {filteredMedicines.length === 1 ? 'medicine' : 'medicines'} found
 								</h2>
 								{searchQuery && (
-									<p style={styles.resultsSubtitle}>
+									<p className={styles.resultsSubtitle}>
 										Showing results for "{searchQuery}"
 									</p>
 								)}
@@ -786,36 +791,35 @@ function Catalog() {
 							</div>
 						) : paginatedMedicines.length > 0 ? (
 							<>
-								<div className="section-grid medicinesGrid" style={styles.medicinesGrid}>
+								<div className={styles.medicinesGrid}>
 									{paginatedMedicines.map(medicine => (
-										<article key={medicine.id} style={styles.medicineCard}>
-											{/* HEADER: NAME + CATEGORY */}
-											<div style={styles.cardHeader}>
-												<h3 style={styles.medicineName}>{medicine.name}</h3>
-												<span style={styles.categoryBadge}>{medicine.category}</span>
+									<article key={medicine.id} className={styles.medicineCard}>
+										{/* HEADER: NAME + CATEGORY */}
+										<div className={styles.cardHeader}>
+											<h3 className={styles.medicineName}>{medicine.name}</h3>
+											<span className={styles.categoryBadge}>{medicine.category}</span>
 											</div>
 
 											{/* COMPOSITION & DOSAGE */}
-											<div style={styles.cardMeta}>
-												<p style={styles.compositionLabel}>
+										<div className={styles.cardMeta}>
+											<p className={styles.compositionLabel}>
 													<strong>Composition:</strong> {medicine.composition}
 												</p>
-												<p style={styles.dosageLabel}>
-													<strong>Dosage Form:</strong> {medicine.dosageForm}
-												</p>
-												<p style={styles.brandLabel}>
+											<p className={styles.dosageLabel}>
+												<strong>Dosage Form:</strong> {medicine.dosageForm}
+											</p>
+											<p className={styles.brandLabel}>
 													<strong>Brand:</strong> {medicine.brand}
 												</p>
 											</div>
 
 											{/* BADGES: PRESCRIPTION, STOCK STATUS */}
-											<div style={styles.badgesRow}>
-												{medicine.requiresPrescription && (
-													<span style={styles.rxBadge}>★ Prescription</span>
+										<div className={styles.badgesRow}>
+											{medicine.requiresPrescription && (
+												<span className={styles.rxBadge}>â˜… Prescription</span>
 												)}
-												<span style={{
-													...styles.stockBadge,
-													backgroundColor: medicine.inStock ? 'var(--success-light)' : 'var(--error-light)',
+											<span className={styles.stockBadge} style={{
+													backgroundColor: medicine.inStock ? 'var(--green-100)' : 'var(--surface)',
 													color: medicine.inStock ? 'var(--success)' : 'var(--error)'
 												}}>
 													{getStockStatus(medicine)}
@@ -823,59 +827,59 @@ function Catalog() {
 											</div>
 
 											{/* PRICING */}
-											<div style={styles.pricingSection}>
-												<p style={styles.priceLabel}>Price {getPricingTier()}</p>
-												<p style={styles.priceValue}>₹{getDisplayPrice(medicine).toFixed(2)}</p>
+										<div className={styles.pricingSection}>
+											<p className={styles.priceLabel}>Price {getPricingTier()}</p>
+											<p className={styles.priceValue}>{convertAndFormat(getDisplayPrice(medicine))}</p>
 											</div>
 
 											{/* ACTIONS */}
-											<div style={styles.cardActions}>
-												<button
-													onClick={() => navigate(`/customer/medicine/${medicine.id}`)}
-													style={styles.detailsButton}
+										<div className={styles.cardActions}>
+											<button
+												onClick={() => navigate(`/customer/medicine/${medicine.id}`)}
+												className={styles.detailsButton}
 													aria-label={`View details for ${medicine.name}`}
 												>
-													📋 Details
+													ðŸ“‹ Details
 												</button>
 												<button
 													onClick={() => handleAddToCart(medicine)}
 													disabled={!medicine.inStock}
-													style={{
-														...styles.addToCartButton,
+												className={styles.addToCartButton}
+												style={{
 														opacity: medicine.inStock ? 1 : 0.5,
 														cursor: medicine.inStock ? 'pointer' : 'not-allowed'
 													}}
 													aria-label={medicine.inStock ? `Add ${medicine.name} to cart` : `${medicine.name} is out of stock`}
 												>
-													{medicine.inStock ? '🛒 Add to Cart' : 'Out of Stock'}
+													{medicine.inStock ? 'ðŸ›’ Add to Cart' : 'Out of Stock'}
 												</button>
 											</div>
 
 											{/* VENDOR INFO - SMALL TEXT */}
-											<p style={styles.vendorInfo}>Sold by {medicine.vendor}</p>
+											<p className={styles.vendorInfo}>Sold by {medicine.vendor}</p>
 										</article>
 									))}
 								</div>
 
 								{/* PAGINATION */}
 								{totalPages > 1 && (
-									<div style={styles.paginationContainer}>
+									<div className={styles.paginationContainer}>
 										<button
 											onClick={() => handlePageChange(currentPage - 1)}
 											disabled={currentPage === 1}
-											style={styles.paginationButton}
+											className={styles.paginationButton}
 											aria-label="Previous page"
 										>
-											← Previous
+											â† Previous
 										</button>
 
-										<div style={styles.pageNumbers}>
+										<div className={styles.pageNumbers}>
 											{Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
 												<button
 													key={page}
 													onClick={() => handlePageChange(page)}
+													className={styles.pageNumber}
 													style={{
-														...styles.pageNumber,
 														backgroundColor: currentPage === page ? 'var(--primary)' : 'transparent',
 														color: currentPage === page ? 'white' : 'var(--text-primary)',
 														fontWeight: currentPage === page ? '600' : '400'
@@ -891,10 +895,10 @@ function Catalog() {
 										<button
 											onClick={() => handlePageChange(currentPage + 1)}
 											disabled={currentPage === totalPages}
-											style={styles.paginationButton}
+											className={styles.paginationButton}
 											aria-label="Next page"
 										>
-											Next →
+											Next â†’
 										</button>
 									</div>
 								)}
@@ -902,7 +906,7 @@ function Catalog() {
 						) : (
 							/* EMPTY STATE */
 							<div className="emptyState">
-								<div className="emptyStateIcon">🔍</div>
+								<div className="emptyStateIcon">ðŸ”</div>
 								<h3>No medicines found</h3>
 								<p>
 									{searchQuery
@@ -921,559 +925,19 @@ function Catalog() {
 				</div>
 
 				{/* INFORMATIONAL FOOTER */}
-				<div style={styles.infoFooter}>
-					<p style={styles.infoTitle}>📋 How to Use This Catalog</p>
-					<ul style={styles.infoList}>
+				<div className={styles.infoFooter}>
+					<p className={styles.infoTitle}>ðŸ“‹ How to Use This Catalog</p>
+					<ul className={styles.infoList}>
 						<li><strong>Search:</strong> Use medicine name, brand, salt name, or dosage form</li>
 						<li><strong>Filter:</strong> Narrow by category, price, availability, or prescription status</li>
 						<li><strong>View Details:</strong> Click any medicine to see composition, vendor info, and patient guidance</li>
 						<li><strong>Pricing:</strong> Prices shown are your {buyerType} pricing and finalized at checkout</li>
-						<li><strong>Prescriptions:</strong> Medicines marked with ★ require verification before delivery</li>
+						<li><strong>Prescriptions:</strong> Medicines marked with â˜… require verification before delivery</li>
 					</ul>
 				</div>
 			</div>
 		</main>
 	);
 }
-
-const styles = {
-	// LOADING STATE
-	loadingContainer: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '1rem',
-		padding: '2rem'
-	},
-	skeleton: {
-		height: '200px',
-		backgroundColor: 'var(--surface)',
-		borderRadius: 'var(--radius)',
-		animation: 'pulse 1.5s ease-in-out infinite'
-	},
-	skeletonSmall: {
-		height: '50px',
-		backgroundColor: 'var(--surface)',
-		borderRadius: 'var(--radius)',
-		animation: 'pulse 1.5s ease-in-out infinite'
-	},
-
-	// LAYOUT
-	layoutContainer: {
-		display: 'grid',
-		gap: '1.5rem',
-		marginTop: '1.5rem',
-		width: '100%',
-		maxWidth: '100%',
-		alignItems: 'start'
-	},
-	filterSidebar: {
-		display: 'flex',
-		flexDirection: 'column',
-		backgroundColor: 'var(--surface)',
-		borderRadius: 'var(--radius-lg)',
-		border: '1px solid var(--border)',
-		userSelect: 'none',
-		overflowY: 'auto',
-		maxHeight: 'calc(100vh - 150px)',
-		paddingRight: '0.5rem',
-		boxShadow: 'var(--shadow-md)'
-	},
-	mainContent: {
-		display: 'flex',
-		flexDirection: 'column',
-		minWidth: 0,
-		width: '100%',
-		maxHeight: 'calc(100vh - 150px)',
-		overflowY: 'auto',
-		overflowX: 'hidden',
-		paddingRight: '0.5rem'
-	},
-
-	// TOP SEARCH BAR
-	topSearchContainer: {
-		marginTop: '1.5rem',
-		marginBottom: '1.5rem',
-		width: '100%'
-	},
-	topSearchForm: {
-		display: 'flex',
-		gap: '1rem',
-		maxWidth: '100%',
-		backgroundColor: 'white',
-		border: '2px solid var(--primary)',
-		borderRadius: 'var(--radius-lg)',
-		padding: '0.75rem 1rem',
-		boxShadow: 'var(--shadow-md)',
-		transition: 'all 0.2s'
-	},
-	topSearchInput: {
-		flex: 1,
-		padding: '0.5rem',
-		border: 'none',
-		fontSize: '1rem',
-		fontFamily: 'inherit',
-		outline: 'none',
-		backgroundColor: 'transparent'
-	},
-	topSearchButton: {
-		padding: '1rem 2rem',
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		border: 'none',
-		borderRadius: 'var(--radius)',
-		fontSize: '1rem',
-		fontWeight: '600',
-		cursor: 'pointer',
-		whiteSpace: 'nowrap',
-		transition: 'background-color 0.2s',
-		boxShadow: 'var(--shadow-sm)',
-		':hover': {
-			backgroundColor: 'var(--primary-dark)'
-		}
-	},
-
-	// RESIZE HANDLE
-	resizeHandle: {
-		position: 'absolute',
-		top: 0,
-		right: 0,
-		width: '10px',
-		height: '100%',
-		cursor: 'col-resize',
-		backgroundColor: 'var(--border)',
-		borderRadius: '0 var(--radius-lg) var(--radius-lg) 0',
-		transition: 'background-color 0.2s ease',
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		zIndex: 100
-	},
-	resizeHandleIcon: {
-		color: 'white',
-		fontSize: '1.2rem',
-		fontWeight: 'bold',
-		pointerEvents: 'none'
-	},
-
-	// FILTER CONTENT
-	filterContent: {
-		padding: '1.5rem 1.25rem',
-		flex: 1
-	},
-
-	// FILTERS SECTION
-	filtersHeader: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		marginBottom: '1.5rem',
-		paddingBottom: '1rem',
-		borderBottom: '2px solid var(--primary)'
-	},
-	filtersSectionTitle: {
-		fontSize: '1.05rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	clearFiltersButton: {
-		padding: '0.4rem 0.8rem',
-		backgroundColor: 'var(--error-light)',
-		color: 'var(--error)',
-		border: '1px solid var(--error)',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.8rem',
-		fontWeight: '600',
-		cursor: 'pointer',
-		transition: 'all 0.2s'
-	},
-
-	// FILTER GROUP
-	filterGroup: {
-		marginBottom: '1.5rem',
-		padding: '0.75rem 0'
-	},
-	filterGroupLabel: {
-		display: 'block',
-		fontSize: '0.85rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		marginBottom: '0.5rem'
-	},
-	filterSelect: {
-		width: '100%',
-		padding: '0.6rem 0.75rem',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.9rem',
-		backgroundColor: 'white',
-		color: 'var(--text-primary)',
-		cursor: 'pointer',
-		transition: 'border-color 0.2s'
-	},
-	filterHint: {
-		fontSize: '0.75rem',
-		color: 'var(--text-secondary)',
-		marginTop: '0.4rem',
-		fontStyle: 'italic'
-	},
-
-	// PRICE RANGE
-	priceDisplay: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		marginBottom: '0.75rem',
-		padding: '0.75rem',
-		backgroundColor: 'var(--primary-light)',
-		borderRadius: 'var(--radius)',
-		border: '1px solid var(--green-200)'
-	},
-	filterPriceValue: {
-		fontSize: '0.95rem',
-		fontWeight: '700',
-		color: 'var(--primary)'
-	},
-	priceSeparator: {
-		color: 'var(--text-secondary)',
-		fontWeight: '600'
-	},
-	sliderContainer: {
-		marginBottom: '1rem'
-	},
-	sliderLabel: {
-		display: 'block',
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		marginBottom: '0.5rem',
-		fontWeight: '600'
-	},
-	priceSlider: {
-		width: '100%',
-		height: '6px',
-		borderRadius: 'var(--radius)',
-		outline: 'none',
-		background: 'linear-gradient(to right, var(--green-200) 0%, var(--primary) 100%)',
-		'-webkit-appearance': 'none',
-		appearance: 'none',
-		cursor: 'pointer'
-	},
-
-	// INFO BOX (in sidebar)
-	infoBox: {
-		backgroundColor: 'var(--primary-light)',
-		border: '1px solid var(--green-200)',
-		borderRadius: 'var(--radius)',
-		padding: '1rem',
-		marginTop: '2rem'
-	},
-	infoText: {
-		fontSize: '0.8rem',
-		color: 'var(--text-secondary)',
-		lineHeight: '1.4',
-		margin: 0
-	},
-
-	// RESULTS SECTION
-	resultsHeader: {
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'baseline',
-		marginBottom: '1.5rem',
-		paddingBottom: '1rem',
-		borderBottom: '1px solid var(--border)'
-	},
-	resultsTitle: {
-		fontSize: '1.1rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: 0
-	},
-	resultsSubtitle: {
-		fontSize: '0.85rem',
-		color: 'var(--text-secondary)',
-		marginTop: '0.25rem'
-	},
-
-	// MEDICINES GRID
-	medicinesGrid: {
-		display: 'grid',
-		// gridTemplateColumns handled by CSS class for responsive design
-		gap: '1.5rem',
-		marginBottom: '2rem',
-		width: '100%'
-	},
-
-	// MEDICINE CARD
-	medicineCard: {
-		backgroundColor: 'white',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius-lg)',
-		padding: '1.5rem',
-		boxShadow: 'var(--shadow-sm)',
-		display: 'flex',
-		flexDirection: 'column',
-		transition: 'all 0.2s ease',
-		':hover': {
-			boxShadow: 'var(--shadow-md)',
-			borderColor: 'var(--primary)'
-		}
-	},
-	cardHeader: {
-		marginBottom: '0.75rem'
-	},
-	medicineName: {
-		fontSize: '1rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: '0 0 0.5rem 0',
-		lineHeight: '1.3'
-	},
-	categoryBadge: {
-		display: 'inline-block',
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		padding: '0.25rem 0.6rem',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.7rem',
-		fontWeight: '600',
-		textTransform: 'uppercase',
-		letterSpacing: '0.5px'
-	},
-
-	// CARD METADATA
-	cardMeta: {
-		fontSize: '0.85rem',
-		marginBottom: '1rem',
-		paddingBottom: '1rem',
-		borderBottom: '1px solid var(--border-light)'
-	},
-	compositionLabel: {
-		margin: '0 0 0.4rem 0',
-		color: 'var(--text-secondary)',
-		lineHeight: '1.4'
-	},
-	dosageLabel: {
-		margin: '0 0 0.4rem 0',
-		color: 'var(--text-secondary)',
-		lineHeight: '1.4'
-	},
-	brandLabel: {
-		margin: 0,
-		color: 'var(--text-secondary)',
-		lineHeight: '1.4'
-	},
-
-	// BADGES ROW
-	badgesRow: {
-		display: 'flex',
-		gap: '0.5rem',
-		flexWrap: 'wrap',
-		marginBottom: '1rem'
-	},
-	rxBadge: {
-		display: 'inline-block',
-		backgroundColor: '#FFE4D6',
-		color: '#D97706',
-		padding: '0.3rem 0.6rem',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.75rem',
-		fontWeight: '600',
-		whiteSpace: 'nowrap'
-	},
-	stockBadge: {
-		display: 'inline-block',
-		padding: '0.3rem 0.6rem',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.75rem',
-		fontWeight: '600',
-		whiteSpace: 'nowrap'
-	},
-
-	// PRICING SECTION
-	pricingSection: {
-		backgroundColor: 'var(--primary-light)',
-		border: '1px solid var(--green-200)',
-		borderRadius: 'var(--radius)',
-		padding: '0.75rem 1rem',
-		marginBottom: '1rem'
-	},
-	priceLabel: {
-		fontSize: '0.75rem',
-		color: 'var(--text-secondary)',
-		margin: '0 0 0.25rem 0',
-		textTransform: 'uppercase',
-		letterSpacing: '0.5px'
-	},
-	priceValue: {
-		fontSize: '1.4rem',
-		fontWeight: '700',
-		color: 'var(--primary)',
-		margin: 0
-	},
-
-	// CARD ACTIONS
-	cardActions: {
-		display: 'flex',
-		gap: '0.5rem',
-		marginBottom: '0.75rem'
-	},
-	detailsButton: {
-		flex: 1,
-		padding: '0.6rem 0.75rem',
-		backgroundColor: 'var(--surface)',
-		color: 'var(--text-primary)',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.85rem',
-		fontWeight: '600',
-		cursor: 'pointer',
-		transition: 'all 0.2s',
-		whiteSpace: 'nowrap'
-	},
-	addToCartButton: {
-		flex: 1,
-		padding: '0.6rem 0.75rem',
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		border: 'none',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.85rem',
-		fontWeight: '600',
-		cursor: 'pointer',
-		transition: 'background-color 0.2s',
-		whiteSpace: 'nowrap'
-	},
-
-	// VENDOR INFO
-	vendorInfo: {
-		fontSize: '0.75rem',
-		color: 'var(--text-secondary)',
-		margin: 0,
-		marginTop: 'auto',
-		paddingTop: '0.5rem',
-		borderTop: '1px solid var(--border-light)'
-	},
-
-	// PAGINATION
-	paginationContainer: {
-		display: 'flex',
-		justifyContent: 'center',
-		alignItems: 'center',
-		gap: '1rem',
-		marginTop: '2rem',
-		paddingTop: '2rem',
-		borderTop: '1px solid var(--border)'
-	},
-	paginationButton: {
-		padding: '0.6rem 1rem',
-		backgroundColor: 'white',
-		color: 'var(--primary)',
-		border: '1px solid var(--primary)',
-		borderRadius: 'var(--radius)',
-		fontWeight: '600',
-		cursor: 'pointer',
-		transition: 'all 0.2s',
-		whiteSpace: 'nowrap'
-	},
-	pageNumbers: {
-		display: 'flex',
-		gap: '0.25rem'
-	},
-	pageNumber: {
-		minWidth: '36px',
-		height: '36px',
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		border: '1px solid var(--border)',
-		borderRadius: 'var(--radius)',
-		cursor: 'pointer',
-		fontSize: '0.85rem',
-		transition: 'all 0.2s'
-	},
-
-	// EMPTY STATE
-	emptyState: {
-		textAlign: 'center',
-		backgroundColor: 'white',
-		border: '1px dashed var(--border)',
-		borderRadius: 'var(--radius-lg)',
-		padding: '3rem 2rem'
-	},
-	emptyIcon: {
-		fontSize: '3rem',
-		marginBottom: '1rem'
-	},
-	emptyTitle: {
-		fontSize: '1.25rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: '0 0 0.5rem 0'
-	},
-	emptyDescription: {
-		fontSize: '0.95rem',
-		color: 'var(--text-secondary)',
-		maxWidth: '400px',
-		margin: '0 auto 1.5rem'
-	},
-	resetButton: {
-		display: 'inline-block',
-		padding: '0.75rem 1.5rem',
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		border: 'none',
-		borderRadius: 'var(--radius)',
-		fontWeight: '600',
-		cursor: 'pointer',
-		marginBottom: '1rem',
-		transition: 'background-color 0.2s'
-	},
-	backLink: {
-		display: 'inline-block',
-		color: 'var(--primary)',
-		textDecoration: 'none',
-		fontSize: '0.9rem',
-		fontWeight: '500',
-		borderBottom: '1px solid var(--primary)',
-		transition: 'all 0.2s'
-	},
-
-	// INFO FOOTER
-	infoFooter: {
-		backgroundColor: 'var(--primary-light)',
-		border: '1px solid var(--green-200)',
-		borderRadius: 'var(--radius-lg)',
-		padding: '1.5rem',
-		marginTop: '3rem'
-	},
-	infoTitle: {
-		fontSize: '0.95rem',
-		fontWeight: '700',
-		color: 'var(--text-primary)',
-		margin: '0 0 1rem 0'
-	},
-	infoList: {
-		listStyle: 'none',
-		margin: 0,
-		padding: 0
-	}
-};
-
-// Add each list item style
-const listItemStyle = {
-	fontSize: '0.85rem',
-	color: 'var(--text-secondary)',
-	marginBottom: '0.5rem',
-	lineHeight: '1.4',
-	paddingLeft: '0'
-};
-
-// Apply to list items via CSS would be better, but for now:
-// Update the infoList style to support li elements
-styles.infoList = {
-	...styles.infoList,
-	'& li': listItemStyle
-};
 
 export default Catalog;
