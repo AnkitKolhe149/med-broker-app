@@ -46,6 +46,23 @@ body {
 	background-color: var(--surface);
 }
 
+.vendor-mobile-toggle {
+	display: none;
+	position: fixed;
+	top: 0.875rem;
+	left: 0.875rem;
+	z-index: 1101;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--primary);
+	color: white;
+	width: 44px;
+	height: 44px;
+	font-size: 1.2rem;
+	cursor: pointer;
+	box-shadow: var(--shadow-md);
+}
+
 /* Sidebar Styles */
 .vendor-sidebar {
 	width: 280px;
@@ -227,6 +244,12 @@ body {
 }
 
 @media (max-width: 768px) {
+	.vendor-mobile-toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
 	.vendor-sidebar {
 		position: fixed;
 		left: -280px;

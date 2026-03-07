@@ -1,0 +1,344 @@
+.container {
+	padding: 2rem;
+	background-color: var(--surface);
+	min-height: 100vh;
+}
+
+.header {
+	margin-bottom: 2rem;
+}
+
+.title {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0;
+	margin-bottom: 0.5rem;
+}
+
+.subtitle {
+	font-size: 0.95rem;
+	color: var(--text-secondary);
+	margin: 0;
+}
+
+.filterBar {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 2rem;
+	flex-wrap: wrap;
+}
+
+.filterButton {
+	padding: 0.6rem 1.2rem;
+	border: 1px solid var(--border);
+	background-color: white;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 500;
+	transition: all 0.2s;
+	font-size: 0.9rem;
+}
+
+.filterButton:hover {
+	background-color: var(--surface);
+}
+
+.filterButtonActive {
+	padding: 0.6rem 1.2rem;
+	border: none;
+	background-color: var(--primary);
+	color: white;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 500;
+	transition: all 0.2s;
+	font-size: 0.9rem;
+}
+
+.section {
+	background-color: white;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-sm);
+	margin-bottom: 2rem;
+}
+
+.sectionTitle {
+	font-size: 1.2rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	padding: 1.5rem 1.5rem 1rem 1.5rem;
+	margin: 0;
+	border-bottom: 1px solid var(--border);
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.tableHeader {
+	background-color: var(--surface);
+	font-weight: 600;
+	color: var(--text-primary);
+	padding: 1rem 1.5rem;
+	text-align: left;
+	border-bottom: 2px solid var(--border);
+	font-size: 0.9rem;
+}
+
+.tableRow {
+	border-bottom: 1px solid var(--border);
+	transition: background-color 0.2s;
+	cursor: pointer;
+}
+
+.tableRow:hover {
+	background-color: var(--primary-light);
+}
+
+.tableCell {
+	padding: 1rem 1.5rem;
+	text-align: left;
+	font-size: 0.9rem;
+}
+
+.statusBadge {
+	display: inline-block;
+	padding: 0.4rem 0.8rem;
+	border-radius: var(--radius);
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: white;
+}
+
+.modalOverlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 1000;
+	align-items: center;
+	justify-content: center;
+}
+
+.modalActive {
+	display: flex;
+}
+
+.modal {
+	background-color: white;
+	border-radius: var(--radius-lg);
+	padding: 2rem;
+	max-width: 600px;
+	width: 90%;
+	max-height: 80vh;
+	overflow: auto;
+	box-shadow: var(--shadow-lg);
+}
+
+.modalHeader {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin-bottom: 1.5rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid var(--border);
+}
+
+.modalContent {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem;
+	margin-bottom: 1.5rem;
+}
+
+.modalField {
+	grid-column: auto;
+}
+
+.modalFieldFull {
+	grid-column: 1 / -1;
+}
+
+.label {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--text-secondary);
+	margin-bottom: 0.4rem;
+	text-transform: uppercase;
+}
+
+.value {
+	font-size: 0.95rem;
+	color: var(--text-primary);
+	font-weight: 500;
+}
+
+.timeline {
+	padding: 1rem 0;
+}
+
+.timelineItem {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+	position: relative;
+}
+
+.timelineMarker {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background-color: var(--primary);
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.8rem;
+	font-weight: 700;
+	flex-shrink: 0;
+	margin-top: 0.2rem;
+}
+
+.timelineContent {
+	flex: 1;
+}
+
+.timelineTitle {
+	font-weight: 600;
+	color: var(--text-primary);
+	margin-bottom: 0.2rem;
+}
+
+.timelineDescription {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	margin-bottom: 0.2rem;
+}
+
+.button {
+	padding: 0.6rem 1.2rem;
+	background-color: var(--primary);
+	color: white;
+	border: none;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.2s;
+}
+
+.button:hover {
+	opacity: 0.9;
+}
+
+.closeButton {
+	padding: 0.4rem 0.8rem;
+	background-color: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 1.2rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.closeButton:hover {
+	background-color: white;
+}
+
+.shippingStats {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 1rem;
+	margin-bottom: 2rem;
+}
+
+.statCard {
+	background-color: white;
+	padding: 1.5rem;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	text-align: center;
+}
+
+.statNumber {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--primary);
+	margin: 0.5rem 0;
+}
+
+.statLabel {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	font-weight: 500;
+}
+
+.viewButton {
+	padding: 0.4rem 0.8rem;
+	border: 1px solid var(--primary);
+	background-color: white;
+	color: var(--primary);
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-size: 0.85rem;
+	font-weight: 500;
+}
+
+.viewButton:hover {
+	background-color: var(--primary-light);
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+	.container {
+		padding: 1.5rem;
+	}
+
+	.shippingStats {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.table {
+		display: block;
+		overflow-x: auto;
+	}
+
+	.modalContent {
+		grid-template-columns: 1fr;
+	}
+
+	.modalFieldFull {
+		grid-column: auto;
+	}
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding: 1rem;
+	}
+
+	.title {
+		font-size: 1.5rem;
+	}
+
+	.shippingStats {
+		grid-template-columns: 1fr;
+	}
+
+	.modal {
+		padding: 1.5rem;
+	}
+
+	.modalHeader {
+		font-size: 1.25rem;
+	}
+}

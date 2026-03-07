@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './Orders.module.css';
 
 function VendorOrders() {
 	const [orders, setOrders] = useState([
@@ -88,223 +89,20 @@ function VendorOrders() {
 
 	const filteredOrders = filterStatus === 'all' ? orders : orders.filter(o => o.status === filterStatus);
 
-	const styles = {
-		container: {
-			padding: '2rem',
-			backgroundColor: 'var(--surface)',
-			minHeight: '100vh'
-		},
-		header: {
-			marginBottom: '2rem'
-		},
-		title: {
-			fontSize: '2rem',
-			fontWeight: '700',
-			color: 'var(--text-primary)',
-			margin: 0,
-			marginBottom: '0.5rem'
-		},
-		subtitle: {
-			fontSize: '0.95rem',
-			color: 'var(--text-secondary)',
-			margin: 0
-		},
-		filterBar: {
-			display: 'flex',
-			gap: '0.5rem',
-			marginBottom: '2rem',
-			flexWrap: 'wrap'
-		},
-		filterButton: {
-			padding: '0.6rem 1.2rem',
-			border: '1px solid var(--border)',
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '500',
-			transition: 'all 0.2s',
-			fontSize: '0.9rem'
-		},
-		filterButtonActive: {
-			padding: '0.6rem 1.2rem',
-			border: 'none',
-			backgroundColor: 'var(--primary)',
-			color: 'white',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '500',
-			transition: 'all 0.2s',
-			fontSize: '0.9rem'
-		},
-		section: {
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius-lg)',
-			border: '1px solid var(--border)',
-			boxShadow: 'var(--shadow-sm)',
-			marginBottom: '2rem',
-			overflow: 'hidden'
-		},
-		table: {
-			width: '100%',
-			borderCollapse: 'collapse'
-		},
-		tableHeader: {
-			backgroundColor: 'var(--surface)',
-			fontWeight: '600',
-			color: 'var(--text-primary)',
-			padding: '1rem 1.5rem',
-			textAlign: 'left',
-			borderBottom: '2px solid var(--border)',
-			fontSize: '0.9rem'
-		},
-		tableRow: {
-			borderBottom: '1px solid var(--border)',
-			transition: 'background-color 0.2s',
-			cursor: 'pointer'
-		},
-		tableRowHover: {
-			backgroundColor: 'var(--primary-light)'
-		},
-		tableCell: {
-			padding: '1rem 1.5rem',
-			textAlign: 'left',
-			fontSize: '0.9rem'
-		},
-		statusBadge: {
-			display: 'inline-block',
-			padding: '0.4rem 0.8rem',
-			borderRadius: 'var(--radius)',
-			fontSize: '0.8rem',
-			fontWeight: '600',
-			color: 'white'
-		},
-		modalOverlay: {
-			display: 'none',
-			position: 'fixed',
-			top: 0,
-			left: 0,
-			right: 0,
-			bottom: 0,
-			backgroundColor: 'rgba(0,0,0,0.5)',
-			zIndex: 1000,
-			alignItems: 'center',
-			justifyContent: 'center'
-		},
-		modalActive: {
-			display: 'flex'
-		},
-		modal: {
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius-lg)',
-			padding: '2rem',
-			maxWidth: '600px',
-			width: '90%',
-			maxHeight: '80vh',
-			overflow: 'auto',
-			boxShadow: 'var(--shadow-lg)'
-		},
-		modalHeader: {
-			fontSize: '1.5rem',
-			fontWeight: '700',
-			color: 'var(--text-primary)',
-			marginBottom: '1.5rem',
-			paddingBottom: '1rem',
-			borderBottom: '1px solid var(--border)',
-			display: 'flex',
-			justifyContent: 'space-between',
-			alignItems: 'center'
-		},
-		modalGrid: {
-			display: 'grid',
-			gridTemplateColumns: '1fr 1fr',
-			gap: '1.5rem',
-			marginBottom: '1.5rem'
-		},
-		modalField: {
-			gridColumn: 'auto'
-		},
-		modalFieldFull: {
-			gridColumn: '1 / -1'
-		},
-		label: {
-			display: 'block',
-			fontSize: '0.85rem',
-			fontWeight: '600',
-			color: 'var(--text-secondary)',
-			marginBottom: '0.4rem',
-			textTransform: 'uppercase'
-		},
-		value: {
-			fontSize: '0.95rem',
-			color: 'var(--text-primary)',
-			fontWeight: '500'
-		},
-		itemsList: {
-			backgroundColor: 'var(--surface)',
-			borderRadius: 'var(--radius)',
-			padding: '1rem'
-		},
-		item: {
-			display: 'flex',
-			justifyContent: 'space-between',
-			paddingBottom: '0.8rem',
-			marginBottom: '0.8rem',
-			borderBottom: '1px solid var(--border)'
-		},
-		itemName: {
-			color: 'var(--text-primary)',
-			fontWeight: '500'
-		},
-		itemPrice: {
-			color: 'var(--primary)',
-			fontWeight: '600'
-		},
-		actionButtons: {
-			display: 'flex',
-			gap: '0.8rem',
-			marginTop: '1.5rem'
-		},
-		button: {
-			flex: 1,
-			padding: '0.8rem',
-			border: 'none',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '600',
-			transition: 'all 0.2s'
-		},
-		primaryButton: {
-			backgroundColor: 'var(--primary)',
-			color: 'white'
-		},
-		secondaryButton: {
-			backgroundColor: 'white',
-			border: '1px solid var(--border)',
-			color: 'var(--text-primary)'
-		},
-		closeButton: {
-			background: 'none',
-			border: 'none',
-			fontSize: '1.5rem',
-			cursor: 'pointer',
-			color: 'var(--text-secondary)'
-		}
-	};
-
 	return (
-		<div style={styles.container}>
+		<div className={styles.container}>
 			{/* Header */}
-			<div style={styles.header}>
-				<h1 style={styles.title}>Orders</h1>
-				<p style={styles.subtitle}>Manage and track all customer orders</p>
+			<div className={styles.header}>
+				<h1 className={styles.title}>Orders</h1>
+				<p className={styles.subtitle}>Manage and track all customer orders</p>
 			</div>
 
 			{/* Filters */}
-			<div style={styles.filterBar}>
+			<div className={styles.filterBar}>
 				{['all', 'pending', 'confirmed', 'shipped', 'delivered'].map(status => (
 					<button
 						key={status}
-						style={filterStatus === status ? styles.filterButtonActive : styles.filterButton}
+						className={filterStatus === status ? styles.filterButtonActive : styles.filterButton}
 						onClick={() => setFilterStatus(status)}
 					>
 						{getStatusLabel(status)}
@@ -313,40 +111,40 @@ function VendorOrders() {
 			</div>
 
 			{/* Orders Table */}
-			<div style={styles.section}>
-				<table style={styles.table}>
+			<div className={styles.section}>
+				<table className={styles.table}>
 					<thead>
 						<tr>
-							<th style={styles.tableHeader}>Order ID</th>
-							<th style={styles.tableHeader}>Customer</th>
-							<th style={styles.tableHeader}>Amount</th>
-							<th style={styles.tableHeader}>Status</th>
-							<th style={styles.tableHeader}>Date</th>
-							<th style={styles.tableHeader}>Action</th>
+							<th className={styles.tableHeader}>Order ID</th>
+							<th className={styles.tableHeader}>Customer</th>
+							<th className={styles.tableHeader}>Amount</th>
+							<th className={styles.tableHeader}>Status</th>
+							<th className={styles.tableHeader}>Date</th>
+							<th className={styles.tableHeader}>Action</th>
 						</tr>
 					</thead>
 					<tbody>
 						{filteredOrders.map(order => (
-							<tr key={order.id} style={styles.tableRow}>
-								<td style={styles.tableCell}>
+							<tr key={order.id} className={styles.tableRow}>
+								<td className={styles.tableCell}>
 									<strong>{order.id}</strong>
 								</td>
-								<td style={styles.tableCell}>{order.customer}</td>
-								<td style={styles.tableCell}>
+								<td className={styles.tableCell}>{order.customer}</td>
+								<td className={styles.tableCell}>
 									<strong>₹{order.amount.toLocaleString()}</strong>
 								</td>
-								<td style={styles.tableCell}>
+								<td className={styles.tableCell}>
 									<div
+										className={styles.statusBadge}
 										style={{
-											...styles.statusBadge,
 											backgroundColor: getStatusColor(order.status)
 										}}
 									>
 										{getStatusLabel(order.status)}
 									</div>
 								</td>
-								<td style={styles.tableCell}>{order.date}</td>
-								<td style={styles.tableCell}>
+								<td className={styles.tableCell}>{order.date}</td>
+								<td className={styles.tableCell}>
 									<button
 										style={{
 											padding: '0.4rem 0.8rem',
@@ -370,72 +168,69 @@ function VendorOrders() {
 			</div>
 
 			{/* Order Details Modal */}
-			<div style={selectedOrder ? { ...styles.modalOverlay, ...styles.modalActive } : styles.modalOverlay}>
+			<div className={selectedOrder ? `${styles.modalOverlay} ${styles.modalActive}` : styles.modalOverlay}>
 				{selectedOrder && (
-					<div style={styles.modal}>
-						<div style={styles.modalHeader}>
+					<div className={styles.modal}>
+						<div className={styles.modalHeader}>
 							<div>Order Details</div>
 							<button
-								style={styles.closeButton}
+								className={styles.closeButton}
 								onClick={() => setSelectedOrder(null)}
 							>
 								✕
 							</button>
 						</div>
 
-						<div style={styles.modalGrid}>
-							<div style={styles.modalField}>
-								<div style={styles.label}>Order ID</div>
-								<div style={styles.value}>{selectedOrder.id}</div>
+						<div className={styles.modalGrid}>
+							<div className={styles.modalField}>
+								<div className={styles.label}>Order ID</div>
+								<div className={styles.value}>{selectedOrder.id}</div>
 							</div>
-							<div style={styles.modalField}>
-								<div style={styles.label}>Customer</div>
-								<div style={styles.value}>{selectedOrder.customer}</div>
+							<div className={styles.modalField}>
+								<div className={styles.label}>Customer</div>
+								<div className={styles.value}>{selectedOrder.customer}</div>
 							</div>
-							<div style={styles.modalField}>
-								<div style={styles.label}>Date</div>
-								<div style={styles.value}>{selectedOrder.date} {selectedOrder.time}</div>
+							<div className={styles.modalField}>
+								<div className={styles.label}>Date</div>
+								<div className={styles.value}>{selectedOrder.date} {selectedOrder.time}</div>
 							</div>
-							<div style={styles.modalField}>
-								<div style={styles.label}>Amount</div>
-								<div style={{ ...styles.value, color: 'var(--primary)' }}>₹{selectedOrder.amount.toLocaleString()}</div>
+							<div className={styles.modalField}>
+								<div className={styles.label}>Amount</div>
+								<div className={styles.value} style={{ color: 'var(--primary)' }}>₹{selectedOrder.amount.toLocaleString()}</div>
 							</div>
-							<div style={styles.modalField}>
-								<div style={styles.label}>Status</div>
+							<div className={styles.modalField}>
+								<div className={styles.label}>Status</div>
 								<div
+									className={styles.statusBadge}
 									style={{
-										...styles.statusBadge,
-										backgroundColor: getStatusColor(selectedOrder.status),
-										display: 'inline-block'
+										backgroundColor: getStatusColor(selectedOrder.status)
 									}}
 								>
 									{getStatusLabel(selectedOrder.status)}
 								</div>
 							</div>
-							<div style={styles.modalField}>
-								<div style={styles.label}>Payment</div>
-								<div style={{
-									...styles.statusBadge,
-									backgroundColor: selectedOrder.payment === 'paid' ? 'var(--success)' : 'var(--warning)',
-									display: 'inline-block'
+							<div className={styles.modalField}>
+								<div className={styles.label}>Payment</div>
+								<div className={styles.statusBadge} style={{
+									backgroundColor: selectedOrder.payment === 'paid' ? 'var(--success)' : 'var(--warning)'
 								}}>
 									{selectedOrder.payment === 'paid' ? '✓ Paid' : '⏳ Pending'}
 								</div>
 							</div>
 						</div>
 
-						<div style={styles.modalFieldFull}>
-							<div style={styles.label}>Items</div>
-							<div style={styles.itemsList}>
-								<div style={{ ...styles.item, borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
-									<span style={styles.itemName}>{selectedOrder.items}</span>
+						<div className={styles.modalFieldFull}>
+							<div className={styles.label}>Items</div>
+							<div className={styles.itemsList}>
+								<div className={styles.item} style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
+									<span className={styles.itemName}>{selectedOrder.items}</span>
 								</div>
 							</div>
 						</div>
 
 						{selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
-							<div style={styles.modalFieldFull}>
-								<div style={styles.label}>Update Status</div>
+							<div className={styles.modalFieldFull}>
+								<div className={styles.label}>Update Status</div>
 								<select
 									style={{
 										width: '100%',
@@ -471,11 +266,11 @@ function VendorOrders() {
 							</div>
 						)}
 
-						<div style={styles.actionButtons}>
-							<button style={{ ...styles.button, ...styles.secondaryButton }}>
+						<div className={styles.actionButtons}>
+							<button className={`${styles.button} ${styles.secondaryButton}`}>
 								Print Invoice
 							</button>
-							<button style={{ ...styles.button, ...styles.secondaryButton }}>
+							<button className={`${styles.button} ${styles.secondaryButton}`}>
 								Send Message
 							</button>
 						</div>

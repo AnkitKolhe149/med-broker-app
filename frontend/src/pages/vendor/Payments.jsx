@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './Payments.module.css';
 
 function VendorPayments() {
 	const [paymentData, setPaymentData] = useState({
@@ -78,257 +79,37 @@ function VendorPayments() {
 		setWithdrawAmount('');
 	};
 
-	const styles = {
-		container: {
-			padding: '2rem',
-			backgroundColor: 'var(--surface)',
-			minHeight: '100vh'
-		},
-		header: {
-			marginBottom: '2rem'
-		},
-		title: {
-			fontSize: '2rem',
-			fontWeight: '700',
-			color: 'var(--text-primary)',
-			margin: 0,
-			marginBottom: '0.5rem'
-		},
-		subtitle: {
-			fontSize: '0.95rem',
-			color: 'var(--text-secondary)',
-			margin: 0
-		},
-		metricsGrid: {
-			display: 'grid',
-			gridTemplateColumns: 'repeat(4, 1fr)',
-			gap: '1.5rem',
-			marginBottom: '2rem'
-		},
-		metricCard: {
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius-lg)',
-			padding: '1.5rem',
-			border: '1px solid var(--border)',
-			boxShadow: 'var(--shadow-sm)'
-		},
-		metricLabel: {
-			fontSize: '0.85rem',
-			color: 'var(--text-secondary)',
-			fontWeight: '500',
-			textTransform: 'uppercase',
-			marginBottom: '0.5rem'
-		},
-		metricValue: {
-			fontSize: '1.8rem',
-			fontWeight: '700',
-			color: 'var(--primary)',
-			margin: '0.5rem 0'
-		},
-		metricChange: {
-			fontSize: '0.8rem',
-			color: 'var(--success)',
-			fontWeight: '600'
-		},
-		withdrawButton: {
-			padding: '0.8rem 1.5rem',
-			backgroundColor: 'var(--primary)',
-			color: 'white',
-			border: 'none',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '600',
-			marginTop: '1rem',
-			transition: 'all 0.2s',
-			width: '100%'
-		},
-		section: {
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius-lg)',
-			padding: '1.5rem',
-			border: '1px solid var(--border)',
-			boxShadow: 'var(--shadow-sm)',
-			marginBottom: '2rem'
-		},
-		sectionHeader: {
-			display: 'flex',
-			justifyContent: 'space-between',
-			alignItems: 'center',
-			marginBottom: '1.5rem',
-			paddingBottom: '1rem',
-			borderBottom: '2px solid var(--border)'
-		},
-		sectionTitle: {
-			fontSize: '1.2rem',
-			fontWeight: '700',
-			color: 'var(--text-primary)',
-			margin: 0
-		},
-		tabs: {
-			display: 'flex',
-			gap: '1rem',
-			borderBottom: '2px solid var(--border)',
-			marginBottom: '1.5rem'
-		},
-		tab: {
-			padding: '0.8rem 1.2rem',
-			backgroundColor: 'transparent',
-			border: 'none',
-			cursor: 'pointer',
-			fontWeight: '500',
-			color: 'var(--text-secondary)',
-			borderBottom: '3px solid transparent',
-			transition: 'all 0.2s'
-		},
-		tabActive: {
-			padding: '0.8rem 1.2rem',
-			backgroundColor: 'transparent',
-			border: 'none',
-			cursor: 'pointer',
-			fontWeight: '600',
-			color: 'var(--primary)',
-			borderBottom: '3px solid var(--primary)',
-			transition: 'all 0.2s'
-		},
-		table: {
-			width: '100%',
-			borderCollapse: 'collapse'
-		},
-		tableHeader: {
-			backgroundColor: 'var(--surface)',
-			fontWeight: '600',
-			color: 'var(--text-primary)',
-			padding: '1rem',
-			textAlign: 'left',
-			borderBottom: '2px solid var(--border)',
-			fontSize: '0.9rem'
-		},
-		tableRow: {
-			borderBottom: '1px solid var(--border)',
-			padding: '1rem'
-		},
-		tableCell: {
-			padding: '1rem',
-			textAlign: 'left',
-			fontSize: '0.9rem'
-		},
-		statusBadge: {
-			display: 'inline-block',
-			padding: '0.3rem 0.8rem',
-			borderRadius: '9999px',
-			fontSize: '0.8rem',
-			fontWeight: '600'
-		},
-		modalOverlay: {
-			display: 'none',
-			position: 'fixed',
-			top: 0,
-			left: 0,
-			right: 0,
-			bottom: 0,
-			backgroundColor: 'rgba(0,0,0,0.5)',
-			zIndex: 1000,
-			alignItems: 'center',
-			justifyContent: 'center'
-		},
-		modalActive: {
-			display: 'flex'
-		},
-		modal: {
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius-lg)',
-			padding: '2rem',
-			maxWidth: '500px',
-			width: '90%',
-			boxShadow: 'var(--shadow-lg)'
-		},
-		modalTitle: {
-			fontSize: '1.5rem',
-			fontWeight: '700',
-			color: 'var(--text-primary)',
-			marginBottom: '1.5rem'
-		},
-		formGroup: {
-			marginBottom: '1.5rem'
-		},
-		label: {
-			display: 'block',
-			fontSize: '0.9rem',
-			fontWeight: '600',
-			color: 'var(--text-primary)',
-			marginBottom: '0.5rem'
-		},
-		input: {
-			width: '100%',
-			padding: '0.8rem',
-			border: '1px solid var(--border)',
-			borderRadius: 'var(--radius)',
-			fontSize: '0.95rem',
-			fontFamily: 'inherit'
-		},
-		buttonGroup: {
-			display: 'flex',
-			gap: '1rem'
-		},
-		button: {
-			flex: 1,
-			padding: '0.8rem',
-			border: 'none',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '600',
-			transition: 'all 0.2s'
-		},
-		primaryButton: {
-			backgroundColor: 'var(--primary)',
-			color: 'white'
-		},
-		secondaryButton: {
-			backgroundColor: 'var(--surface)',
-			border: '1px solid var(--border)',
-			color: 'var(--text-primary)'
-		},
-		amountPositive: {
-			color: 'var(--success)',
-			fontWeight: '600'
-		},
-		amountNegative: {
-			color: 'var(--error)',
-			fontWeight: '600'
-		}
-	};
-
 	return (
-		<div style={styles.container}>
+		<div className={styles.container}>
 			{/* Header */}
-			<div style={styles.header}>
-				<h1 style={styles.title}>Payments & Settlements</h1>
-				<p style={styles.subtitle}>Manage earnings and withdrawals</p>
+			<div className={styles.header}>
+				<h1 className={styles.title}>Payments & Settlements</h1>
+				<p className={styles.subtitle}>Manage earnings and withdrawals</p>
 			</div>
 
 			{/* Metrics */}
-			<div style={styles.metricsGrid}>
-				<div style={styles.metricCard}>
-					<div style={styles.metricLabel}>Total Earnings</div>
-					<div style={styles.metricValue}>₹{paymentData.totalEarnings.toLocaleString()}</div>
-					<div style={styles.metricChange}>↑ 23.5% this month</div>
+			<div className={styles.metricsGrid}>
+				<div className={styles.metricCard}>
+					<div className={styles.metricLabel}>Total Earnings</div>
+					<div className={styles.metricValue}>₹{paymentData.totalEarnings.toLocaleString()}</div>
+					<div className={styles.metricChange}>↑ 23.5% this month</div>
 				</div>
-				<div style={styles.metricCard}>
-					<div style={styles.metricLabel}>Current Balance</div>
-					<div style={styles.metricValue}>₹{paymentData.currentBalance.toLocaleString()}</div>
-					<div style={styles.metricChange}>Ready to withdraw</div>
+				<div className={styles.metricCard}>
+					<div className={styles.metricLabel}>Current Balance</div>
+					<div className={styles.metricValue}>₹{paymentData.currentBalance.toLocaleString()}</div>
+					<div className={styles.metricChange}>Ready to withdraw</div>
 				</div>
-				<div style={styles.metricCard}>
-					<div style={styles.metricLabel}>Pending Amount</div>
-					<div style={styles.metricValue}>₹{paymentData.pendingAmount.toLocaleString()}</div>
-					<div style={styles.metricChange}>Will settle on Jan 20</div>
+				<div className={styles.metricCard}>
+					<div className={styles.metricLabel}>Pending Amount</div>
+					<div className={styles.metricValue}>₹{paymentData.pendingAmount.toLocaleString()}</div>
+					<div className={styles.metricChange}>Will settle on Jan 20</div>
 				</div>
-				<div style={styles.metricCard}>
-					<div style={styles.metricLabel}>Total Settlements</div>
-					<div style={styles.metricValue}>{paymentData.totalSettlements}</div>
-					<div style={styles.metricChange}>₹{(paymentData.totalEarnings * 0.95).toLocaleString()} withdrawn</div>
+				<div className={styles.metricCard}>
+					<div className={styles.metricLabel}>Total Settlements</div>
+					<div className={styles.metricValue}>{paymentData.totalSettlements}</div>
+					<div className={styles.metricChange}>₹{(paymentData.totalEarnings * 0.95).toLocaleString()} withdrawn</div>
 					<button
-						style={styles.withdrawButton}
+						className={styles.withdrawButton}
 						onClick={() => setShowWithdrawal(true)}
 					>
 						Request Withdrawal
@@ -337,16 +118,16 @@ function VendorPayments() {
 			</div>
 
 			{/* Transactions and Settlements */}
-			<div style={styles.section}>
-				<div style={styles.tabs}>
+			<div className={styles.section}>
+				<div className={styles.tabs}>
 					<button
-						style={activeTab === 'transactions' ? styles.tabActive : styles.tab}
+						className={`${styles.tab} ${activeTab === 'transactions' ? styles.tabActive : ''}`}
 						onClick={() => setActiveTab('transactions')}
 					>
 						Transactions
 					</button>
 					<button
-						style={activeTab === 'settlements' ? styles.tabActive : styles.tab}
+						className={`${styles.tab} ${activeTab === 'settlements' ? styles.tabActive : ''}`}
 						onClick={() => setActiveTab('settlements')}
 					>
 						Settlement History
@@ -354,41 +135,45 @@ function VendorPayments() {
 				</div>
 
 				{activeTab === 'transactions' && (
-					<table style={styles.table}>
+					<table className={styles.table}>
 						<thead>
-							<tr style={{ backgroundColor: 'var(--surface)' }}>
-								<th style={styles.tableHeader}>Date</th>
-								<th style={styles.tableHeader}>Description</th>
-								<th style={styles.tableHeader}>Type</th>
-								<th style={styles.tableHeader}>Amount</th>
-								<th style={styles.tableHeader}>Status</th>
+							<tr className={styles.tableHeadRow}>
+								<th className={styles.tableHeader}>Date</th>
+								<th className={styles.tableHeader}>Description</th>
+								<th className={styles.tableHeader}>Type</th>
+								<th className={styles.tableHeader}>Amount</th>
+								<th className={styles.tableHeader}>Status</th>
 							</tr>
 						</thead>
 						<tbody>
 							{paymentData.transactions.map((txn, idx) => (
-								<tr key={idx} style={styles.tableRow}>
-									<td style={styles.tableCell}>{txn.date}</td>
-									<td style={styles.tableCell}>{txn.description}</td>
-									<td style={styles.tableCell}>
-										<span style={{
-											...styles.statusBadge,
+								<tr key={idx} className={styles.tableRow}>
+									<td className={styles.tableCell}>{txn.date}</td>
+									<td className={styles.tableCell}>{txn.description}</td>
+									<td className={styles.tableCell}>
+										<span
+											className={styles.statusBadge}
+											style={{
 											backgroundColor: txn.type === 'order' ? 'var(--green-100)' : 'var(--red-100)',
 											color: txn.type === 'order' ? 'var(--success)' : 'var(--error)'
-										}}>
+											}}
+										>
 											{txn.type === 'order' ? '💰 Sale' : '↩️ Refund'}
 										</span>
 									</td>
-									<td style={styles.tableCell}>
-										<span style={txn.amount > 0 ? styles.amountPositive : styles.amountNegative}>
+									<td className={styles.tableCell}>
+										<span className={`${txn.amount > 0 ? styles.amountPositive : styles.amountNegative}`}>
 											{txn.amount > 0 ? '+' : ''}₹{Math.abs(txn.amount).toLocaleString()}
 										</span>
 									</td>
-									<td style={styles.tableCell}>
-										<span style={{
-											...styles.statusBadge,
+									<td className={styles.tableCell}>
+										<span
+											className={styles.statusBadge}
+											style={{
 											backgroundColor: txn.status === 'settled' ? 'var(--green-100)' : 'var(--yellow-100)',
 											color: txn.status === 'settled' ? 'var(--success)' : 'var(--warning)'
-										}}>
+											}}
+										>
 											{txn.status === 'settled' ? '✓ Settled' : '⏳ Pending'}
 										</span>
 									</td>
@@ -399,33 +184,35 @@ function VendorPayments() {
 				)}
 
 				{activeTab === 'settlements' && (
-					<table style={styles.table}>
+					<table className={styles.table}>
 						<thead>
-							<tr style={{ backgroundColor: 'var(--surface)' }}>
-								<th style={styles.tableHeader}>Settlement ID</th>
-								<th style={styles.tableHeader}>Amount</th>
-								<th style={styles.tableHeader}>Date</th>
-								<th style={styles.tableHeader}>Method</th>
-								<th style={styles.tableHeader}>Status</th>
+							<tr className={styles.tableHeadRow}>
+								<th className={styles.tableHeader}>Settlement ID</th>
+								<th className={styles.tableHeader}>Amount</th>
+								<th className={styles.tableHeader}>Date</th>
+								<th className={styles.tableHeader}>Method</th>
+								<th className={styles.tableHeader}>Status</th>
 							</tr>
 						</thead>
 						<tbody>
 							{paymentData.settlements.map((settlement, idx) => (
-								<tr key={idx} style={styles.tableRow}>
-									<td style={styles.tableCell}>
+								<tr key={idx} className={styles.tableRow}>
+									<td className={styles.tableCell}>
 										<strong>{settlement.settlementId}</strong>
 									</td>
-									<td style={styles.tableCell}>
+									<td className={styles.tableCell}>
 										<strong>₹{settlement.amount.toLocaleString()}</strong>
 									</td>
-									<td style={styles.tableCell}>{settlement.date}</td>
-									<td style={styles.tableCell}>{settlement.method}</td>
-									<td style={styles.tableCell}>
-										<span style={{
-											...styles.statusBadge,
+									<td className={styles.tableCell}>{settlement.date}</td>
+									<td className={styles.tableCell}>{settlement.method}</td>
+									<td className={styles.tableCell}>
+										<span
+											className={styles.statusBadge}
+											style={{
 											backgroundColor: 'var(--green-100)',
 											color: 'var(--success)'
-										}}>
+											}}
+										>
 											✓ {settlement.status}
 										</span>
 									</td>
@@ -437,50 +224,43 @@ function VendorPayments() {
 			</div>
 
 			{/* Bank Details */}
-			<div style={styles.section}>
-				<div style={styles.sectionHeader}>
-					<h2 style={styles.sectionTitle}>Bank Details</h2>
-					<button style={{
-						padding: '0.6rem 1.2rem',
-						border: '1px solid var(--border)',
-						backgroundColor: 'white',
-						borderRadius: 'var(--radius)',
-						cursor: 'pointer',
-						fontWeight: '500'
-					}}>
+			<div className={styles.section}>
+				<div className={styles.sectionHeader}>
+					<h2 className={styles.sectionTitle}>Bank Details</h2>
+					<button className={styles.editButton}>
 						Edit
 					</button>
 				</div>
-				<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+				<div className={styles.bankGrid}>
 					<div>
-						<div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '0.3rem' }}>
+						<div className={styles.bankLabel}>
 							ACCOUNT HOLDER NAME
 						</div>
-						<div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: '600' }}>
+						<div className={styles.bankValue}>
 							ABC Pharmacy Ltd
 						</div>
 					</div>
 					<div>
-						<div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '0.3rem' }}>
+						<div className={styles.bankLabel}>
 							ACCOUNT NUMBER
 						</div>
-						<div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: '600' }}>
+						<div className={styles.bankValue}>
 							567890123456
 						</div>
 					</div>
 					<div>
-						<div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '0.3rem' }}>
+						<div className={styles.bankLabel}>
 							BANK NAME
 						</div>
-						<div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: '600' }}>
+						<div className={styles.bankValue}>
 							HDFC Bank
 						</div>
 					</div>
 					<div>
-						<div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '0.3rem' }}>
+						<div className={styles.bankLabel}>
 							IFSC CODE
 						</div>
-						<div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: '600' }}>
+						<div className={styles.bankValue}>
 							HDFC0003456
 						</div>
 					</div>
@@ -488,51 +268,51 @@ function VendorPayments() {
 			</div>
 
 			{/* Withdrawal Modal */}
-			<div style={showWithdrawal ? { ...styles.modalOverlay, ...styles.modalActive } : styles.modalOverlay}>
-				<div style={styles.modal}>
-					<h2 style={styles.modalTitle}>Request Withdrawal</h2>
+			<div className={`${styles.modalOverlay} ${showWithdrawal ? styles.modalActive : ''}`}>
+				<div className={styles.modal}>
+					<h2 className={styles.modalTitle}>Request Withdrawal</h2>
 
-					<div style={styles.formGroup}>
-						<label style={styles.label}>Available Balance</label>
-						<div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary)' }}>
+					<div className={styles.formGroup}>
+						<label className={styles.label}>Available Balance</label>
+						<div className={styles.availableBalanceValue}>
 							₹{paymentData.currentBalance.toLocaleString()}
 						</div>
 					</div>
 
-					<div style={styles.formGroup}>
-						<label style={styles.label}>Withdrawal Amount</label>
+					<div className={styles.formGroup}>
+						<label className={styles.label}>Withdrawal Amount</label>
 						<input
 							type="number"
-							style={styles.input}
+							className={styles.input}
 							placeholder="Enter amount"
 							min="0"
 							max={paymentData.currentBalance}
 							value={withdrawAmount}
 							onChange={(e) => setWithdrawAmount(e.target.value)}
 						/>
-						<small style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', display: 'block' }}>
+						<small className={styles.withdrawalHint}>
 							Minimum withdrawal: ₹100 | Maximum: ₹{paymentData.currentBalance.toLocaleString()}
 						</small>
 					</div>
 
-					<div style={{ ...styles.formGroup, backgroundColor: 'var(--primary-light)', padding: '1rem', borderRadius: 'var(--radius)' }}>
-						<strong style={{ color: 'var(--text-primary)' }}>Settlement Details</strong>
-						<div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: '1.6' }}>
+					<div style={{ backgroundColor: 'var(--primary-light)', padding: '1rem', borderRadius: 'var(--radius)' }} className={styles.formGroup}>
+						<strong className={styles.settlementDetailsTitle}>Settlement Details</strong>
+						<div className={styles.settlementDetailsText}>
 							• Transfer will be made to your registered bank account<br/>
 							• Processing time: 1-2 business days<br/>
 							• No transaction fees applied
 						</div>
 					</div>
 
-					<div style={styles.buttonGroup}>
+					<div className={styles.buttonGroup}>
 						<button
-							style={{ ...styles.button, ...styles.secondaryButton }}
+							className={`${styles.button} ${styles.secondaryButton}`}
 							onClick={() => setShowWithdrawal(false)}
 						>
 							Cancel
 						</button>
 						<button
-							style={{ ...styles.button, ...styles.primaryButton }}
+							className={`${styles.button} ${styles.primaryButton}`}
 							onClick={handleWithdrawal}
 							disabled={!withdrawAmount || parseInt(withdrawAmount) <= 0}
 						>

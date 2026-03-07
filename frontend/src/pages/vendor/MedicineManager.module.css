@@ -1,0 +1,362 @@
+.container {
+	padding: 2rem;
+	background-color: var(--surface);
+	min-height: 100vh;
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 2rem;
+}
+
+.headerLeft {
+	flex: 1;
+}
+
+.title {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0;
+	margin-bottom: 0.3rem;
+}
+
+.subtitle {
+	font-size: 0.95rem;
+	color: var(--text-secondary);
+	margin: 0;
+}
+
+.addButton {
+	padding: 0.8rem 1.5rem;
+	background-color: var(--primary);
+	color: white;
+	border: none;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.2s;
+}
+
+.addButton:hover {
+	opacity: 0.9;
+}
+
+.filterBar {
+	display: flex;
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+	flex-wrap: wrap;
+}
+
+.filterGroup {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.filterLabel {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	font-weight: 600;
+	align-self: center;
+	text-transform: uppercase;
+}
+
+.filterButton {
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--border);
+	background-color: white;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 500;
+	transition: all 0.2s;
+	font-size: 0.85rem;
+}
+
+.filterButton:hover {
+	background-color: var(--surface);
+}
+
+.filterButtonActive {
+	padding: 0.5rem 1rem;
+	border: none;
+	background-color: var(--primary);
+	color: white;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 500;
+	transition: all 0.2s;
+	font-size: 0.85rem;
+}
+
+.section {
+	background-color: white;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-sm);
+	margin-bottom: 2rem;
+	overflow: hidden;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.tableHeader {
+	background-color: var(--surface);
+	font-weight: 600;
+	color: var(--text-primary);
+	padding: 1rem 1.5rem;
+	text-align: left;
+	border-bottom: 2px solid var(--border);
+	font-size: 0.9rem;
+}
+
+.tableRow {
+	border-bottom: 1px solid var(--border);
+	transition: background-color 0.2s;
+	cursor: pointer;
+}
+
+.tableRow:hover {
+	background-color: var(--primary-light);
+}
+
+.tableCell {
+	padding: 1rem 1.5rem;
+	text-align: left;
+	font-size: 0.9rem;
+}
+
+.statusBadge {
+	display: inline-block;
+	padding: 0.3rem 0.8rem;
+	border-radius: 9999px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: white;
+}
+
+.modalOverlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 1000;
+	align-items: center;
+	justify-content: center;
+}
+
+.modalActive {
+	display: flex;
+}
+
+.modal {
+	background-color: white;
+	border-radius: var(--radius-lg);
+	padding: 2rem;
+	max-width: 600px;
+	width: 90%;
+	max-height: 80vh;
+	overflow: auto;
+	box-shadow: var(--shadow-lg);
+}
+
+.modalHeader {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin-bottom: 1.5rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid var(--border);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.formGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem;
+}
+
+.formGridFull {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.5rem;
+}
+
+.formGroup {
+	display: flex;
+	flex-direction: column;
+}
+
+.label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin-bottom: 0.5rem;
+	text-transform: uppercase;
+}
+
+.input {
+	padding: 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 0.95rem;
+	font-family: inherit;
+}
+
+.input:focus {
+	outline: none;
+	border-color: var(--primary);
+}
+
+.textarea {
+	padding: 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 0.95rem;
+	font-family: inherit;
+	min-height: 100px;
+	resize: vertical;
+}
+
+.textarea:focus {
+	outline: none;
+	border-color: var(--primary);
+}
+
+.select {
+	padding: 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 0.95rem;
+	font-family: inherit;
+	background-color: white;
+}
+
+.select:focus {
+	outline: none;
+	border-color: var(--primary);
+}
+
+.actionButtons {
+	display: flex;
+	gap: 1rem;
+	margin-top: 1.5rem;
+}
+
+.button {
+	flex: 1;
+	padding: 0.8rem;
+	border: none;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.2s;
+}
+
+.button:hover {
+	opacity: 0.9;
+}
+
+.primaryButton {
+	background-color: var(--primary);
+	color: white;
+}
+
+.secondaryButton {
+	background-color: white;
+	border: 1px solid var(--border);
+	color: var(--text-primary);
+}
+
+.secondaryButton:hover {
+	background-color: var(--surface);
+}
+
+.dangerButton {
+	background-color: var(--error);
+	color: white;
+}
+
+.closeButton {
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	cursor: pointer;
+	color: var(--text-secondary);
+}
+
+.closeButton:hover {
+	color: var(--text-primary);
+}
+
+.editButton {
+	padding: 0.4rem 0.8rem;
+	background-color: var(--primary);
+	color: white;
+	border: none;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-size: 0.85rem;
+}
+
+.editButton:hover {
+	opacity: 0.9;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+	.container {
+		padding: 1.5rem;
+	}
+
+	.header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1rem;
+	}
+
+	.addButton {
+		width: 100%;
+	}
+
+	.table {
+		display: block;
+		overflow-x: auto;
+	}
+
+	.filterBar {
+		flex-direction: column;
+	}
+
+	.formGrid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding: 1rem;
+	}
+
+	.title {
+		font-size: 1.5rem;
+	}
+
+	.modalHeader {
+		font-size: 1.25rem;
+	}
+
+	.modal {
+		padding: 1.5rem;
+	}
+}

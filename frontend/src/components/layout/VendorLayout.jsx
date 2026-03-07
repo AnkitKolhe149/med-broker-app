@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './VendorLayout.css';
 
 function VendorLayout({ children }) {
 	const navigate = useNavigate();
 	const location = useLocation();
-	const [sidebarOpen, setSidebarOpen] = useState(true);
+	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
 
 	const menuItems = [
 		{ path: '/vendor/dashboard', label: 'Dashboard', icon: '📊' },
@@ -21,95 +23,80 @@ function VendorLayout({ children }) {
 
 	const isActive = (path) => location.pathname === path;
 
+	useEffect(() => {
+		const handleResize = () => {
+			const mobile = window.innerWidth <= 768;
+			setIsMobileView(mobile);
+			if (!mobile) {
+				setIsMobileMenuOpen(false);
+			}
+		};
+
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+
+	useEffect(() => {
+		if (isMobileMenuOpen) {
+			setIsMobileMenuOpen(false);
+		}
+	}, [location.pathname]);
+
+	const handleToggleSidebar = () => {
+		if (isMobileView) {
+			setIsMobileMenuOpen(prev => !prev);
+			return;
+		}
+		setIsCollapsed(prev => !prev);
+	};
+
 	return (
-		<div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--surface)' }}>
-			{/* Sidebar */}
-			<aside
-				style={{
-					width: sidebarOpen ? '280px' : '80px',
-					background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
-					color: 'white',
-					transition: 'width 0.3s ease',
-					borderRight: '2px solid rgba(255,255,255,0.15)',
-					overflow: 'hidden',
-					position: 'fixed',
-					height: '100vh',
-					left: 0,
-					top: 0,
-					zIndex: 100,
-					boxShadow: '2px 0 8px rgba(0,0,0,0.1)'
-				}}
+		<div className="vendor-layout">
+			<button
+				className="vendor-mobile-toggle"
+				onClick={() => setIsMobileMenuOpen(true)}
+				aria-label="Open vendor navigation"
 			>
+				☰
+			</button>
+
+			<div
+				className={`vendor-sidebar-overlay ${isMobileMenuOpen ? 'show' : ''}`}
+				onClick={() => setIsMobileMenuOpen(false)}
+				aria-hidden={!isMobileMenuOpen}
+			/>
+
+			{/* Sidebar */}
+			<aside className={`vendor-sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'open' : ''}`}>
 				{/* Sidebar Header */}
-				<div style={{
-					padding: '1.5rem',
-					borderBottom: '1px solid rgba(255,255,255,0.2)',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-					background: 'rgba(0,0,0,0.1)'
-				}}>
-					{sidebarOpen && (
+				<div className="vendor-sidebar-header">
+					{!isCollapsed && (
 						<div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-							<div style={{ fontSize: '1.5rem' }}>💊</div>
-							<h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>MedBroker</h2>
+							<div className="vendor-menu-item-icon">💊</div>
+							<h2>MedBroker</h2>
 						</div>
 					)}
 					<button
-						onClick={() => setSidebarOpen(!sidebarOpen)}
-						style={{
-							background: 'none',
-							border: 'none',
-							color: 'white',
-							cursor: 'pointer',
-							fontSize: '1.2rem',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center'
-						}}
+						onClick={handleToggleSidebar}
+						className="vendor-sidebar-toggle"
+						aria-label={isMobileView ? 'Close vendor navigation' : 'Toggle vendor sidebar'}
 					>
-						{sidebarOpen ? '‹' : '›'}
+						{isMobileView ? '✕' : isCollapsed ? '›' : '‹'}
 					</button>
 				</div>
 
 				{/* Menu Items */}
-				<nav style={{ paddingTop: '1rem' }}>
+				<nav className="vendor-sidebar-nav">
 					{menuItems.map(item => (
 						<button
 							key={item.path}
 							onClick={() => navigate(item.path)}
-							style={{
-								width: '100%',
-								padding: '1rem 1.5rem',
-								backgroundColor: isActive(item.path) ? 'rgba(255,255,255,0.25)' : 'transparent',
-								border: 'none',
-								color: 'white',
-								cursor: 'pointer',
-								display: 'flex',
-								alignItems: 'center',
-								gap: '1rem',
-								transition: 'all 0.2s',
-								borderLeft: isActive(item.path) ? '4px solid white' : 'none',
-								fontWeight: isActive(item.path) ? '600' : '500'
-							}}
-							onMouseEnter={(e) => {
-								if (!isActive(item.path)) {
-									e.target.style.backgroundColor = 'rgba(255,255,255,0.15)';
-								}
-							}}
-							onMouseLeave={(e) => {
-								if (!isActive(item.path)) {
-									e.target.style.backgroundColor = 'transparent';
-								}
-							}}
+							className={`vendor-menu-item ${isActive(item.path) ? 'active' : ''}`}
+							aria-current={isActive(item.path) ? 'page' : undefined}
 						>
-							<span style={{ fontSize: '1.3rem', minWidth: '24px', textAlign: 'center' }}>
-								{item.icon}
-							</span>
-							{sidebarOpen && (
-								<span style={{ fontSize: '0.9rem', fontWeight: isActive(item.path) ? '600' : '500' }}>
-									{item.label}
-								</span>
+							<span className="vendor-menu-item-icon">{item.icon}</span>
+							{!isCollapsed && (
+								<span className="vendor-menu-item-label">{item.label}</span>
 							)}
 						</button>
 					))}
@@ -117,14 +104,7 @@ function VendorLayout({ children }) {
 			</aside>
 
 			{/* Main Content */}
-			<main
-				style={{
-					flex: 1,
-					marginLeft: sidebarOpen ? '280px' : '80px',
-					transition: 'margin-left 0.3s ease',
-					overflow: 'auto'
-				}}
-			>
+			<main className={`vendor-main ${isCollapsed ? 'expanded' : ''}`}>
 				{children}
 			</main>
 		</div>

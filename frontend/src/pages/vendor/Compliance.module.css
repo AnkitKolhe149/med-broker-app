@@ -1,0 +1,327 @@
+.container {
+  padding: 2rem;
+  background-color: var(--surface);
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.section {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.documentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.documentCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  background-color: var(--surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.documentCard:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.documentInfo {
+  flex: 1;
+}
+
+.documentName {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.documentMeta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  margin-right: 1rem;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.documentActionsWrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--primary);
+  background-color: white;
+  color: var(--primary);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.button:hover {
+  background-color: var(--primary-light);
+}
+
+.primaryButton {
+  padding: 0.6rem 1.2rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.primaryButton:hover {
+  filter: brightness(0.95);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.auditHeaderRow {
+  background-color: var(--surface);
+}
+
+.tableHeader {
+  background-color: var(--surface);
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--border);
+}
+
+.tableRow:hover {
+  background-color: var(--surface);
+}
+
+.tableCell {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.complianceAlert {
+  background-color: var(--warning-light);
+  border: 2px solid var(--warning);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.alertContent {
+  flex: 1;
+}
+
+.alertTitle {
+  font-weight: 600;
+  color: var(--warning-dark);
+  margin-bottom: 0.3rem;
+}
+
+.alertMessage {
+  color: var(--warning-dark);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.complianceScore {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background-color: var(--primary-light);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--primary);
+  margin-bottom: 1.5rem;
+}
+
+.scoreCircle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.scoreText {
+  flex: 1;
+}
+
+.scoreLabel {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+}
+
+.scoreDesc {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.scoreStatus {
+  font-size: 0.85rem;
+  color: var(--success);
+  font-weight: 500;
+}
+
+.auditDescription {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.tipsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.tipCard {
+  padding: 1rem;
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  transition: box-shadow 0.2s;
+}
+
+.tipCard:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.tipTitle {
+  margin: 0 0 0.5rem 0;
+  color: var(--primary);
+}
+
+.tipList {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .documentGrid,
+  .tipsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .documentCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .documentActionsWrap {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .complianceScore {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .section {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .tableHeader,
+  .tableCell {
+    padding: 0.75rem;
+  }
+
+  .scoreCircle {
+    width: 64px;
+    height: 64px;
+    font-size: 1.5rem;
+  }
+}

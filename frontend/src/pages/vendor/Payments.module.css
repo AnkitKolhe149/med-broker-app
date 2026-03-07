@@ -1,0 +1,394 @@
+.container {
+	padding: 2rem;
+	background-color: var(--surface);
+	min-height: 100vh;
+}
+
+.header {
+	margin-bottom: 2rem;
+}
+
+.title {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0 0 0.5rem;
+}
+
+.subtitle {
+	font-size: 0.95rem;
+	color: var(--text-secondary);
+	margin: 0;
+}
+
+.metricsGrid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.metricCard {
+	background-color: white;
+	border-radius: var(--radius-lg);
+	padding: 1.5rem;
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-sm);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metricCard:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-md);
+}
+
+.metricLabel {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	font-weight: 500;
+	text-transform: uppercase;
+	margin-bottom: 0.5rem;
+}
+
+.metricValue {
+	font-size: 1.8rem;
+	font-weight: 700;
+	color: var(--primary);
+	margin: 0.5rem 0;
+}
+
+.metricChange {
+	font-size: 0.8rem;
+	color: var(--success);
+	font-weight: 600;
+}
+
+.withdrawButton {
+	padding: 0.8rem 1.5rem;
+	background-color: var(--primary);
+	color: white;
+	border: none;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 600;
+	margin-top: 1rem;
+	transition: all 0.2s;
+	width: 100%;
+}
+
+.withdrawButton:hover {
+	filter: brightness(0.95);
+}
+
+.section {
+	background-color: white;
+	border-radius: var(--radius-lg);
+	padding: 1.5rem;
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-sm);
+	margin-bottom: 2rem;
+}
+
+.sectionHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1.5rem;
+	padding-bottom: 1rem;
+	border-bottom: 2px solid var(--border);
+}
+
+.sectionTitle {
+	font-size: 1.2rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.tabs {
+	display: flex;
+	gap: 1rem;
+	border-bottom: 2px solid var(--border);
+	margin-bottom: 1.5rem;
+}
+
+.tab {
+	padding: 0.8rem 1.2rem;
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+	font-weight: 500;
+	color: var(--text-secondary);
+	border-bottom: 3px solid transparent;
+	transition: all 0.2s;
+}
+
+.tab:hover {
+	color: var(--primary);
+}
+
+.tabActive {
+	font-weight: 600;
+	color: var(--primary);
+	border-bottom: 3px solid var(--primary);
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.tableHeadRow {
+	background-color: var(--surface);
+}
+
+.tableHeader {
+	background-color: var(--surface);
+	font-weight: 600;
+	color: var(--text-primary);
+	padding: 1rem;
+	text-align: left;
+	border-bottom: 2px solid var(--border);
+	font-size: 0.9rem;
+}
+
+.tableRow {
+	border-bottom: 1px solid var(--border);
+}
+
+.tableRow:hover {
+	background-color: var(--surface);
+}
+
+.tableCell {
+	padding: 1rem;
+	text-align: left;
+	font-size: 0.9rem;
+}
+
+.statusBadge {
+	display: inline-block;
+	padding: 0.3rem 0.8rem;
+	border-radius: 9999px;
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+
+.amountPositive {
+	color: var(--success);
+	font-weight: 600;
+}
+
+.amountNegative {
+	color: var(--error);
+	font-weight: 600;
+}
+
+.editButton {
+	padding: 0.6rem 1.2rem;
+	border: 1px solid var(--border);
+	background-color: white;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 500;
+	transition: all 0.2s;
+}
+
+.editButton:hover {
+	background-color: var(--surface);
+}
+
+.bankGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem;
+}
+
+.bankLabel {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	font-weight: 500;
+	margin-bottom: 0.3rem;
+}
+
+.bankValue {
+	font-size: 0.95rem;
+	color: var(--text-primary);
+	font-weight: 600;
+}
+
+.modalOverlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 1000;
+	align-items: center;
+	justify-content: center;
+}
+
+.modalActive {
+	display: flex;
+}
+
+.modal {
+	background-color: white;
+	border-radius: var(--radius-lg);
+	padding: 2rem;
+	max-width: 500px;
+	width: 90%;
+	box-shadow: var(--shadow-lg);
+}
+
+.modalTitle {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin-bottom: 1.5rem;
+}
+
+.formGroup {
+	margin-bottom: 1.5rem;
+}
+
+.label {
+	display: block;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin-bottom: 0.5rem;
+}
+
+.availableBalanceValue {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--primary);
+}
+
+.input {
+	width: 100%;
+	padding: 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 0.95rem;
+	font-family: inherit;
+}
+
+.input:focus {
+	outline: none;
+	border-color: var(--primary);
+}
+
+.withdrawalHint {
+	color: var(--text-secondary);
+	margin-top: 0.5rem;
+	display: block;
+}
+
+.settlementDetailsTitle {
+	color: var(--text-primary);
+}
+
+.settlementDetailsText {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	margin-top: 0.5rem;
+	line-height: 1.6;
+}
+
+.buttonGroup {
+	display: flex;
+	gap: 1rem;
+}
+
+.button {
+	flex: 1;
+	padding: 0.8rem;
+	border: none;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.2s;
+}
+
+.button:hover:not(:disabled) {
+	transform: translateY(-1px);
+}
+
+.button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.primaryButton {
+	background-color: var(--primary);
+	color: white;
+}
+
+.secondaryButton {
+	background-color: var(--surface);
+	border: 1px solid var(--border);
+	color: var(--text-primary);
+}
+
+@media (max-width: 900px) {
+	.container {
+		padding: 1.5rem;
+	}
+
+	.metricsGrid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.bankGrid {
+		grid-template-columns: 1fr;
+	}
+
+	.tableHeader,
+	.tableCell {
+		padding: 0.75rem;
+	}
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding: 1rem;
+	}
+
+	.metricsGrid {
+		grid-template-columns: 1fr;
+		gap: 1rem;
+	}
+
+	.section {
+		padding: 1rem;
+	}
+
+	.tabs {
+		gap: 0.5rem;
+		overflow-x: auto;
+	}
+
+	.tab {
+		padding: 0.7rem 0.9rem;
+		white-space: nowrap;
+	}
+
+	.sectionHeader {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.75rem;
+	}
+
+	.modal {
+		width: 95%;
+		padding: 1.25rem;
+	}
+
+	.buttonGroup {
+		flex-direction: column;
+	}
+}

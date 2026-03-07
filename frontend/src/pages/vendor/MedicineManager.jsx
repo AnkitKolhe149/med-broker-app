@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './MedicineManager.module.css';
 
 function VendorMedicineManager() {
 	const [medicines, setMedicines] = useState([
@@ -105,270 +106,39 @@ function VendorMedicineManager() {
 		return true;
 	});
 
-	const styles = {
-		container: {
-			padding: '2rem',
-			backgroundColor: 'var(--surface)',
-			minHeight: '100vh'
-		},
-		header: {
-			display: 'flex',
-			justifyContent: 'space-between',
-			alignItems: 'center',
-			marginBottom: '2rem'
-		},
-		headerLeft: {
-			flex: 1
-		},
-		title: {
-			fontSize: '2rem',
-			fontWeight: '700',
-			color: 'var(--text-primary)',
-			margin: 0,
-			marginBottom: '0.3rem'
-		},
-		subtitle: {
-			fontSize: '0.95rem',
-			color: 'var(--text-secondary)',
-			margin: 0
-		},
-		addButton: {
-			padding: '0.8rem 1.5rem',
-			backgroundColor: 'var(--primary)',
-			color: 'white',
-			border: 'none',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '600',
-			transition: 'all 0.2s'
-		},
-		filterBar: {
-			display: 'flex',
-			gap: '1.5rem',
-			marginBottom: '2rem',
-			flexWrap: 'wrap'
-		},
-		filterGroup: {
-			display: 'flex',
-			gap: '0.5rem'
-		},
-		filterLabel: {
-			fontSize: '0.85rem',
-			color: 'var(--text-secondary)',
-			fontWeight: '600',
-			alignSelf: 'center',
-			textTransform: 'uppercase'
-		},
-		filterButton: {
-			padding: '0.5rem 1rem',
-			border: '1px solid var(--border)',
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '500',
-			transition: 'all 0.2s',
-			fontSize: '0.85rem'
-		},
-		filterButtonActive: {
-			padding: '0.5rem 1rem',
-			border: 'none',
-			backgroundColor: 'var(--primary)',
-			color: 'white',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '500',
-			transition: 'all 0.2s',
-			fontSize: '0.85rem'
-		},
-		section: {
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius-lg)',
-			border: '1px solid var(--border)',
-			boxShadow: 'var(--shadow-sm)',
-			marginBottom: '2rem',
-			overflow: 'hidden'
-		},
-		table: {
-			width: '100%',
-			borderCollapse: 'collapse'
-		},
-		tableHeader: {
-			backgroundColor: 'var(--surface)',
-			fontWeight: '600',
-			color: 'var(--text-primary)',
-			padding: '1rem 1.5rem',
-			textAlign: 'left',
-			borderBottom: '2px solid var(--border)',
-			fontSize: '0.9rem'
-		},
-		tableRow: {
-			borderBottom: '1px solid var(--border)',
-			transition: 'background-color 0.2s',
-			cursor: 'pointer'
-		},
-		tableCell: {
-			padding: '1rem 1.5rem',
-			textAlign: 'left',
-			fontSize: '0.9rem'
-		},
-		statusBadge: {
-			display: 'inline-block',
-			padding: '0.3rem 0.8rem',
-			borderRadius: '9999px',
-			fontSize: '0.8rem',
-			fontWeight: '600',
-			color: 'white'
-		},
-		modalOverlay: {
-			display: 'none',
-			position: 'fixed',
-			top: 0,
-			left: 0,
-			right: 0,
-			bottom: 0,
-			backgroundColor: 'rgba(0,0,0,0.5)',
-			zIndex: 1000,
-			alignItems: 'center',
-			justifyContent: 'center'
-		},
-		modalActive: {
-			display: 'flex'
-		},
-		modal: {
-			backgroundColor: 'white',
-			borderRadius: 'var(--radius-lg)',
-			padding: '2rem',
-			maxWidth: '600px',
-			width: '90%',
-			maxHeight: '80vh',
-			overflow: 'auto',
-			boxShadow: 'var(--shadow-lg)'
-		},
-		modalHeader: {
-			fontSize: '1.5rem',
-			fontWeight: '700',
-			color: 'var(--text-primary)',
-			marginBottom: '1.5rem',
-			paddingBottom: '1rem',
-			borderBottom: '1px solid var(--border)',
-			display: 'flex',
-			justifyContent: 'space-between',
-			alignItems: 'center'
-		},
-		formGrid: {
-			display: 'grid',
-			gridTemplateColumns: '1fr 1fr',
-			gap: '1.5rem'
-		},
-		formGridFull: {
-			display: 'grid',
-			gridTemplateColumns: '1fr',
-			gap: '1.5rem'
-		},
-		formGroup: {
-			display: 'flex',
-			flexDirection: 'column'
-		},
-		label: {
-			fontSize: '0.85rem',
-			fontWeight: '600',
-			color: 'var(--text-primary)',
-			marginBottom: '0.5rem',
-			textTransform: 'uppercase'
-		},
-		input: {
-			padding: '0.8rem',
-			border: '1px solid var(--border)',
-			borderRadius: 'var(--radius)',
-			fontSize: '0.95rem',
-			fontFamily: 'inherit'
-		},
-		textarea: {
-			padding: '0.8rem',
-			border: '1px solid var(--border)',
-			borderRadius: 'var(--radius)',
-			fontSize: '0.95rem',
-			fontFamily: 'inherit',
-			minHeight: '100px',
-			resize: 'vertical'
-		},
-		select: {
-			padding: '0.8rem',
-			border: '1px solid var(--border)',
-			borderRadius: 'var(--radius)',
-			fontSize: '0.95rem',
-			fontFamily: 'inherit',
-			backgroundColor: 'white'
-		},
-		actionButtons: {
-			display: 'flex',
-			gap: '1rem',
-			marginTop: '1.5rem'
-		},
-		button: {
-			flex: 1,
-			padding: '0.8rem',
-			border: 'none',
-			borderRadius: 'var(--radius)',
-			cursor: 'pointer',
-			fontWeight: '600',
-			transition: 'all 0.2s'
-		},
-		primaryButton: {
-			backgroundColor: 'var(--primary)',
-			color: 'white'
-		},
-		secondaryButton: {
-			backgroundColor: 'white',
-			border: '1px solid var(--border)',
-			color: 'var(--text-primary)'
-		},
-		dangerButton: {
-			backgroundColor: 'var(--error)',
-			color: 'white'
-		},
-		closeButton: {
-			background: 'none',
-			border: 'none',
-			fontSize: '1.5rem',
-			cursor: 'pointer',
-			color: 'var(--text-secondary)'
-		}
-	};
-
 	return (
-		<div style={styles.container}>
+		<div className={styles.container}>
 			{/* Header */}
-			<div style={styles.header}>
-				<div style={styles.headerLeft}>
-					<h1 style={styles.title}>Product Management</h1>
-					<p style={styles.subtitle}>Manage your medicine catalog and inventory</p>
+			<div className={styles.header}>
+				<div className={styles.headerLeft}>
+					<h1 className={styles.title}>Product Management</h1>
+					<p className={styles.subtitle}>Manage your medicine catalog and inventory</p>
 				</div>
-				<button style={styles.addButton} onClick={() => setShowAddForm(true)}>
+				<button className={styles.addButton} onClick={() => setShowAddForm(true)}>
 					+ Add Product
 				</button>
 			</div>
 
 			{/* Filters */}
-			<div style={styles.filterBar}>
-				<div style={styles.filterGroup}>
-					<span style={styles.filterLabel}>Category:</span>
+			<div className={styles.filterBar}>
+				<div className={styles.filterGroup}>
+					<span className={styles.filterLabel}>Category:</span>
 					{['all', ...categories].map(cat => (
 						<button
 							key={cat}
-							style={filterCategory === cat ? styles.filterButtonActive : styles.filterButton}
+							className={filterCategory === cat ? styles.filterButtonActive : styles.filterButton}
 							onClick={() => setFilterCategory(cat)}
 						>
 							{cat === 'all' ? 'All' : cat}
 						</button>
 					))}
 				</div>
-				<div style={styles.filterGroup}>
-					<span style={styles.filterLabel}>Stock:</span>
+				<div className={styles.filterGroup}>
+					<span className={styles.filterLabel}>Stock:</span>
 					{['all', 'in-stock', 'out-of-stock'].map(status => (
 						<button
 							key={status}
-							style={filterStatus === status ? styles.filterButtonActive : styles.filterButton}
+							className={filterStatus === status ? styles.filterButtonActive : styles.filterButton}
 							onClick={() => setFilterStatus(status)}
 						>
 							{status === 'all' ? 'All' : status === 'in-stock' ? 'In Stock' : 'Out of Stock'}
@@ -378,48 +148,48 @@ function VendorMedicineManager() {
 			</div>
 
 			{/* Medicines Table */}
-			<div style={styles.section}>
-				<table style={styles.table}>
+			<div className={styles.section}>
+				<table className={styles.table}>
 					<thead>
 						<tr>
-							<th style={styles.tableHeader}>Product Name</th>
-							<th style={styles.tableHeader}>Category</th>
-							<th style={styles.tableHeader}>Stock</th>
-							<th style={styles.tableHeader}>Price</th>
-							<th style={styles.tableHeader}>Margin</th>
-							<th style={styles.tableHeader}>Status</th>
-							<th style={styles.tableHeader}>Action</th>
+							<th className={styles.tableHeader}>Product Name</th>
+							<th className={styles.tableHeader}>Category</th>
+							<th className={styles.tableHeader}>Stock</th>
+							<th className={styles.tableHeader}>Price</th>
+							<th className={styles.tableHeader}>Margin</th>
+							<th className={styles.tableHeader}>Status</th>
+							<th className={styles.tableHeader}>Action</th>
 						</tr>
 					</thead>
 					<tbody>
 						{filteredMedicines.map(medicine => (
-							<tr key={medicine.id} style={styles.tableRow}>
-								<td style={styles.tableCell}>
+							<tr key={medicine.id} className={styles.tableRow}>
+								<td className={styles.tableCell}>
 									<strong>{medicine.name}</strong>
 								</td>
-								<td style={styles.tableCell}>{medicine.category}</td>
-								<td style={styles.tableCell}>
+								<td className={styles.tableCell}>{medicine.category}</td>
+								<td className={styles.tableCell}>
 									<strong>{medicine.stock} units</strong>
 								</td>
-								<td style={styles.tableCell}>
+								<td className={styles.tableCell}>
 									<strong>₹{medicine.price}</strong>
 								</td>
-								<td style={styles.tableCell}>
+								<td className={styles.tableCell}>
 									<strong style={{ color: medicine.margin > 40 ? 'var(--success)' : 'var(--warning)' }}>
 										{medicine.margin}%
 									</strong>
 								</td>
-								<td style={styles.tableCell}>
+								<td className={styles.tableCell}>
 									<div
+										className={styles.statusBadge}
 										style={{
-											...styles.statusBadge,
 											backgroundColor: medicine.stock > 0 ? 'var(--success)' : 'var(--error)'
 										}}
 									>
 										{medicine.stock > 0 ? '✓ In Stock' : '✗ Out'}
 									</div>
 								</td>
-								<td style={styles.tableCell}>
+								<td className={styles.tableCell}>
 									<button
 										style={{
 											padding: '0.4rem 0.8rem',
@@ -442,43 +212,43 @@ function VendorMedicineManager() {
 			</div>
 
 			{/* Add Medicine Modal */}
-			<div style={showAddForm ? { ...styles.modalOverlay, ...styles.modalActive } : styles.modalOverlay}>
-				<div style={styles.modal}>
-					<div style={styles.modalHeader}>
+			<div className={showAddForm ? `${styles.modalOverlay} ${styles.modalActive}` : styles.modalOverlay}>
+				<div className={styles.modal}>
+					<div className={styles.modalHeader}>
 						<div>Add New Product</div>
 						<button
-							style={styles.closeButton}
+							className={styles.closeButton}
 							onClick={() => setShowAddForm(false)}
 						>
 							✕
 						</button>
 					</div>
 
-					<div style={styles.formGrid}>
-						<div style={styles.formGroup}>
-							<label style={styles.label}>Product Name</label>
-							<input
-								type="text"
-								style={styles.input}
+					<div className={styles.formGrid}>
+						<div className={styles.formGroup}>
+						<label className={styles.label}>Product Name</label>
+						<input
+							type="text"
+							className={styles.input}
 								placeholder="e.g., Paracetamol 500mg"
 								value={newMedicine.name}
 								onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
 							/>
 						</div>
-						<div style={styles.formGroup}>
-							<label style={styles.label}>Manufacturer</label>
+						<div className={styles.formGroup}>
+							<label className={styles.label}>Manufacturer</label>
 							<input
 								type="text"
-								style={styles.input}
+								className={styles.input}
 								placeholder="e.g., Cipla Ltd"
 								value={newMedicine.manufacturer}
 								onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
 							/>
 						</div>
-						<div style={styles.formGroup}>
-							<label style={styles.label}>Category</label>
+						<div className={styles.formGroup}>
+							<label className={styles.label}>Category</label>
 							<select
-								style={styles.select}
+								className={styles.select}
 								value={newMedicine.category}
 								onChange={(e) => setNewMedicine({ ...newMedicine, category: e.target.value })}
 							>
@@ -487,32 +257,32 @@ function VendorMedicineManager() {
 								))}
 							</select>
 						</div>
-						<div style={styles.formGroup}>
-							<label style={styles.label}>Initial Stock</label>
-							<input
-								type="number"
-								style={styles.input}
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Initial Stock</label>
+								<input
+									type="number"
+									className={styles.input}
 								placeholder="0"
 								value={newMedicine.stock}
 								onChange={(e) => setNewMedicine({ ...newMedicine, stock: e.target.value })}
 							/>
 						</div>
-						<div style={styles.formGroup}>
-							<label style={styles.label}>Selling Price (₹)</label>
-							<input
-								type="number"
-								style={styles.input}
+					<div className={styles.formGroup}>
+						<label className={styles.label}>Selling Price (₹)</label>
+						<input
+							type="number"
+							className={styles.input}
 								placeholder="0.00"
 								step="0.01"
 								value={newMedicine.price}
 								onChange={(e) => setNewMedicine({ ...newMedicine, price: e.target.value })}
 							/>
 						</div>
-						<div style={styles.formGroup}>
-							<label style={styles.label}>Cost Price (₹)</label>
+						<div className={styles.formGroup}>
+							<label className={styles.label}>Cost Price (₹)</label>
 							<input
 								type="number"
-								style={styles.input}
+								className={styles.input}
 								placeholder="0.00"
 								step="0.01"
 								value={newMedicine.costPrice}
@@ -521,11 +291,11 @@ function VendorMedicineManager() {
 						</div>
 					</div>
 
-					<div style={styles.formGridFull}>
-						<div style={styles.formGroup}>
-							<label style={styles.label}>Description</label>
-							<textarea
-								style={styles.textarea}
+						<div className={styles.formGridFull}>
+							<div className={styles.formGroup}>
+						<label className={styles.label}>Description</label>
+						<textarea
+							className={styles.textarea}
 								placeholder="Product description..."
 								value={newMedicine.description}
 								onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
@@ -533,11 +303,11 @@ function VendorMedicineManager() {
 						</div>
 					</div>
 
-					<div style={styles.actionButtons}>
-						<button style={{ ...styles.button, ...styles.secondaryButton }} onClick={() => setShowAddForm(false)}>
+				<div className={styles.actionButtons}>
+						<button className={`${styles.button} ${styles.secondaryButton}`} onClick={() => setShowAddForm(false)}>
 							Cancel
 						</button>
-						<button style={{ ...styles.button, ...styles.primaryButton }} onClick={handleAddMedicine}>
+						<button className={`${styles.button} ${styles.primaryButton}`} onClick={handleAddMedicine}>
 							Add Product
 						</button>
 					</div>
@@ -545,45 +315,45 @@ function VendorMedicineManager() {
 			</div>
 
 			{/* Edit Medicine Modal */}
-			<div style={selectedMedicine ? { ...styles.modalOverlay, ...styles.modalActive } : styles.modalOverlay}>
+			<div className={selectedMedicine ? `${styles.modalOverlay} ${styles.modalActive}` : styles.modalOverlay}>
 				{selectedMedicine && (
-					<div style={styles.modal}>
-						<div style={styles.modalHeader}>
+					<div className={styles.modal}>
+						<div className={styles.modalHeader}>
 							<div>Edit Product</div>
 							<button
-								style={styles.closeButton}
+								className={styles.closeButton}
 								onClick={() => setSelectedMedicine(null)}
 							>
 								✕
 							</button>
 						</div>
 
-						<div style={{ ...styles.formGrid, marginBottom: '1.5rem' }}>
-							<div style={styles.formGroup}>
-								<label style={styles.label}>Product Name</label>
-								<input type="text" style={styles.input} value={selectedMedicine.name} disabled />
+						<div className={styles.formGrid} style={{ marginBottom: '1.5rem' }}>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Product Name</label>
+								<input type="text" className={styles.input} value={selectedMedicine.name} disabled />
 							</div>
-							<div style={styles.formGroup}>
-								<label style={styles.label}>Category</label>
-								<input type="text" style={styles.input} value={selectedMedicine.category} disabled />
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Category</label>
+								<input type="text" className={styles.input} value={selectedMedicine.category} disabled />
 							</div>
-							<div style={styles.formGroup}>
-								<label style={styles.label}>Stock</label>
-								<input type="number" style={styles.input} value={selectedMedicine.stock} disabled />
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Stock</label>
+								<input type="number" className={styles.input} value={selectedMedicine.stock} disabled />
 							</div>
-							<div style={styles.formGroup}>
-								<label style={styles.label}>Price</label>
-								<input type="number" style={styles.input} value={selectedMedicine.price} disabled />
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Price</label>
+								<input type="number" className={styles.input} value={selectedMedicine.price} disabled />
 							</div>
 						</div>
 
-						<div style={styles.actionButtons}>
-							<button style={{ ...styles.button, ...styles.dangerButton }} onClick={() => {
+						<div className={styles.actionButtons}>
+							<button className={`${styles.button} ${styles.dangerButton}`} onClick={() => {
 								deleteMedicine(selectedMedicine.id);
 							}}>
 								Delete Product
 							</button>
-							<button style={{ ...styles.button, ...styles.secondaryButton }} onClick={() => setSelectedMedicine(null)}>
+							<button className={`${styles.button} ${styles.secondaryButton}`} onClick={() => setSelectedMedicine(null)}>
 								Close
 							</button>
 						</div>

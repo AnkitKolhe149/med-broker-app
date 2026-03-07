@@ -1,0 +1,263 @@
+.container {
+	display: grid;
+	grid-template-columns: 320px 1fr;
+	gap: 0;
+	min-height: calc(100vh - 80px);
+	background-color: white;
+}
+
+.sidebar {
+	background-color: var(--surface);
+	border-right: 1px solid var(--border);
+	overflow: auto;
+	max-height: calc(100vh - 80px);
+}
+
+.sidebarHeader {
+	padding: 1.5rem;
+	border-bottom: 1px solid var(--border);
+	background-color: white;
+}
+
+.sidebarTitle {
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0;
+	margin-bottom: 1rem;
+}
+
+.searchBox {
+	width: 100%;
+	padding: 0.6rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 0.9rem;
+	background-color: white;
+}
+
+.conversationList {
+	padding: 0.5rem;
+}
+
+.conversationItem {
+	padding: 1rem;
+	border-bottom: 1px solid var(--border);
+	cursor: pointer;
+	transition: all 0.2s;
+	background-color: white;
+}
+
+.conversationItemActive {
+	padding: 1rem;
+	border-bottom: 1px solid var(--border);
+	cursor: pointer;
+	background-color: var(--primary-light);
+	border-left: 4px solid var(--primary);
+}
+
+.conversationHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	margin-bottom: 0.5rem;
+}
+
+.conversationAvatar {
+	font-size: 1.5rem;
+}
+
+.conversationName {
+	font-weight: 600;
+	color: var(--text-primary);
+	font-size: 0.95rem;
+}
+
+.conversationMeta {
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+	white-space: nowrap;
+}
+
+.conversationPreview {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.unreadBadge {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background-color: var(--primary);
+	margin-left: auto;
+}
+
+.chatArea {
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 80px);
+}
+
+.chatHeader {
+	padding: 1.5rem;
+	border-bottom: 1px solid var(--border);
+	background-color: white;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.chatHeaderTitle {
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.chatMessages {
+	flex: 1;
+	overflow: auto;
+	padding: 1.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	background-color: var(--surface);
+}
+
+.messageGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	margin-bottom: 0.5rem;
+}
+
+.messageBubbleVendor {
+	max-width: 70%;
+	padding: 0.8rem 1rem;
+	border-radius: var(--radius);
+	word-wrap: break-word;
+	font-size: 0.95rem;
+	background-color: var(--primary);
+	color: white;
+	align-self: flex-end;
+}
+
+.messageBubbleCustomer {
+	max-width: 70%;
+	padding: 0.8rem 1rem;
+	border-radius: var(--radius);
+	word-wrap: break-word;
+	font-size: 0.95rem;
+	background-color: white;
+	color: var(--text-primary);
+	border: 1px solid var(--border);
+	align-self: flex-start;
+}
+
+.messageTime {
+	font-size: 0.75rem;
+	color: var(--text-secondary);
+	margin-top: 0.2rem;
+}
+
+.inputArea {
+	padding: 1.5rem;
+	background-color: white;
+	border-top: 1px solid var(--border);
+	display: flex;
+	gap: 0.8rem;
+}
+
+.inputField {
+	flex: 1;
+	padding: 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 0.95rem;
+	background-color: var(--surface);
+	font-family: inherit;
+}
+
+.sendButton {
+	padding: 0.8rem 1.5rem;
+	background-color: var(--primary);
+	color: white;
+	border: none;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.2s;
+}
+
+.fileMessage {
+	background-color: var(--primary-light);
+	border: 1px solid var(--primary);
+	padding: 0.8rem 1rem;
+	border-radius: var(--radius);
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.emptyState {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: var(--text-secondary);
+	text-align: center;
+}
+
+@media (max-width: 900px) {
+	.container {
+		grid-template-columns: 280px 1fr;
+	}
+
+	.sidebarHeader,
+	.chatHeader,
+	.chatMessages,
+	.inputArea {
+		padding: 1rem;
+	}
+
+	.messageBubbleVendor,
+	.messageBubbleCustomer {
+		max-width: 80%;
+	}
+}
+
+@media (max-width: 768px) {
+	.container {
+		grid-template-columns: 1fr;
+		min-height: auto;
+	}
+
+	.sidebar {
+		max-height: 40vh;
+		border-right: none;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.chatArea {
+		height: auto;
+		min-height: 60vh;
+	}
+
+	.inputArea {
+		padding: 0.8rem;
+	}
+
+	.sendButton {
+		padding: 0.8rem 1rem;
+	}
+
+	.messageBubbleVendor,
+	.messageBubbleCustomer {
+		max-width: 90%;
+	}
+}
