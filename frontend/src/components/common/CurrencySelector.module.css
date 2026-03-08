@@ -109,7 +109,7 @@
 }
 
 .currencyOption.active {
-	background-color: rgba(var(--primary-rgb, 79, 70, 229), 0.08);
+	background-color: rgba(var(--primary-rgb, 21, 115, 71), 0.08);
 }
 
 .optionSymbol {

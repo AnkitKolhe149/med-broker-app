@@ -350,6 +350,8 @@ function Catalog() {
 
 	// Helper functions
 	const buyerType = user?.customer?.buyerType || 'RETAIL';
+	const minPricePercent = (minPrice / 500) * 100;
+	const maxPricePercent = (maxPrice / 500) * 100;
 	const getDisplayPrice = (medicine) => {
 
 		const vendorPrice = buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice;
@@ -469,7 +471,7 @@ function Catalog() {
 				<div className={styles.topSearchContainer}>
 					<form onSubmit={handleSearchSubmit} className={styles.topSearchForm}>
 						<div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-							<span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>ðŸ”</span>
+						<span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>🔍</span>
 							<input
 								type="text"
 								placeholder="Search by medicine name, brand, salt composition, category..."
@@ -502,7 +504,7 @@ function Catalog() {
 							width: '100%'
 						}}
 					>
-						{showMobileFilters ? 'âœ• Close Filters' : 'ðŸ”½ Show Filters'}
+						{showMobileFilters ? 'Close Filters' : 'Show Filters'}
 					</button>
 				</div>
 
@@ -511,18 +513,15 @@ function Catalog() {
 					className={styles.layoutContainer}
 					style={{ '--filter-width': `${filterWidth}px` }}
 				>
-					
+
 					{/* ===== LEFT SIDEBAR: FILTERS (DRAWER ON MOBILE) ===== */}
-					<aside 
+					<aside
 						className={styles.filterSidebar}
-						style={{
-							left: showMobileFilters ? '0' : undefined
-						}}
+						style={{ left: showMobileFilters ? '0' : undefined }}
 					>
-						{/* Mobile close button */}
-						<button 
+						<button
 							className="mobileFilterClose"
-						onClick={() => dispatch({ type: CATALOG_ACTIONS.SET_SHOW_MOBILE_FILTERS, payload: false })}
+							onClick={() => dispatch({ type: CATALOG_ACTIONS.SET_SHOW_MOBILE_FILTERS, payload: false })}
 							style={{
 								display: 'none',
 								position: 'sticky',
@@ -541,12 +540,10 @@ function Catalog() {
 								zIndex: 10
 							}}
 						>
-							âœ• Close
+							Close
 						</button>
-						
-						<section className={styles.filterContent}>
 
-							{/* FILTERS HEADER */}
+						<section className={styles.filterContent}>
 							<div className={styles.filtersHeader}>
 								<h3 className={styles.filtersSectionTitle}>Refine Your Search</h3>
 								{(categoryFilter !== 'all' || availabilityFilter !== 'all' || prescriptionFilter !== 'all' || minPrice !== 0 || maxPrice !== 500 || sortBy !== 'relevance') && (
@@ -560,18 +557,15 @@ function Catalog() {
 								)}
 							</div>
 
-							{/* CATEGORY FILTER */}
 							<div className={styles.filterGroup}>
 								<label className={styles.filterGroupLabel}>Category</label>
 								<select
 									value={categoryFilter}
-									onChange={(e) => {
-									dispatch({ type: CATALOG_ACTIONS.SET_CATEGORY_FILTER, payload: e.target.value });
-									}}
-								className={styles.filterSelect}
+									onChange={(e) => dispatch({ type: CATALOG_ACTIONS.SET_CATEGORY_FILTER, payload: e.target.value })}
+									className={styles.filterSelect}
 									aria-label="Filter by medicine category"
 								>
-									{categories.map(cat => (
+									{categories.map((cat) => (
 										<option key={cat} value={cat}>
 											{cat === 'all' ? 'All Categories' : cat}
 										</option>
@@ -579,16 +573,22 @@ function Catalog() {
 								</select>
 							</div>
 
-							{/* PRICE RANGE FILTER */}
 							<div className={styles.filterGroup}>
-							<label className={styles.filterGroupLabel}>Price Range ({getCurrencySymbol()})</label>
-							<div className={styles.priceDisplay}>
-								<span className={styles.filterPriceValue}>{convertAndFormat(minPrice)}</span>
-								<span className={styles.priceSeparator}>â€”</span>
-								<span className={styles.filterPriceValue}>{convertAndFormat(maxPrice)}</span>
-							</div>
-							<div className={styles.sliderContainer}>
-								<label className={styles.sliderLabel}>Min: {convertAndFormat(minPrice)}</label>
+								<label className={styles.filterGroupLabel}>Price Range ({getCurrencySymbol()})</label>
+								<div className={styles.priceDisplay}>
+									<span className={styles.filterPriceValue}>{convertAndFormat(minPrice)}</span>
+									<span className={styles.priceSeparator}>-</span>
+									<span className={styles.filterPriceValue}>{convertAndFormat(maxPrice)}</span>
+								</div>
+								<div className={styles.rangeSliderContainer}>
+									<div className={styles.rangeSliderTrack} />
+									<div
+										className={styles.rangeSliderHighlight}
+										style={{
+											left: `${minPricePercent}%`,
+											width: `${Math.max(maxPricePercent - minPricePercent, 0)}%`
+										}}
+									/>
 									<input
 										type="range"
 										min="0"
@@ -597,16 +597,11 @@ function Catalog() {
 										value={minPrice}
 										onChange={(e) => {
 											const value = Number(e.target.value);
-											if (value <= maxPrice) {
-											dispatch({ type: CATALOG_ACTIONS.SET_MIN_PRICE, payload: value });
-											}
+											if (value <= maxPrice) dispatch({ type: CATALOG_ACTIONS.SET_MIN_PRICE, payload: value });
 										}}
-										className={styles.priceSlider}
-										aria-label="Minimum price slider"
+										className={`${styles.priceRangeInput} ${styles.minThumb}`}
+										aria-label="Minimum price"
 									/>
-								</div>
-								<div className={styles.sliderContainer}>
-								<label className={styles.sliderLabel}>Max: {convertAndFormat(maxPrice)}</label>
 									<input
 										type="range"
 										min="0"
@@ -615,25 +610,24 @@ function Catalog() {
 										value={maxPrice}
 										onChange={(e) => {
 											const value = Number(e.target.value);
-											if (value >= minPrice) {
-											dispatch({ type: CATALOG_ACTIONS.SET_MAX_PRICE, payload: value });
-											}
+											if (value >= minPrice) dispatch({ type: CATALOG_ACTIONS.SET_MAX_PRICE, payload: value });
 										}}
-										className={styles.priceSlider}
-										aria-label="Maximum price slider"
+										className={`${styles.priceRangeInput} ${styles.maxThumb}`}
+										aria-label="Maximum price"
 									/>
+								</div>
+								<div className={styles.sliderValuesRow}>
+									<span className={styles.sliderValueLabel}>Min: {convertAndFormat(minPrice)}</span>
+									<span className={styles.sliderValueLabel}>Max: {convertAndFormat(maxPrice)}</span>
 								</div>
 							</div>
 
-							{/* AVAILABILITY FILTER */}
 							<div className={styles.filterGroup}>
 								<label className={styles.filterGroupLabel}>Availability</label>
 								<select
 									value={availabilityFilter}
-									onChange={(e) => {
-									dispatch({ type: CATALOG_ACTIONS.SET_AVAILABILITY_FILTER, payload: e.target.value });
-									}}
-								className={styles.filterSelect}
+									onChange={(e) => dispatch({ type: CATALOG_ACTIONS.SET_AVAILABILITY_FILTER, payload: e.target.value })}
+									className={styles.filterSelect}
 									aria-label="Filter by stock availability"
 								>
 									<option value="all">All Items</option>
@@ -642,27 +636,21 @@ function Catalog() {
 								</select>
 							</div>
 
-							{/* PRESCRIPTION FILTER */}
 							<div className={styles.filterGroup}>
 								<label className={styles.filterGroupLabel}>Prescription Required</label>
 								<select
 									value={prescriptionFilter}
-									onChange={(e) => {
-									dispatch({ type: CATALOG_ACTIONS.SET_PRESCRIPTION_FILTER, payload: e.target.value });
-									}}
-								className={styles.filterSelect}
+									onChange={(e) => dispatch({ type: CATALOG_ACTIONS.SET_PRESCRIPTION_FILTER, payload: e.target.value })}
+									className={styles.filterSelect}
 									aria-label="Filter by prescription requirement"
 								>
 									<option value="all">All Medicines</option>
 									<option value="not-required">No Prescription</option>
 									<option value="required">Prescription Required</option>
 								</select>
-								<p className={styles.filterHint}>
-									Prescription-required medicines will require verification during checkout
-								</p>
+								<p className={styles.filterHint}>Prescription-required medicines will require verification during checkout</p>
 							</div>
 
-							{/* SORT OPTIONS */}
 							<div className={styles.filterGroup}>
 								<label className={styles.filterGroupLabel}>Sort By</label>
 								<select
@@ -680,7 +668,6 @@ function Catalog() {
 								</select>
 							</div>
 
-							{/* BUYER TYPE INFO */}
 							<div className={styles.infoBox}>
 								<p className={styles.infoText}>
 									<strong>Pricing:</strong> You are viewing <strong>{buyerType}</strong> pricing.
@@ -689,17 +676,16 @@ function Catalog() {
 							</div>
 						</section>
 
-						{/* RESIZE HANDLE */}
-						<div 
+						<div
 							className={styles.resizeHandle}
 							onMouseDown={handleMouseDown}
 							style={{
-								cursor: isResizing ? 'col-resize' : 'col-resize',
+								cursor: 'col-resize',
 								backgroundColor: isResizing ? 'var(--primary)' : 'var(--border)'
 							}}
 							title="Drag to resize filter panel"
 						>
-							<div className={styles.resizeHandleIcon}>â‹®</div>
+							<div className={styles.resizeHandleIcon}>...</div>
 						</div>
 					</aside>
 
@@ -730,25 +716,25 @@ function Catalog() {
 							{categoryFilter !== 'all' && (
 								<span className="filterBadge">
 									Category: {categoryFilter}
-								<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_CATEGORY_FILTER, payload: 'all' }); }}>âœ•</button>
+							<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_CATEGORY_FILTER, payload: 'all' }); }}>×</button>
 								</span>
 							)}
 							{availabilityFilter !== 'all' && (
 								<span className="filterBadge">
 									{availabilityFilter === 'in-stock' ? 'In Stock' : 'Out of Stock'}
-								<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_AVAILABILITY_FILTER, payload: 'all' }); }}>âœ•</button>
+							<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_AVAILABILITY_FILTER, payload: 'all' }); }}>×</button>
 								</span>
 							)}
 							{prescriptionFilter !== 'all' && (
 								<span className="filterBadge">
 									{prescriptionFilter === 'required' ? 'Prescription Only' : 'No Prescription'}
-								<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_PRESCRIPTION_FILTER, payload: 'all' }); }}>âœ•</button>
+							<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.SET_PRESCRIPTION_FILTER, payload: 'all' }); }}>×</button>
 								</span>
 							)}
 							{(minPrice !== 0 || maxPrice !== 500) && (
 								<span className="filterBadge">
-									â‚¹{minPrice}-â‚¹{maxPrice}
-								<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.RESET_PRICE_RANGE }); }}>âœ•</button>
+								₹{minPrice}-₹{maxPrice}
+							<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.RESET_PRICE_RANGE }); }}>×</button>
 								</span>
 							)}
 							{(categoryFilter !== 'all' || availabilityFilter !== 'all' || prescriptionFilter !== 'all' || minPrice !== 0 || maxPrice !== 500) && (
@@ -816,7 +802,7 @@ function Catalog() {
 											{/* BADGES: PRESCRIPTION, STOCK STATUS */}
 										<div className={styles.badgesRow}>
 											{medicine.requiresPrescription && (
-												<span className={styles.rxBadge}>â˜… Prescription</span>
+												<span className={styles.rxBadge}>Rx Prescription</span>
 												)}
 											<span className={styles.stockBadge} style={{
 													backgroundColor: medicine.inStock ? 'var(--green-100)' : 'var(--surface)',
@@ -839,7 +825,7 @@ function Catalog() {
 												className={styles.detailsButton}
 													aria-label={`View details for ${medicine.name}`}
 												>
-													ðŸ“‹ Details
+													Details
 												</button>
 												<button
 													onClick={() => handleAddToCart(medicine)}
@@ -851,7 +837,7 @@ function Catalog() {
 													}}
 													aria-label={medicine.inStock ? `Add ${medicine.name} to cart` : `${medicine.name} is out of stock`}
 												>
-													{medicine.inStock ? 'ðŸ›’ Add to Cart' : 'Out of Stock'}
+													{medicine.inStock ? 'Add to Cart' : 'Out of Stock'}
 												</button>
 											</div>
 
@@ -870,7 +856,7 @@ function Catalog() {
 											className={styles.paginationButton}
 											aria-label="Previous page"
 										>
-											â† Previous
+											Previous
 										</button>
 
 										<div className={styles.pageNumbers}>
@@ -898,7 +884,7 @@ function Catalog() {
 											className={styles.paginationButton}
 											aria-label="Next page"
 										>
-											Next â†’
+											Next
 										</button>
 									</div>
 								)}
@@ -906,7 +892,7 @@ function Catalog() {
 						) : (
 							/* EMPTY STATE */
 							<div className="emptyState">
-								<div className="emptyStateIcon">ðŸ”</div>
+							<div className="emptyStateIcon">🔍</div>
 								<h3>No medicines found</h3>
 								<p>
 									{searchQuery
@@ -924,17 +910,6 @@ function Catalog() {
 					</section>
 				</div>
 
-				{/* INFORMATIONAL FOOTER */}
-				<div className={styles.infoFooter}>
-					<p className={styles.infoTitle}>ðŸ“‹ How to Use This Catalog</p>
-					<ul className={styles.infoList}>
-						<li><strong>Search:</strong> Use medicine name, brand, salt name, or dosage form</li>
-						<li><strong>Filter:</strong> Narrow by category, price, availability, or prescription status</li>
-						<li><strong>View Details:</strong> Click any medicine to see composition, vendor info, and patient guidance</li>
-						<li><strong>Pricing:</strong> Prices shown are your {buyerType} pricing and finalized at checkout</li>
-						<li><strong>Prescriptions:</strong> Medicines marked with â˜… require verification before delivery</li>
-					</ul>
-				</div>
 			</div>
 		</main>
 	);

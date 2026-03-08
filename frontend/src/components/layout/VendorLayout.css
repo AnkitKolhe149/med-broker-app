@@ -1,17 +1,17 @@
 /* Vendor Layout Styles */
 
 :root {
-	--primary: #0d9488;
-	--primary-dark: #0f766e;
-	--primary-light: #20b2aa;
-	--surface: #f0fdf4;
+	--primary: #157347;
+	--primary-dark: #0e5e3a;
+	--primary-light: #e8f6ee;
+	--surface: #f5fbf7;
 	--surface-alt: #ffffff;
-	--border: #d1d5db;
-	--border-light: #e5e7eb;
-	--text-primary: #1f2937;
-	--text-secondary: #6b7280;
-	--text-tertiary: #9ca3af;
-	--success: #10b981;
+	--border: #cfe0d6;
+	--border-light: #e4efe8;
+	--text-primary: #102017;
+	--text-secondary: #3d5a4c;
+	--text-tertiary: #6e887c;
+	--success: #157347;
 	--warning: #f59e0b;
 	--error: #ef4444;
 	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);

@@ -1,11 +1,11 @@
 /* --- 1. GLOBAL VARIABLES (Force Light Mode) --- */
 :root {
   --bg-color: #ffffff;           /* Pure White Background */
-  --text-main: #111827;          /* Dark Text */
-  --text-muted: #6b7280;         /* Gray Text */
-  --primary: #16a34a;            /* MedAI Green */
-  --primary-hover: #15803d;
-  --border-color: #e5e7eb;       /* Light Gray Border */
+  --text-main: #102017;          /* Dark Text */
+  --text-muted: #3d5a4c;         /* Stronger muted text */
+  --primary: #157347;            /* MedAI Green */
+  --primary-hover: #0e5e3a;
+  --border-color: #cfe0d6;       /* Soft green border */
 }
 
 /* --- 2. RESET & BODY --- */
@@ -97,7 +97,7 @@ html, body, #root {
 }
 
 .info-card {
-  background-color: #f0fdf4; /* Light Green Background */
+  background-color: #e8f6ee; /* Light Green Background */
   border: none;
 }
 

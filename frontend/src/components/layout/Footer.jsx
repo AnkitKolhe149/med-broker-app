@@ -79,8 +79,8 @@ const styles = {
 	footer: {
 		backgroundColor: 'var(--primary)',
 		color: 'white',
-		paddingTop: '3rem',
-		paddingBottom: '2rem',
+		paddingTop: '1.75rem',
+		paddingBottom: '1rem',
 		marginTop: 'auto'
 	},
 	container: {
@@ -91,9 +91,9 @@ const styles = {
 	grid: {
 		display: 'grid',
 		gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-		gap: '2rem',
-		marginBottom: '2rem',
-		paddingBottom: '2rem',
+		gap: '1.25rem',
+		marginBottom: '1.25rem',
+		paddingBottom: '1.25rem',
 		borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
 	},
 	column: {
@@ -103,22 +103,22 @@ const styles = {
 	columnTitle: {
 		fontSize: '1rem',
 		fontWeight: '600',
-		marginBottom: '1rem',
+		marginBottom: '0.6rem',
 		color: 'white'
 	},
 	columnDescription: {
-		fontSize: '0.9rem',
-		lineHeight: '1.6',
+		fontSize: '0.85rem',
+		lineHeight: '1.45',
 		color: 'rgba(255, 255, 255, 0.9)',
-		marginBottom: '1rem'
+		marginBottom: '0.75rem'
 	},
 	socialLinks: {
 		display: 'flex',
-		gap: '1rem'
+		gap: '0.6rem'
 	},
 	socialLink: {
-		width: '40px',
-		height: '40px',
+		width: '34px',
+		height: '34px',
 		borderRadius: 'var(--radius)',
 		backgroundColor: 'rgba(255, 255, 255, 0.1)',
 		color: 'white',
@@ -127,7 +127,7 @@ const styles = {
 		display: 'flex',
 		alignItems: 'center',
 		justifyContent: 'center',
-		fontSize: '0.9rem',
+		fontSize: '0.8rem',
 		transition: 'background-color 0.2s',
 		textDecoration: 'none'
 	},
@@ -137,7 +137,7 @@ const styles = {
 		margin: 0,
 		display: 'flex',
 		flexDirection: 'column',
-		gap: '0.75rem'
+		gap: '0.45rem'
 	},
 	link: {
 		background: 'none',
@@ -145,20 +145,21 @@ const styles = {
 		color: 'rgba(255, 255, 255, 0.9)',
 		cursor: 'pointer',
 		fontSize: '0.9rem',
+		lineHeight: '1.35',
 		padding: 0,
 		textAlign: 'left',
 		textDecoration: 'none',
 		transition: 'color 0.2s'
 	},
 	bottomSection: {
-		paddingTop: '1rem'
+		paddingTop: '0.5rem'
 	},
 	bottomContent: {
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		flexWrap: 'wrap',
-		gap: '1rem'
+		gap: '0.6rem'
 	},
 	copyright: {
 		fontSize: '0.85rem',
