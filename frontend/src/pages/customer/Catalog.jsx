@@ -384,17 +384,6 @@ function Catalog() {
 		showSuccess(`${medicine.name} added to cart`);
 	};
 
-	const handleSearchChange = (e) => {
-		const query = e.target.value;
-		dispatch({ type: CATALOG_ACTIONS.SET_SEARCH_QUERY, payload: query });
-	};
-
-	const handleSearchSubmit = (e) => {
-		e.preventDefault();
-		dispatch({ type: CATALOG_ACTIONS.SET_SEARCHING, payload: false });
-		dispatch({ type: CATALOG_ACTIONS.SET_CURRENT_PAGE, payload: 1 });
-	};
-
 	const handleSortChange = (newSort) => {
 		dispatch({ type: CATALOG_ACTIONS.SET_SORT_BY, payload: newSort });
 		dispatch({ type: CATALOG_ACTIONS.SET_CURRENT_PAGE, payload: 1 });
@@ -459,54 +448,26 @@ function Catalog() {
 	return (
 		<main className="page">
 			<div className="container">
-				{/* PAGE HEADER */}
-				<div className="page-header">
-					<div className="title-group">
-						<h1 className="section-title">Medicine Catalog</h1>
-						<p className="section-subtitle">Safe, transparent, and fast medicine discovery from verified vendors</p>
-					</div>
-				</div>
-
-				{/* SEARCH BAR - TOP OF PAGE */}
-				<div className={styles.topSearchContainer}>
-					<form onSubmit={handleSearchSubmit} className={styles.topSearchForm}>
-						<div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-						<span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>🔍</span>
-							<input
-								type="text"
-								placeholder="Search by medicine name, brand, salt composition, category..."
-								value={searchQuery}
-								onChange={handleSearchChange}
-								className={styles.topSearchInput}
-								aria-label="Search medicines"
-							/>
-						</div>
-						<button type="submit" className={styles.topSearchButton}>
-							Search
-						</button>
-					</form>
-					
-					{/* Mobile Filter Toggle Button */}
-					<button 
-						className="mobileFilterToggle"
-						onClick={() => dispatch({ type: CATALOG_ACTIONS.SET_SHOW_MOBILE_FILTERS, payload: !showMobileFilters })}
-						style={{
-							display: 'none',
-							padding: '0.75rem 1.5rem',
-							background: 'var(--primary)',
-							color: 'white',
-							border: 'none',
-							borderRadius: '8px',
-							fontSize: '1rem',
-							fontWeight: '500',
-							cursor: 'pointer',
-							marginTop: '1rem',
-							width: '100%'
-						}}
-					>
-						{showMobileFilters ? 'Close Filters' : 'Show Filters'}
-					</button>
-				</div>
+				{/* Mobile Filter Toggle Button */}
+				<button 
+					className="mobileFilterToggle"
+					onClick={() => dispatch({ type: CATALOG_ACTIONS.SET_SHOW_MOBILE_FILTERS, payload: !showMobileFilters })}
+					style={{
+						display: 'none',
+						padding: '0.75rem 1.5rem',
+						background: 'var(--primary)',
+						color: 'white',
+						border: 'none',
+						borderRadius: '8px',
+						fontSize: '1rem',
+						fontWeight: '500',
+						cursor: 'pointer',
+						marginTop: '1rem',
+						width: '100%'
+					}}
+				>
+					{showMobileFilters ? 'Close Filters' : 'Show Filters'}
+				</button>
 
 				{/* TWO-COLUMN LAYOUT: FILTERS (LEFT) + MEDICINES (RIGHT) */}
 				<div

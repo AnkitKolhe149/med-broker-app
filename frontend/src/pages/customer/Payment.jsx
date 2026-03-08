@@ -125,7 +125,7 @@ function Payment() {
 
 				<div className={styles.mainContent}>
 					{/* Left: Payment Methods */}
-					<section className="section" style={{ padding: '2rem' }}>
+					<section className={styles.paymentSection}>
 						<form onSubmit={handlePaymentProcess} className={styles.formContainer}>
 							{/* UPI Payment */}
 							<div className={styles.paymentMethodCard}>

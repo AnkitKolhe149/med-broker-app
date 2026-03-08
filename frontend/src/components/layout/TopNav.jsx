@@ -4,7 +4,6 @@ import { useCart } from '../../context/CartContext';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
 import Avatar from '../common/Avatar';
-import CurrencySelector from '../common/CurrencySelector';
 
 function TopNav() {
 	const navigate = useNavigate();
@@ -129,8 +128,6 @@ function TopNav() {
 					</div>
 
 					<div className="topnav-actions" style={styles.rightSection}>
-						<CurrencySelector />
-
 						<button
 							type="button"
 							onClick={() => handleNavigate('/customer/cart')}

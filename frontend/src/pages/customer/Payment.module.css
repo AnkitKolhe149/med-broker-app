@@ -13,6 +13,7 @@
 .paymentSection {
 	display: flex;
 	flex-direction: column;
+	padding: 2rem;
 }
 
 .formContainer {
@@ -273,16 +274,177 @@
 	margin: 0.25rem 0 0 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
 	.mainContent {
 		grid-template-columns: 1fr;
+		gap: 1.5rem;
+		margin-top: 1.5rem;
+	}
+
+	.paymentSection {
+		padding: 1.5rem;
 	}
 
 	.summaryCard {
 		position: static;
 	}
+}
+
+@media (max-width: 768px) {
+	.mainContent {
+		gap: 1rem;
+		margin-top: 1rem;
+	}
+
+	.paymentSection {
+		padding: 1.25rem;
+	}
+
+	.paymentMethodCard {
+		padding: 1.25rem;
+	}
+
+	.methodDetails {
+		margin-left: 1.75rem;
+	}
+
+	.summaryCard {
+		padding: 1.25rem;
+	}
 
 	.twoColumn {
 		grid-template-columns: 1fr;
+	}
+
+	.qrContainer {
+		padding: 1rem;
+	}
+}
+
+@media (max-width: 480px) {
+	.mainContent {
+		gap: 0.75rem;
+		margin-top: 0.75rem;
+	}
+
+	.paymentSection {
+		padding: 0.75rem;
+	}
+
+	.paymentMethodCard {
+		padding: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.radioLabel {
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.methodDetails {
+		margin-left: 2rem;
+		padding-top: 0.75rem;
+	}
+
+	.summaryCard {
+		padding: 1rem;
+	}
+
+	.summaryTitle {
+		font-size: 0.9rem;
+		margin: 0 0 0.75rem 0;
+	}
+
+	.section {
+		margin-bottom: 0.75rem;
+	}
+
+	.sectionTitle {
+		font-size: 0.85rem;
+		margin: 0 0 0.5rem 0;
+	}
+
+	.addressText {
+		font-size: 0.8rem;
+	}
+
+	.itemRow {
+		font-size: 0.8rem;
+		margin-bottom: 0.35rem;
+	}
+
+	.pricingRow {
+		font-size: 0.8rem;
+		margin-bottom: 0.35rem;
+	}
+
+	.totalRow {
+		font-size: 0.95rem;
+		margin-top: 0.35rem;
+	}
+
+	.divider {
+		margin: 0.75rem 0;
+	}
+
+	.payButton {
+		padding: 0.85rem;
+		font-size: 0.95rem;
+		margin-top: 0.75rem;
+	}
+
+	.disclaimer {
+		font-size: 0.75rem;
+		margin: 0.75rem 0 0 0;
+	}
+
+	.label {
+		font-size: 0.85rem;
+	}
+
+	.input {
+		padding: 0.65rem;
+		font-size: 0.85rem;
+	}
+
+	.qrContainer {
+		padding: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.qrLabel {
+		font-size: 0.85rem;
+	}
+
+	.qrHint {
+		font-size: 0.75rem;
+		margin: 0.75rem 0 0 0;
+	}
+
+	.orDivider {
+		margin: 0.75rem 0;
+		font-size: 0.9rem;
+	}
+
+	.methodTitle {
+		font-size: 0.95rem;
+	}
+
+	.securityBadge {
+		gap: 0.5rem;
+		padding: 0.5rem;
+		margin-top: 0.75rem;
+	}
+
+	.badgeIcon {
+		font-size: 1.25rem;
+	}
+
+	.badgeTitle {
+		font-size: 0.8rem;
+	}
+
+	.badgeText {
+		font-size: 0.7rem;
 	}
 }
