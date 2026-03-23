@@ -58,6 +58,7 @@ function App() {
                             {/* Animated background layer */}
                             <AnimatedBackground />
                             
+                            <div className="app-content-layer">
                             <Routes>
                     {/* Public routes */}
                     <Route path="/" element={<Landing />} />
@@ -173,6 +174,7 @@ function App() {
                     {/* Fallback route */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
+                        </div>
                     </Router>
                 </CartProvider>
             </CurrencyProvider>
