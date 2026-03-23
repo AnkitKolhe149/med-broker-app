@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import medicineService from '../../services/medicine.service';
 import styles from './Catalog.module.css';
 import { catalogReducer, initialCatalogState, CATALOG_ACTIONS } from './catalogReducer';
 
@@ -22,7 +23,7 @@ function Catalog() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { addToCart } = useCart();
 	const { user } = useUser();
-	const { showSuccess } = useNotification();
+	const { showSuccess, showError } = useNotification();
   const { convertAndFormat, convert, getCurrencySymbol, formatOriginalPrice, currency: userCurrency } = useCurrency();
 	
 	// Consolidated state management with useReducer
@@ -50,223 +51,27 @@ function Catalog() {
 		const fetchMedicines = async () => {
 			dispatch({ type: CATALOG_ACTIONS.SET_LOADING, payload: true });
 			try {
-				await new Promise(resolve => setTimeout(resolve, 800));
-				
-				const medicineData = [
-					{
-						id: 1,
-						name: 'Paracetamol 500mg',
-						category: 'Analgesics',
-						composition: 'Paracetamol',
-						brand: 'Paracare',
-						dosageForm: 'Tablet',
-						retailPrice: 45.00,
-						wholesalePrice: 36.00,
-						currency: 'INR',
-					popularity: 92,
-						addedAt: '2024-01-12',
-						requiresPrescription: false,
-						vendor: 'PharmaCorp India',
-						inStock: true,
-						stockLevel: 245
-					},
-					{
-						id: 2,
-						name: 'Amoxicillin 250mg',
-						category: 'Antibiotics',
-						composition: 'Amoxicillin Trihydrate',
-						brand: 'MediSupply',
-						dosageForm: 'Capsule',
-					retailPrice: 1.50,
-					wholesalePrice: 1.20,
-					currency: 'USD',
-					popularity: 78,
-					addedAt: '2024-01-08',
-					requiresPrescription: true,
-					vendor: 'MediSupply Ltd (USA)',
-						inStock: true,
-						stockLevel: 152
-					},
-					{
-						id: 3,
-						name: 'Cetirizine 10mg',
-						category: 'Antihistamines',
-						composition: 'Cetirizine Hydrochloride',
-						brand: 'AllerFree',
-						dosageForm: 'Tablet',
-					retailPrice: 0.30,
-					wholesalePrice: 0.25,
-					currency: 'EUR',
-					popularity: 85,
-					addedAt: '2024-01-05',
-					requiresPrescription: false,
-					vendor: 'HealthPlus Pharma (EU)',
-						inStock: true,
-						stockLevel: 389
-					},
-					{
-						id: 4,
-						name: 'Omeprazole 20mg',
-						category: 'Antacids',
-						composition: 'Omeprazole',
-						brand: 'AcidGuard',
-						dosageForm: 'Capsule',
-						retailPrice: 85.00,
-						wholesalePrice: 70.00,					currency: 'INR',						popularity: 74,
-						addedAt: '2024-01-02',
-						requiresPrescription: true,
-						vendor: 'PharmaCorp India',
-						inStock: true,
-						stockLevel: 98
-					},
-					{
-						id: 5,
-						name: 'Metformin 500mg',
-						category: 'Antidiabetics',
-						composition: 'Metformin Hydrochloride',
-						brand: 'DiabeCare',
-						dosageForm: 'Tablet',
-					retailPrice: 0.75,
-					wholesalePrice: 0.60,
-					currency: 'GBP',
-						popularity: 88,
-						addedAt: '2023-12-29',
-						requiresPrescription: true,
-						vendor: 'DiabeCare Inc',
-						inStock: true,
-						stockLevel: 267
-					},
-					{
-						id: 6,
-						name: 'Atorvastatin 10mg',
-						category: 'Cardiovascular',
-						composition: 'Atorvastatin Calcium',
-						brand: 'CardioPharma',
-						dosageForm: 'Tablet',
-						retailPrice: 95.00,
-						wholesalePrice: 78.00,
-						currency: 'INR',
-					popularity: 69,
-						addedAt: '2023-12-22',
-						requiresPrescription: true,
-						vendor: 'CardioPharma',
-						inStock: false,
-						stockLevel: 0
-					},
-					{
-						id: 7,
-						name: 'Ibuprofen 400mg',
-						category: 'Analgesics',
-						composition: 'Ibuprofen',
-						brand: 'PainFree',
-						dosageForm: 'Tablet',
-						retailPrice: 55.00,
-						wholesalePrice: 44.00,
-						currency: 'INR',
-					popularity: 81,
-						addedAt: '2023-12-18',
-						requiresPrescription: false,
-						vendor: 'PharmaCorp India',
-						inStock: true,
-						stockLevel: 178
-					},
-					{
-						id: 8,
-						name: 'Lisinopril 10mg',
-						category: 'Cardiovascular',
-						composition: 'Lisinopril',
-						brand: 'HeartCare',
-						dosageForm: 'Tablet',
-						retailPrice: 110.00,
-						wholesalePrice: 88.00,
-						currency: 'INR',
-					popularity: 76,
-						addedAt: '2023-12-10',
-						requiresPrescription: true,
-						vendor: 'HealthPlus Pharma',
-						inStock: true,
-						stockLevel: 134
-					},
-					{
-						id: 9,
-						name: 'Levothyroxine 50mcg',
-						category: 'Endocrine',
-						composition: 'Levothyroxine Sodium',
-						brand: 'ThyroidCare',
-						dosageForm: 'Tablet',
-						retailPrice: 80.00,
-						wholesalePrice: 65.00,
-						currency: 'INR',
-					popularity: 72,
-						addedAt: '2023-12-05',
-						requiresPrescription: true,
-						vendor: 'DiabeCare Inc',
-						inStock: true,
-						stockLevel: 201
-					},
-					{
-						id: 10,
-						name: 'Aspirin 75mg',
-						category: 'Cardiovascular',
-						composition: 'Acetylsalicylic Acid',
-						brand: 'CardioShield',
-						dosageForm: 'Tablet',
-						retailPrice: 40.00,
-						wholesalePrice: 32.00,
-						currency: 'INR',
-					popularity: 84,
-						addedAt: '2023-11-28',
-						requiresPrescription: false,
-						vendor: 'CardioPharma',
-						inStock: true,
-						stockLevel: 421
-					},
-					{
-						id: 11,
-						name: 'Calcium Carbonate 500mg',
-						category: 'Supplements',
-						composition: 'Calcium Carbonate',
-						brand: 'BoneHealth',
-						dosageForm: 'Tablet',
-						retailPrice: 35.00,
-						wholesalePrice: 28.00,
-						currency: 'INR',
-					popularity: 70,
-						addedAt: '2023-11-20',
-						requiresPrescription: false,
-						vendor: 'PharmaCorp India',
-						inStock: true,
-						stockLevel: 356
-					},
-					{
-						id: 12,
-						name: 'Multivitamin Complex',
-						category: 'Supplements',
-						composition: 'Vitamins A,B,C,D,E',
-						brand: 'VitaNutrition',
-						dosageForm: 'Capsule',
-						retailPrice: 75.00,
-						wholesalePrice: 60.00,
-						currency: 'INR',
-					popularity: 79,
-						addedAt: '2023-11-15',
-						requiresPrescription: false,
-						vendor: 'MediSupply Ltd',
-						inStock: true,
-						stockLevel: 198
-					}
-				];
-				
-				dispatch({ type: CATALOG_ACTIONS.SET_MEDICINES, payload: medicineData });
+				const result = await medicineService.getMedicines({
+					page: currentPage,
+					limit: itemsPerPage
+				});
+
+				if (result.success) {
+					dispatch({ type: CATALOG_ACTIONS.SET_MEDICINES, payload: result.medicines });
+				} else {
+					console.error('Failed to fetch medicines:', result.error);
+					showError('Failed to load medicines from server');
+				}
 			} catch (error) {
 				console.error('Failed to load medicines:', error);
+				showError('Error loading medicines');
 			} finally {
 				dispatch({ type: CATALOG_ACTIONS.SET_LOADING, payload: false });
 			}
 		};
 		
 		fetchMedicines();
-	}, []);
+	}, [currentPage]);
 
 	useEffect(() => {
 		const query = searchParams.get('search') || '';
