@@ -11,6 +11,7 @@ import { CurrencyProvider } from '../context/CurrencyContext';
 // Layout components
 import AppShell from '../components/layout/AppShell';
 import VendorLayout from '../components/layout/VendorLayout';
+import AnimatedBackground from '../components/layout/AnimatedBackground';
 
 // Auth guard
 import AuthGuard from './authGuard';
@@ -54,6 +55,9 @@ function App() {
                 <CurrencyProvider>
                     <CartProvider>
                         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                            {/* Animated background layer */}
+                            <AnimatedBackground />
+                            
                             <Routes>
                     {/* Public routes */}
                     <Route path="/" element={<Landing />} />

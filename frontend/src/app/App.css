@@ -98,12 +98,22 @@ body {
 	-webkit-tap-highlight-color: transparent;
 	padding: max(0px, env(safe-area-inset-bottom));
 	font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-	background: var(--background);
+	background: transparent;
 	color: var(--text-primary);
 	line-height: 1.6;
 	font-size: clamp(0.875rem, 1vw, 1.125rem);
 	word-break: break-word;
 	overflow-wrap: break-word;
+}
+
+/* ============================================
+   LAYOUT & POSITIONING
+   ============================================ */
+
+/* Ensure main content appears above animated background */
+#root > * {
+	position: relative;
+	z-index: 1;
 }
 
 /* Fluid Typography Scaling */

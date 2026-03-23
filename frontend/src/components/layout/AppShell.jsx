@@ -20,11 +20,14 @@ const styles = {
 	wrapper: {
 		display: 'flex',
 		flexDirection: 'column',
-		minHeight: '100vh'
+		minHeight: '100vh',
+		backgroundColor: 'transparent',
+		position: 'relative',
+		zIndex: 1
 	},
 	main: {
 		flex: 1,
-		backgroundColor: 'var(--background)'
+		backgroundColor: 'transparent'
 	}
 };
 

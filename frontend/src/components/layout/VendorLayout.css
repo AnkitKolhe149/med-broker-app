@@ -43,7 +43,9 @@ body {
 .vendor-layout {
 	display: flex;
 	min-height: 100vh;
-	background-color: var(--surface);
+	background-color: transparent;
+	position: relative;
+	z-index: 1;
 }
 
 .vendor-mobile-toggle {
@@ -204,7 +206,7 @@ body {
 	transition: var(--transition);
 	overflow-y: auto;
 	overflow-x: hidden;
-	background: var(--surface);
+	background: transparent;
 }
 
 .vendor-main.expanded {
