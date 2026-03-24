@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Orders.module.css';
 
 function VendorOrders() {
@@ -91,11 +92,10 @@ function VendorOrders() {
 
 	return (
 		<div className={styles.container}>
-			{/* Header */}
-			<div className={styles.header}>
-				<h1 className={styles.title}>Orders</h1>
-				<p className={styles.subtitle}>Manage and track all customer orders</p>
-			</div>
+			<VendorPageShell
+				title="Orders"
+				subtitle="Manage and track all customer orders"
+			>
 
 			{/* Filters */}
 			<div className={styles.filterBar}>
@@ -277,6 +277,7 @@ function VendorOrders() {
 					</div>
 				)}
 			</div>
+			</VendorPageShell>
 		</div>
 	);
 }

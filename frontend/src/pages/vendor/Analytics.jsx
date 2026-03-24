@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Analytics.module.css';
 
 function VendorAnalytics() {
@@ -33,21 +34,23 @@ function VendorAnalytics() {
 
 	return (
 		<div className={styles.container}>
-			{/* Header */}
-			<div className={styles.header}>
-				<h1 className={styles.title}>Analytics & Insights</h1>
-				<div className={styles.timeRangeSelector}>
-					{['week', 'month', 'quarter', 'year'].map(range => (
-						<button
-							key={range}
-							className={`${styles.timeButton} ${timeRange === range ? styles.timeButtonActive : ''}`}
-							onClick={() => setTimeRange(range)}
-						>
-							{range.charAt(0).toUpperCase() + range.slice(1)}
-						</button>
-					))}
-				</div>
-			</div>
+			<VendorPageShell
+				title="Analytics & Insights"
+				subtitle="Track performance trends and revenue signals"
+				actions={(
+					<div className={styles.timeRangeSelector}>
+						{['week', 'month', 'quarter', 'year'].map(range => (
+							<button
+								key={range}
+								className={`${styles.timeButton} ${timeRange === range ? styles.timeButtonActive : ''}`}
+								onClick={() => setTimeRange(range)}
+							>
+								{range.charAt(0).toUpperCase() + range.slice(1)}
+							</button>
+						))}
+					</div>
+				)}
+			>
 
 			{/* Key Metrics */}
 			<div className={styles.metricsGrid}>
@@ -168,6 +171,7 @@ function VendorAnalytics() {
 				Consider increasing inventory by 20% to avoid stockouts. Also, your Cetirizine 10mg could benefit from a 5-10% price optimization
 				based on market competition.
 			</div>
+			</VendorPageShell>
 		</div>
 	);
 }

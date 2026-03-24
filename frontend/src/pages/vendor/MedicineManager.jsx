@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './MedicineManager.module.css';
 
 function VendorMedicineManager() {
@@ -108,16 +109,15 @@ function VendorMedicineManager() {
 
 	return (
 		<div className={styles.container}>
-			{/* Header */}
-			<div className={styles.header}>
-				<div className={styles.headerLeft}>
-					<h1 className={styles.title}>Product Management</h1>
-					<p className={styles.subtitle}>Manage your medicine catalog and inventory</p>
-				</div>
-				<button className={styles.addButton} onClick={() => setShowAddForm(true)}>
-					+ Add Product
-				</button>
-			</div>
+			<VendorPageShell
+				title="Product Management"
+				subtitle="Manage your medicine catalog and inventory"
+				actions={(
+					<button className={styles.addButton} onClick={() => setShowAddForm(true)}>
+						+ Add Product
+					</button>
+				)}
+			>
 
 			{/* Filters */}
 			<div className={styles.filterBar}>
@@ -360,6 +360,7 @@ function VendorMedicineManager() {
 					</div>
 				)}
 			</div>
+			</VendorPageShell>
 		</div>
 	);
 }

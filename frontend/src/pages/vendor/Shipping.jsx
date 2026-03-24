@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Shipping.module.css';
 
 function VendorShipping() {
@@ -67,11 +68,10 @@ function VendorShipping() {
 
 	return (
 		<div className={styles.container}>
-			{/* Header */}
-			<div className={styles.header}>
-				<h1 className={styles.title}>Shipping & Logistics</h1>
-				<p className={styles.subtitle}>Manage shipments and track deliveries in real-time</p>
-			</div>
+			<VendorPageShell
+				title="Shipping & Logistics"
+				subtitle="Manage shipments and track deliveries in real-time"
+			>
 
 			{/* Stats */}
 			<div className={styles.shippingStats}>
@@ -269,6 +269,7 @@ function VendorShipping() {
 					</div>
 				)}
 			</div>
+			</VendorPageShell>
 		</div>
 	);
 }

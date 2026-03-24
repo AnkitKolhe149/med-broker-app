@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Compliance.module.css';
 
 function VendorCompliance() {
@@ -67,11 +68,10 @@ function VendorCompliance() {
 
 	return (
 		<div className={styles.container}>
-			{/* Header */}
-			<div className={styles.header}>
-				<h1 className={styles.title}>Compliance & Documents</h1>
-				<p className={styles.subtitle}>Manage your business licenses, certifications, and regulatory documents</p>
-			</div>
+			<VendorPageShell
+				title="Compliance & Documents"
+				subtitle="Manage your business licenses, certifications, and regulatory documents"
+			>
 
 			{/* Compliance Alert */}
 			<div className={styles.complianceAlert}>
@@ -198,6 +198,7 @@ function VendorCompliance() {
 					</div>
 				</div>
 			</div>
+			</VendorPageShell>
 		</div>
 	);
 }

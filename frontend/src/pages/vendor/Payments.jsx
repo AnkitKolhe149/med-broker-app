@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Payments.module.css';
 
 function VendorPayments() {
@@ -81,11 +82,10 @@ function VendorPayments() {
 
 	return (
 		<div className={styles.container}>
-			{/* Header */}
-			<div className={styles.header}>
-				<h1 className={styles.title}>Payments & Settlements</h1>
-				<p className={styles.subtitle}>Manage earnings and withdrawals</p>
-			</div>
+			<VendorPageShell
+				title="Payments & Settlements"
+				subtitle="Manage earnings and withdrawals"
+			>
 
 			{/* Metrics */}
 			<div className={styles.metricsGrid}>
@@ -321,6 +321,7 @@ function VendorPayments() {
 					</div>
 				</div>
 			</div>
+			</VendorPageShell>
 		</div>
 	);
 }

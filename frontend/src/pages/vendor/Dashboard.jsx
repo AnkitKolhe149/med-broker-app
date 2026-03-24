@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
+import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Dashboard.module.css';
 
 function VendorDashboard() {
@@ -73,16 +74,20 @@ function VendorDashboard() {
 
 	return (
 		<div className={styles.container}>
-			{/* Header */}
-			<div className={styles.header}>
-				<div className={styles.headerLeft}>
-				<h1 className={styles.title}>Vendor Dashboard</h1>
-				<p className={styles.subtitle}>Welcome, {user?.vendor?.companyName || user?.email}! Here's your business overview.</p>
-				</div>
-				<button className={styles.logoutButton} onClick={handleLogout}>
-					Logout
-				</button>
-			</div>
+			<VendorPageShell
+				title="Vendor Dashboard"
+				subtitle={`Welcome, ${user?.vendor?.companyName || user?.email}! Here's your business overview.`}
+				actions={(
+					<>
+						<button className={styles.inventoryButton} onClick={() => navigate('/vendor/products')}>
+							Manage Inventory & Stock
+						</button>
+						<button className={styles.logoutButton} onClick={handleLogout}>
+							Logout
+						</button>
+					</>
+				)}
+			>
 
 			{/* Verification Alert */}
 			{user?.vendor?.verificationStatus === 'PENDING' && (
@@ -93,6 +98,29 @@ function VendorDashboard() {
 					</p>
 				</div>
 			)}
+
+			<div className={styles.quickActionsSection}>
+				<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/products')}>
+					<span className={styles.quickActionIcon}>💊</span>
+					<span className={styles.quickActionLabel}>Add / Update Stock</span>
+					<span className={styles.quickActionHint}>Manage inventory and pricing</span>
+				</button>
+				<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/orders')}>
+					<span className={styles.quickActionIcon}>📦</span>
+					<span className={styles.quickActionLabel}>Process Orders</span>
+					<span className={styles.quickActionHint}>Review pending order queue</span>
+				</button>
+				<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/shipping')}>
+					<span className={styles.quickActionIcon}>🚚</span>
+					<span className={styles.quickActionLabel}>Track Shipping</span>
+					<span className={styles.quickActionHint}>Update shipment progress</span>
+				</button>
+				<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/payments')}>
+					<span className={styles.quickActionIcon}>💰</span>
+					<span className={styles.quickActionLabel}>View Payments</span>
+					<span className={styles.quickActionHint}>Check settlements and ledger</span>
+				</button>
+			</div>
 
 			{/* Key Metrics */}
 			<div className={styles.metricsGrid}>
@@ -223,6 +251,13 @@ function VendorDashboard() {
 				{/* Low Stock Alert */}
 				<div className={styles.section}>
 					<h2 className={styles.sectionTitle}>Low Stock Alert</h2>
+					<button
+						type="button"
+						className={styles.inlineInventoryButton}
+						onClick={() => navigate('/vendor/products')}
+					>
+						Update Stocks
+					</button>
 					{dashboardData.lowStockProducts.length > 0 ? (
 						<div style={{ display: 'grid', gap: '1rem' }}>
 							{dashboardData.lowStockProducts.map((product, idx) => (
@@ -266,6 +301,7 @@ function VendorDashboard() {
 					)}
 				</div>
 			</div>
+			</VendorPageShell>
 		</div>
 	);
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Settings.module.css';
 
 function VendorSettings() {
@@ -60,11 +61,10 @@ function VendorSettings() {
 
 	return (
 		<div className={styles.container}>
-			{/* Header */}
-			<div className={styles.header}>
-				<h1 className={styles.title}>Settings</h1>
-				<p className={styles.subtitle}>Manage your account, security, and preferences</p>
-			</div>
+			<VendorPageShell
+				title="Settings"
+				subtitle="Manage your account, security, and preferences"
+			>
 
 			{/* Tabs */}
 			<div className={styles.tabs}>
@@ -398,6 +398,7 @@ function VendorSettings() {
 					</div>
 				</div>
 			)}
+			</VendorPageShell>
 		</div>
 	);
 }
