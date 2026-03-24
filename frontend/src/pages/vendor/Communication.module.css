@@ -3,20 +3,21 @@
 	grid-template-columns: 320px 1fr;
 	gap: 0;
 	min-height: calc(100vh - 80px);
-	background-color: white;
+	background-color: var(--surface);
 }
 
 .sidebar {
-	background-color: var(--surface);
-	border-right: 1px solid var(--border);
+	background-color: var(--surface-elevated);
+	border-right: 1px solid var(--border-light);
 	overflow: auto;
 	max-height: calc(100vh - 80px);
+	box-shadow: inset -1px 0 0 var(--border-light);
 }
 
 .sidebarHeader {
 	padding: 1.5rem;
-	border-bottom: 1px solid var(--border);
-	background-color: white;
+	border-bottom: 1px solid var(--border-light);
+	background-color: var(--surface-elevated);
 }
 
 .sidebarTitle {
@@ -30,10 +31,16 @@
 .searchBox {
 	width: 100%;
 	padding: 0.6rem;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	border-radius: var(--radius);
 	font-size: 0.9rem;
-	background-color: white;
+	background-color: var(--surface-elevated);
+}
+
+.searchBox:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: 2px;
+	border-color: var(--primary);
 }
 
 .conversationList {
@@ -42,15 +49,25 @@
 
 .conversationItem {
 	padding: 1rem;
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--border-light);
 	cursor: pointer;
-	transition: all 0.2s;
-	background-color: white;
+	transition: background-color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard);
+	background-color: var(--surface-elevated);
+}
+
+.conversationItem:hover {
+	background-color: var(--surface);
+}
+
+.conversationItem:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: -2px;
+	border-radius: 6px;
 }
 
 .conversationItemActive {
 	padding: 1rem;
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--border-light);
 	cursor: pointer;
 	background-color: var(--primary-light);
 	border-left: 4px solid var(--primary);
@@ -104,8 +121,8 @@
 
 .chatHeader {
 	padding: 1.5rem;
-	border-bottom: 1px solid var(--border);
-	background-color: white;
+	border-bottom: 1px solid var(--border-light);
+	background-color: var(--surface-elevated);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -152,9 +169,9 @@
 	border-radius: var(--radius);
 	word-wrap: break-word;
 	font-size: 0.95rem;
-	background-color: white;
+	background-color: var(--surface-elevated);
 	color: var(--text-primary);
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	align-self: flex-start;
 }
 
@@ -166,8 +183,8 @@
 
 .inputArea {
 	padding: 1.5rem;
-	background-color: white;
-	border-top: 1px solid var(--border);
+	background-color: var(--surface-elevated);
+	border-top: 1px solid var(--border-light);
 	display: flex;
 	gap: 0.8rem;
 }
@@ -175,11 +192,17 @@
 .inputField {
 	flex: 1;
 	padding: 0.8rem;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	border-radius: var(--radius);
 	font-size: 0.95rem;
 	background-color: var(--surface);
 	font-family: inherit;
+}
+
+.inputField:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: 2px;
+	border-color: var(--primary);
 }
 
 .sendButton {
@@ -190,7 +213,18 @@
 	border-radius: var(--radius);
 	cursor: pointer;
 	font-weight: 600;
-	transition: all 0.2s;
+	transition: transform var(--motion-fast) var(--ease-standard), filter var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.sendButton:hover {
+	transform: translateY(-1px);
+	filter: brightness(1.03);
+	box-shadow: var(--shadow-sm);
+}
+
+.sendButton:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: 2px;
 }
 
 .fileMessage {

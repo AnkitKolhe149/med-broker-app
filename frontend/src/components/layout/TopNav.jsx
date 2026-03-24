@@ -15,6 +15,22 @@ function TopNav() {
 	const profileButtonRef = useRef(null);
 	const profileMenuRef = useRef(null);
 
+	const focusProfileMenuItem = (index) => {
+		const menuButtons = profileMenuRef.current
+			? Array.from(profileMenuRef.current.querySelectorAll('button.topnav-profile-menu-item'))
+			: [];
+
+		if (!menuButtons.length) return;
+
+		const boundedIndex = Math.max(0, Math.min(index, menuButtons.length - 1));
+		menuButtons[boundedIndex].focus();
+	};
+
+	const openProfileMenuAndFocus = (index = 0) => {
+		setShowProfileMenu(true);
+		window.requestAnimationFrame(() => focusProfileMenuItem(index));
+	};
+
 	useEffect(() => {
 		const handleClickOutside = (e) => {
 			if (
@@ -72,14 +88,92 @@ function TopNav() {
 		setShowMobileMenu(false);
 	};
 
-	const quickLinks = [
-		{ label: 'Dashboard', path: '/customer/dashboard' },
-		{ label: 'Browse Medicines', path: '/customer/catalog' },
-		{ label: 'Cart', path: '/customer/cart' },
-		{ label: 'My Orders', path: '/customer/orders' },
-		{ label: 'Checkout', path: '/customer/checkout' },
-		{ label: 'Payment', path: '/customer/payment' },
-		{ label: 'Profile Settings', path: '/customer/profile' }
+	const handleProfileButtonKeyDown = (e) => {
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			openProfileMenuAndFocus(0);
+			return;
+		}
+
+		if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			const menuButtons = profileMenuRef.current
+				? Array.from(profileMenuRef.current.querySelectorAll('button.topnav-profile-menu-item'))
+				: [];
+			openProfileMenuAndFocus(Math.max(menuButtons.length - 1, 0));
+			return;
+		}
+
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			if (showProfileMenu) {
+				setShowProfileMenu(false);
+			} else {
+				openProfileMenuAndFocus(0);
+			}
+		}
+	};
+
+	const handleProfileMenuKeyDown = (e) => {
+		const menuButtons = profileMenuRef.current
+			? Array.from(profileMenuRef.current.querySelectorAll('button.topnav-profile-menu-item'))
+			: [];
+
+		if (!menuButtons.length) return;
+
+		const currentIndex = menuButtons.findIndex((button) => button === document.activeElement);
+
+		if (e.key === 'Escape') {
+			e.preventDefault();
+			setShowProfileMenu(false);
+			profileButtonRef.current?.focus();
+			return;
+		}
+
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % menuButtons.length;
+			menuButtons[nextIndex].focus();
+			return;
+		}
+
+		if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			const prevIndex = currentIndex < 0 ? menuButtons.length - 1 : (currentIndex - 1 + menuButtons.length) % menuButtons.length;
+			menuButtons[prevIndex].focus();
+			return;
+		}
+
+		if (e.key === 'Home') {
+			e.preventDefault();
+			menuButtons[0].focus();
+			return;
+		}
+
+		if (e.key === 'End') {
+			e.preventDefault();
+			menuButtons[menuButtons.length - 1].focus();
+		}
+	};
+
+	const profileMenuSections = [
+		{
+			title: 'Account',
+			items: [
+				{ label: 'Dashboard', path: '/customer/dashboard', icon: '🏠' },
+				{ label: 'Profile Settings', path: '/customer/profile', icon: '⚙️' }
+			]
+		},
+		{
+			title: 'Shopping',
+			items: [
+				{ label: 'Browse Medicines', path: '/customer/catalog', icon: '💊' },
+				{ label: 'Cart', path: '/customer/cart', icon: '🛒' },
+				{ label: 'My Orders', path: '/customer/orders', icon: '📦' },
+				{ label: 'Checkout', path: '/customer/checkout', icon: '✅' },
+				{ label: 'Payment', path: '/customer/payment', icon: '💳' }
+			]
+		}
 	];
 
 	const totalItems = getTotalItems();
@@ -145,10 +239,12 @@ function TopNav() {
 								ref={profileButtonRef}
 								data-profile-button
 								onClick={() => setShowProfileMenu((prev) => !prev)}
+								onKeyDown={handleProfileButtonKeyDown}
 								className="profileButton"
 								style={styles.profileButton}
 								aria-expanded={showProfileMenu}
 								aria-haspopup="menu"
+								aria-controls="topnav-profile-menu"
 								title="Open profile menu"
 							>
 								{user?.customer?.fullName ? (
@@ -177,9 +273,12 @@ function TopNav() {
 									/>
 									<div
 										ref={profileMenuRef}
+										id="topnav-profile-menu"
 										className="topnav-profile-menu"
 										data-profile-menu
 										style={styles.profileMenu}
+										role="menu"
+										onKeyDown={handleProfileMenuKeyDown}
 									>
 										{user ? (
 											<>
@@ -199,16 +298,24 @@ function TopNav() {
 												</div>
 												<div style={styles.menuDivider} />
 
-												{quickLinks.map((link) => (
-													<button
-														type="button"
-														key={link.path}
-														className="topnav-profile-menu-item"
-														style={styles.menuItem}
-														onClick={() => handleNavigate(link.path)}
-													>
-														{link.label}
-													</button>
+												{profileMenuSections.map((section, sectionIndex) => (
+													<div key={section.title} className="topnav-profile-menu-section" style={styles.menuSection}>
+														<p className="topnav-profile-menu-section-title" style={styles.menuSectionTitle}>{section.title}</p>
+														{section.items.map((item) => (
+															<button
+																type="button"
+																key={item.path}
+																className="topnav-profile-menu-item"
+																style={styles.menuItem}
+																onClick={() => handleNavigate(item.path)}
+																role="menuitem"
+															>
+																<span className="topnav-profile-menu-item-icon" style={styles.menuItemIcon} aria-hidden="true">{item.icon}</span>
+																<span>{item.label}</span>
+															</button>
+														))}
+														{sectionIndex < profileMenuSections.length - 1 && <div style={{ ...styles.menuDivider, marginTop: '0.55rem', marginBottom: '0.55rem' }} />}
+													</div>
 												))}
 
 												<div style={{ ...styles.menuDivider, marginTop: '0.5rem', marginBottom: '0.5rem' }} />
@@ -218,6 +325,7 @@ function TopNav() {
 													className="topnav-profile-menu-item topnav-profile-menu-logout"
 													style={{ ...styles.menuItem, ...styles.logoutButton }}
 													onClick={handleLogout}
+													role="menuitem"
 												>
 													🚪 Logout
 												</button>
@@ -238,24 +346,25 @@ function TopNav() {
 
 const styles = {
 	header: {
-		backgroundColor: 'var(--primary-light)',
-		borderBottom: '1px solid var(--border)',
-		padding: '1rem 0',
+		backgroundColor: 'rgba(255, 255, 255, 0.72)',
+		backdropFilter: 'blur(12px)',
+		borderBottom: '1px solid rgba(21, 115, 71, 0.14)',
+		padding: '0.78rem 0',
 		position: 'sticky',
 		top: 0,
 		zIndex: 100,
-		boxShadow: 'var(--shadow-sm)',
+		boxShadow: '0 4px 14px rgba(16, 32, 23, 0.08)',
 		overflow: 'visible',
 		contain: 'none'
 	},
 	container: {
-		maxWidth: '1200px',
+		maxWidth: '1240px',
 		margin: '0 auto',
-		padding: '0 1rem',
+		padding: '0 1.1rem',
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
-		gap: '1.25rem',
+		gap: '1rem',
 		overflow: 'visible',
 		contain: 'none'
 	},
@@ -265,22 +374,25 @@ const styles = {
 	logo: {
 		background: 'none',
 		border: 'none',
-		fontSize: '1.5rem',
+		fontSize: '1.45rem',
 		fontWeight: '700',
 		color: 'var(--primary)',
 		cursor: 'pointer',
 		borderRadius: 'var(--radius)',
-		padding: '0.5rem 0'
+		padding: '0.45rem 0.2rem',
+		letterSpacing: '0.2px',
+		transition: 'transform 0.2s ease, color 0.2s ease'
 	},
 	hamburgerButton: {
-		background: 'none',
-		border: '1px solid var(--border)',
+		background: 'rgba(255, 255, 255, 0.86)',
+		border: '1px solid rgba(21, 115, 71, 0.2)',
 		padding: '0.35rem 0.7rem',
 		borderRadius: 'var(--radius)',
 		cursor: 'pointer',
 		fontSize: '0.85rem',
 		fontWeight: 600,
-		color: 'var(--text-primary)'
+		color: 'var(--text-primary)',
+		boxShadow: '0 2px 8px rgba(16, 32, 23, 0.08)'
 	},
 	centerSection: {
 		flex: 1,
@@ -290,25 +402,29 @@ const styles = {
 	searchForm: {
 		display: 'flex',
 		gap: 0,
-		borderRadius: 'var(--radius)'
+		borderRadius: 'var(--radius)',
+		overflow: 'hidden',
+		boxShadow: '0 2px 10px rgba(16, 32, 23, 0.08)'
 	},
 	searchInput: {
 		flex: 1,
-		padding: '0.75rem 1rem',
-		border: '1px solid var(--border)',
+		padding: '0.7rem 0.95rem',
+		border: '1px solid rgba(21, 115, 71, 0.2)',
 		borderRadius: 'var(--radius) 0 0 var(--radius)',
 		fontSize: '0.9rem',
 		fontFamily: 'inherit',
-		outline: 'none'
+		outline: 'none',
+		backgroundColor: 'rgba(255, 255, 255, 0.92)'
 	},
 	searchButton: {
-		padding: '0.75rem 1rem',
+		padding: '0.7rem 1rem',
 		backgroundColor: 'var(--primary)',
 		color: 'white',
 		border: 'none',
 		borderRadius: '0 var(--radius) var(--radius) 0',
 		cursor: 'pointer',
-		fontSize: '0.95rem'
+		fontSize: '0.92rem',
+		fontWeight: 600
 	},
 	rightSection: {
 		display: 'flex',
@@ -322,13 +438,15 @@ const styles = {
 		alignItems: 'center',
 		justifyContent: 'center',
 		gap: '0.35rem',
-		background: 'none',
-		border: '1px solid var(--border)',
+		background: 'rgba(255, 255, 255, 0.86)',
+		border: '1px solid rgba(21, 115, 71, 0.2)',
 		cursor: 'pointer',
-		padding: '0.52rem 1.1rem 0.52rem 0.85rem',
+		padding: '0.5rem 1rem 0.5rem 0.82rem',
 		minHeight: '40px',
 		borderRadius: 'var(--radius)',
-		overflow: 'visible'
+		overflow: 'visible',
+		boxShadow: '0 2px 8px rgba(16, 32, 23, 0.08)',
+		transition: 'transform 0.2s ease, box-shadow 0.2s ease'
 	},
 	cartIcon: {
 		display: 'inline-block',
@@ -361,8 +479,8 @@ const styles = {
 		position: 'relative'
 	},
 	profileButton: {
-		background: 'none',
-		border: '1px solid var(--border)',
+		background: 'rgba(255, 255, 255, 0.88)',
+		border: '1px solid rgba(21, 115, 71, 0.2)',
 		cursor: 'pointer',
 		padding: '4px 10px',
 		borderRadius: 'var(--radius-full)',
@@ -370,7 +488,9 @@ const styles = {
 		alignItems: 'center',
 		gap: '0.4rem',
 		justifyContent: 'center',
-		minHeight: '40px'
+		minHeight: '40px',
+		boxShadow: '0 2px 8px rgba(16, 32, 23, 0.08)',
+		transition: 'transform 0.2s ease, box-shadow 0.2s ease'
 	},
 	fallbackProfileText: {
 		fontSize: '0.85rem',
@@ -386,18 +506,20 @@ const styles = {
 		position: 'absolute',
 		top: 'calc(100% + 0.5rem)',
 		right: 0,
-		backgroundColor: 'white',
-		border: '1px solid var(--border)',
-		borderRadius: '8px',
-		boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+		backgroundColor: 'rgba(255, 255, 255, 0.96)',
+		backdropFilter: 'blur(12px)',
+		border: '1px solid rgba(21, 115, 71, 0.16)',
+		borderRadius: '14px',
+		boxShadow: '0 16px 36px rgba(16, 32, 23, 0.2)',
 		minWidth: '320px',
 		maxWidth: 'min(360px, calc(100vw - 1rem))',
 		zIndex: 10000,
-		overflow: 'hidden'
+		overflow: 'hidden',
+		paddingBottom: '0.25rem'
 	},
 	profileMenuHeader: {
 		padding: '1rem',
-		backgroundColor: 'var(--primary-light)',
+		backgroundColor: 'rgba(21, 115, 71, 0.08)',
 		display: 'flex',
 		alignItems: 'center',
 		gap: '1rem'
@@ -424,21 +546,43 @@ const styles = {
 	},
 	menuDivider: {
 		border: 'none',
-		borderTop: '1px solid var(--border)',
+		borderTop: '1px solid var(--border-light)',
 		margin: 0,
 		padding: 0,
 		height: '1px'
 	},
+	menuSection: {
+		padding: '0 0.4rem'
+	},
+	menuSectionTitle: {
+		margin: '0.7rem 0.6rem 0.4rem',
+		fontSize: '0.72rem',
+		fontWeight: 700,
+		letterSpacing: '0.06em',
+		textTransform: 'uppercase',
+		color: 'var(--text-light)'
+	},
 	menuItem: {
 		width: '100%',
-		padding: '0.85rem 1rem',
+		padding: '0.66rem 0.85rem',
 		background: 'none',
 		border: 'none',
 		textAlign: 'left',
 		cursor: 'pointer',
-		fontSize: '0.95rem',
+		fontSize: '0.9rem',
 		color: 'var(--text-primary)',
-		fontWeight: 500
+		fontWeight: 500,
+		transition: 'background-color 0.22s var(--ease-standard), color 0.22s var(--ease-standard), transform 0.16s var(--ease-standard)',
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.6rem',
+		borderRadius: '10px'
+	},
+	menuItemIcon: {
+		width: '1.1rem',
+		textAlign: 'center',
+		fontSize: '0.95rem',
+		lineHeight: 1
 	},
 	logoutButton: {
 		color: 'var(--error)'
@@ -449,7 +593,8 @@ const styles = {
 		left: 0,
 		right: 0,
 		bottom: 0,
-		zIndex: 9999
+		zIndex: 9999,
+		backgroundColor: 'rgba(16, 32, 23, 0.14)'
 	}
 };
 

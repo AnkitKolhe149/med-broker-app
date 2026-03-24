@@ -36,12 +36,13 @@
 	border-radius: var(--radius);
 	cursor: pointer;
 	font-weight: 500;
-	transition: all 0.2s;
+	transition: transform var(--motion-fast) var(--ease-standard), background-color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard);
 	font-size: 0.9rem;
 }
 
 .filterButton:hover {
 	background-color: var(--surface);
+	border-color: var(--border-light);
 }
 
 .filterButtonActive {
@@ -52,7 +53,7 @@
 	border-radius: var(--radius);
 	cursor: pointer;
 	font-weight: 500;
-	transition: all 0.2s;
+	transition: transform var(--motion-fast) var(--ease-standard), background-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
 	font-size: 0.9rem;
 }
 
@@ -75,41 +76,50 @@
 
 .table {
 	width: 100%;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 }
 
 .tableHeader {
 	background-color: var(--surface);
 	font-weight: 600;
-	color: var(--text-primary);
-	padding: 1rem 1.5rem;
+	color: var(--text-secondary);
+	padding: 0.9rem 1.2rem;
 	text-align: left;
-	border-bottom: 2px solid var(--border);
-	font-size: 0.9rem;
+	border-bottom: 1px solid var(--border-light);
+	font-size: 0.75rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 }
 
 .tableRow {
-	border-bottom: 1px solid var(--border);
-	transition: background-color 0.2s;
+	border-bottom: 1px solid var(--border-light);
+	transition: background-color var(--motion-base) var(--ease-standard);
 	cursor: pointer;
 }
 
 .tableRow:hover {
-	background-color: var(--primary-light);
+	background-color: var(--surface);
 }
 
 .tableCell {
-	padding: 1rem 1.5rem;
+	padding: 1rem 1.2rem;
 	text-align: left;
 	font-size: 0.9rem;
+	color: var(--text-primary);
+	vertical-align: middle;
 }
 
 .statusBadge {
-	display: inline-block;
-	padding: 0.4rem 0.8rem;
-	border-radius: var(--radius);
-	font-size: 0.8rem;
-	font-weight: 600;
+	display: inline-flex;
+	align-items: center;
+	padding: 0.35rem 0.78rem;
+	border-radius: var(--radius-full);
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	line-height: 1.2;
 	color: white;
 }
 
@@ -120,10 +130,13 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.5);
+	background-color: rgba(10, 18, 14, 0.48);
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
 	z-index: 1000;
 	align-items: center;
 	justify-content: center;
+	padding: 1rem;
 }
 
 .modalActive {
@@ -131,14 +144,15 @@
 }
 
 .modal {
-	background-color: white;
+	background-color: var(--surface-elevated);
+	border: 1px solid var(--border-light);
 	border-radius: var(--radius-lg);
 	padding: 2rem;
 	max-width: 600px;
 	width: 90%;
-	max-height: 80vh;
+	max-height: 85vh;
 	overflow: auto;
-	box-shadow: var(--shadow-lg);
+	box-shadow: var(--shadow-xl);
 }
 
 .modalHeader {
@@ -262,11 +276,18 @@
 }
 
 .statCard {
-	background-color: white;
+	background-color: var(--surface-elevated);
 	padding: 1.5rem;
 	border-radius: var(--radius-lg);
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	text-align: center;
+	box-shadow: var(--shadow-sm);
+	transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.statCard:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-md);
 }
 
 .statNumber {

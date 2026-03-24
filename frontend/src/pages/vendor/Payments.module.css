@@ -29,12 +29,12 @@
 }
 
 .metricCard {
-	background-color: white;
+	background-color: var(--surface-elevated);
 	border-radius: var(--radius-lg);
 	padding: 1.5rem;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	box-shadow: var(--shadow-sm);
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
 }
 
 .metricCard:hover {
@@ -72,19 +72,21 @@
 	cursor: pointer;
 	font-weight: 600;
 	margin-top: 1rem;
-	transition: all 0.2s;
+	transition: transform var(--motion-fast) var(--ease-standard), filter var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
 	width: 100%;
 }
 
 .withdrawButton:hover {
+	transform: translateY(-1px);
 	filter: brightness(0.95);
+	box-shadow: var(--shadow-sm);
 }
 
 .section {
-	background-color: white;
+	background-color: var(--surface-elevated);
 	border-radius: var(--radius-lg);
 	padding: 1.5rem;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	box-shadow: var(--shadow-sm);
 	margin-bottom: 2rem;
 }
@@ -120,7 +122,7 @@
 	font-weight: 500;
 	color: var(--text-secondary);
 	border-bottom: 3px solid transparent;
-	transition: all 0.2s;
+	transition: color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), background-color var(--motion-base) var(--ease-standard);
 }
 
 .tab:hover {
@@ -135,7 +137,8 @@
 
 .table {
 	width: 100%;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 }
 
 .tableHeadRow {
@@ -145,15 +148,17 @@
 .tableHeader {
 	background-color: var(--surface);
 	font-weight: 600;
-	color: var(--text-primary);
-	padding: 1rem;
+	color: var(--text-secondary);
+	padding: 0.9rem 1rem;
 	text-align: left;
-	border-bottom: 2px solid var(--border);
-	font-size: 0.9rem;
+	border-bottom: 1px solid var(--border-light);
+	font-size: 0.75rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 }
 
 .tableRow {
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--border-light);
 }
 
 .tableRow:hover {
@@ -164,14 +169,20 @@
 	padding: 1rem;
 	text-align: left;
 	font-size: 0.9rem;
+	color: var(--text-primary);
+	vertical-align: middle;
 }
 
 .statusBadge {
-	display: inline-block;
-	padding: 0.3rem 0.8rem;
+	display: inline-flex;
+	align-items: center;
+	padding: 0.35rem 0.78rem;
 	border-radius: 9999px;
-	font-size: 0.8rem;
-	font-weight: 600;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	line-height: 1.2;
 }
 
 .amountPositive {
@@ -191,11 +202,13 @@
 	border-radius: var(--radius);
 	cursor: pointer;
 	font-weight: 500;
-	transition: all 0.2s;
+	transition: transform var(--motion-fast) var(--ease-standard), background-color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
 }
 
 .editButton:hover {
 	background-color: var(--surface);
+	border-color: var(--border-light);
+	transform: translateY(-1px);
 }
 
 .bankGrid {
@@ -224,10 +237,13 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.5);
+	background-color: rgba(10, 18, 14, 0.48);
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
 	z-index: 1000;
 	align-items: center;
 	justify-content: center;
+	padding: 1rem;
 }
 
 .modalActive {
@@ -235,12 +251,15 @@
 }
 
 .modal {
-	background-color: white;
+	background-color: var(--surface-elevated);
+	border: 1px solid var(--border-light);
 	border-radius: var(--radius-lg);
 	padding: 2rem;
 	max-width: 500px;
 	width: 90%;
-	box-shadow: var(--shadow-lg);
+	max-height: 85vh;
+	overflow: auto;
+	box-shadow: var(--shadow-xl);
 }
 
 .modalTitle {

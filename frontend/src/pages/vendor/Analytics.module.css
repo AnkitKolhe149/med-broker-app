@@ -30,7 +30,12 @@
 	background-color: white;
 	cursor: pointer;
 	font-weight: 500;
-	transition: all 0.2s;
+	transition: transform var(--motion-fast) var(--ease-standard), background-color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.timeButton:hover {
+	background-color: var(--surface);
+	border-color: var(--border-light);
 }
 
 .timeButtonActive {
@@ -47,11 +52,17 @@
 }
 
 .metricCard {
-	background-color: white;
+	background-color: var(--surface-elevated);
 	border-radius: var(--radius-lg);
 	padding: 1.5rem;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	box-shadow: var(--shadow-sm);
+	transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.metricCard:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-md);
 }
 
 .metricLabel {
@@ -83,10 +94,10 @@
 }
 
 .chartCard {
-	background-color: white;
+	background-color: var(--surface-elevated);
 	border-radius: var(--radius-lg);
 	padding: 1.5rem;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	box-shadow: var(--shadow-sm);
 }
 
@@ -105,6 +116,7 @@
 	align-items: flex-end;
 	gap: 1rem;
 	justify-content: space-around;
+	padding: 0.5rem 0.25rem 0.25rem;
 }
 
 .salesBarContainer {
@@ -147,16 +159,17 @@
 }
 
 .tableCard {
-	background-color: white;
+	background-color: var(--surface-elevated);
 	border-radius: var(--radius-lg);
 	padding: 1.5rem;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	box-shadow: var(--shadow-sm);
 }
 
 .table {
 	width: 100%;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 }
 
 .tableHeadRow {
@@ -166,19 +179,30 @@
 .tableHeader {
 	background-color: var(--surface);
 	font-weight: 600;
-	color: var(--text-primary);
-	padding: 1rem;
+	color: var(--text-secondary);
+	padding: 0.9rem 1rem;
 	text-align: left;
-	border-bottom: 2px solid var(--border);
+	border-bottom: 1px solid var(--border-light);
+	font-size: 0.75rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 }
 
 .tableRow {
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--border-light);
+	transition: background-color var(--motion-base) var(--ease-standard);
+}
+
+.tableRow:hover {
+	background-color: var(--surface);
 }
 
 .tableCell {
 	padding: 1rem;
 	text-align: left;
+	font-size: 0.9rem;
+	color: var(--text-primary);
+	vertical-align: middle;
 }
 
 .detailsButton {
@@ -189,6 +213,13 @@
 	border-radius: var(--radius);
 	cursor: pointer;
 	font-size: 0.85rem;
+	transition: transform var(--motion-fast) var(--ease-standard), filter var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.detailsButton:hover {
+	transform: translateY(-1px);
+	filter: brightness(1.03);
+	box-shadow: var(--shadow-sm);
 }
 
 .insightBox {

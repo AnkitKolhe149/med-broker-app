@@ -177,10 +177,10 @@
 }
 
 .summaryCard {
-	background-color: white;
+	background-color: var(--surface-elevated);
 	padding: 1.5rem;
 	border-radius: var(--radius-lg);
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	box-shadow: var(--shadow-sm);
 	position: sticky;
 	top: 100px;

@@ -13,17 +13,23 @@
 .filterButton {
 	padding: 0.5rem 1rem;
 	border-radius: var(--radius);
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	cursor: pointer;
 	font-weight: 500;
 	font-size: 0.9rem;
-	transition: all 0.2s;
-	background-color: white;
+	transition: background-color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+	background-color: var(--surface-elevated);
 }
 
 .filterButton:hover {
 	background-color: var(--primary-light);
 	border-color: var(--primary);
+	transform: translateY(-1px);
+}
+
+.filterButton:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: 2px;
 }
 
 .ordersList {
@@ -33,16 +39,18 @@
 }
 
 .orderCard {
-	background-color: white;
+	background-color: var(--surface-elevated);
 	border-radius: var(--radius-lg);
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	box-shadow: var(--shadow-sm);
 	overflow: hidden;
-	transition: box-shadow 0.2s;
+	transition: box-shadow var(--motion-base) var(--ease-standard), transform var(--motion-fast) var(--ease-standard), border-color var(--motion-base) var(--ease-standard);
 }
 
 .orderCard:hover {
 	box-shadow: var(--shadow-md);
+	transform: translateY(-1px);
+	border-color: rgba(21, 115, 71, 0.24);
 }
 
 .orderHeader {
@@ -51,12 +59,17 @@
 	align-items: center;
 	padding: 1.25rem;
 	background-color: var(--surface);
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--border-light);
 	cursor: pointer;
 }
 
 .orderHeader:hover {
 	background-color: var(--primary-light);
+}
+
+.orderHeader:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: -2px;
 }
 
 .orderInfo {
@@ -84,11 +97,15 @@
 }
 
 .statusBadge {
-	display: inline-block;
-	padding: 0.4rem 0.8rem;
-	border-radius: var(--radius);
-	font-size: 0.8rem;
-	font-weight: 600;
+	display: inline-flex;
+	align-items: center;
+	padding: 0.35rem 0.78rem;
+	border-radius: var(--radius-full);
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	line-height: 1.2;
 	white-space: nowrap;
 }
 
@@ -100,12 +117,18 @@
 	margin-left: 1rem;
 	color: var(--text-secondary);
 	padding: 0;
-	transition: transform 0.2s;
+	transition: transform var(--motion-fast) var(--ease-standard), color var(--motion-base) var(--ease-standard);
 }
 
 .expandButton:hover {
 	color: var(--primary);
 	transform: scale(1.2);
+}
+
+.expandButton:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: 2px;
+	border-radius: 6px;
 }
 
 .orderSummary {
@@ -218,28 +241,39 @@
 	font-size: 0.85rem;
 	font-weight: 500;
 	cursor: pointer;
-	transition: opacity 0.2s;
+	transition: opacity var(--motion-base) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
 }
 
 .actionButton:hover {
 	opacity: 0.9;
 }
 
+.actionButton:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: 2px;
+}
+
 .helpButton {
 	padding: 0.5rem 1rem;
 	background-color: var(--surface);
 	color: var(--text-primary);
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-light);
 	border-radius: var(--radius);
 	font-size: 0.85rem;
 	font-weight: 500;
 	cursor: pointer;
-	transition: all 0.2s;
+	transition: background-color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
 }
 
 .helpButton:hover {
 	background-color: var(--primary-light);
 	border-color: var(--primary);
+	transform: translateY(-1px);
+}
+
+.helpButton:focus-visible {
+	outline: 2px solid rgba(21, 115, 71, 0.34);
+	outline-offset: 2px;
 }
 
 .emptyState {
