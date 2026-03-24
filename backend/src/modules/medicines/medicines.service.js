@@ -1,12 +1,33 @@
 const { prisma } = require('../../database/prisma');
 
 const DEFAULT_PAGE = 1;
-const DEFAULT_LIMIT = 100;
-const MAX_LIMIT = 200;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+const COUNT_CACHE_TTL_MS = 30 * 1000;
+
+let inventoryCountCache = {
+  value: null,
+  expiresAt: 0
+};
 
 const toPositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const getInventoryCount = async () => {
+  const now = Date.now();
+  if (inventoryCountCache.value !== null && now < inventoryCountCache.expiresAt) {
+    return inventoryCountCache.value;
+  }
+
+  const total = await prisma.inventory.count();
+  inventoryCountCache = {
+    value: total,
+    expiresAt: now + COUNT_CACHE_TTL_MS
+  };
+
+  return total;
 };
 
 const mapInventoryToCatalogMedicine = (inventory) => {
@@ -39,14 +60,25 @@ module.exports = {
     const requestedLimit = toPositiveInt(query.limit, DEFAULT_LIMIT);
     const limit = Math.min(requestedLimit, MAX_LIMIT);
     const skip = (page - 1) * limit;
+    const includeTotal = query.includeTotal !== 'false';
 
     const [items, total] = await Promise.all([
       prisma.inventory.findMany({
         skip,
         take: limit,
         orderBy: { updatedAt: 'desc' },
-        include: {
-          medicine: true,
+        select: {
+          id: true,
+          quantity: true,
+          medicine: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              priceCents: true,
+              createdAt: true
+            }
+          },
           vendor: {
             select: {
               id: true,
@@ -55,16 +87,18 @@ module.exports = {
           }
         }
       }),
-      prisma.inventory.count()
+      includeTotal ? getInventoryCount() : Promise.resolve(null)
     ]);
+
+    const normalizedTotal = total ?? items.length;
 
     return {
       items: items.map(mapInventoryToCatalogMedicine),
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit)
+        total: normalizedTotal,
+        totalPages: limit > 0 ? Math.ceil(normalizedTotal / limit) : 0
       }
     };
   }

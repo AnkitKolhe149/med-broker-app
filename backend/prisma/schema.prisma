@@ -56,6 +56,8 @@ model User {
   customer          Customer?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  @@index([createdAt])
 }
 
 model Vendor {
@@ -76,6 +78,9 @@ model Vendor {
   inventory          Inventory[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+
+  @@index([verificationStatus])
+  @@index([updatedAt])
 }
 
 model Customer {
@@ -103,6 +108,8 @@ model Medicine {
   orderItems  OrderItem[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+
+  @@index([updatedAt])
 }
 
 model Inventory {
@@ -116,6 +123,8 @@ model Inventory {
   updatedAt  DateTime @updatedAt
 
   @@unique([medicineId, vendorId])
+  @@index([updatedAt])
+  @@index([vendorId, updatedAt])
 }
 
 model Order {
@@ -129,6 +138,9 @@ model Order {
   invoice    Invoice?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }
 
 model OrderItem {
@@ -139,6 +151,9 @@ model OrderItem {
   unitPriceCents Int
   order          Order    @relation(fields: [orderId], references: [id])
   medicine       Medicine @relation(fields: [medicineId], references: [id])
+
+  @@index([orderId])
+  @@index([medicineId])
 }
 
 model Payment {
@@ -149,6 +164,10 @@ model Payment {
   amountCents Int
   order       Order         @relation(fields: [orderId], references: [id])
   createdAt   DateTime      @default(now())
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([provider, createdAt])
 }
 
 model Invoice {

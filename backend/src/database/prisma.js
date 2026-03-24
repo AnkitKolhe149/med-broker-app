@@ -1,7 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 
 // Configure Prisma for Neon's serverless PostgreSQL
-const prisma = new PrismaClient({
+const basePrisma = new PrismaClient({
   log: ['query', 'error', 'warn'],
   datasources: {
     db: {
@@ -10,11 +10,25 @@ const prisma = new PrismaClient({
   },
 });
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isTransientDbTerminationError = (error) => {
+  if (!error) return false;
+
+  const message = String(error.message || '').toLowerCase();
+  return (
+    message.includes('57p01') ||
+    message.includes('administrator command') ||
+    message.includes('terminating connection due to administrator command') ||
+    message.includes('server closed the connection unexpectedly')
+  );
+};
+
 // Test connection with retry logic
 const connectWithRetry = async (retries = 3) => {
   for (let i = 0; i < retries; i++) {
     try {
-      await prisma.$connect();
+      await basePrisma.$connect();
       console.log('✓ Database connected successfully');
       return;
     } catch (err) {
@@ -23,26 +37,82 @@ const connectWithRetry = async (retries = 3) => {
         console.error('✗ Unable to connect to database after multiple attempts');
       } else {
         console.log(`  Retrying in ${(i + 1) * 2} seconds...`);
-        await new Promise(resolve => setTimeout(resolve, (i + 1) * 2000));
+        await wait((i + 1) * 2000);
       }
     }
   }
 };
 
+const reconnectWithRetry = async (retries = 2) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await basePrisma.$disconnect().catch(() => {});
+      await basePrisma.$connect();
+      return true;
+    } catch (error) {
+      if (i === retries - 1) {
+        return false;
+      }
+      await wait((i + 1) * 300);
+    }
+  }
+
+  return false;
+};
+
+const prisma = basePrisma.$extends({
+  query: {
+    $allModels: {
+      async $allOperations({ args, query }) {
+        try {
+          return await query(args);
+        } catch (error) {
+          if (!isTransientDbTerminationError(error)) {
+            throw error;
+          }
+
+          const recovered = await reconnectWithRetry();
+          if (!recovered) {
+            throw error;
+          }
+
+          return query(args);
+        }
+      },
+    },
+    async $queryRaw({ args, query }) {
+      try {
+        return await query(args);
+      } catch (error) {
+        if (!isTransientDbTerminationError(error)) {
+          throw error;
+        }
+
+        const recovered = await reconnectWithRetry();
+        if (!recovered) {
+          throw error;
+        }
+
+        return query(args);
+      }
+    },
+  },
+});
+
 connectWithRetry();
 
 // Graceful shutdown
 process.on('beforeExit', async () => {
-  await prisma.$disconnect();
+  await basePrisma.$disconnect();
 });
 
 process.on('SIGINT', async () => {
-  await prisma.$disconnect();
+  await basePrisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  await prisma.$disconnect();
+  await basePrisma.$disconnect();
   process.exit(0);
 });
 
