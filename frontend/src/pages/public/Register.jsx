@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
-import { validateEmail, validatePassword, validatePhone, validatePasswordMatch } from '../../utils/validation';
 
 function Register() {
 	const navigate = useNavigate();
@@ -12,32 +11,14 @@ function Register() {
 		confirmPassword: '',
 		role: 'CUSTOMER'
 	});
-	const [errors, setErrors] = useState({});
-	const [passwordStrength, setPasswordStrength] = useState('weak');
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 
 	const handleInputChange = (e) => {
-		const { name, value } = e.target;
 		setFormData({
 			...formData,
-			[name]: value
+			[e.target.name]: e.target.value
 		});
-
-		// Clear error for this field as user types
-		if (errors[name]) {
-			setErrors({
-				...errors,
-				[name]: ''
-			});
-		}
-
-		// Update password strength indicator in real-time
-		if (name === 'password') {
-			const validation = validatePassword(value);
-			setPasswordStrength(validation.strength);
-		}
-
 		setError('');
 	};
 
@@ -49,45 +30,19 @@ function Register() {
 		setError('');
 	};
 
-	const validateForm = () => {
-		const newErrors = {};
-
-		// Validate email
-		const emailValidation = validateEmail(formData.email);
-		if (!emailValidation.isValid) {
-			newErrors.email = emailValidation.error;
-		}
-
-		// Validate mobile (optional but if provided, must be valid)
-		if (formData.mobile.trim()) {
-			const phoneValidation = validatePhone(formData.mobile);
-			if (!phoneValidation.isValid) {
-				newErrors.mobile = phoneValidation.error;
-			}
-		}
-
-		// Validate password
-		const passwordValidation = validatePassword(formData.password);
-		if (!passwordValidation.isValid) {
-			newErrors.password = passwordValidation.error;
-		}
-
-		// Validate password match
-		const passwordMatchValidation = validatePasswordMatch(formData.password, formData.confirmPassword);
-		if (!passwordMatchValidation.isValid) {
-			newErrors.confirmPassword = passwordMatchValidation.error;
-		}
-
-		setErrors(newErrors);
-		return Object.keys(newErrors).length === 0;
-	};
-
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setError('');
 
-		// Validate before submitting
-		if (!validateForm()) {
+		// Validate password match
+		if (formData.password !== formData.confirmPassword) {
+			setError('Passwords do not match');
+			return;
+		}
+
+		// Validate password length
+		if (formData.password.length < 6) {
+			setError('Password must be at least 6 characters long');
 			return;
 		}
 
@@ -105,7 +60,7 @@ function Register() {
 			if (result.user.role === 'VENDOR') {
 				navigate('/vendor/dashboard');
 			} else if (result.user.role === 'CUSTOMER') {
-				navigate('/customer/catalog');
+				navigate('/customer/dashboard');
 			} else if (result.user.role === 'ADMIN') {
 				navigate('/admin/dashboard');
 			} else {
@@ -168,13 +123,8 @@ function Register() {
 									placeholder="name@company.com"
 									value={formData.email}
 									onChange={handleInputChange}
-									style={errors.email ? { borderColor: '#dc2626' } : {}}
+									required
 								/>
-								{errors.email && (
-									<span style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
-										{errors.email}
-									</span>
-								)}
 							</div>
 							<div>
 								<label className="label">Mobile number</label>
@@ -185,31 +135,13 @@ function Register() {
 									placeholder="+91 98765 43210"
 									value={formData.mobile}
 									onChange={handleInputChange}
-									style={errors.mobile ? { borderColor: '#dc2626' } : {}}
 								/>
-								{errors.mobile && (
-									<span style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
-										{errors.mobile}
-									</span>
-								)}
 							</div>
 						</div>
 
 						<div className="form-row">
 							<div>
-								<label className="label">
-									Password *
-									{formData.password && (
-										<span style={{
-											marginLeft: '0.5rem',
-											fontSize: '0.8rem',
-											fontWeight: 'normal',
-											color: passwordStrength === 'strong' ? '#16a34a' : passwordStrength === 'medium' ? '#ca8a04' : '#dc2626'
-										}}>
-											({passwordStrength})
-										</span>
-									)}
-								</label>
+								<label className="label">Password *</label>
 								<input
 									className="input"
 									type="password"
@@ -217,13 +149,9 @@ function Register() {
 									placeholder="••••••••"
 									value={formData.password}
 									onChange={handleInputChange}
-									style={errors.password ? { borderColor: '#dc2626' } : {}}
+									required
+									minLength={6}
 								/>
-								{errors.password && (
-									<span style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
-										{errors.password}
-									</span>
-								)}
 							</div>
 							<div>
 								<label className="label">Confirm password *</label>
@@ -234,13 +162,9 @@ function Register() {
 									placeholder="••••••••"
 									value={formData.confirmPassword}
 									onChange={handleInputChange}
-									style={errors.confirmPassword ? { borderColor: '#dc2626' } : {}}
+									required
+									minLength={6}
 								/>
-								{errors.confirmPassword && (
-									<span style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
-										{errors.confirmPassword}
-									</span>
-								)}
 							</div>
 						</div>
 
