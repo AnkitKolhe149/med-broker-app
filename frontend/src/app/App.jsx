@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
@@ -12,6 +12,8 @@ import { CurrencyProvider } from '../context/CurrencyContext';
 import AppShell from '../components/layout/AppShell';
 import VendorLayout from '../components/layout/VendorLayout';
 import AnimatedBackground from '../components/layout/AnimatedBackground';
+import ChatbotFloatingButton from '../components/layout/ChatbotFloatingButton';
+import ChatbotPanel from '../components/layout/ChatbotPanel';
 
 // Auth guard
 import AuthGuard from './authGuard';
@@ -49,6 +51,8 @@ import VendorSettings from '../pages/vendor/Settings';
 import AdminDashboard from '../pages/admin/Dashboard';
 
 function App() {
+    const [isChatOpen, setIsChatOpen] = useState(false);
+
     return (
         <NotificationProvider>
             <UserProvider>
@@ -174,6 +178,11 @@ function App() {
                     {/* Fallback route */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
+                        <ChatbotPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+                        <ChatbotFloatingButton
+                            isOpen={isChatOpen}
+                            onClick={() => setIsChatOpen((prev) => !prev)}
+                        />
                         </div>
                     </Router>
                 </CartProvider>
