@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
@@ -7,6 +7,8 @@ import Avatar from '../common/Avatar';
 
 function TopNav() {
 	const navigate = useNavigate();
+	const location = useLocation();
+	const [urlSearchParams, setUrlSearchParams] = useSearchParams();
 	const { getTotalItems } = useCart();
 	const { user } = useUser();
 	const [searchQuery, setSearchQuery] = useState('');
@@ -56,6 +58,12 @@ function TopNav() {
 	}, [showMobileMenu]);
 
 	useEffect(() => {
+		if (location.pathname === '/customer/catalog') {
+			setSearchQuery(urlSearchParams.get('search') || '');
+		}
+	}, [location.pathname, urlSearchParams]);
+
+	useEffect(() => {
 		const handleResize = () => {
 			if (window.innerWidth > 992) {
 				setShowMobileMenu(false);
@@ -71,8 +79,17 @@ function TopNav() {
 		if (!searchQuery.trim()) return;
 
 		navigate(`/customer/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
-		setSearchQuery('');
 		setShowMobileMenu(false);
+	};
+
+	const handleClearSearch = () => {
+		setSearchQuery('');
+
+		if (location.pathname === '/customer/catalog' && urlSearchParams.get('search')) {
+			const nextParams = new URLSearchParams(urlSearchParams);
+			nextParams.delete('search');
+			setUrlSearchParams(nextParams);
+		}
 	};
 
 	const handleLogout = () => {
@@ -178,6 +195,7 @@ function TopNav() {
 
 	const totalItems = getTotalItems();
 	const cartCountLabel = totalItems > 99 ? '99+' : String(totalItems);
+	const hasAppliedSearch = location.pathname === '/customer/catalog' && Boolean(urlSearchParams.get('search')?.trim());
 
 	return (
 		<header style={styles.header}>
@@ -215,6 +233,18 @@ function TopNav() {
 								className="searchInput"
 								style={styles.searchInput}
 							/>
+							{hasAppliedSearch && (
+								<button
+									type="button"
+									onClick={handleClearSearch}
+									className="searchClearButton"
+									style={styles.searchClearButton}
+									aria-label="Clear search"
+									title="Clear search"
+								>
+									x
+								</button>
+							)}
 							<button type="submit" className="searchButton" style={styles.searchButton}>
 								Search
 							</button>
@@ -415,6 +445,19 @@ const styles = {
 		fontFamily: 'inherit',
 		outline: 'none',
 		backgroundColor: 'rgba(255, 255, 255, 0.92)'
+	},
+	searchClearButton: {
+		padding: '0.7rem 0.85rem',
+		backgroundColor: 'rgba(255, 255, 255, 0.92)',
+		color: 'var(--text-secondary)',
+		borderTop: '1px solid rgba(21, 115, 71, 0.2)',
+		borderBottom: '1px solid rgba(21, 115, 71, 0.2)',
+		borderLeft: 'none',
+		borderRight: 'none',
+		cursor: 'pointer',
+		fontSize: '0.95rem',
+		fontWeight: 700,
+		lineHeight: 1
 	},
 	searchButton: {
 		padding: '0.7rem 1rem',

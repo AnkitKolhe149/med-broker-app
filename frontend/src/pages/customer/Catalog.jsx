@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { formatCurrency as formatCurrencyValue, getCurrencySymbol as getCurrencySymbolByCode } from '../../utils/currency';
 import medicineService from '../../services/medicine.service';
 import styles from './Catalog.module.css';
 import { catalogReducer, initialCatalogState, CATALOG_ACTIONS } from './catalogReducer';
@@ -20,11 +21,13 @@ import { catalogReducer, initialCatalogState, CATALOG_ACTIONS } from './catalogR
  */
 function Catalog() {
 	const navigate = useNavigate();
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams] = useSearchParams();
 	const { addToCart } = useCart();
 	const { user } = useUser();
 	const { showSuccess, showError } = useNotification();
-  const { convertAndFormat, convert, getCurrencySymbol, formatOriginalPrice, currency: userCurrency } = useCurrency();
+	const { currency: userCurrency } = useCurrency();
+	const [viewerCurrency, setViewerCurrency] = useState(userCurrency || 'USD');
+	const [apiPagination, setApiPagination] = useState({ totalPages: 1, total: 0 });
 	
 	// Consolidated state management with useReducer
 	const [state, dispatch] = useReducer(catalogReducer, initialCatalogState);
@@ -49,7 +52,9 @@ function Catalog() {
 
 	useEffect(() => {
 		const fetchMedicines = async () => {
-			dispatch({ type: CATALOG_ACTIONS.SET_LOADING, payload: true });
+			const isInitialLoad = currentPage === 1 && medicines.length === 0;
+			dispatch({ type: CATALOG_ACTIONS.SET_LOADING, payload: isInitialLoad });
+			dispatch({ type: CATALOG_ACTIONS.SET_SEARCHING, payload: !isInitialLoad });
 			try {
 				const result = await medicineService.getMedicines({
 					page: currentPage,
@@ -58,6 +63,20 @@ function Catalog() {
 
 				if (result.success) {
 					dispatch({ type: CATALOG_ACTIONS.SET_MEDICINES, payload: result.medicines });
+					setApiPagination({
+						totalPages: result.pagination?.totalPages || 1,
+						total: result.pagination?.total || 0
+					});
+					if (result.currency) {
+						setViewerCurrency(result.currency);
+					}
+
+					if ((result.pagination?.totalPages || 1) > currentPage) {
+						medicineService.prefetchMedicines({
+							page: currentPage + 1,
+							limit: itemsPerPage
+						});
+					}
 				} else {
 					console.error('Failed to fetch medicines:', result.error);
 					showError('Failed to load medicines from server');
@@ -67,11 +86,12 @@ function Catalog() {
 				showError('Error loading medicines');
 			} finally {
 				dispatch({ type: CATALOG_ACTIONS.SET_LOADING, payload: false });
+				dispatch({ type: CATALOG_ACTIONS.SET_SEARCHING, payload: false });
 			}
 		};
 		
 		fetchMedicines();
-	}, [currentPage]);
+	}, [currentPage, itemsPerPage]);
 
 	useEffect(() => {
 		const query = searchParams.get('search') || '';
@@ -145,24 +165,18 @@ function Catalog() {
 		return list;
 	}, [medicines, searchQuery, categoryFilter, availabilityFilter, prescriptionFilter, sortBy, minPrice, maxPrice, user?.customer?.buyerType]);
 
-	// Pagination logic
-	const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage);
-	const paginatedMedicines = useMemo(() => {
-		const startIndex = (currentPage - 1) * itemsPerPage;
-		const endIndex = startIndex + itemsPerPage;
-		return filteredMedicines.slice(startIndex, endIndex);
-	}, [filteredMedicines, currentPage]);
+	// API-driven pagination to avoid double-slicing already paginated results.
+	const totalPages = apiPagination.totalPages;
 
 	// Helper functions
 	const buyerType = user?.customer?.buyerType || 'RETAIL';
 	const minPricePercent = (minPrice / 500) * 100;
 	const maxPricePercent = (maxPrice / 500) * 100;
 	const getDisplayPrice = (medicine) => {
-
-		const vendorPrice = buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice;
-		const vendorCurrency = medicine.currency || 'INR';
-		return convert(vendorPrice, vendorCurrency);
+		return buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice;
 	};
+
+	const formatDisplayPrice = (value) => formatCurrencyValue(value, viewerCurrency, true);
 	// Get pricing tier label for transparency
 	const getPricingTier = () => {
 		if (buyerType === 'WHOLESALE') return '(Wholesale)';
@@ -184,7 +198,8 @@ function Catalog() {
 			1,
 			medicine.retailPrice,
 			medicine.wholesalePrice,
-			buyerType
+			buyerType,
+			medicine.currencyCode || viewerCurrency
 		);
 		showSuccess(`${medicine.name} added to cart`);
 	};
@@ -340,11 +355,11 @@ function Catalog() {
 							</div>
 
 							<div className={styles.filterGroup}>
-								<label className={styles.filterGroupLabel}>Price Range ({getCurrencySymbol()})</label>
+								<label className={styles.filterGroupLabel}>Price Range ({getCurrencySymbolByCode(viewerCurrency)})</label>
 								<div className={styles.priceDisplay}>
-									<span className={styles.filterPriceValue}>{convertAndFormat(minPrice)}</span>
+									<span className={styles.filterPriceValue}>{formatDisplayPrice(minPrice)}</span>
 									<span className={styles.priceSeparator}>-</span>
-									<span className={styles.filterPriceValue}>{convertAndFormat(maxPrice)}</span>
+									<span className={styles.filterPriceValue}>{formatDisplayPrice(maxPrice)}</span>
 								</div>
 								<div className={styles.rangeSliderContainer}>
 									<div className={styles.rangeSliderTrack} />
@@ -383,8 +398,8 @@ function Catalog() {
 									/>
 								</div>
 								<div className={styles.sliderValuesRow}>
-									<span className={styles.sliderValueLabel}>Min: {convertAndFormat(minPrice)}</span>
-									<span className={styles.sliderValueLabel}>Max: {convertAndFormat(maxPrice)}</span>
+									<span className={styles.sliderValueLabel}>Min: {formatDisplayPrice(minPrice)}</span>
+									<span className={styles.sliderValueLabel}>Max: {formatDisplayPrice(maxPrice)}</span>
 								</div>
 							</div>
 
@@ -499,7 +514,7 @@ function Catalog() {
 							)}
 							{(minPrice !== 0 || maxPrice !== 500) && (
 								<span className="filterBadge">
-								₹{minPrice}-₹{maxPrice}
+								{formatDisplayPrice(minPrice)}-{formatDisplayPrice(maxPrice)}
 							<button onClick={() => { dispatch({ type: CATALOG_ACTIONS.RESET_PRICE_RANGE }); }}>×</button>
 								</span>
 							)}
@@ -524,6 +539,9 @@ function Catalog() {
 										Showing results for "{searchQuery}"
 									</p>
 								)}
+								{searching && (
+									<p className={styles.resultsSubtitle}>Updating results...</p>
+								)}
 							</div>
 						</div>
 
@@ -541,10 +559,10 @@ function Catalog() {
 									</div>
 								))}
 							</div>
-						) : paginatedMedicines.length > 0 ? (
+						) : filteredMedicines.length > 0 ? (
 							<>
 								<div className={styles.medicinesGrid}>
-									{paginatedMedicines.map(medicine => (
+									{filteredMedicines.map(medicine => (
 									<article key={medicine.id} className={styles.medicineCard}>
 										{/* HEADER: NAME + CATEGORY */}
 										<div className={styles.cardHeader}>
@@ -581,7 +599,7 @@ function Catalog() {
 											{/* PRICING */}
 										<div className={styles.pricingSection}>
 											<p className={styles.priceLabel}>Price {getPricingTier()}</p>
-											<p className={styles.priceValue}>{convertAndFormat(getDisplayPrice(medicine))}</p>
+											<p className={styles.priceValue}>{formatDisplayPrice(getDisplayPrice(medicine))}</p>
 											</div>
 
 											{/* ACTIONS */}
