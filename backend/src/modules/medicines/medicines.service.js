@@ -1,9 +1,19 @@
 const { prisma } = require('../../database/prisma');
+const { getEnv } = require('../../config/env');
+const { getLatestRates } = require('../exchangeRate/exchangeRate.service');
+const { NotFoundError } = require('../../utils/errors');
+const {
+  normalizeCurrencyCode,
+  getCurrencyForCountry,
+  convertAmount
+} = require('../../utils/currencyPipeline');
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 const COUNT_CACHE_TTL_MS = 30 * 1000;
+const BASE_CURRENCY = getEnv('EXCHANGE_RATE_BASE', 'INR').toUpperCase();
+const DEFAULT_CURRENCY = getEnv('DEFAULT_CURRENCY', 'USD').toUpperCase();
 
 let inventoryCountCache = {
   value: null,
@@ -30,9 +40,47 @@ const getInventoryCount = async () => {
   return total;
 };
 
-const mapInventoryToCatalogMedicine = (inventory) => {
-  const retailPrice = Number((inventory.medicine.priceCents / 100).toFixed(2));
-  const wholesalePrice = Number((retailPrice * 0.9).toFixed(2));
+const resolveViewerCurrency = ({ query = {}, viewerContext = {} }) => {
+  const explicitCurrency = normalizeCurrencyCode(query.currency);
+  if (explicitCurrency) {
+    return explicitCurrency;
+  }
+
+  if (query.country) {
+    return getCurrencyForCountry(query.country, DEFAULT_CURRENCY);
+  }
+
+  const userCountry = viewerContext.user?.customer?.country || viewerContext.user?.vendor?.country;
+  if (userCountry) {
+    return getCurrencyForCountry(userCountry, DEFAULT_CURRENCY);
+  }
+
+  return DEFAULT_CURRENCY;
+};
+
+const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRateRecord) => {
+  const sourceCurrencyCode = BASE_CURRENCY;
+  const sourceRetailPrice = Number((inventory.medicine.priceCents / 100).toFixed(2));
+  const sourceWholesalePrice = Number((sourceRetailPrice * 0.9).toFixed(2));
+
+  const convertedRetail = convertAmount({
+    amount: sourceRetailPrice,
+    fromCurrency: sourceCurrencyCode,
+    toCurrency: viewerCurrencyCode,
+    baseCurrency: exchangeRateRecord?.baseCode || BASE_CURRENCY,
+    rates: exchangeRateRecord?.rates || {}
+  });
+
+  const convertedWholesale = convertAmount({
+    amount: sourceWholesalePrice,
+    fromCurrency: sourceCurrencyCode,
+    toCurrency: viewerCurrencyCode,
+    baseCurrency: exchangeRateRecord?.baseCode || BASE_CURRENCY,
+    rates: exchangeRateRecord?.rates || {}
+  });
+
+  const retailPrice = Number((convertedRetail ?? sourceRetailPrice).toFixed(2));
+  const wholesalePrice = Number((convertedWholesale ?? sourceWholesalePrice).toFixed(2));
 
   return {
     id: inventory.id,
@@ -44,6 +92,10 @@ const mapInventoryToCatalogMedicine = (inventory) => {
     dosageForm: 'Tablet',
     retailPrice,
     wholesalePrice,
+    currencyCode: viewerCurrencyCode,
+    sourceCurrencyCode,
+    sourceRetailPrice,
+    sourceWholesalePrice,
     popularity: Math.min(100, Math.max(50, inventory.quantity)),
     addedAt: inventory.medicine.createdAt,
     requiresPrescription: false,
@@ -55,12 +107,15 @@ const mapInventoryToCatalogMedicine = (inventory) => {
 };
 
 module.exports = {
-  listMedicines: async (query = {}) => {
+  listMedicines: async (query = {}, viewerContext = {}) => {
     const page = toPositiveInt(query.page, DEFAULT_PAGE);
     const requestedLimit = toPositiveInt(query.limit, DEFAULT_LIMIT);
     const limit = Math.min(requestedLimit, MAX_LIMIT);
     const skip = (page - 1) * limit;
     const includeTotal = query.includeTotal !== 'false';
+    const viewerCurrency = resolveViewerCurrency({ query, viewerContext });
+
+    const exchangeRateRecord = await getLatestRates(BASE_CURRENCY);
 
     const [items, total] = await Promise.all([
       prisma.inventory.findMany({
@@ -93,13 +148,51 @@ module.exports = {
     const normalizedTotal = total ?? items.length;
 
     return {
-      items: items.map(mapInventoryToCatalogMedicine),
+      currency: viewerCurrency,
+      items: items.map((inventory) => mapInventoryToCatalogMedicine(inventory, viewerCurrency, exchangeRateRecord)),
       pagination: {
         page,
         limit,
         total: normalizedTotal,
         totalPages: limit > 0 ? Math.ceil(normalizedTotal / limit) : 0
       }
+    };
+  },
+
+  getMedicineById: async (inventoryId, query = {}, viewerContext = {}) => {
+    const viewerCurrency = resolveViewerCurrency({ query, viewerContext });
+    const exchangeRateRecord = await getLatestRates(BASE_CURRENCY);
+
+    const inventory = await prisma.inventory.findUnique({
+      where: { id: inventoryId },
+      select: {
+        id: true,
+        quantity: true,
+        medicine: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            priceCents: true,
+            createdAt: true
+          }
+        },
+        vendor: {
+          select: {
+            id: true,
+            companyName: true
+          }
+        }
+      }
+    });
+
+    if (!inventory) {
+      throw new NotFoundError('Medicine not found');
+    }
+
+    return {
+      currency: viewerCurrency,
+      item: mapInventoryToCatalogMedicine(inventory, viewerCurrency, exchangeRateRecord)
     };
   }
 };

@@ -53,6 +53,40 @@ async function authenticate(req, res, next) {
 }
 
 /**
+ * Attach user if token exists; continue as guest on missing/invalid token.
+ */
+async function authenticateOptional(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = authService.verifyToken(token);
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        vendor: true,
+        customer: true
+      }
+    });
+
+    if (user) {
+      req.user = user;
+    }
+
+    return next();
+  } catch (_error) {
+    return next();
+  }
+}
+
+/**
  * Check if user has completed profile
  */
 function requireCompleteProfile(req, res, next) {
@@ -82,6 +116,7 @@ function requireRole(...roles) {
 
 module.exports = {
   authenticate,
+  authenticateOptional,
   requireCompleteProfile,
   requireRole
 };
