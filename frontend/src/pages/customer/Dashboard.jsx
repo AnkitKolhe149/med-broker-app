@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
-import Avatar from '../../components/common/Avatar';
+import { formatCurrency } from '../../utils/currency';
 
 function CustomerDashboard() {
 	const navigate = useNavigate();
@@ -18,6 +18,8 @@ function CustomerDashboard() {
 		total: 1250.50,
 		items: 3
 	};
+	const currencyCode = localStorage.getItem('preferredCurrency') || 'USD';
+	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
 	const savedAddress = user?.customer
 		? `${user.customer.address || ''}, ${user.customer.city || ''}, ${user.customer.state || ''} ${user.customer.zipCode || ''}`
 		: 'No saved address';
@@ -43,17 +45,7 @@ function CustomerDashboard() {
 				<section className="section">
 					<div className="section-grid">
 					<div className="card">
-						<div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-							<Avatar 
-								src={user?.customer?.profileImage}
-								name={user?.customer?.fullName}
-								size={60}
-							/>
-							<div>
-								<h3>Welcome</h3>
-								<p className="section-subtitle">{user?.customer?.fullName || user?.email}</p>
-						</div>
-						</div>
+						<h3>Welcome</h3>
 						<p className="section-subtitle">Buyer Type: {user?.customer?.buyerType || 'N/A'}</p>
 						<p className="section-subtitle">Member: {user?.email}</p>
 						<button className="button" onClick={() => navigate('/customer/profile')}>Profile Settings</button>
@@ -74,7 +66,7 @@ function CustomerDashboard() {
 						<h3>Last Order Summary</h3>
 						<p className="section-subtitle">Order ID: {lastOrder.id}</p>
 						<p className="section-subtitle">Date: {new Date(lastOrder.date).toLocaleDateString('en-IN')}</p>
-						<p className="section-subtitle">Items: {lastOrder.items} · Total: ₹{lastOrder.total.toFixed(2)}</p>
+						<p className="section-subtitle">Items: {lastOrder.items} · Total: {formatPrice(lastOrder.total)}</p>
 						<button className="button-outline" onClick={() => navigate('/customer/orders')}>Track Order</button>
 					</div>
 				</div>

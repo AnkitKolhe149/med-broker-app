@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNotification } from '../../context/NotificationContext';
+import { formatCurrency } from '../../utils/currency';
 import styles from './Payment.module.css';
 
 function Payment() {
@@ -12,6 +13,8 @@ function Payment() {
 	const [loading, setLoading] = useState(true);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [upiId, setUpiId] = useState('customer@upi');
+	const currencyCode = orderData?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
 
 	useEffect(() => {
 		const pendingOrder = sessionStorage.getItem('pending_order');
@@ -247,7 +250,7 @@ function Payment() {
 									<div className={styles.methodDetails}>
 										<div className={styles.walletBalance}>
 											<p className={styles.balanceLabel}>Available Balance</p>
-											<p className={styles.balanceAmount}>₹0.00</p>
+											<p className={styles.balanceAmount}>{formatPrice(0)}</p>
 											<button type="button" className={styles.addFundsButton}>
 												+ Add Funds to Wallet
 											</button>
@@ -280,7 +283,7 @@ function Payment() {
 									cursor: isProcessing ? 'not-allowed' : 'pointer'
 								}}
 							>
-								{isProcessing ? 'Processing Payment...' : `Pay ₹${total.toFixed(2)}`}
+								{isProcessing ? 'Processing Payment...' : `Pay ${formatPrice(total)}`}
 							</button>
 
 							<p className={styles.disclaimer}>
@@ -313,7 +316,7 @@ function Payment() {
 								{orderData.cartItems.map(item => (
 									<div key={item.medicineId} className={styles.itemRow}>
 										<span>{item.name} × {item.quantity}</span>
-										<span>₹{(item.basePrice * item.quantity).toFixed(2)}</span>
+										<span>{formatPrice(item.basePrice * item.quantity)}</span>
 									</div>
 								))}
 							</div>
@@ -324,25 +327,25 @@ function Payment() {
 							<div className={styles.section}>
 								<div className={styles.pricingRow}>
 									<span>Subtotal</span>
-									<span>₹{orderData.subtotal.toFixed(2)}</span>
+									<span>{formatPrice(orderData.subtotal)}</span>
 								</div>
 								{orderData.discountPercent > 0 && (
 									<div className={styles.pricingRow} style={{ color: 'var(--success)' }}>
 										<span>Discount ({orderData.discountPercent}%)</span>
-										<span>−₹{((orderData.subtotal * orderData.discountPercent) / 100).toFixed(2)}</span>
+										<span>−{formatPrice((orderData.subtotal * orderData.discountPercent) / 100)}</span>
 									</div>
 								)}
 								<div className={styles.pricingRow}>
 									<span>Delivery</span>
-									<span>{orderData.subtotal > 500 ? 'Free' : '₹50'}</span>
+									<span>{orderData.subtotal > 500 ? 'Free' : formatPrice(50)}</span>
 								</div>
 								<div className={styles.pricingRow}>
 									<span>Tax (5% GST)</span>
-									<span>₹{(((orderData.subtotal * (100 - orderData.discountPercent) / 100) + (orderData.subtotal > 500 ? 0 : 50)) * 0.05).toFixed(2)}</span>
+									<span>{formatPrice((((orderData.subtotal * (100 - orderData.discountPercent) / 100) + (orderData.subtotal > 500 ? 0 : 50)) * 0.05))}</span>
 								</div>
 								<div className={styles.totalRow}>
 									<span>Total Amount Due</span>
-									<span>₹{total.toFixed(2)}</span>
+									<span>{formatPrice(total)}</span>
 								</div>
 							</div>
 

@@ -26,13 +26,13 @@ export const CartProvider = ({ children }) => {
 		}
 	}, [cartItems]);
 
-	const addToCart = (medicine, quantity = 1, retailPrice, wholesalePrice, buyerType) => {
+	const addToCart = (medicine, quantity = 1, retailPrice, wholesalePrice, buyerType, currencyCode = 'USD') => {
 		setCartItems(prevItems => {
 			const existingItem = prevItems.find(item => item.medicineId === medicine.id);
 			if (existingItem) {
 				return prevItems.map(item =>
 					item.medicineId === medicine.id
-						? { ...item, quantity: item.quantity + quantity }
+						? { ...item, quantity: item.quantity + quantity, currencyCode }
 						: item
 				);
 			}
@@ -48,6 +48,7 @@ export const CartProvider = ({ children }) => {
 					retailPrice,
 					wholesalePrice,
 					buyerType,
+					currencyCode,
 					basePrice: buyerType === 'WHOLESALE' ? wholesalePrice : retailPrice,
 					addedAt: new Date().toISOString()
 				}

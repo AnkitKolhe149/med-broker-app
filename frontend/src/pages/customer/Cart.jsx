@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useNotification } from '../../context/NotificationContext';
+import { formatCurrency } from '../../utils/currency';
 import styles from './Cart.module.css';
 
 function Cart() {
@@ -11,6 +12,8 @@ function Cart() {
 	const [appliedCoupon, setAppliedCoupon] = useState('');
 	const [couponInput, setCouponInput] = useState('');
 	const [discountPercent, setDiscountPercent] = useState(0);
+	const cartCurrency = cartItems[0]?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+	const formatPrice = (value) => formatCurrency(value, cartCurrency, true);
 
 	// Sample coupons for demo
 	const validCoupons = {
@@ -51,7 +54,7 @@ function Cart() {
 			showError('Your cart is empty');
 			return;
 		}
-		navigate('/customer/checkout', { state: { discountPercent, appliedCoupon } });
+		navigate('/customer/checkout', { state: { discountPercent, appliedCoupon, currencyCode: cartCurrency } });
 	};
 
 	const handleContinueShopping = () => {
@@ -110,7 +113,7 @@ function Cart() {
 										<h3 className={styles.itemName}>{item.name}</h3>
 										<p className={styles.itemCategory}>{item.category}</p>
 										<p className={styles.itemVendor}>Vendor: {item.vendor}</p>
-										<p className={styles.itemPrice}>₹{item.basePrice.toFixed(2)} each</p>
+										<p className={styles.itemPrice}>{formatPrice(item.basePrice)} each</p>
 									</div>
 								</div>
 
@@ -139,7 +142,7 @@ function Cart() {
 								</div>
 
 								<div className={styles.itemTotal}>
-									<p className={styles.totalPrice}>₹{(item.basePrice * item.quantity).toFixed(2)}</p>
+									<p className={styles.totalPrice}>{formatPrice(item.basePrice * item.quantity)}</p>
 									<button
 										onClick={() => removeFromCart(item.medicineId)}
 										className={styles.removeButton}
@@ -195,31 +198,31 @@ function Cart() {
 							<div className={styles.priceBreakdown}>
 								<div className={styles.priceRow}>
 									<span>Subtotal</span>
-									<span>₹{subtotal.toFixed(2)}</span>
+									<span>{formatPrice(subtotal)}</span>
 								</div>
 								{buyerMargin > 0 && (
 									<div className={styles.priceRow} style={{ color: 'var(--success)' }}>
 										<span>Buyer Margin</span>
-										<span>−₹{buyerMargin.toFixed(2)}</span>
+										<span>−{formatPrice(buyerMargin)}</span>
 									</div>
 								)}
 								<div className={styles.priceRow}>
 									<span>Platform Charges</span>
-									<span>₹{platformCharge.toFixed(2)}</span>
+									<span>{formatPrice(platformCharge)}</span>
 								</div>
 								{discountPercent > 0 && (
 									<div className={styles.priceRow} style={{ color: 'var(--success)' }}>
 										<span>Discount ({discountPercent}%)</span>
-										<span>−₹{discount.toFixed(2)}</span>
+										<span>−{formatPrice(discount)}</span>
 									</div>
 								)}
 								<div className={styles.priceRow}>
 									<span>Tax (5% GST)</span>
-									<span>₹{tax.toFixed(2)}</span>
+									<span>{formatPrice(tax)}</span>
 								</div>
 								<div className={styles.totalRow}>
 									<span>Total Amount</span>
-									<span>₹{total.toFixed(2)}</span>
+									<span>{formatPrice(total)}</span>
 								</div>
 							</div>
 
@@ -244,7 +247,7 @@ function Cart() {
 								<span className={styles.infoIcon}>🚚</span>
 								<div>
 									<h4 className={styles.infoCardTitle}>Free Delivery</h4>
-									<p className={styles.infoCardText}>On orders above ₹500</p>
+									<p className={styles.infoCardText}>On orders above {formatPrice(500)}</p>
 								</div>
 							</div>
 						</div>

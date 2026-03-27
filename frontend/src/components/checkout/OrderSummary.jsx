@@ -1,7 +1,10 @@
 import React from 'react';
+import { formatCurrency } from '../../utils/currency';
 import styles from './Checkout.module.css';
 
 export function OrderSummary({ cartItems, getTotalPrice, discountPercent, appliedCoupon }) {
+  const currencyCode = cartItems[0]?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+  const formatPrice = (value) => formatCurrency(value, currencyCode, true);
   const subtotal = getTotalPrice();
   const discount = (subtotal * discountPercent) / 100;
   const deliveryCharge = subtotal > 500 ? 0 : 50;
@@ -21,7 +24,7 @@ export function OrderSummary({ cartItems, getTotalPrice, discountPercent, applie
                 <p className={styles.itemName}>{item.name}</p>
                 <p className={styles.itemQty}>Qty: {item.quantity}</p>
               </div>
-              <p className={styles.itemAmount}>₹{(item.basePrice * item.quantity).toFixed(2)}</p>
+              <p className={styles.itemAmount}>{formatPrice(item.basePrice * item.quantity)}</p>
             </div>
           ))}
         </div>
@@ -32,12 +35,12 @@ export function OrderSummary({ cartItems, getTotalPrice, discountPercent, applie
         <div className={styles.pricingBreakdown}>
           <div className={styles.pricingRow}>
             <span>Subtotal</span>
-            <span>₹{subtotal.toFixed(2)}</span>
+            <span>{formatPrice(subtotal)}</span>
           </div>
           {discountPercent > 0 && (
             <div className={styles.pricingRow} style={{ color: 'var(--success)' }}>
               <span>Discount ({discountPercent}%)</span>
-              <span>−₹{discount.toFixed(2)}</span>
+              <span>−{formatPrice(discount)}</span>
             </div>
           )}
           {appliedCoupon && (
@@ -47,15 +50,15 @@ export function OrderSummary({ cartItems, getTotalPrice, discountPercent, applie
           )}
           <div className={styles.pricingRow}>
             <span>Delivery Charge</span>
-            <span>{deliveryCharge === 0 ? 'Free' : `₹${deliveryCharge.toFixed(2)}`}</span>
+            <span>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge)}</span>
           </div>
           <div className={styles.pricingRow}>
             <span>Tax (5% GST)</span>
-            <span>₹{tax.toFixed(2)}</span>
+            <span>{formatPrice(tax)}</span>
           </div>
           <div className={styles.totalRow}>
             <span>Total</span>
-            <span>₹{total.toFixed(2)}</span>
+            <span>{formatPrice(total)}</span>
           </div>
         </div>
 

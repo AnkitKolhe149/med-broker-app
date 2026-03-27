@@ -1,4 +1,42 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const CACHE_TTL_MS = 60 * 1000;
+const medicinesCache = new Map();
+
+const buildCacheKey = (params = {}, userContext = {}, preferredCurrency = '') => {
+	return JSON.stringify({
+		page: Number(params.page || 1),
+		limit: Number(params.limit || 12),
+		country: userContext.country || '',
+		currency: preferredCurrency || ''
+	});
+};
+
+const getStoredUserContext = () => {
+	try {
+		const rawUser = localStorage.getItem('user');
+		if (!rawUser) return {};
+		const user = JSON.parse(rawUser);
+		return {
+			country: user?.customer?.country || user?.vendor?.country || null
+		};
+	} catch (_error) {
+		return {};
+	}
+};
+
+const getAuthHeaders = () => {
+	const token = localStorage.getItem('token');
+	if (!token) {
+		return {
+			'Content-Type': 'application/json'
+		};
+	}
+
+	return {
+		'Content-Type': 'application/json',
+		Authorization: `Bearer ${token}`
+	};
+};
 
 const medicineService = {
 	/**
@@ -10,18 +48,27 @@ const medicineService = {
 	 */
 	getMedicines: async (params = {}) => {
 		try {
+			const userContext = getStoredUserContext();
+			const preferredCurrency = localStorage.getItem('preferredCurrency');
+			const cacheKey = buildCacheKey(params, userContext, preferredCurrency);
+			const cached = medicinesCache.get(cacheKey);
+
+			if (cached && cached.expiresAt > Date.now()) {
+				return cached.value;
+			}
+
 			const queryString = new URLSearchParams({
 				page: params.page || 1,
-				limit: params.limit || 12
+				limit: params.limit || 12,
+				...(userContext.country ? { country: userContext.country } : {}),
+				...(preferredCurrency ? { currency: preferredCurrency } : {})
 			}).toString();
 
 			const response = await fetch(
 				`${API_BASE_URL}/medicines?${queryString}`,
 				{
 					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json'
-					}
+					headers: getAuthHeaders()
 				}
 			);
 
@@ -30,17 +77,26 @@ const medicineService = {
 			}
 
 			const data = await response.json();
-			return {
+			const payload = {
 				success: true,
 				medicines: data.data || [],
-				pagination: data.pagination || {}
+				pagination: data.pagination || {},
+				currency: data.currency || preferredCurrency || 'USD'
 			};
+
+			medicinesCache.set(cacheKey, {
+				value: payload,
+				expiresAt: Date.now() + CACHE_TTL_MS
+			});
+
+			return payload;
 		} catch (error) {
 			console.error('Failed to fetch medicines:', error);
 			return {
 				success: false,
 				medicines: [],
 				pagination: {},
+				currency: localStorage.getItem('preferredCurrency') || 'USD',
 				error: error.message
 			};
 		}
@@ -53,13 +109,18 @@ const medicineService = {
 	 */
 	getMedicineById: async (medicineId) => {
 		try {
+			const userContext = getStoredUserContext();
+			const preferredCurrency = localStorage.getItem('preferredCurrency');
+			const queryString = new URLSearchParams({
+				...(userContext.country ? { country: userContext.country } : {}),
+				...(preferredCurrency ? { currency: preferredCurrency } : {})
+			}).toString();
+
 			const response = await fetch(
-				`${API_BASE_URL}/medicines/${medicineId}`,
+				`${API_BASE_URL}/medicines/${medicineId}${queryString ? `?${queryString}` : ''}`,
 				{
 					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json'
-					}
+					headers: getAuthHeaders()
 				}
 			);
 
@@ -68,10 +129,18 @@ const medicineService = {
 			}
 
 			const data = await response.json();
-			return data.data;
+			return data.data || null;
 		} catch (error) {
 			console.error('Failed to fetch medicine:', error);
 			throw error;
+		}
+	},
+
+	prefetchMedicines: async (params = {}) => {
+		try {
+			await medicineService.getMedicines(params);
+		} catch (_error) {
+			// Prefetch is best-effort and should not affect UX.
 		}
 	}
 };

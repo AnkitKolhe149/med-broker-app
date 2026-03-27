@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '../../components/common/Avatar';
 import { useUser } from '../../context/UserContext';
+import { formatCurrency } from '../../utils/currency';
 import styles from './OrdersHistory.module.css';
 
 function OrdersHistory() {
@@ -11,6 +12,8 @@ function OrdersHistory() {
 	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState('all');
 	const [expandedOrderId, setExpandedOrderId] = useState(null);
+	const defaultCurrencyCode = localStorage.getItem('preferredCurrency') || 'USD';
+	const formatPrice = (value, currencyCode = defaultCurrencyCode) => formatCurrency(value, currencyCode, true);
 
 	// Sample orders data - will be fetched from API
 	const sampleOrders = [
@@ -18,6 +21,7 @@ function OrdersHistory() {
 			orderId: 'ORD1705432891234',
 			date: '2024-01-16',
 			status: 'delivered',
+			currencyCode: defaultCurrencyCode,
 			total: 1250.50,
 			items: [
 				{ name: 'Paracetamol 500mg', quantity: 1, price: 45 },
@@ -30,6 +34,7 @@ function OrdersHistory() {
 			orderId: 'ORD1705346291567',
 			date: '2024-01-15',
 			status: 'in_transit',
+			currencyCode: defaultCurrencyCode,
 			total: 850.00,
 			items: [
 				{ name: 'Cetirizine 10mg', quantity: 1, price: 25 }
@@ -41,6 +46,7 @@ function OrdersHistory() {
 			orderId: 'ORD1705259891890',
 			date: '2024-01-14',
 			status: 'confirmed',
+			currencyCode: defaultCurrencyCode,
 			total: 2100.75,
 			items: [
 				{ name: 'Omeprazole 20mg', quantity: 1, price: 85 },
@@ -53,6 +59,7 @@ function OrdersHistory() {
 			orderId: 'ORD1705173491123',
 			date: '2024-01-13',
 			status: 'cancelled',
+			currencyCode: defaultCurrencyCode,
 			total: 500.00,
 			items: [
 				{ name: 'Atorvastatin 10mg', quantity: 1, price: 95 }
@@ -274,7 +281,7 @@ function OrdersHistory() {
 								</div>
 								<div className={styles.amountSection}>
 									<p className={styles.totalLabel}>Total</p>
-									<p className={styles.totalAmount}>₹{order.total.toFixed(2)}</p>
+									<p className={styles.totalAmount}>{formatPrice(order.total, order.currencyCode)}</p>
 								</div>
 							</div>
 
@@ -292,7 +299,7 @@ function OrdersHistory() {
 													<p className={styles.itemName}>{item.name}</p>
 													<p className={styles.itemQty}>Qty: {item.quantity}</p>
 												</div>
-												<p className={styles.itemPrice}>₹{(item.price * item.quantity).toFixed(2)}</p>
+												<p className={styles.itemPrice}>{formatPrice(item.price * item.quantity, order.currencyCode)}</p>
 											</div>
 										))}
 									</div>

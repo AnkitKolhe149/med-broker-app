@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Avatar from '../../components/common/Avatar';
 import { useUser } from '../../context/UserContext';
+import { formatCurrency } from '../../utils/currency';
 import styles from './OrderConfirmation.module.css';
 
 function OrderConfirmation() {
@@ -11,6 +12,8 @@ function OrderConfirmation() {
 	const [orderData, setOrderData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
+	const currencyCode = orderData?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
 
 	useEffect(() => {
 		const completedOrder = sessionStorage.getItem('completed_order');
@@ -54,19 +57,19 @@ ITEMS ORDERED
 ==================
 ${orderData.cartItems.map(item => `
 ${item.name}
-Quantity: ${item.quantity} × ₹${item.basePrice.toFixed(2)} = ₹${(item.basePrice * item.quantity).toFixed(2)}
+Quantity: ${item.quantity} × ${formatPrice(item.basePrice)} = ${formatPrice(item.basePrice * item.quantity)}
 Category: ${item.category}
 Vendor: ${item.vendor}
 `).join('\n')}
 
 PRICE SUMMARY
 ==================
-Subtotal: ₹${orderData.subtotal.toFixed(2)}
-${orderData.discountPercent > 0 ? `Discount (${orderData.discountPercent}%): -₹${(orderData.subtotal * orderData.discountPercent / 100).toFixed(2)}` : ''}
-Delivery Charge: ${orderData.subtotal > 500 ? 'Free' : '₹50'}
-Tax (5% GST): ₹${calculateTax().toFixed(2)}
+Subtotal: ${formatPrice(orderData.subtotal)}
+${orderData.discountPercent > 0 ? `Discount (${orderData.discountPercent}%): -${formatPrice(orderData.subtotal * orderData.discountPercent / 100)}` : ''}
+Delivery Charge: ${orderData.subtotal > 500 ? 'Free' : formatPrice(50)}
+Tax (5% GST): ${formatPrice(calculateTax())}
 ---
-Total Amount: ₹${orderData.total.toFixed(2)}
+Total Amount: ${formatPrice(orderData.total)}
 
 PAYMENT METHOD
 ==================
@@ -170,7 +173,7 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 										</div>
 										<div className={styles.itemAmount}>
 											<p className={styles.qty}>Qty: {item.quantity}</p>
-											<p className={styles.amount}>₹{(item.basePrice * item.quantity).toFixed(2)}</p>
+											<p className={styles.amount}>{formatPrice(item.basePrice * item.quantity)}</p>
 										</div>
 									</div>
 								))}
@@ -245,25 +248,25 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 								<div className={styles.summaryContent}>
 									<div className={styles.summaryRow}>
 										<span>Subtotal</span>
-										<span>₹{orderData.subtotal.toFixed(2)}</span>
+										<span>{formatPrice(orderData.subtotal)}</span>
 									</div>
 									{orderData.discountPercent > 0 && (
 										<div className={styles.summaryRow} style={{ color: 'var(--success)' }}>
 											<span>Discount ({orderData.discountPercent}%)</span>
-											<span>−₹{(orderData.subtotal * orderData.discountPercent / 100).toFixed(2)}</span>
+											<span>−{formatPrice(orderData.subtotal * orderData.discountPercent / 100)}</span>
 										</div>
 									)}
 									<div className={styles.summaryRow}>
 										<span>Delivery Charge</span>
-										<span>{orderData.subtotal > 500 ? 'Free' : '₹50'}</span>
+										<span>{orderData.subtotal > 500 ? 'Free' : formatPrice(50)}</span>
 									</div>
 									<div className={styles.summaryRow}>
 										<span>Tax (5% GST)</span>
-										<span>₹{calculateTax().toFixed(2)}</span>
+										<span>{formatPrice(calculateTax())}</span>
 									</div>
 									<div className={styles.summaryTotal}>
 										<span>Total Paid</span>
-										<span>₹{orderData.total.toFixed(2)}</span>
+										<span>{formatPrice(orderData.total)}</span>
 									</div>
 								</div>
 
@@ -278,9 +281,14 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 
 								<div className={styles.trackingCard}>
 									<p className={styles.trackingLabel}>📍 Track Your Order</p>
-									<a href={`#/customer/orders`} className={styles.trackingLink}>
+									<button
+										type="button"
+										onClick={() => navigate('/customer/orders')}
+										className={styles.trackingLink}
+										style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+									>
 										View tracking details →
-									</a>
+									</button>
 								</div>
 
 								<div className={styles.supportBox}>
