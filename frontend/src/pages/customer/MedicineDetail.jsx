@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
+import { formatCurrency } from '../../utils/currency';
+import medicineService from '../../services/medicine.service';
 import styles from './MedicineDetail.module.css';
 
 function MedicineDetail() {
@@ -13,164 +15,40 @@ function MedicineDetail() {
 	const [quantity, setQuantity] = useState(1);
 	const [loading, setLoading] = useState(true);
 	const [addedToCart, setAddedToCart] = useState(false);
-
-	// Sample medicines database - will be replaced with API
-	const medicinesDB = [
-		{
-			id: 1,
-			name: 'Paracetamol 500mg',
-			category: 'Analgesics',
-			retailPrice: 45.00,
-			wholesalePrice: 35.00,
-			vendor: 'PharmaCorp India',
-			vendorId: 1,
-			inStock: true,
-			composition: 'Paracetamol 500mg',
-			manufacturer: 'PharmaCorp India Ltd.',
-			dosage: '500mg tablet',
-			usage: 'Relief from fever, mild to moderate pain',
-			packSize: '10 tablets',
-			expiry: '12/2025',
-			batchNo: 'PC-2024-001',
-			registrationNo: 'DL-2023-ABC123',
-			description: 'Paracetamol is an analgesic and antipyretic drug used to treat mild to moderate pain and fever. It works by reducing the production of prostaglandins which cause pain and fever in the body.',
-			sideEffects: 'Rare side effects may include rash, allergic reactions. In case of overdose, seek medical help immediately.',
-			precautions: 'Do not exceed the recommended dose. Not recommended for patients with liver disease.',
-			storage: 'Store below 25°C in a dry place. Keep away from children.',
-			warnings: 'This medicine is available over-the-counter. If symptoms persist, consult a doctor.'
-		},
-		{
-			id: 2,
-			name: 'Amoxicillin 250mg',
-			category: 'Antibiotics',
-			retailPrice: 120.00,
-			wholesalePrice: 90.00,
-			vendor: 'MediSupply Ltd',
-			vendorId: 2,
-			inStock: true,
-			composition: 'Amoxicillin Trihydrate 250mg',
-			manufacturer: 'MediSupply Ltd.',
-			dosage: '250mg capsule',
-			usage: 'Treatment of bacterial infections',
-			packSize: '10 capsules (Blister Pack)',
-			expiry: '06/2025',
-			batchNo: 'MS-2024-045',
-			registrationNo: 'DL-2023-XYZ789',
-			description: 'Amoxicillin is a beta-lactam antibiotic used to treat various bacterial infections including ear infections, strep throat, urinary tract infections, and pneumonia.',
-			sideEffects: 'Common: Diarrhea, nausea, vomiting. Allergic reactions may occur in penicillin-sensitive patients.',
-			precautions: 'Do not use if allergic to penicillin. Complete the full course of treatment as prescribed.',
-			storage: 'Store below 25°C. Keep away from sunlight. Keep out of reach of children.',
-			warnings: 'Prescription required. May cause allergic reactions in susceptible individuals.'
-		},
-		{
-			id: 3,
-			name: 'Cetirizine 10mg',
-			category: 'Antihistamines',
-			retailPrice: 25.00,
-			wholesalePrice: 18.00,
-			vendor: 'HealthPlus Pharma',
-			vendorId: 3,
-			inStock: true,
-			composition: 'Cetirizine Hydrochloride 10mg',
-			manufacturer: 'HealthPlus Pharma Ltd.',
-			dosage: '10mg tablet',
-			usage: 'Relief from allergies and allergy symptoms',
-			packSize: '20 tablets',
-			expiry: '09/2025',
-			batchNo: 'HP-2024-012',
-			registrationNo: 'DL-2023-DEF456',
-			description: 'Cetirizine is a second-generation antihistamine used to relieve allergy symptoms including sneezing, runny nose, watery eyes, and itching caused by allergies.',
-			sideEffects: 'Drowsiness, dry mouth, fatigue. Severe side effects are rare.',
-			precautions: 'Do not consume alcohol while on this medication. May cause drowsiness.',
-			storage: 'Store below 25°C in a dry place. Use within 6 months of opening the packet.',
-			warnings: 'Available over-the-counter. Do not exceed recommended dose.'
-		},
-		{
-			id: 4,
-			name: 'Omeprazole 20mg',
-			category: 'Antacids',
-			retailPrice: 85.00,
-			wholesalePrice: 65.00,
-			vendor: 'PharmaCorp India',
-			vendorId: 1,
-			inStock: true,
-			composition: 'Omeprazole 20mg',
-			manufacturer: 'PharmaCorp India Ltd.',
-			dosage: '20mg capsule',
-			usage: 'Treatment of acid reflux and GERD',
-			packSize: '15 capsules (Blister Pack)',
-			expiry: '08/2025',
-			batchNo: 'PC-2024-089',
-			registrationNo: 'DL-2023-GHI789',
-			description: 'Omeprazole is a proton pump inhibitor used to reduce stomach acid and treat conditions like gastroesophageal reflux disease (GERD), peptic ulcers, and acid-related dyspepsia.',
-			sideEffects: 'Headache, diarrhea, abdominal pain. Long-term use may affect calcium absorption.',
-			precautions: 'Take 30-60 minutes before meals. Do not exceed 40mg per day without medical consultation.',
-			storage: 'Store below 25°C. Protect from light and moisture.',
-			warnings: 'Prescription or doctor recommendation required. Do not use for more than 2 weeks without medical advice.'
-		},
-		{
-			id: 5,
-			name: 'Metformin 500mg',
-			category: 'Antidiabetics',
-			retailPrice: 60.00,
-			wholesalePrice: 45.00,
-			vendor: 'DiabeCare Inc',
-			vendorId: 4,
-			inStock: true,
-			composition: 'Metformin Hydrochloride 500mg',
-			manufacturer: 'DiabeCare Inc.',
-			dosage: '500mg tablet',
-			usage: 'Management of type 2 diabetes',
-			packSize: '30 tablets',
-			expiry: '11/2025',
-			batchNo: 'DC-2024-034',
-			registrationNo: 'DL-2023-JKL123',
-			description: 'Metformin is a first-line medication for type 2 diabetes management. It helps lower blood sugar levels by reducing glucose production in the liver and improving insulin resistance.',
-			sideEffects: 'Nausea, vomiting, diarrhea, abdominal pain. Usually subside after a few weeks.',
-			precautions: 'Regular kidney function monitoring required. Do not use if allergic to metformin.',
-			storage: 'Store below 25°C in a cool, dry place. Keep away from moisture.',
-			warnings: 'Prescription required. Do not stop taking without consulting your doctor.'
-		},
-		{
-			id: 6,
-			name: 'Atorvastatin 10mg',
-			category: 'Cardiovascular',
-			retailPrice: 95.00,
-			wholesalePrice: 72.00,
-			vendor: 'CardioPharma',
-			vendorId: 5,
-			inStock: false,
-			composition: 'Atorvastatin Calcium 10mg',
-			manufacturer: 'CardioPharma Ltd.',
-			dosage: '10mg tablet',
-			usage: 'Cholesterol management and cardiovascular protection',
-			packSize: '20 tablets (Blister Pack)',
-			expiry: '10/2025',
-			batchNo: 'CP-2024-056',
-			registrationNo: 'DL-2023-MNO456',
-			description: 'Atorvastatin is a statin used to reduce cholesterol levels and decrease the risk of heart disease. It works by inhibiting HMG-CoA reductase, an enzyme essential for cholesterol production.',
-			sideEffects: 'Muscle pain, weakness, liver enzyme elevation. Severe effects are rare.',
-			precautions: 'Regular liver function tests recommended. Avoid grapefruit juice while on this medication.',
-			storage: 'Store below 25°C. Protect from light.',
-			warnings: 'Prescription required. Not recommended during pregnancy.'
-		}
-	];
+	const currencyCode = localStorage.getItem('preferredCurrency') || 'USD';
+	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
 
 	useEffect(() => {
 		loadMedicineData();
-	}, []);
+	}, [id]);
 
 	const loadMedicineData = async () => {
 		try {
-			const med = medicinesDB.find(m => m.id === parseInt(id));
-			if (med) {
-				setMedicine(med);
-			} else {
-				// Medicine not found
+			setLoading(true);
+			const med = await medicineService.getMedicineById(id);
+
+			if (!med) {
 				navigate('/customer/catalog');
+				return;
 			}
+
+			setMedicine({
+				...med,
+				manufacturer: med.brand || med.vendor || 'N/A',
+				dosage: med.dosageForm || 'Standard dosage',
+				usage: 'Use as directed by your healthcare professional.',
+				packSize: 'Standard pack',
+				expiry: 'Check package',
+				batchNo: 'N/A',
+				registrationNo: 'N/A',
+				sideEffects: 'Consult a doctor or pharmacist for complete side effect information.',
+				precautions: 'Follow prescription and dosage instructions carefully.',
+				storage: 'Store in a cool, dry place away from direct sunlight.',
+				warnings: 'Read label instructions before use.'
+			});
 		} catch (error) {
 			console.error('Failed to load medicine:', error);
+			navigate('/customer/catalog');
 		} finally {
 			setLoading(false);
 		}
@@ -184,7 +62,8 @@ function MedicineDetail() {
 				quantity,
 				medicine.retailPrice,
 				medicine.wholesalePrice,
-				user?.customer?.buyerType || 'RETAIL'
+				user?.customer?.buyerType || 'RETAIL',
+				currencyCode
 			);
 			setAddedToCart(true);
 			setTimeout(() => setAddedToCart(false), 2000);
@@ -264,10 +143,10 @@ function MedicineDetail() {
 							<div className={styles.pricing}>
 								<div className={styles.priceCard}>
 									<p className={styles.priceLabel}>Price</p>
-									<p className={styles.priceValue}>₹{displayPrice.toFixed(2)}</p>
+									<p className={styles.priceValue}>{formatPrice(displayPrice)}</p>
 									{user?.customer?.buyerType === 'WHOLESALE' && (
 										<p className={styles.savingsInfo}>
-											Save ₹{savings.toFixed(2)} ({savingsPercent}%)
+											Save {formatPrice(savings)} ({savingsPercent}%)
 										</p>
 									)}
 								</div>
