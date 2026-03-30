@@ -110,6 +110,8 @@ dist
 # Temporary folders
 tmp/
 temp/
+seed.js
+
 
 # Editor directories and files
 .vscode/
@@ -117,6 +119,7 @@ temp/
 *.swp
 *.swo
 *~
+
 
 # OS generated files
 .DS_Store
