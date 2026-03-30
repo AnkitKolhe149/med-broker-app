@@ -242,6 +242,33 @@ body {
 	overflow-y: auto;
 	overflow-x: hidden;
 	background: transparent;
+	/* Vendor-only readability tuning for glass surfaces */
+	--text-primary: #0f2318;
+	--text-secondary: #26493a;
+	--text-light: #4a6b5c;
+	--surface-elevated: rgba(255, 255, 255, 0.8);
+	--surface-elevated-strong: rgba(255, 255, 255, 0.9);
+}
+
+.vendor-main input,
+.vendor-main select,
+.vendor-main textarea {
+	color: var(--text-primary);
+	background: var(--surface-elevated-strong);
+	border-color: rgba(21, 115, 71, 0.26);
+}
+
+.vendor-main input::placeholder,
+.vendor-main textarea::placeholder {
+	color: var(--text-secondary);
+	opacity: 0.86;
+}
+
+.vendor-main input:focus,
+.vendor-main select:focus,
+.vendor-main textarea:focus {
+	border-color: rgba(21, 115, 71, 0.5);
+	box-shadow: 0 0 0 3px rgba(21, 115, 71, 0.14);
 }
 
 .vendor-utility-bar {
