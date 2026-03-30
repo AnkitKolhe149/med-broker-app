@@ -21,15 +21,20 @@ function NotificationBar() {
 
 const styles = {
 	bar: {
+		position: 'fixed',
+		top: '5rem',
+		left: '50%',
+		transform: 'translateX(-50%)',
 		display: 'flex',
 		alignItems: 'center',
 		gap: '0.5rem',
 		color: 'white',
 		padding: '0.75rem 1rem',
 		borderRadius: 'var(--radius)',
-		margin: '1rem auto 0',
-		maxWidth: '1200px',
-		boxShadow: 'var(--shadow-sm)'
+		maxWidth: 'min(90vw, 560px)',
+		boxShadow: 'var(--shadow-sm)',
+		zIndex: 2000,
+		pointerEvents: 'none'
 	},
 	icon: {
 		fontWeight: '700'
