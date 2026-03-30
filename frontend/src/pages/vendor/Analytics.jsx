@@ -1,36 +1,59 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
+import vendorService from '../../services/vendor.service';
 import styles from './Analytics.module.css';
 
 function VendorAnalytics() {
-	const navigate = useNavigate();
 	const [timeRange, setTimeRange] = useState('month');
+	const [loading, setLoading] = useState(true);
 	const [analyticsData, setAnalyticsData] = useState({
-		totalSales: 125450,
-		totalOrders: 348,
+		totalSales: 0,
+		totalOrders: 0,
 		conversionRate: 3.45,
-		avgOrderValue: 360.37,
-		topProducts: [
-			{ id: 1, name: 'Paracetamol 500mg', sales: 1250, revenue: 56250 },
-			{ id: 2, name: 'Amoxicillin 250mg', sales: 890, revenue: 106800 },
-			{ id: 3, name: 'Cetirizine 10mg', sales: 756, revenue: 18900 }
-		],
-		salesTrend: [
-			{ month: 'Jan', sales: 12500 },
-			{ month: 'Feb', sales: 15600 },
-			{ month: 'Mar', sales: 18900 },
-			{ month: 'Apr', sales: 22400 },
-			{ month: 'May', sales: 28600 },
-			{ month: 'Jun', sales: 27450 }
-		],
-		regionData: [
-			{ region: 'North India', orders: 145, revenue: 52300 },
-			{ region: 'South India', orders: 102, revenue: 38900 },
-			{ region: 'Central India', orders: 78, revenue: 29800 },
-			{ region: 'East India', orders: 23, revenue: 4450 }
-		]
+		avgOrderValue: 0,
+		topProducts: [],
+		salesTrend: [],
+		regionData: []
 	});
+
+	useEffect(() => {
+		const loadAnalytics = async () => {
+			try {
+				setLoading(true);
+				const response = await vendorService.getAnalytics(timeRange);
+				setAnalyticsData({
+					totalSales: Math.round((response.metrics?.totalSalesCents || 0) / 100),
+					totalOrders: response.metrics?.totalOrders || 0,
+					conversionRate: response.metrics?.conversionRate || 0,
+					avgOrderValue: Math.round((response.metrics?.avgOrderValueCents || 0) / 100),
+					topProducts: (response.topProducts || []).map((p) => ({
+						id: p.id,
+						name: p.name,
+						sales: p.unitsSold,
+						revenue: Math.round((p.revenueCents || 0) / 100)
+					})),
+					salesTrend: (response.salesTrend || []).map((t) => ({
+						month: t.label,
+						sales: Math.round((t.salesCents || 0) / 100)
+					})),
+					regionData: (response.regionData || []).map((r) => ({
+						region: r.region,
+						orders: r.orders,
+						revenue: Math.round((r.revenueCents || 0) / 100)
+					}))
+				});
+			} catch (error) {
+				console.error('Failed to load analytics data:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadAnalytics();
+	}, [timeRange]);
+
+	const maxSalesTrend = Math.max(...analyticsData.salesTrend.map((data) => data.sales), 1);
+	const maxRegionOrders = Math.max(...analyticsData.regionData.map((region) => region.orders), 1);
 
 	return (
 		<div className={styles.container}>
@@ -51,6 +74,7 @@ function VendorAnalytics() {
 					</div>
 				)}
 			>
+			{loading && <div className={styles.chartCard}>Loading analytics...</div>}
 
 			{/* Key Metrics */}
 			<div className={styles.metricsGrid}>
@@ -82,6 +106,7 @@ function VendorAnalytics() {
 				<div className={styles.chartCard}>
 					<div className={styles.chartTitle}>Sales Trend (Last 6 Months)</div>
 					<div className={styles.chart}>
+						{analyticsData.salesTrend.length === 0 && <p>No trend data available.</p>}
 						{analyticsData.salesTrend.map((data, idx) => (
 							<div key={idx} className={styles.salesBarContainer}>
 								<div
@@ -97,10 +122,10 @@ function VendorAnalytics() {
 											fontSize: '0.8rem',
 											padding: '0.5rem'
 										},
-										height: `${(data.sales / 30000) * 250}px`
+										height: `${(data.sales / maxSalesTrend) * 250}px`
 									}}
 								>
-									${(data.sales / 1000).toFixed(0)}K
+									₹{(data.sales / 1000).toFixed(0)}K
 								</div>
 								<span className={styles.monthLabel}>{data.month}</span>
 							</div>
@@ -112,6 +137,7 @@ function VendorAnalytics() {
 				<div className={styles.chartCard}>
 					<div className={styles.chartTitle}>Orders by Region</div>
 					<div>
+						{analyticsData.regionData.length === 0 && <p>No region data available.</p>}
 						{analyticsData.regionData.map((region, idx) => (
 							<div key={idx} className={styles.regionItem}>
 								<div className={styles.regionHeader}>
@@ -121,7 +147,7 @@ function VendorAnalytics() {
 								<div className={styles.progressTrack}>
 									<div
 										style={{
-											width: `${(region.orders / 145) * 100}%`,
+											width: `${(region.orders / maxRegionOrders) * 100}%`,
 											height: '100%',
 											backgroundColor: 'var(--primary)',
 											borderRadius: '4px'
@@ -147,6 +173,11 @@ function VendorAnalytics() {
 						</tr>
 					</thead>
 					<tbody>
+						{analyticsData.topProducts.length === 0 && (
+							<tr className={styles.tableRow}>
+								<td className={styles.tableCell} colSpan={4}>No product performance data available.</td>
+							</tr>
+						)}
 						{analyticsData.topProducts.map((product, idx) => (
 							<tr key={idx} className={styles.tableRow}>
 								<td className={styles.tableCell}>

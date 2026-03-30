@@ -1,39 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
+import vendorService from '../../services/vendor.service';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Dashboard.module.css';
 
 function VendorDashboard() {
 	const navigate = useNavigate();
 	const [user, setUser] = useState(null);
+	const [loading, setLoading] = useState(true);
 	const [dashboardData, setDashboardData] = useState({
-		todaySales: 12450,
-		todayOrders: 24,
-		pendingOrders: 8,
-		totalProducts: 156,
-		totalInventoryValue: 450000,
+		todaySales: 0,
+		todayOrders: 0,
+		pendingOrders: 0,
+		totalProducts: 0,
+		totalInventoryValue: 0,
 		averageRating: 4.8,
-		totalReviews: 342,
+		totalReviews: 0,
 		conversionRate: 3.45,
-		weeklyTrend: [
-			{ day: 'Mon', sales: 8500, orders: 15 },
-			{ day: 'Tue', sales: 9200, orders: 18 },
-			{ day: 'Wed', sales: 7800, orders: 14 },
-			{ day: 'Thu', sales: 10500, orders: 21 },
-			{ day: 'Fri', sales: 12450, orders: 24 },
-			{ day: 'Sat', sales: 11200, orders: 22 },
-			{ day: 'Sun', sales: 9800, orders: 19 }
-		],
-		recentOrders: [
-			{ id: 'ORD-001', customer: 'Dr. Kumar', amount: 2450, status: 'pending', time: '5 mins ago' },
-			{ id: 'ORD-002', customer: 'Health Clinic', amount: 5600, status: 'confirmed', time: '25 mins ago' },
-			{ id: 'ORD-003', customer: 'Hospital Wing', amount: 8900, status: 'shipped', time: '2 hours ago' }
-		],
-		lowStockProducts: [
-			{ id: 1, name: 'Paracetamol 500mg', stock: 15, threshold: 50 },
-			{ id: 2, name: 'Cetirizine 10mg', stock: 8, threshold: 30 }
-		]
+		weeklyTrend: [],
+		recentOrders: [],
+		lowStockProducts: []
 	});
 
 	useEffect(() => {
@@ -42,10 +29,40 @@ function VendorDashboard() {
 
 	const loadUserData = async () => {
 		try {
-			const userData = await authService.getCurrentUser();
+			setLoading(true);
+			const [userData, dashboard] = await Promise.all([
+				authService.getCurrentUser(),
+				vendorService.getDashboard()
+			]);
+
 			setUser(userData);
+			setDashboardData({
+				todaySales: Math.round((dashboard.metrics?.todaySalesCents || 0) / 100),
+				todayOrders: dashboard.metrics?.todayOrders || 0,
+				pendingOrders: dashboard.metrics?.pendingOrders || 0,
+				totalProducts: dashboard.metrics?.totalProducts || 0,
+				totalInventoryValue: Math.round((dashboard.metrics?.totalInventoryValueCents || 0) / 100),
+				averageRating: 4.8,
+				totalReviews: 0,
+				conversionRate: 3.45,
+				weeklyTrend: (dashboard.weeklyTrend || []).map((item) => ({
+					day: item.day,
+					sales: Math.round((item.salesCents || 0) / 100),
+					orders: item.orders || 0
+				})),
+				recentOrders: (dashboard.recentOrders || []).map((order) => ({
+					id: order.id,
+					customer: order.customer,
+					amount: Math.round((order.amountCents || 0) / 100),
+					status: order.status,
+					time: new Date(order.createdAt).toLocaleString()
+				})),
+				lowStockProducts: dashboard.lowStockProducts || []
+			});
 		} catch (error) {
 			console.error('Failed to load user data:', error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -71,6 +88,18 @@ function VendorDashboard() {
 			return <span style={{ ...badgeStyle, backgroundColor: 'var(--red-100)', color: 'var(--error)' }}>✗ Rejected</span>;
 		return null;
 	};
+
+	const maxWeeklySales = Math.max(...dashboardData.weeklyTrend.map((data) => data.sales), 1);
+
+	if (loading) {
+		return (
+			<div className={styles.container}>
+				<VendorPageShell title="Vendor Dashboard" subtitle="Loading live metrics...">
+					<div className={styles.section}>Loading dashboard data...</div>
+				</VendorPageShell>
+			</div>
+		);
+	}
 
 	return (
 		<div className={styles.container}>
@@ -157,12 +186,13 @@ function VendorDashboard() {
 				<div className={styles.section}>
 					<h2 className={styles.sectionTitle}>Weekly Sales Trend</h2>
 					<div className={styles.chart}>
+						{dashboardData.weeklyTrend.length === 0 && <p>No sales data available.</p>}
 						{dashboardData.weeklyTrend.map((data, idx) => (
 							<div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
 								<div
 									className={styles.bar}
 									style={{
-										height: `${(data.sales / 13000) * 150}px`
+										height: `${(data.sales / maxWeeklySales) * 150}px`
 									}}
 								>
 									₹{(data.sales / 1000).toFixed(0)}K
@@ -228,14 +258,22 @@ function VendorDashboard() {
 												backgroundColor:
 													order.status === 'pending'
 														? 'var(--yellow-100)'
-														: order.status === 'confirmed'
+														: order.status === 'paid'
 														? 'var(--blue-100)'
+														: order.status === 'shipped'
+														? 'var(--green-100)'
+														: order.status === 'cancelled'
+														? 'var(--red-100)'
 														: 'var(--green-100)',
 												color:
 													order.status === 'pending'
 														? 'var(--warning)'
-														: order.status === 'confirmed'
+														: order.status === 'paid'
 														? 'var(--primary)'
+														: order.status === 'shipped'
+														? 'var(--success)'
+														: order.status === 'cancelled'
+														? 'var(--error)'
 														: 'var(--success)'
 											}}
 										>

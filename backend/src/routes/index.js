@@ -7,6 +7,7 @@ const inventoryRoutes = require("../modules/inventory/inventory.routes");
 const medicinesRoutes = require("../modules/medicines/medicines.routes");
 const orderRoutes = require("../modules/orders/orders.routes");
 const paymentRoutes = require("../modules/payments/payments.routes");
+const vendorInsightsRoutes = require("../modules/vendorInsights/vendorInsights.routes");
 
 const router = express.Router();
 
@@ -30,6 +31,9 @@ router.use("/orders", orderRoutes);
 
 // Payment routes
 router.use("/payments", paymentRoutes);
+
+// Vendor dashboard/analytics routes
+router.use("/vendor-insights", vendorInsightsRoutes);
 
 // Legacy user routes (keep for now, can be removed later)
 router.get("/users", async (req, res, next) => {
