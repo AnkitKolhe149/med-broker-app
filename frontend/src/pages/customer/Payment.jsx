@@ -58,41 +58,73 @@ function Payment() {
 		return upiString;
 	};
 
-	const handlePaymentProcess = async (e) => {
-		e.preventDefault();
-		setIsProcessing(true);
+const handlePaymentProcess = async (e) => {
+	e.preventDefault();
+	setIsProcessing(true);
 
-		try {
-			// Simulate payment processing
-			await new Promise(resolve => setTimeout(resolve, 2000));
+	try {
+		const totalAmount = calculateTotal();
 
-			// Generate Order ID
-			const orderId = 'ORD' + Date.now();
+		// 🔥 STEP 1: CREATE PAYMENT
+		const res = await fetch("http://localhost:4000/api/custom-payments/create", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				amount: totalAmount,
+				userId: "user123",
+				orderId: "order_" + Date.now(),
+			}),
+		});
 
-			// Store order data (in real implementation, this would be in DB)
-			const completedOrder = {
-				...orderData,
-				orderId,
-				paymentMethod,
-				paymentStatus: 'completed',
-				orderStatus: 'confirmed',
-				completedAt: new Date().toISOString(),
-				total: calculateTotal()
-			};
+		const data = await res.json();
 
-			// Store in sessionStorage for order confirmation page
-			sessionStorage.setItem('completed_order', JSON.stringify(completedOrder));
-			sessionStorage.removeItem('pending_order');
+		console.log("🔥 CREATE RESPONSE:", data);
 
-			// Navigate to order confirmation
-			navigate(`/customer/order-confirmation/${orderId}`);
-		} catch (error) {
-			console.error('Payment failed:', error);
-			showError('Payment processing failed. Please try again.');
-		} finally {
-			setIsProcessing(false);
+		if (!data.paymentIntentId) {
+			throw new Error("No paymentIntentId received");
 		}
-	};
+
+		// 🔥 STEP 2: SIMULATE SUCCESS
+		await new Promise(resolve => setTimeout(resolve, 1000));
+
+		// 🔥 STEP 3: UPDATE STATUS
+		await fetch("http://localhost:4000/api/custom-payments/success", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				paymentIntentId: data.paymentIntentId,
+			}),
+		});
+
+		// 🔥 STEP 4: COMPLETE ORDER
+		const orderId = 'ORD' + Date.now();
+
+		const completedOrder = {
+			...orderData,
+			orderId,
+			paymentMethod,
+			paymentStatus: 'completed',
+			orderStatus: 'confirmed',
+			completedAt: new Date().toISOString(),
+			total: totalAmount
+		};
+
+		sessionStorage.setItem('completed_order', JSON.stringify(completedOrder));
+		sessionStorage.removeItem('pending_order');
+
+		navigate(`/customer/order-confirmation/${orderId}`);
+
+	} catch (error) {
+		console.error("❌ PAYMENT ERROR:", error);
+		showError("Payment failed");
+	} finally {
+		setIsProcessing(false);
+	}
+};
 
 	if (loading) {
 		return (
