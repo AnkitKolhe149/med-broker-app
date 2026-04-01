@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
+import './AuthCare.css';
 
 function Register() {
 	const navigate = useNavigate();
@@ -13,6 +14,8 @@ function Register() {
 	});
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	const handleInputChange = (e) => {
 		setFormData({
@@ -41,8 +44,8 @@ function Register() {
 		}
 
 		// Validate password length
-		if (formData.password.length < 6) {
-			setError('Password must be at least 6 characters long');
+		if (formData.password.length < 8) {
+			setError('Password must be at least 8 characters long');
 			return;
 		}
 
@@ -74,59 +77,54 @@ function Register() {
 	};
 
 	return (
-		<main className="page">
-			<div className="container grid grid-2">
-				<div className="card reveal">
-					<h2 className="section-title">Create your account</h2>
-					<p className="section-subtitle">Join MedBroker to access global medicine marketplace.</p>
-					
-					<form onSubmit={handleSubmit} className="grid" style={{ marginTop: '1.5rem' }}>
-						{error && (
-							<div style={{
-								padding: '0.75rem',
-								backgroundColor: '#fee',
-								border: '1px solid #fcc',
-								borderRadius: '8px',
-								color: '#c33'
-							}}>
-								{error}
-							</div>
-						)}
+		<main className="auth-care-page page">
+			<div className="container auth-care-container">
+				<section className="auth-care-hero reveal">
+					<p className="auth-care-kicker">Healthcare Onboarding</p>
+					<h1 className="auth-care-title">Create your MedBroker account</h1>
+					<p className="auth-care-subtitle">
+						Start in minutes and connect with a verified medicine marketplace tailored for clinics, hospitals, and suppliers.
+					</p>
+				</section>
+
+				<section className="auth-care-card card reveal">
+					<form onSubmit={handleSubmit} className="auth-care-form">
+						{error && <div className="auth-care-error">{error}</div>}
 
 						<div>
-							<label className="label">I want to register as</label>
-							<div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+							<label className="label">Register as</label>
+							<div className="auth-care-role-switch" role="group" aria-label="Select registration role">
 								<button
 									type="button"
-									className={formData.role === 'CUSTOMER' ? 'button' : 'button-outline'}
+									className={formData.role === 'CUSTOMER' ? 'auth-care-role-btn active' : 'auth-care-role-btn'}
 									onClick={() => handleRoleSelect('CUSTOMER')}
 								>
-									Customer / Buyer
+									Customer
 								</button>
 								<button
 									type="button"
-									className={formData.role === 'VENDOR' ? 'button' : 'button-outline'}
+									className={formData.role === 'VENDOR' ? 'auth-care-role-btn active' : 'auth-care-role-btn'}
 									onClick={() => handleRoleSelect('VENDOR')}
 								>
-									Vendor / Supplier
+									Vendor
 								</button>
 							</div>
 						</div>
 
-						<div className="form-row">
-							<div>
-								<label className="label">Email address *</label>
+						<div className="form-row auth-care-row">
+							<div className="auth-care-field-group">
+								<label className="label">Email address</label>
 								<input
 									className="input"
 									type="email"
 									name="email"
-									placeholder="name@company.com"
+									placeholder="name@clinic.com"
 									value={formData.email}
 									onChange={handleInputChange}
 									required
 								/>
 							</div>
-							<div>
+							<div className="auth-care-field-group">
 								<label className="label">Mobile number</label>
 								<input
 									className="input"
@@ -139,71 +137,69 @@ function Register() {
 							</div>
 						</div>
 
-						<div className="form-row">
-							<div>
-								<label className="label">Password *</label>
-								<input
-									className="input"
-									type="password"
-									name="password"
-									placeholder="••••••••"
-									value={formData.password}
-									onChange={handleInputChange}
-									required
-									minLength={6}
-								/>
+						<div className="form-row auth-care-row">
+							<div className="auth-care-field-group">
+								<label className="label">Password</label>
+								<div className="auth-care-password-wrap">
+									<input
+										className="input"
+										type={showPassword ? 'text' : 'password'}
+										name="password"
+										placeholder="Minimum 8 characters"
+										value={formData.password}
+										onChange={handleInputChange}
+										required
+										minLength={8}
+									/>
+									<button
+										type="button"
+										className="auth-care-toggle"
+										onClick={() => setShowPassword((prev) => !prev)}
+									>
+										{showPassword ? 'Hide' : 'Show'}
+									</button>
+								</div>
 							</div>
-							<div>
-								<label className="label">Confirm password *</label>
-								<input
-									className="input"
-									type="password"
-									name="confirmPassword"
-									placeholder="••••••••"
-									value={formData.confirmPassword}
-									onChange={handleInputChange}
-									required
-									minLength={6}
-								/>
+							<div className="auth-care-field-group">
+								<label className="label">Confirm password</label>
+								<div className="auth-care-password-wrap">
+									<input
+										className="input"
+										type={showConfirmPassword ? 'text' : 'password'}
+										name="confirmPassword"
+										placeholder="Re-enter password"
+										value={formData.confirmPassword}
+										onChange={handleInputChange}
+										required
+										minLength={8}
+									/>
+									<button
+										type="button"
+										className="auth-care-toggle"
+										onClick={() => setShowConfirmPassword((prev) => !prev)}
+									>
+										{showConfirmPassword ? 'Hide' : 'Show'}
+									</button>
+								</div>
 							</div>
 						</div>
 
-						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-						<button
-							type="button"
-							onClick={() => navigate('/login')}
-							style={{ background: 'none', border: 'none', color: '#1E88E5', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-						>
-							Already have an account? Sign in
+						<button type="submit" className="button auth-care-submit" disabled={loading}>
+							{loading ? 'Creating account...' : 'Continue to onboarding'}
 						</button>
-							<button type="submit" className="button" disabled={loading}>
-								{loading ? 'Creating account...' : 'Continue to onboarding'}
+
+						<div className="auth-care-foot-row">
+							<button
+								type="button"
+								className="auth-care-link-btn"
+								onClick={() => navigate('/login')}
+							>
+								Already have an account? Sign in
 							</button>
+							<span className="auth-care-foot-note">After signup, your profile setup and verification flow starts automatically.</span>
 						</div>
 					</form>
-				</div>
-
-				<div className="card-soft reveal">
-					<h3>What happens next?</h3>
-					<div className="grid" style={{ marginTop: '1rem', gap: '1rem' }}>
-						<div className="card">
-							<strong>Step 1: Account creation</strong>
-							<p className="section-subtitle">Create your account with email and password.</p>
-						</div>
-						<div className="card">
-							<strong>Step 2: Profile setup</strong>
-							<p className="section-subtitle">Provide business details and regulatory information.</p>
-						</div>
-						<div className="card">
-							<strong>Step 3: Verification</strong>
-							<p className="section-subtitle">Our team will verify your credentials (vendors only).</p>
-						</div>
-						<div className="card">
-							<strong>Step 4: Start trading</strong>
-							<p className="section-subtitle">Access marketplace, browse medicines, place orders.</p>
-						</div>
-					</div>
-				</div>
+				</section>
 			</div>
 		</main>
 	);

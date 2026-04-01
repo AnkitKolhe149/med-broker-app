@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
+import './AuthCare.css';
 
 function Login() {
 	const navigate = useNavigate();
@@ -11,6 +12,7 @@ function Login() {
 	});
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
 
 	const handleInputChange = (e) => {
 		setFormData({
@@ -58,101 +60,96 @@ function Login() {
 	};
 
 	return (
-		<main className="page">
-			<div className="container grid grid-2">
-				<div className="card reveal">
-					<h2 className="section-title">Sign in to MedBroker</h2>
-					<p className="section-subtitle">Access your dashboard, orders, and pricing controls.</p>
-					
-					<form onSubmit={handleSubmit} style={{ marginTop: '1.5rem' }} className="grid">
-						{error && (
-							<div style={{
-								padding: '0.75rem',
-								backgroundColor: '#fee',
-								border: '1px solid #fcc',
-								borderRadius: '8px',
-								color: '#c33'
-							}}>
-								{error}
-							</div>
-						)}
+		<main className="auth-care-page page">
+			<div className="container auth-care-container">
+				<section className="auth-care-hero reveal">
+					<p className="auth-care-kicker">Trusted Healthcare Commerce</p>
+					<h1 className="auth-care-title">Sign in to your MedBroker workspace</h1>
+					<p className="auth-care-subtitle">
+						Built for hospitals, clinics, and verified suppliers with secure access and role-based control.
+					</p>
+				</section>
 
-						<div>
-							<label className="label">Email address</label>
-							<input
-								className="input"
-								type="email"
-								name="email"
-								placeholder="name@company.com"
-								value={formData.email}
-								onChange={handleInputChange}
-								required
-							/>
+				<section className="auth-care-card auth-care-card-login card reveal">
+					<form onSubmit={handleSubmit} className="auth-care-form">
+						<div className="auth-care-form-header">
+							<h2 className="auth-care-form-title">Welcome back</h2>
+							<p className="auth-care-form-subtitle">Sign in to continue your healthcare procurement workflow.</p>
 						</div>
 
-						<div>
-							<label className="label">Password</label>
-							<input
-								className="input"
-								type="password"
-								name="password"
-								placeholder="••••••••"
-								value={formData.password}
-								onChange={handleInputChange}
-								required
-							/>
-						</div>
+						{error && <div className="auth-care-error">{error}</div>}
 
 						<div>
-							<label className="label">Sign in as (Required)</label>
-							<div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+							<label className="label">Continue as</label>
+							<div className="auth-care-role-switch" role="group" aria-label="Select user role">
 								<button
 									type="button"
-									className={formData.role === 'CUSTOMER' ? 'button' : 'button-outline'}
+									className={formData.role === 'CUSTOMER' ? 'auth-care-role-btn active' : 'auth-care-role-btn'}
 									onClick={() => handleRoleSelect('CUSTOMER')}
 								>
 									Customer
 								</button>
 								<button
 									type="button"
-									className={formData.role === 'VENDOR' ? 'button' : 'button-outline'}
+									className={formData.role === 'VENDOR' ? 'auth-care-role-btn active' : 'auth-care-role-btn'}
 									onClick={() => handleRoleSelect('VENDOR')}
 								>
 									Vendor
 								</button>
 							</div>
-							<p className="section-subtitle" style={{ marginTop: '0.5rem' }}>
-								Admin access is restricted to internal operations.
-							</p>
 						</div>
 
-						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-							<span className="badge">🔒 Secure JWT Auth</span>
-							<div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-							<button
-								type="button"
-								onClick={() => navigate('/register')}
-								style={{ background: 'none', border: 'none', color: '#1E88E5', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-							>
-								Don't have an account?
-							</button>
-								<button type="submit" className="button" disabled={loading}>
-									{loading ? 'Signing in...' : 'Sign in'}
+						<div className="auth-care-field-group">
+							<label className="label">Email address</label>
+							<input
+								className="input"
+								type="email"
+								name="email"
+								placeholder="name@hospital.com"
+								value={formData.email}
+								onChange={handleInputChange}
+								required
+							/>
+						</div>
+
+						<div className="auth-care-field-group">
+							<label className="label">Password</label>
+							<div className="auth-care-password-wrap">
+								<input
+									className="input"
+									type={showPassword ? 'text' : 'password'}
+									name="password"
+									placeholder="Enter your password"
+									value={formData.password}
+									onChange={handleInputChange}
+									required
+								/>
+								<button
+									type="button"
+									className="auth-care-toggle"
+									onClick={() => setShowPassword((prev) => !prev)}
+								>
+									{showPassword ? 'Hide' : 'Show'}
 								</button>
 							</div>
 						</div>
-					</form>
-				</div>
 
-				<div className="card-soft reveal">
-					<h3>What you can do</h3>
-					<ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#5a6b76', lineHeight: 1.8 }}>
-						<li>Manage medicine catalogs and regulatory metadata.</li>
-						<li>Track orders with live status updates.</li>
-						<li>Monitor pricing margins and vendor share.</li>
-						<li>Download invoices, receipts, and reports.</li>
-					</ul>
-				</div>
+						<button type="submit" className="button auth-care-submit" disabled={loading}>
+							{loading ? 'Signing in...' : 'Sign in securely'}
+						</button>
+
+						<div className="auth-care-foot-row">
+							<button
+								type="button"
+								className="auth-care-link-btn"
+								onClick={() => navigate('/register')}
+							>
+								Create a new account
+							</button>
+							<span className="auth-care-foot-note">Admin access is restricted to internal operations.</span>
+						</div>
+					</form>
+				</section>
 			</div>
 		</main>
 	);
