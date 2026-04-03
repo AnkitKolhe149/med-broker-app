@@ -196,178 +196,241 @@ function TopNav() {
 	const totalItems = getTotalItems();
 	const cartCountLabel = totalItems > 99 ? '99+' : String(totalItems);
 	const hasAppliedSearch = location.pathname === '/customer/catalog' && Boolean(urlSearchParams.get('search')?.trim());
+	const utilityLinks = [
+		{ label: 'Help Center', path: '/customer/profile' },
+		{ label: 'Track Orders', path: '/customer/orders' },
+		{ label: 'Profile', path: '/customer/profile' }
+	];
+	const categoryLinks = [
+		{ label: 'All Medicines', search: '' },
+		{ label: 'Diabetes Care', search: 'diabetes' },
+		{ label: 'Cardiac Care', search: 'cardiac' },
+		{ label: 'Supplements', search: 'supplements' },
+		{ label: 'Devices', search: 'device' },
+		{ label: 'Personal Care', search: 'personal care' },
+		{ label: 'Offers', path: '/customer/catalog' }
+	];
+
+	const openCategory = (item) => {
+		if (item.path) {
+			handleNavigate(item.path);
+			return;
+		}
+
+		const search = item.search ? `?search=${encodeURIComponent(item.search)}` : '';
+		handleNavigate(`/customer/catalog${search}`);
+	};
 
 	return (
 		<header style={styles.header}>
-			<div className="topnav-container" style={styles.container}>
-				<div style={styles.leftSection}>
-					<button
-						type="button"
-						className="topnav-logo"
-						onClick={() => navigate('/customer/dashboard')}
-						style={styles.logo}
-					>
-						MedBroker
-					</button>
-				</div>
-
-				<button
-					type="button"
-					className="hamburgerMenu"
-					onClick={() => setShowMobileMenu((prev) => !prev)}
-					style={styles.hamburgerButton}
-					aria-label="Toggle mobile menu"
-					aria-expanded={showMobileMenu}
-				>
-					{showMobileMenu ? '✕ Close' : '☰ Menu'}
-				</button>
-
-				<div className={`topnav-right ${showMobileMenu ? 'show' : ''}`}>
-					<div className="centerSection" style={styles.centerSection}>
-						<form onSubmit={handleSearch} className="searchForm" style={styles.searchForm}>
-							<input
-								type="text"
-								placeholder="Search medicines..."
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								className="searchInput"
-								style={styles.searchInput}
-							/>
-							{hasAppliedSearch && (
-								<button
-									type="button"
-									onClick={handleClearSearch}
-									className="searchClearButton"
-									style={styles.searchClearButton}
-									aria-label="Clear search"
-									title="Clear search"
-								>
-									x
-								</button>
-							)}
-							<button type="submit" className="searchButton" style={styles.searchButton}>
-								Search
-							</button>
-						</form>
-					</div>
-
-					<div className="topnav-actions" style={styles.rightSection}>
-						<button
-							type="button"
-							onClick={() => handleNavigate('/customer/cart')}
-							className="cartButton"
-							style={styles.cartButton}
-							title="View Cart"
-						>
-							<span style={styles.cartIcon}>🛒 Cart</span>
-							{totalItems > 0 && <span style={styles.cartBadge}>{cartCountLabel}</span>}
-						</button>
-
-						<div className="topnav-profile-container" style={styles.profileContainer}>
+			<div className="topnav-utility-bar" style={styles.utilityBar}>
+				<div className="topnav-container" style={styles.utilityContainer}>
+					<div style={styles.utilityLeft}>Trusted healthcare procurement platform</div>
+					<div style={styles.utilityRight}>
+						{utilityLinks.map((item) => (
 							<button
 								type="button"
-								ref={profileButtonRef}
-								data-profile-button
-								onClick={() => setShowProfileMenu((prev) => !prev)}
-								onKeyDown={handleProfileButtonKeyDown}
-								className="profileButton"
-								style={styles.profileButton}
-								aria-expanded={showProfileMenu}
-								aria-haspopup="menu"
-								aria-controls="topnav-profile-menu"
-								title="Open profile menu"
+								key={item.path}
+								onClick={() => handleNavigate(item.path)}
+								className="topnav-utility-link"
+								style={styles.utilityLink}
 							>
-								{user?.customer?.fullName ? (
-									<>
-										<Avatar
-											src={user?.customer?.profileImage}
-											name={user?.customer?.fullName}
-											size={36}
-										/>
-										<span style={styles.profileChevron}>v</span>
-									</>
-								) : (
-									<>
-										<span style={styles.fallbackProfileText}>👤 Profile</span>
-										<span style={styles.profileChevron}>v</span>
-									</>
+								{item.label}
+							</button>
+						))}
+					</div>
+				</div>
+			</div>
+
+			<div className="topnav-main-bar" style={styles.mainBar}>
+				<div className="topnav-container" style={styles.container}>
+					<div style={styles.leftSection}>
+						<button
+							type="button"
+							className="topnav-logo"
+							onClick={() => navigate('/customer/dashboard')}
+							style={styles.logo}
+						>
+							MedBroker
+						</button>
+					</div>
+
+					<button
+						type="button"
+						className="hamburgerMenu"
+						onClick={() => setShowMobileMenu((prev) => !prev)}
+						style={styles.hamburgerButton}
+						aria-label="Toggle mobile menu"
+						aria-expanded={showMobileMenu}
+					>
+						{showMobileMenu ? '✕ Close' : '☰ Menu'}
+					</button>
+
+					<div className={`topnav-right ${showMobileMenu ? 'show' : ''}`}>
+						<div className="centerSection" style={styles.centerSection}>
+							<form onSubmit={handleSearch} className="searchForm" style={styles.searchForm}>
+								<input
+									type="text"
+									placeholder="Search medicines, brands or conditions"
+									value={searchQuery}
+									onChange={(e) => setSearchQuery(e.target.value)}
+									className="searchInput"
+									style={styles.searchInput}
+								/>
+								{hasAppliedSearch && (
+									<button
+										type="button"
+										onClick={handleClearSearch}
+										className="searchClearButton"
+										style={styles.searchClearButton}
+										aria-label="Clear search"
+										title="Clear search"
+									>
+										x
+									</button>
 								)}
+								<button type="submit" className="searchButton" style={styles.searchButton}>
+									Search
+								</button>
+							</form>
+						</div>
+
+						<div className="topnav-actions" style={styles.rightSection}>
+							<button
+								type="button"
+								onClick={() => handleNavigate('/customer/cart')}
+								className="cartButton"
+								style={styles.cartButton}
+								title="View Cart"
+							>
+								<span style={styles.cartIcon}>🛒 Cart</span>
+								{totalItems > 0 && <span style={styles.cartBadge}>{cartCountLabel}</span>}
 							</button>
 
-							{showProfileMenu && (
-								<>
-									<div
-										style={styles.backdrop}
-										onClick={() => setShowProfileMenu(false)}
-										aria-hidden="true"
-									/>
-									<div
-										ref={profileMenuRef}
-										id="topnav-profile-menu"
-										className="topnav-profile-menu"
-										data-profile-menu
-										style={styles.profileMenu}
-										role="menu"
-										onKeyDown={handleProfileMenuKeyDown}
-									>
-										{user ? (
-											<>
-												<div className="topnav-profile-menu-header" style={styles.profileMenuHeader}>
-													<Avatar
-														src={user?.customer?.profileImage}
-														name={user?.customer?.fullName}
-														size={44}
-													/>
-													<div>
-														<p style={styles.profileName}>{user?.customer?.fullName || 'User'}</p>
-														<p style={styles.profileEmail}>{user?.email}</p>
-														{user?.customer?.buyerType && (
-															<span style={styles.buyerTypeBadge}>{user.customer.buyerType}</span>
-														)}
+							<div className="topnav-profile-container" style={styles.profileContainer}>
+								<button
+									type="button"
+									ref={profileButtonRef}
+									data-profile-button
+									onClick={() => setShowProfileMenu((prev) => !prev)}
+									onKeyDown={handleProfileButtonKeyDown}
+									className="profileButton"
+									style={styles.profileButton}
+									aria-expanded={showProfileMenu}
+									aria-haspopup="menu"
+									aria-controls="topnav-profile-menu"
+									title="Open profile menu"
+								>
+									{user?.customer?.fullName ? (
+										<>
+											<Avatar
+												src={user?.customer?.profileImage}
+												name={user?.customer?.fullName}
+												size={36}
+											/>
+											<span style={styles.profileChevron}>v</span>
+										</>
+									) : (
+										<>
+											<span style={styles.fallbackProfileText}>👤 Account</span>
+											<span style={styles.profileChevron}>v</span>
+										</>
+									)}
+								</button>
+
+								{showProfileMenu && (
+									<>
+										<div
+											style={styles.backdrop}
+											onClick={() => setShowProfileMenu(false)}
+											aria-hidden="true"
+										/>
+										<div
+											ref={profileMenuRef}
+											id="topnav-profile-menu"
+											className="topnav-profile-menu"
+											data-profile-menu
+											style={styles.profileMenu}
+											role="menu"
+											onKeyDown={handleProfileMenuKeyDown}
+										>
+											{user ? (
+												<>
+													<div className="topnav-profile-menu-header" style={styles.profileMenuHeader}>
+														<Avatar
+															src={user?.customer?.profileImage}
+															name={user?.customer?.fullName}
+															size={44}
+														/>
+														<div>
+															<p style={styles.profileName}>{user?.customer?.fullName || 'User'}</p>
+															<p style={styles.profileEmail}>{user?.email}</p>
+															{user?.customer?.buyerType && (
+																<span style={styles.buyerTypeBadge}>{user.customer.buyerType}</span>
+															)}
+														</div>
 													</div>
-												</div>
-												<div style={styles.menuDivider} />
+													<div style={styles.menuDivider} />
 
-												{profileMenuSections.map((section, sectionIndex) => (
-													<div key={section.title} className="topnav-profile-menu-section" style={styles.menuSection}>
-														<p className="topnav-profile-menu-section-title" style={styles.menuSectionTitle}>{section.title}</p>
-														{section.items.map((item) => (
-															<button
-																type="button"
-																key={item.path}
-																className="topnav-profile-menu-item"
-																style={styles.menuItem}
-																onClick={() => handleNavigate(item.path)}
-																role="menuitem"
-															>
-																<span className="topnav-profile-menu-item-icon" style={styles.menuItemIcon} aria-hidden="true">{item.icon}</span>
-																<span>{item.label}</span>
-															</button>
-														))}
-														{sectionIndex < profileMenuSections.length - 1 && <div style={{ ...styles.menuDivider, marginTop: '0.55rem', marginBottom: '0.55rem' }} />}
-													</div>
-												))}
+													{profileMenuSections.map((section, sectionIndex) => (
+														<div key={section.title} className="topnav-profile-menu-section" style={styles.menuSection}>
+															<p className="topnav-profile-menu-section-title" style={styles.menuSectionTitle}>{section.title}</p>
+															{section.items.map((item) => (
+																<button
+																	type="button"
+																	key={item.path}
+																	className="topnav-profile-menu-item"
+																	style={styles.menuItem}
+																	onClick={() => handleNavigate(item.path)}
+																	role="menuitem"
+																>
+																	<span className="topnav-profile-menu-item-icon" style={styles.menuItemIcon} aria-hidden="true">{item.icon}</span>
+																	<span>{item.label}</span>
+																</button>
+															))}
+															{sectionIndex < profileMenuSections.length - 1 && <div style={{ ...styles.menuDivider, marginTop: '0.55rem', marginBottom: '0.55rem' }} />}
+														</div>
+													))}
 
-												<div style={{ ...styles.menuDivider, marginTop: '0.5rem', marginBottom: '0.5rem' }} />
+													<div style={{ ...styles.menuDivider, marginTop: '0.5rem', marginBottom: '0.5rem' }} />
 
-												<button
-													type="button"
-													className="topnav-profile-menu-item topnav-profile-menu-logout"
-													style={{ ...styles.menuItem, ...styles.logoutButton }}
-													onClick={handleLogout}
-													role="menuitem"
-												>
-													🚪 Logout
-												</button>
-											</>
-										) : (
-											<div style={{ padding: '1rem', textAlign: 'center' }}>Loading...</div>
-										)}
-									</div>
-								</>
-							)}
+													<button
+														type="button"
+														className="topnav-profile-menu-item topnav-profile-menu-logout"
+														style={{ ...styles.menuItem, ...styles.logoutButton }}
+														onClick={handleLogout}
+														role="menuitem"
+													>
+														🚪 Logout
+													</button>
+												</>
+											) : (
+												<div style={{ padding: '1rem', textAlign: 'center' }}>Loading...</div>
+											)}
+										</div>
+									</>
+								)}
+							</div>
 						</div>
 					</div>
+				</div>
+			</div>
+
+			<div className="topnav-category-bar" style={styles.categoryBar}>
+				<div className="topnav-container" style={styles.categoryContainer}>
+					<nav className="topnav-category-nav" style={styles.categoryNav} aria-label="Medicine categories">
+						{categoryLinks.map((item) => (
+							<button
+								type="button"
+								key={item.label}
+								onClick={() => openCategory(item)}
+								className="topnav-category-item"
+								style={styles.categoryItem}
+							>
+								{item.label}
+							</button>
+						))}
+					</nav>
 				</div>
 			</div>
 		</header>
@@ -376,25 +439,62 @@ function TopNav() {
 
 const styles = {
 	header: {
-		backgroundColor: 'rgba(255, 255, 255, 0.72)',
-		backdropFilter: 'blur(12px)',
-		borderBottom: '1px solid rgba(21, 115, 71, 0.14)',
-		padding: '0.78rem 0',
+		backgroundColor: 'transparent',
 		position: 'sticky',
 		top: 0,
 		zIndex: 100,
-		boxShadow: '0 4px 14px rgba(16, 32, 23, 0.08)',
 		overflow: 'visible',
 		contain: 'none'
 	},
-	container: {
-		maxWidth: '1240px',
+	utilityBar: {
+		background: 'linear-gradient(90deg, rgba(12, 73, 50, 0.98) 0%, rgba(15, 93, 63, 0.98) 100%)',
+		borderBottom: '1px solid rgba(255, 255, 255, 0.12)'
+	},
+	utilityContainer: {
+		maxWidth: '1320px',
 		margin: '0 auto',
-		padding: '0 1.1rem',
+		padding: '0.38rem 1.25rem',
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
-		gap: '1rem',
+		gap: '1rem'
+	},
+	utilityLeft: {
+		fontSize: '0.74rem',
+		letterSpacing: '0.02em',
+		color: 'rgba(231, 255, 244, 0.92)'
+	},
+	utilityRight: {
+		display: 'flex',
+		gap: '0.75rem',
+		alignItems: 'center',
+		flexWrap: 'wrap',
+		justifyContent: 'flex-end'
+	},
+	utilityLink: {
+		background: 'none',
+		border: 'none',
+		color: '#dcfce7',
+		fontSize: '0.76rem',
+		fontWeight: 600,
+		cursor: 'pointer',
+		padding: '0.1rem 0.25rem'
+	},
+	mainBar: {
+		backgroundColor: 'rgba(255, 255, 255, 0.88)',
+		backdropFilter: 'blur(10px)',
+		borderBottom: '1px solid rgba(21, 115, 71, 0.16)',
+		boxShadow: '0 4px 14px rgba(16, 32, 23, 0.08)',
+		padding: '0.68rem 0'
+	},
+	container: {
+		maxWidth: '1320px',
+		margin: '0 auto',
+		padding: '0 1.25rem',
+		display: 'flex',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		gap: '1.25rem',
 		overflow: 'visible',
 		contain: 'none'
 	},
@@ -427,7 +527,7 @@ const styles = {
 	centerSection: {
 		flex: 1,
 		minWidth: 0,
-		maxWidth: '520px'
+		maxWidth: '640px'
 	},
 	searchForm: {
 		display: 'flex',
@@ -471,7 +571,7 @@ const styles = {
 	},
 	rightSection: {
 		display: 'flex',
-		gap: '0.85rem',
+		gap: '0.7rem',
 		alignItems: 'center',
 		flex: '0 0 auto'
 	},
@@ -638,6 +738,35 @@ const styles = {
 		bottom: 0,
 		zIndex: 9999,
 		backgroundColor: 'rgba(16, 32, 23, 0.14)'
+	},
+	categoryBar: {
+		background: 'linear-gradient(90deg, rgba(10, 58, 40, 0.98) 0%, rgba(12, 73, 50, 0.98) 100%)',
+		borderBottom: '1px solid rgba(255, 255, 255, 0.12)'
+	},
+	categoryContainer: {
+		maxWidth: '1320px',
+		margin: '0 auto',
+		padding: '0 1.25rem'
+	},
+	categoryNav: {
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.38rem',
+		overflowX: 'auto',
+		padding: '0.36rem 0',
+		scrollbarWidth: 'none'
+	},
+	categoryItem: {
+		background: 'none',
+		border: '1px solid transparent',
+		borderRadius: '8px',
+		color: '#e2f9ee',
+		fontSize: '0.84rem',
+		fontWeight: 600,
+		padding: '0.4rem 0.62rem',
+		cursor: 'pointer',
+		whiteSpace: 'nowrap',
+		transition: 'all 0.2s ease'
 	}
 };
 
