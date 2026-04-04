@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
+import { useNotification } from '../../context/NotificationContext';
+import vendorService from '../../services/vendor.service';
 import styles from './Settings.module.css';
 
-function VendorSettings() {
-	const [activeTab, setActiveTab] = useState('profile');
-	const [settings, setSettings] = useState({
-		businessName: 'ABC Pharmacy Ltd',
-		email: 'contact@abcpharmacy.com',
-		phone: '+91-9876543210',
-		address: '123 Medical Street, Health City, State 560001',
-		city: 'Bangalore',
-		state: 'Karnataka',
-		pincode: '560001',
-		gstNumber: '18AABCU1234A1Z0',
-		aboutBusiness: 'Leading pharmacy chain providing quality medicines and healthcare products'
-	});
+const DEFAULT_PROFILE_SETTINGS = {
+	businessName: '',
+	email: '',
+	phone: '',
+	address: '',
+	city: '',
+	state: '',
+	pincode: '',
+	gstNumber: '',
+	aboutBusiness: '',
+	contactPersonName: ''
+};
 
-	const [tempSettings, setTempSettings] = useState(settings);
+function VendorSettings() {
+	const { showError, showSuccess } = useNotification();
+	const [activeTab, setActiveTab] = useState('profile');
+	const [settings, setSettings] = useState(DEFAULT_PROFILE_SETTINGS);
+	const [tempSettings, setTempSettings] = useState(DEFAULT_PROFILE_SETTINGS);
+	const [loadingProfile, setLoadingProfile] = useState(true);
+	const [savingProfile, setSavingProfile] = useState(false);
 	const [showTwoFA, setShowTwoFA] = useState(false);
 	const [twoFAEnabled, setTwoFAEnabled] = useState(false);
 	const [changePassword, setChangePassword] = useState(false);
@@ -26,24 +33,62 @@ function VendorSettings() {
 		confirm: ''
 	});
 
-	const handleSaveProfile = () => {
-		setSettings(tempSettings);
-		alert('Profile updated successfully!');
+	useEffect(() => {
+		const loadProfile = async () => {
+			try {
+				setLoadingProfile(true);
+				const profile = await vendorService.getProfile();
+				const normalizedProfile = {
+					...DEFAULT_PROFILE_SETTINGS,
+					...profile
+				};
+
+				setSettings(normalizedProfile);
+				setTempSettings(normalizedProfile);
+			} catch (error) {
+				console.error('Failed to load vendor profile:', error);
+				showError(error?.response?.data?.message || 'Failed to load profile settings');
+			} finally {
+				setLoadingProfile(false);
+			}
+		};
+
+		loadProfile();
+	}, [showError]);
+
+	const handleSaveProfile = async () => {
+		try {
+			setSavingProfile(true);
+			const updatedProfile = await vendorService.updateProfile(tempSettings);
+			const normalizedProfile = {
+				...DEFAULT_PROFILE_SETTINGS,
+				...updatedProfile
+			};
+
+			setSettings(normalizedProfile);
+			setTempSettings(normalizedProfile);
+			showSuccess('Profile updated successfully');
+		} catch (error) {
+			console.error('Failed to update vendor profile:', error);
+			showError(error?.response?.data?.message || 'Failed to update profile settings');
+		} finally {
+			setSavingProfile(false);
+		}
 	};
 
 	const handlePasswordChange = () => {
 		if (passwords.new !== passwords.confirm) {
-			alert('Passwords do not match!');
+			showError('Passwords do not match');
 			return;
 		}
-		alert('Password changed successfully!');
+		showSuccess('Password changed successfully!');
 		setChangePassword(false);
 		setPasswords({ current: '', new: '', confirm: '' });
 	};
 
 	const handleEnable2FA = () => {
 		setTwoFAEnabled(true);
-		alert('2FA enabled successfully! Download your backup codes.');
+		showSuccess('2FA enabled successfully! Download your backup codes.');
 	};
 
 	function Toggle({ enabled, onChange }) {
@@ -82,6 +127,8 @@ function VendorSettings() {
 			{/* Profile Tab */}
 			{activeTab === 'profile' && (
 				<>
+					{loadingProfile && <p className={styles.loadingText}>Loading profile settings...</p>}
+
 					<div className={styles.section}>
 						<h2 className={styles.sectionTitle}>Business Information</h2>
 						<div className={styles.formGrid}>
@@ -92,6 +139,7 @@ function VendorSettings() {
 									className={styles.input}
 									value={tempSettings.businessName}
 									onChange={(e) => setTempSettings({ ...tempSettings, businessName: e.target.value })}
+									disabled={loadingProfile || savingProfile}
 								/>
 							</div>
 							<div className={styles.formGroup}>
@@ -101,6 +149,17 @@ function VendorSettings() {
 									className={styles.input}
 									value={tempSettings.email}
 									onChange={(e) => setTempSettings({ ...tempSettings, email: e.target.value })}
+									disabled={loadingProfile || savingProfile}
+								/>
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Contact Person Name</label>
+								<input
+									type="text"
+									className={styles.input}
+									value={tempSettings.contactPersonName}
+									onChange={(e) => setTempSettings({ ...tempSettings, contactPersonName: e.target.value })}
+									disabled={loadingProfile || savingProfile}
 								/>
 							</div>
 							<div className={styles.formGroup}>
@@ -110,6 +169,7 @@ function VendorSettings() {
 									className={styles.input}
 									value={tempSettings.phone}
 									onChange={(e) => setTempSettings({ ...tempSettings, phone: e.target.value })}
+									disabled={loadingProfile || savingProfile}
 								/>
 							</div>
 							<div className={styles.formGroup}>
@@ -119,6 +179,7 @@ function VendorSettings() {
 									className={styles.input}
 									value={tempSettings.gstNumber}
 									onChange={(e) => setTempSettings({ ...tempSettings, gstNumber: e.target.value })}
+									disabled={loadingProfile || savingProfile}
 								/>
 							</div>
 						</div>
@@ -134,6 +195,7 @@ function VendorSettings() {
 									className={styles.input}
 									value={tempSettings.address}
 									onChange={(e) => setTempSettings({ ...tempSettings, address: e.target.value })}
+									disabled={loadingProfile || savingProfile}
 								/>
 							</div>
 							<div className={styles.formGrid}>
@@ -144,6 +206,7 @@ function VendorSettings() {
 										className={styles.input}
 										value={tempSettings.city}
 										onChange={(e) => setTempSettings({ ...tempSettings, city: e.target.value })}
+										disabled={loadingProfile || savingProfile}
 									/>
 								</div>
 								<div className={styles.formGroup}>
@@ -153,6 +216,7 @@ function VendorSettings() {
 										className={styles.input}
 										value={tempSettings.state}
 										onChange={(e) => setTempSettings({ ...tempSettings, state: e.target.value })}
+										disabled={loadingProfile || savingProfile}
 									/>
 								</div>
 								<div className={styles.formGroup}>
@@ -162,6 +226,7 @@ function VendorSettings() {
 										className={styles.input}
 										value={tempSettings.pincode}
 										onChange={(e) => setTempSettings({ ...tempSettings, pincode: e.target.value })}
+										disabled={loadingProfile || savingProfile}
 									/>
 								</div>
 							</div>
@@ -177,16 +242,25 @@ function VendorSettings() {
 								value={tempSettings.aboutBusiness}
 								onChange={(e) => setTempSettings({ ...tempSettings, aboutBusiness: e.target.value })}
 								placeholder="Tell customers about your business..."
+								disabled={loadingProfile || savingProfile}
 							/>
 						</div>
 					</div>
 
 					<div className={styles.buttonGroup}>
-						<button className={`${styles.button} ${styles.secondaryButton}`}>
+						<button
+							className={`${styles.button} ${styles.secondaryButton}`}
+							onClick={() => setTempSettings(settings)}
+							disabled={loadingProfile || savingProfile}
+						>
 							Cancel
 						</button>
-						<button className={`${styles.button} ${styles.primaryButton}`} onClick={handleSaveProfile}>
-							Save Changes
+						<button
+							className={`${styles.button} ${styles.primaryButton}`}
+							onClick={handleSaveProfile}
+							disabled={loadingProfile || savingProfile}
+						>
+							{savingProfile ? 'Saving...' : 'Save Changes'}
 						</button>
 					</div>
 				</>

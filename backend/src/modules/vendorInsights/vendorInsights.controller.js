@@ -41,4 +41,29 @@ module.exports = {
       return next(error);
     }
   }
+,
+  getOrders: async (req, res, next) => {
+    try {
+      const { page, limit, status } = req.query;
+      const data = await vendorInsightsService.getVendorOrders(req.user.id, {
+        page,
+        limit,
+        status
+      });
+
+      if (!data) {
+        return res.status(404).json({
+          success: false,
+          message: 'Vendor profile not found'
+        });
+      }
+
+      return res.json({
+        success: true,
+        data
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
 };

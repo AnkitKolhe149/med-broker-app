@@ -95,6 +95,27 @@ const calculateVendorOrderRevenue = (order, vendorMedicineIds) => {
     .reduce((sum, item) => sum + (item.unitPriceCents * item.quantity), 0);
 };
 
+const formatVendorOrder = (order, vendorMedicineIds) => {
+  const vendorItems = order.items.filter((item) => vendorMedicineIds.has(item.medicineId));
+  const totalCents = calculateVendorOrderRevenue(order, vendorMedicineIds);
+
+  return {
+    id: order.id,
+    customer: order.user?.customer?.fullName || order.user?.name || 'Customer',
+    amountCents: totalCents,
+    status: order.status.toLowerCase(),
+    paymentStatus: order.payment?.status?.toLowerCase() || 'unknown',
+    createdAt: order.createdAt,
+    items: vendorItems.map((item) => ({
+      id: item.id,
+      medicineId: item.medicineId,
+      name: item.medicine?.name || 'Medicine',
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCents
+    }))
+  };
+};
+
 const getDashboard = async (userId) => {
   const context = await getVendorAndInventory(userId);
   if (!context) {
@@ -194,14 +215,74 @@ const getDashboard = async (userId) => {
       totalInventoryValueCents
     },
     weeklyTrend,
-    recentOrders: recentOrders.map((order) => ({
-      id: order.id,
-      customer: order.user?.customer?.fullName || order.user?.name || 'Customer',
-      amountCents: calculateVendorOrderRevenue(order, vendorMedicineIds),
-      status: order.status.toLowerCase(),
-      createdAt: order.createdAt
-    })),
+    recentOrders: recentOrders.map((order) => formatVendorOrder(order, vendorMedicineIds)),
     lowStockProducts
+  };
+};
+
+const getVendorOrders = async (userId, options = {}) => {
+  const context = await getVendorAndInventory(userId);
+  if (!context) {
+    return null;
+  }
+
+  const { vendor, inventory } = context;
+  const vendorMedicineIds = new Set(inventory.map((item) => item.medicineId));
+  const page = Math.max(Number.parseInt(options.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(Number.parseInt(options.limit, 10) || 10, 1), 100);
+  const skip = (page - 1) * limit;
+  const status = typeof options.status === 'string' && options.status.trim() && options.status !== 'all'
+    ? options.status.trim().toUpperCase()
+    : null;
+
+  const where = buildOrderWhereForVendor(vendor.id);
+  if (status) {
+    where.status = status;
+  }
+
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            name: true,
+            customer: {
+              select: { fullName: true }
+            }
+          }
+        },
+        payment: true,
+        items: {
+          include: {
+            medicine: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit
+    }),
+    prisma.order.count({ where })
+  ]);
+
+  return {
+    vendor: {
+      id: vendor.id,
+      companyName: vendor.companyName
+    },
+    orders: orders.map((order) => formatVendorOrder(order, vendorMedicineIds)),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
   };
 };
 
@@ -324,5 +405,6 @@ const getAnalytics = async (userId, timeRange = 'month') => {
 
 module.exports = {
   getDashboard,
-  getAnalytics
+  getAnalytics,
+  getVendorOrders
 };

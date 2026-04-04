@@ -33,6 +33,30 @@ const vendorService = {
 		}
 
 		return response.data.data;
+	},
+
+	getProfile: async () => {
+		const response = await axios.get(`${API_URL}/vendor/profile`, {
+			headers: getAuthHeaders()
+		});
+
+		if (!response.data?.success) {
+			throw new Error(response.data?.message || 'Failed to load vendor profile');
+		}
+
+		return response.data.data;
+	},
+
+	updateProfile: async (payload) => {
+		const response = await axios.patch(`${API_URL}/vendor/profile`, payload, {
+			headers: getAuthHeaders()
+		});
+
+		if (!response.data?.success) {
+			throw new Error(response.data?.message || 'Failed to update vendor profile');
+		}
+
+		return response.data.data;
 	}
 };
 

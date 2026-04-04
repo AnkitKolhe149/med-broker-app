@@ -77,6 +77,12 @@
 	border-bottom: 1px solid var(--border);
 }
 
+.loadingText {
+	color: var(--text-secondary);
+	font-size: 0.9rem;
+	margin: 0 0 1rem 0;
+}
+
 .formGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -165,6 +171,12 @@
 .button:focus-visible {
 	outline: 2px solid rgba(21, 115, 71, 0.34);
 	outline-offset: 2px;
+}
+
+.button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	transform: none;
 }
 
 .primaryButton {

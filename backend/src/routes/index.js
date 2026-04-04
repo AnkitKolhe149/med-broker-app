@@ -9,6 +9,7 @@ const medicinesRoutes = require("../modules/medicines/medicines.routes");
 const orderRoutes = require("../modules/orders/orders.routes");
 const paymentRoutes = require("../modules/payments/payments.routes");
 const vendorInsightsRoutes = require("../modules/vendorInsights/vendorInsights.routes");
+const vendorProfileRoutes = require("../modules/vendorProfile/vendorProfile.routes");
 
 const router = express.Router();
 
@@ -36,6 +37,9 @@ router.use("/custom-payments", paymentCustomRoutes);
 
 // Vendor dashboard/analytics routes
 router.use("/vendor-insights", vendorInsightsRoutes);
+
+// Vendor profile settings routes
+router.use("/vendor", vendorProfileRoutes);
 
 // Legacy user routes (keep for now, can be removed later)
 router.get("/users", async (req, res, next) => {
