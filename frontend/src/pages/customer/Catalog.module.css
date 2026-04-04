@@ -405,6 +405,35 @@
 	border-color: var(--primary);
 }
 
+.cardImageWrap {
+	width: 100%;
+	height: 150px;
+	border-radius: var(--radius);
+	overflow: hidden;
+	border: 1px solid var(--border-light);
+	margin-bottom: 0.9rem;
+	background: var(--surface);
+}
+
+.cardImage {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.cardImageFallback {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--text-secondary);
+	background-color: var(--surface);
+}
+
 .cardHeader {
 	margin-bottom: 0.75rem;
 }

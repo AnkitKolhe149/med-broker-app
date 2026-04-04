@@ -564,6 +564,13 @@ function Catalog() {
 								<div className={styles.medicinesGrid}>
 									{filteredMedicines.map(medicine => (
 									<article key={medicine.id} className={styles.medicineCard}>
+										<div className={styles.cardImageWrap}>
+											{medicine.imageUrl ? (
+												<img src={medicine.imageUrl} alt={medicine.name} className={styles.cardImage} loading="lazy" />
+											) : (
+												<div className={styles.cardImageFallback}>No image</div>
+											)}
+										</div>
 										{/* HEADER: NAME + CATEGORY */}
 										<div className={styles.cardHeader}>
 											<h3 className={styles.medicineName}>{medicine.name}</h3>

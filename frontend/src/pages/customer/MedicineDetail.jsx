@@ -112,7 +112,11 @@ function MedicineDetail() {
 					{/* Left: Medicine Info */}
 					<section className="section" style={{ padding: '2rem' }}>
 						<div className={styles.medicineImagePlaceholder}>
-					<span className={styles.medicineEmoji}>💊</span>
+							{medicine.imageUrl ? (
+								<img src={medicine.imageUrl} alt={medicine.name} className={styles.medicineImage} />
+							) : (
+								<span className={styles.medicineEmoji}>💊</span>
+							)}
 						</div>
 
 						<div className={styles.basicInfo}>

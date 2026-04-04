@@ -117,6 +117,7 @@ model Inventory {
   medicineId String
   vendorId   String
   quantity   Int      @default(0)
+  imageUrl   String?
   medicine   Medicine @relation(fields: [medicineId], references: [id])
   vendor     Vendor   @relation(fields: [vendorId], references: [id])
   createdAt  DateTime @default(now())

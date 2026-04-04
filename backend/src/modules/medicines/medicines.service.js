@@ -99,6 +99,7 @@ const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRa
     popularity: Math.min(100, Math.max(50, inventory.quantity)),
     addedAt: inventory.medicine.createdAt,
     requiresPrescription: false,
+    imageUrl: inventory.imageUrl || null,
     vendor: inventory.vendor.companyName,
     vendorId: inventory.vendor.id,
     inStock: inventory.quantity > 0,
@@ -125,6 +126,7 @@ module.exports = {
         select: {
           id: true,
           quantity: true,
+          imageUrl: true,
           medicine: {
             select: {
               id: true,
@@ -168,6 +170,7 @@ module.exports = {
       select: {
         id: true,
         quantity: true,
+        imageUrl: true,
         medicine: {
           select: {
             id: true,

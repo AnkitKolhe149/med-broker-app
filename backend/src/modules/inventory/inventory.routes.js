@@ -1,6 +1,7 @@
 const express = require('express');
 const inventoryController = require('./inventory.controller');
 const { authenticate, requireRole } = require('../../middlewares/auth.middleware');
+const { medicineImageUpload } = require('../../middlewares/upload.middleware');
 
 const router = express.Router();
 
@@ -20,6 +21,13 @@ router.get('/', inventoryController.getVendorInventory);
  * @access  Private (Vendor)
  */
 router.post('/medicines', inventoryController.addMedicineToInventory);
+
+/**
+ * @route   POST /api/inventory/:id/image
+ * @desc    Upload/replace medicine image for an inventory item
+ * @access  Private (Vendor)
+ */
+router.post('/:id/image', medicineImageUpload.single('image'), inventoryController.uploadInventoryMedicineImage);
 
 /**
  * @route   PATCH /api/inventory/:id

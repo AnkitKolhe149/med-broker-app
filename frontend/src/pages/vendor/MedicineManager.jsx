@@ -1,111 +1,138 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
+import { useNotification } from '../../context/NotificationContext';
+import inventoryService from '../../services/inventory.service';
 import styles from './MedicineManager.module.css';
 
 function VendorMedicineManager() {
-	const [medicines, setMedicines] = useState([
-		{
-			id: 1,
-			name: 'Paracetamol 500mg',
-			category: 'Pain & Fever',
-			manufacturer: 'Cipla Ltd',
-			stock: 450,
-			price: 25,
-			costPrice: 18,
-			margin: 28,
-			description: 'Effective pain reliever and fever reducer',
-			active: true
-		},
-		{
-			id: 2,
-			name: 'Amoxicillin 250mg',
-			category: 'Antibiotics',
-			manufacturer: 'GSK',
-			stock: 280,
-			price: 120,
-			costPrice: 85,
-			margin: 41,
-			description: 'Broad-spectrum antibiotic',
-			active: true
-		},
-		{
-			id: 3,
-			name: 'Cetirizine 10mg',
-			category: 'Allergies',
-			manufacturer: 'Alembic',
-			stock: 600,
-			price: 25,
-			costPrice: 15,
-			margin: 67,
-			description: 'Fast-acting allergy relief',
-			active: true
-		},
-		{
-			id: 4,
-			name: 'Aspirin 100mg',
-			category: 'Pain & Fever',
-			manufacturer: 'Bayer',
-			stock: 0,
-			price: 15,
-			costPrice: 10,
-			margin: 50,
-			description: 'Daily aspirin for heart health',
-			active: true
-		}
-	]);
-
+	const { showSuccess, showError } = useNotification();
+	const [medicines, setMedicines] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [submitting, setSubmitting] = useState(false);
+	const [uploadingId, setUploadingId] = useState(null);
 	const [showAddForm, setShowAddForm] = useState(false);
 	const [selectedMedicine, setSelectedMedicine] = useState(null);
-	const [filterCategory, setFilterCategory] = useState('all');
 	const [filterStatus, setFilterStatus] = useState('all');
+	const [uploadFile, setUploadFile] = useState(null);
 	const [newMedicine, setNewMedicine] = useState({
 		name: '',
-		category: 'Pain & Fever',
-		manufacturer: '',
 		stock: '',
 		price: '',
-		costPrice: '',
 		description: ''
 	});
 
-	const categories = ['Pain & Fever', 'Antibiotics', 'Allergies', 'Vitamins', 'Digestive', 'Cold & Cough'];
+	useEffect(() => {
+		const loadInventory = async () => {
+			try {
+				setLoading(true);
+				const result = await inventoryService.getInventory({ page: 1, limit: 100 });
+				setMedicines((result.items || []).map((item) => ({
+					id: item.id,
+					medicineId: item.medicineId,
+					name: item.medicine?.name || 'Unknown medicine',
+					description: item.medicine?.description || '',
+					stock: item.quantity || 0,
+					price: Number(((item.medicine?.priceCents || 0) / 100).toFixed(2)),
+					imageUrl: item.imageUrl || null
+				})));
+			} catch (error) {
+				console.error('Failed to load inventory', error);
+				showError(error?.response?.data?.message || 'Failed to load inventory');
+			} finally {
+				setLoading(false);
+			}
+		};
 
-	const handleAddMedicine = () => {
-		if (newMedicine.name && newMedicine.price) {
-			const medicine = {
-				id: Math.max(...medicines.map(m => m.id)) + 1,
-				...newMedicine,
-				stock: parseInt(newMedicine.stock) || 0,
-				price: parseFloat(newMedicine.price),
-				costPrice: parseFloat(newMedicine.costPrice) || 0,
-				margin: newMedicine.costPrice ? Math.round(((newMedicine.price - newMedicine.costPrice) / newMedicine.costPrice) * 100) : 0,
-				active: true
+		loadInventory();
+	}, []);
+
+	const handleAddMedicine = async () => {
+		if (!newMedicine.name || !newMedicine.price || !newMedicine.stock) {
+			showError('Please enter medicine name, price, and initial stock');
+			return;
+		}
+
+		try {
+			setSubmitting(true);
+			const payload = {
+				name: newMedicine.name.trim(),
+				description: newMedicine.description?.trim() || null,
+				priceCents: Math.round(Number(newMedicine.price) * 100),
+				quantity: Number(newMedicine.stock)
 			};
-			setMedicines([...medicines, medicine]);
-			setNewMedicine({
-				name: '',
-				category: 'Pain & Fever',
-				manufacturer: '',
-				stock: '',
-				price: '',
-				costPrice: '',
-				description: ''
+
+			const inventory = await inventoryService.addMedicineToInventory(payload);
+			const mapped = {
+				id: inventory.id,
+				medicineId: inventory.medicineId,
+				name: inventory.medicine?.name || payload.name,
+				description: inventory.medicine?.description || payload.description || '',
+				stock: inventory.quantity || payload.quantity,
+				price: Number((((inventory.medicine?.priceCents) || payload.priceCents) / 100).toFixed(2)),
+				imageUrl: inventory.imageUrl || null
+			};
+
+			setMedicines((prev) => {
+				const idx = prev.findIndex((m) => m.id === mapped.id);
+				if (idx >= 0) {
+					const updated = [...prev];
+					updated[idx] = mapped;
+					return updated;
+				}
+				return [mapped, ...prev];
 			});
+
+			setNewMedicine({ name: '', stock: '', price: '', description: '' });
 			setShowAddForm(false);
+			showSuccess('Medicine added to inventory');
+		} catch (error) {
+			console.error('Failed to add medicine', error);
+			showError(error?.response?.data?.message || 'Failed to add medicine');
+		} finally {
+			setSubmitting(false);
 		}
 	};
 
-	const deleteMedicine = (id) => {
-		setMedicines(medicines.filter(m => m.id !== id));
-		setSelectedMedicine(null);
+	const deleteMedicine = async (id) => {
+		try {
+			await inventoryService.deleteInventoryItem(id);
+			setMedicines((prev) => prev.filter((m) => m.id !== id));
+			setSelectedMedicine(null);
+			showSuccess('Product deleted successfully');
+		} catch (error) {
+			console.error('Failed to delete product', error);
+			showError(error?.response?.data?.message || 'Failed to delete product');
+		}
 	};
 
-	const filteredMedicines = medicines.filter(m => {
-		if (filterCategory !== 'all' && m.category !== filterCategory) return false;
+	const handleUploadImage = async () => {
+		if (!selectedMedicine || !uploadFile) {
+			showError('Please select an image file first');
+			return;
+		}
+
+		try {
+			setUploadingId(selectedMedicine.id);
+			const result = await inventoryService.uploadMedicineImage(selectedMedicine.id, uploadFile);
+			setMedicines((prev) => prev.map((m) => (
+				m.id === selectedMedicine.id ? { ...m, imageUrl: result.imageUrl } : m
+			)));
+			setSelectedMedicine((prev) => (prev ? { ...prev, imageUrl: result.imageUrl } : prev));
+			setUploadFile(null);
+			showSuccess('Medicine image uploaded');
+		} catch (error) {
+			console.error('Failed to upload image', error);
+			showError(error?.response?.data?.message || 'Failed to upload image');
+		} finally {
+			setUploadingId(null);
+		}
+	};
+
+	const filteredMedicines = useMemo(() => medicines.filter((m) => {
 		if (filterStatus === 'in-stock' && m.stock === 0) return false;
 		if (filterStatus === 'out-of-stock' && m.stock > 0) return false;
 		return true;
-	});
+	}), [medicines, filterStatus]);
 
 	return (
 		<div className={styles.container}>
@@ -113,7 +140,7 @@ function VendorMedicineManager() {
 				title="Product Management"
 				subtitle="Manage your medicine catalog and inventory"
 				actions={(
-					<button className={styles.addButton} onClick={() => setShowAddForm(true)}>
+					<button className={styles.addButton} onClick={() => setShowAddForm(true)} disabled={submitting}>
 						+ Add Product
 					</button>
 				)}
@@ -121,18 +148,6 @@ function VendorMedicineManager() {
 
 			{/* Filters */}
 			<div className={styles.filterBar}>
-				<div className={styles.filterGroup}>
-					<span className={styles.filterLabel}>Category:</span>
-					{['all', ...categories].map(cat => (
-						<button
-							key={cat}
-							className={filterCategory === cat ? styles.filterButtonActive : styles.filterButton}
-							onClick={() => setFilterCategory(cat)}
-						>
-							{cat === 'all' ? 'All' : cat}
-						</button>
-					))}
-				</div>
 				<div className={styles.filterGroup}>
 					<span className={styles.filterLabel}>Stock:</span>
 					{['all', 'in-stock', 'out-of-stock'].map(status => (
@@ -149,14 +164,16 @@ function VendorMedicineManager() {
 
 			{/* Medicines Table */}
 			<div className={styles.section}>
+				{loading ? (
+					<div className={styles.loadingState}>Loading inventory...</div>
+				) : (
 				<table className={styles.table}>
 					<thead>
 						<tr>
+							<th className={styles.tableHeader}>Image</th>
 							<th className={styles.tableHeader}>Product Name</th>
-							<th className={styles.tableHeader}>Category</th>
 							<th className={styles.tableHeader}>Stock</th>
 							<th className={styles.tableHeader}>Price</th>
-							<th className={styles.tableHeader}>Margin</th>
 							<th className={styles.tableHeader}>Status</th>
 							<th className={styles.tableHeader}>Action</th>
 						</tr>
@@ -165,19 +182,20 @@ function VendorMedicineManager() {
 						{filteredMedicines.map(medicine => (
 							<tr key={medicine.id} className={styles.tableRow}>
 								<td className={styles.tableCell}>
+									{medicine.imageUrl ? (
+										<img src={medicine.imageUrl} alt={medicine.name} className={styles.thumbnailImage} />
+									) : (
+										<div className={styles.thumbnailPlaceholder}>No image</div>
+									)}
+								</td>
+								<td className={styles.tableCell}>
 									<strong>{medicine.name}</strong>
 								</td>
-								<td className={styles.tableCell}>{medicine.category}</td>
 								<td className={styles.tableCell}>
 									<strong>{medicine.stock} units</strong>
 								</td>
 								<td className={styles.tableCell}>
 									<strong>₹{medicine.price}</strong>
-								</td>
-								<td className={styles.tableCell}>
-									<strong style={{ color: medicine.margin > 40 ? 'var(--success)' : 'var(--warning)' }}>
-										{medicine.margin}%
-									</strong>
 								</td>
 								<td className={styles.tableCell}>
 									<div
@@ -191,15 +209,7 @@ function VendorMedicineManager() {
 								</td>
 								<td className={styles.tableCell}>
 									<button
-										style={{
-											padding: '0.4rem 0.8rem',
-											backgroundColor: 'var(--primary)',
-											color: 'white',
-											border: 'none',
-											borderRadius: 'var(--radius)',
-											cursor: 'pointer',
-											fontSize: '0.85rem'
-										}}
+										className={styles.editButton}
 										onClick={() => setSelectedMedicine(medicine)}
 									>
 										Edit
@@ -209,6 +219,7 @@ function VendorMedicineManager() {
 						))}
 					</tbody>
 				</table>
+				)}
 			</div>
 
 			{/* Add Medicine Modal */}
@@ -235,28 +246,6 @@ function VendorMedicineManager() {
 								onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
 							/>
 						</div>
-						<div className={styles.formGroup}>
-							<label className={styles.label}>Manufacturer</label>
-							<input
-								type="text"
-								className={styles.input}
-								placeholder="e.g., Cipla Ltd"
-								value={newMedicine.manufacturer}
-								onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
-							/>
-						</div>
-						<div className={styles.formGroup}>
-							<label className={styles.label}>Category</label>
-							<select
-								className={styles.select}
-								value={newMedicine.category}
-								onChange={(e) => setNewMedicine({ ...newMedicine, category: e.target.value })}
-							>
-								{categories.map(cat => (
-									<option key={cat} value={cat}>{cat}</option>
-								))}
-							</select>
-						</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Initial Stock</label>
 								<input
@@ -278,17 +267,6 @@ function VendorMedicineManager() {
 								onChange={(e) => setNewMedicine({ ...newMedicine, price: e.target.value })}
 							/>
 						</div>
-						<div className={styles.formGroup}>
-							<label className={styles.label}>Cost Price (₹)</label>
-							<input
-								type="number"
-								className={styles.input}
-								placeholder="0.00"
-								step="0.01"
-								value={newMedicine.costPrice}
-								onChange={(e) => setNewMedicine({ ...newMedicine, costPrice: e.target.value })}
-							/>
-						</div>
 					</div>
 
 						<div className={styles.formGridFull}>
@@ -304,11 +282,11 @@ function VendorMedicineManager() {
 					</div>
 
 				<div className={styles.actionButtons}>
-						<button className={`${styles.button} ${styles.secondaryButton}`} onClick={() => setShowAddForm(false)}>
+						<button className={`${styles.button} ${styles.secondaryButton}`} onClick={() => setShowAddForm(false)} disabled={submitting}>
 							Cancel
 						</button>
-						<button className={`${styles.button} ${styles.primaryButton}`} onClick={handleAddMedicine}>
-							Add Product
+						<button className={`${styles.button} ${styles.primaryButton}`} onClick={handleAddMedicine} disabled={submitting}>
+							{submitting ? 'Adding...' : 'Add Product'}
 						</button>
 					</div>
 				</div>
@@ -334,8 +312,8 @@ function VendorMedicineManager() {
 								<input type="text" className={styles.input} value={selectedMedicine.name} disabled />
 							</div>
 							<div className={styles.formGroup}>
-								<label className={styles.label}>Category</label>
-								<input type="text" className={styles.input} value={selectedMedicine.category} disabled />
+								<label className={styles.label}>Description</label>
+								<textarea className={styles.textarea} value={selectedMedicine.description || ''} disabled />
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Stock</label>
@@ -344,6 +322,32 @@ function VendorMedicineManager() {
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Price</label>
 								<input type="number" className={styles.input} value={selectedMedicine.price} disabled />
+							</div>
+						</div>
+
+
+						<div className={styles.formGridFull}>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Medicine Image</label>
+								{selectedMedicine.imageUrl ? (
+									<img src={selectedMedicine.imageUrl} alt={selectedMedicine.name} className={styles.previewImage} />
+								) : (
+									<div className={styles.previewPlaceholder}>No image uploaded</div>
+								)}
+								<input
+									type="file"
+									accept="image/*"
+									className={styles.input}
+									onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+								/>
+								<button
+									type="button"
+									className={`${styles.button} ${styles.primaryButton}`}
+									onClick={handleUploadImage}
+									disabled={!uploadFile || uploadingId === selectedMedicine.id}
+								>
+									{uploadingId === selectedMedicine.id ? 'Uploading...' : 'Upload Image'}
+								</button>
 							</div>
 						</div>
 

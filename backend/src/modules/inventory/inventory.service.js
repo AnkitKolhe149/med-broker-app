@@ -4,6 +4,7 @@ const {
   NotFoundError,
   ForbiddenError
 } = require('../../utils/errors');
+const { uploadMedicineImage } = require('../../services/cloudinary.service');
 
 module.exports = {
   /**
@@ -112,6 +113,57 @@ module.exports = {
     });
 
     return updatedItem;
+  },
+
+  /**
+   * Upload or replace image for a vendor-owned inventory item
+   */
+  uploadInventoryMedicineImage: async (userId, inventoryId, file) => {
+    if (!file || !file.buffer || !file.mimetype) {
+      throw new ValidationError('Medicine image is required');
+    }
+
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId },
+      select: { id: true }
+    });
+
+    if (!vendor) {
+      throw new NotFoundError('Vendor profile not found.');
+    }
+
+    const inventoryItem = await prisma.inventory.findUnique({
+      where: { id: inventoryId },
+      select: {
+        id: true,
+        vendorId: true,
+        medicineId: true
+      }
+    });
+
+    if (!inventoryItem) {
+      throw new NotFoundError('Inventory item not found');
+    }
+
+    if (inventoryItem.vendorId !== vendor.id) {
+      throw new ForbiddenError('You can only upload images for your own inventory items');
+    }
+
+    const imageUrl = await uploadMedicineImage(file.buffer, file.mimetype, inventoryItem.id);
+
+    const updatedInventory = await prisma.inventory.update({
+      where: { id: inventoryItem.id },
+      data: { imageUrl },
+      include: {
+        medicine: true
+      }
+    });
+
+    return {
+      inventoryId: updatedInventory.id,
+      medicineId: updatedInventory.medicineId,
+      imageUrl: updatedInventory.imageUrl
+    };
   },
 
   /**

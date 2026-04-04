@@ -42,6 +42,14 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Handle Multer upload errors
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      success: false,
+      message: 'Image size must be less than or equal to 5MB'
+    });
+  }
+
   // Default error response
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
