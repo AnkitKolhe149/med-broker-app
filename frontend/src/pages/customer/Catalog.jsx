@@ -49,6 +49,7 @@ function Catalog() {
 	} = state;
 	
 	const itemsPerPage = 12;
+	const getBrandLabel = (medicine) => medicine.brand || medicine.vendor || 'Unbranded';
 
 	useEffect(() => {
 		const fetchMedicines = async () => {
@@ -100,7 +101,7 @@ function Catalog() {
 
 	// Available filter options (derived from data)
 	const categories = useMemo(() => {
-		const unique = new Set(medicines.map(medicine => medicine.category));
+		const unique = new Set(medicines.map((medicine) => getBrandLabel(medicine)));
 		return ['all', ...Array.from(unique)].sort();
 	}, [medicines]);
 
@@ -123,7 +124,7 @@ function Catalog() {
 
 		// Filter by category
 		if (categoryFilter !== 'all') {
-			list = list.filter(medicine => medicine.category === categoryFilter);
+			list = list.filter((medicine) => getBrandLabel(medicine) === categoryFilter);
 		}
 
 		// Filter by stock availability
@@ -174,6 +175,13 @@ function Catalog() {
 	const maxPricePercent = (maxPrice / 500) * 100;
 	const getDisplayPrice = (medicine) => {
 		return buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice;
+	};
+
+	const getStockStatusTone = (medicine) => {
+		if (!medicine.inStock) return 'out';
+		if (medicine.stockLevel > 50) return 'good';
+		if (medicine.stockLevel > 20) return 'warn';
+		return 'low';
 	};
 
 	const formatDisplayPrice = (value) => formatCurrencyValue(value, viewerCurrency, true);
@@ -490,6 +498,16 @@ function Catalog() {
 
 					{/* ===== RIGHT SECTION: MEDICINES LISTING ===== */}
 					<section className={styles.mainContent}>
+						<div className={styles.resultsHeaderCompact}>
+							<div>
+								<h2 className={styles.resultsTitle}>
+									{filteredMedicines.length} {filteredMedicines.length === 1 ? 'medicine' : 'medicines'} found
+								</h2>
+								{searchQuery && <p className={styles.resultsSubtitle}>Showing results for "{searchQuery}"</p>}
+								{searching && <p className={styles.resultsSubtitle}>Updating results...</p>}
+							</div>
+						</div>
+
 						{/* ACTIVE FILTERS DISPLAY */}
 						<div className="activeFiltersBadges" style={{
 							display: (categoryFilter !== 'all' || availabilityFilter !== 'all' || prescriptionFilter !== 'all' || minPrice !== 0 || maxPrice !== 500) ? 'flex' : 'none'
@@ -529,22 +547,6 @@ function Catalog() {
 						</div>
 
 						{/* RESULTS HEADER */}
-						<div className={styles.resultsHeader}>
-							<div>
-								<h2 className={styles.resultsTitle}>
-									{filteredMedicines.length} {filteredMedicines.length === 1 ? 'medicine' : 'medicines'} found
-								</h2>
-								{searchQuery && (
-									<p className={styles.resultsSubtitle}>
-										Showing results for "{searchQuery}"
-									</p>
-								)}
-								{searching && (
-									<p className={styles.resultsSubtitle}>Updating results...</p>
-								)}
-							</div>
-						</div>
-
 						{/* MEDICINES GRID */}
 						{loading ? (
 							/* LOADING STATE */
@@ -565,6 +567,10 @@ function Catalog() {
 									{filteredMedicines.map(medicine => (
 									<article key={medicine.id} className={styles.medicineCard}>
 										<div className={styles.cardImageWrap}>
+											<div className={styles.cardOverlayRow}>
+												<span className={styles.ratingBadge}>★ {Math.min(5, Math.max(3.8, (medicine.popularity / 20)).toFixed(1))}</span>
+												<span className={`${styles.stockPill} ${styles[`stockTone-${getStockStatusTone(medicine)}`]}`}>{getStockStatus(medicine)}</span>
+											</div>
 											{medicine.imageUrl ? (
 												<img src={medicine.imageUrl} alt={medicine.name} className={styles.cardImage} loading="lazy" />
 											) : (
@@ -574,20 +580,7 @@ function Catalog() {
 										{/* HEADER: NAME + CATEGORY */}
 										<div className={styles.cardHeader}>
 											<h3 className={styles.medicineName}>{medicine.name}</h3>
-											<span className={styles.categoryBadge}>{medicine.category}</span>
-											</div>
-
-											{/* COMPOSITION & DOSAGE */}
-										<div className={styles.cardMeta}>
-											<p className={styles.compositionLabel}>
-													<strong>Composition:</strong> {medicine.composition}
-												</p>
-											<p className={styles.dosageLabel}>
-												<strong>Dosage Form:</strong> {medicine.dosageForm}
-											</p>
-											<p className={styles.brandLabel}>
-													<strong>Brand:</strong> {medicine.brand}
-												</p>
+											<span className={styles.categoryBadge}>{getBrandLabel(medicine)}</span>
 											</div>
 
 											{/* BADGES: PRESCRIPTION, STOCK STATUS */}
@@ -595,18 +588,16 @@ function Catalog() {
 											{medicine.requiresPrescription && (
 												<span className={styles.rxBadge}>Rx Prescription</span>
 												)}
-											<span className={styles.stockBadge} style={{
-													backgroundColor: medicine.inStock ? 'var(--green-100)' : 'var(--surface)',
-													color: medicine.inStock ? 'var(--success)' : 'var(--error)'
-												}}>
-													{getStockStatus(medicine)}
-												</span>
 											</div>
 
 											{/* PRICING */}
 										<div className={styles.pricingSection}>
 											<p className={styles.priceLabel}>Price {getPricingTier()}</p>
 											<p className={styles.priceValue}>{formatDisplayPrice(getDisplayPrice(medicine))}</p>
+											<div className={styles.priceCompareRow}>
+												<span>Retail {formatDisplayPrice(medicine.retailPrice)}</span>
+												<span>Wholesale {formatDisplayPrice(medicine.wholesalePrice)}</span>
+											</div>
 											</div>
 
 											{/* ACTIONS */}
@@ -632,8 +623,6 @@ function Catalog() {
 												</button>
 											</div>
 
-											{/* VENDOR INFO - SMALL TEXT */}
-											<p className={styles.vendorInfo}>Sold by {medicine.vendor}</p>
 										</article>
 									))}
 								</div>
