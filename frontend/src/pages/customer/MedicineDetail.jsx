@@ -141,6 +141,7 @@ function MedicineDetail() {
 								) : (
 									<span className={styles.outOfStock}>✗ Out of Stock</span>
 								)}
+								<p className={styles.availableUnits}>Available Units: {medicine.stockLevel ?? 0}</p>
 							</div>
 
 							{/* Pricing */}
@@ -239,6 +240,10 @@ function MedicineDetail() {
 									<tr className={styles.infoRow}>
 										<td className={styles.infoLabel}>Storage:</td>
 										<td className={styles.infoValue}>{medicine.storage}</td>
+									</tr>
+									<tr className={styles.infoRow}>
+										<td className={styles.infoLabel}>Available Units:</td>
+										<td className={styles.infoValue}>{medicine.stockLevel ?? 0}</td>
 									</tr>
 								</tbody>
 							</table>
