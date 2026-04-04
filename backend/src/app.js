@@ -14,24 +14,46 @@ app.use(cors({
 
 app.use(express.json());
 
-// Enhanced health check with database status
-app.get("/health", async (req, res) => {
-  let dbStatus = 'disconnected';
-  let dbLatency = null;
-  
+const HEALTH_DB_PROBE_TTL_MS = 15 * 1000;
+let cachedDbProbe = {
+  checkedAt: 0,
+  status: 'disconnected',
+  latency: null
+};
+
+const probeDatabaseHealth = async () => {
+  const now = Date.now();
+  if (now - cachedDbProbe.checkedAt < HEALTH_DB_PROBE_TTL_MS) {
+    return cachedDbProbe;
+  }
+
   try {
     const start = Date.now();
     await prisma.$queryRaw`SELECT 1`;
-    dbLatency = Date.now() - start;
-    dbStatus = 'connected';
-  } catch (error) {
-    dbStatus = 'error';
+    cachedDbProbe = {
+      checkedAt: now,
+      status: 'connected',
+      latency: `${Date.now() - start}ms`
+    };
+  } catch (_error) {
+    cachedDbProbe = {
+      checkedAt: now,
+      status: 'error',
+      latency: null
+    };
   }
+
+  return cachedDbProbe;
+};
+
+// Enhanced health check with database status
+app.get("/health", async (req, res) => {
+  const dbProbe = await probeDatabaseHealth();
   
   res.json({ 
     status: "ok",
-    database: dbStatus,
-    latency: dbLatency !== null ? `${dbLatency}ms` : null,
+    database: dbProbe.status,
+    latency: dbProbe.latency,
     timestamp: new Date().toISOString()
   });
 });

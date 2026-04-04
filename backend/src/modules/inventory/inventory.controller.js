@@ -15,7 +15,7 @@ module.exports = {
         search
       };
 
-      const result = await inventoryService.getVendorInventory(req.user.id, options);
+      const result = await inventoryService.getVendorInventory(req.user, options);
 
       res.status(200).json({
         success: true,
@@ -33,7 +33,7 @@ module.exports = {
    */
   addMedicineToInventory: async (req, res, next) => {
     try {
-      const result = await inventoryService.addMedicineToVendorInventory(req.user.id, req.body);
+      const result = await inventoryService.addMedicineToVendorInventory(req.user, req.body);
 
       res.status(201).json({
         success: true,
@@ -55,7 +55,7 @@ module.exports = {
     try {
       const inventoryId = req.params.id;
       const result = await inventoryService.uploadInventoryMedicineImage(
-        req.user.id,
+        req.user,
         inventoryId,
         req.file
       );
@@ -78,7 +78,7 @@ module.exports = {
     try {
       const inventoryId = req.params.id;
       const updatedItem = await inventoryService.updateInventoryItem(
-        req.user.id,
+        req.user,
         inventoryId,
         req.body
       );
@@ -100,7 +100,7 @@ module.exports = {
   deleteInventoryItem: async (req, res, next) => {
     try {
       const inventoryId = req.params.id;
-      const result = await inventoryService.deleteInventoryItem(req.user.id, inventoryId);
+      const result = await inventoryService.deleteInventoryItem(req.user, inventoryId);
 
       res.status(200).json({
         success: true,

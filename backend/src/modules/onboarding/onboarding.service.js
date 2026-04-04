@@ -8,6 +8,47 @@ const isValidGSTIN = (gstin) => {
   return gstinRegex.test(gstin);
 };
 
+const parseUniqueTarget = (error) => {
+  if (!error || error.code !== 'P2002') {
+    return [];
+  }
+
+  if (Array.isArray(error.meta?.target)) {
+    return error.meta.target;
+  }
+
+  const message = String(error.message || '');
+  return [message];
+};
+
+const toVendorConflictError = (error) => {
+  const target = parseUniqueTarget(error).join(',');
+
+  if (target.includes('userId')) {
+    return new ConflictError('Vendor profile already exists');
+  }
+
+  if (target.includes('gstinNumber')) {
+    return new ConflictError('GSTIN number already registered');
+  }
+
+  if (target.includes('drugLicenseNumber')) {
+    return new ConflictError('Drug license number already registered');
+  }
+
+  return new ConflictError('Vendor profile could not be created due to duplicate data');
+};
+
+const toCustomerConflictError = (error) => {
+  const target = parseUniqueTarget(error).join(',');
+
+  if (target.includes('userId')) {
+    return new ConflictError('Customer profile already exists');
+  }
+
+  return new ConflictError('Customer profile could not be created due to duplicate data');
+};
+
 // Public API
 module.exports = {
   completeVendorOnboarding: async (userId, data) => {
@@ -46,53 +87,41 @@ module.exports = {
       throw new ValidationError('Contact number must be exactly 10 digits');
     }
 
-    const existingVendor = await prisma.vendor.findUnique({
-      where: { userId }
-    });
+    try {
+      const vendor = await prisma.$transaction(async (tx) => {
+        const createdVendor = await tx.vendor.create({
+          data: {
+            userId,
+            companyName,
+            vendorType,
+            country,
+            state,
+            gstinNumber,
+            drugLicenseNumber,
+            businessAddress,
+            bankAccountDetails: bankAccountDetails || {},
+            contactPersonName,
+            contactNumber,
+            verificationStatus: 'VERIFIED'
+          }
+        });
 
-    if (existingVendor) {
-      throw new ConflictError('Vendor profile already exists');
-    }
+        await tx.user.update({
+          where: { id: userId },
+          data: { isProfileComplete: true }
+        });
 
-    const duplicateGSTIN = await prisma.vendor.findUnique({
-      where: { gstinNumber }
-    });
+        return createdVendor;
+      });
 
-    if (duplicateGSTIN) {
-      throw new ConflictError('GSTIN number already registered');
-    }
-
-    const duplicateLicense = await prisma.vendor.findUnique({
-      where: { drugLicenseNumber }
-    });
-
-    if (duplicateLicense) {
-      throw new ConflictError('Drug license number already registered');
-    }
-
-    const vendor = await prisma.vendor.create({
-      data: {
-        userId,
-        companyName,
-        vendorType,
-        country,
-        state,
-        gstinNumber,
-        drugLicenseNumber,
-        businessAddress,
-        bankAccountDetails: bankAccountDetails || {},
-        contactPersonName,
-        contactNumber,
-        verificationStatus: 'VERIFIED'
+      return vendor;
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw toVendorConflictError(error);
       }
-    });
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { isProfileComplete: true }
-    });
-
-    return vendor;
+      throw error;
+    }
   },
 
   completeCustomerOnboarding: async (userId, data) => {
@@ -133,48 +162,51 @@ module.exports = {
       throw new ValidationError('Contact number must be exactly 10 digits');
     }
 
-    const existingCustomer = await prisma.customer.findUnique({
-      where: { userId }
-    });
+    try {
+      const customer = await prisma.$transaction(async (tx) => {
+        const createdCustomer = await tx.customer.create({
+          data: {
+            userId,
+            fullName,
+            buyerType,
+            businessName,
+            gstin,
+            country,
+            city,
+            deliveryAddress,
+            contactNumber
+          }
+        });
 
-    if (existingCustomer) {
-      throw new ConflictError('Customer profile already exists');
-    }
+        await tx.user.update({
+          where: { id: userId },
+          data: { isProfileComplete: true }
+        });
 
-    if (buyerType === 'WHOLESALE' && !businessName) {
-      throw new ValidationError('Business name is required for wholesale buyers');
-    }
+        return createdCustomer;
+      });
 
-    const customer = await prisma.customer.create({
-      data: {
-        userId,
-        fullName,
-        buyerType,
-        businessName,
-        gstin,
-        country,
-        city,
-        deliveryAddress,
-        contactNumber
+      return customer;
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw toCustomerConflictError(error);
       }
-    });
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { isProfileComplete: true }
-    });
-
-    return customer;
+      throw error;
+    }
   },
 
-  getOnboardingStatus: async (userId) => {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        vendor: true,
-        customer: true
-      }
-    });
+  getOnboardingStatus: async (userContext) => {
+    const isLoadedUser = typeof userContext === 'object' && userContext !== null;
+    const user = isLoadedUser
+      ? userContext
+      : await prisma.user.findUnique({
+        where: { id: userContext },
+        include: {
+          vendor: true,
+          customer: true
+        }
+      });
 
     if (!user) {
       throw new NotFoundError('User not found');

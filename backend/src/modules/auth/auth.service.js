@@ -75,22 +75,26 @@ module.exports = {
     validatePassword(password);
     validateMobile(mobile);
 
-    // Check email uniqueness
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
+    // Single lookup for registration conflicts to avoid duplicate checks.
+    const existingAccount = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          ...(mobile ? [{ mobile }] : [])
+        ]
+      },
+      select: {
+        email: true,
+        mobile: true
+      }
     });
 
-    if (existingUser) {
-      throw new ConflictError('User with this email already exists');
-    }
+    if (existingAccount) {
+      if (existingAccount.email === email) {
+        throw new ConflictError('User with this email already exists');
+      }
 
-    // Check mobile uniqueness if provided
-    if (mobile) {
-      const existingMobile = await prisma.user.findFirst({
-        where: { mobile }
-      });
-
-      if (existingMobile) {
+      if (mobile && existingAccount.mobile === mobile) {
         throw new ConflictError('Mobile number already registered');
       }
     }
@@ -163,14 +167,17 @@ module.exports = {
     };
   },
 
-  getProfileStatus: async (userId) => {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        vendor: true,
-        customer: true
-      }
-    });
+  getProfileStatus: async (userContext) => {
+    const isLoadedUser = typeof userContext === 'object' && userContext !== null;
+    const user = isLoadedUser
+      ? userContext
+      : await prisma.user.findUnique({
+        where: { id: userContext },
+        include: {
+          vendor: true,
+          customer: true
+        }
+      });
 
     if (!user) {
       throw new NotFoundError('User not found');

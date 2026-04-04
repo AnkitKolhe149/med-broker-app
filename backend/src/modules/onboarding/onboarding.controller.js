@@ -37,7 +37,7 @@ module.exports = {
 
   getStatus: async (req, res, next) => {
     try {
-      const status = await onboardingService.getOnboardingStatus(req.user.id);
+      const status = await onboardingService.getOnboardingStatus(req.user);
 
       res.status(200).json({
         success: true,

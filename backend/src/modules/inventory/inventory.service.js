@@ -6,23 +6,45 @@ const {
 } = require('../../utils/errors');
 const { uploadMedicineImage } = require('../../services/cloudinary.service');
 
+const resolveVendorContext = async (userContext) => {
+  const userId = typeof userContext === 'string' ? userContext : userContext?.id;
+  const userVendor = typeof userContext === 'object' ? userContext?.vendor : null;
+
+  if (userVendor?.id) {
+    return {
+      id: userVendor.id,
+      verificationStatus: userVendor.verificationStatus || null
+    };
+  }
+
+  if (!userId) {
+    throw new NotFoundError('User context is missing.');
+  }
+
+  const vendor = await prisma.vendor.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      verificationStatus: true
+    }
+  });
+
+  if (!vendor) {
+    throw new NotFoundError('Vendor profile not found. Please complete onboarding first.');
+  }
+
+  return vendor;
+};
+
 module.exports = {
   /**
    * Get all inventory items for a vendor
    */
-  getVendorInventory: async (userId, options = {}) => {
+  getVendorInventory: async (userContext, options = {}) => {
     const { page = 1, limit = 20, search } = options;
     const skip = (page - 1) * limit;
 
-    // Get vendor ID
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId },
-      select: { id: true }
-    });
-
-    if (!vendor) {
-      throw new NotFoundError('Vendor profile not found. Please complete onboarding first.');
-    }
+    const vendor = await resolveVendorContext(userContext);
 
     // Build where clause
     const where = { vendorId: vendor.id };
@@ -65,7 +87,7 @@ module.exports = {
   /**
    * Update inventory item (quantity only for now)
    */
-  updateInventoryItem: async (userId, inventoryId, updateData) => {
+  updateInventoryItem: async (userContext, inventoryId, updateData) => {
     const { quantity } = updateData;
 
     // Validate quantity
@@ -75,15 +97,7 @@ module.exports = {
       }
     }
 
-    // Get vendor ID
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId },
-      select: { id: true }
-    });
-
-    if (!vendor) {
-      throw new NotFoundError('Vendor profile not found.');
-    }
+    const vendor = await resolveVendorContext(userContext);
 
     // Check if inventory item exists and belongs to vendor
     const inventoryItem = await prisma.inventory.findUnique({
@@ -118,19 +132,12 @@ module.exports = {
   /**
    * Upload or replace image for a vendor-owned inventory item
    */
-  uploadInventoryMedicineImage: async (userId, inventoryId, file) => {
+  uploadInventoryMedicineImage: async (userContext, inventoryId, file) => {
     if (!file || !file.buffer || !file.mimetype) {
       throw new ValidationError('Medicine image is required');
     }
 
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId },
-      select: { id: true }
-    });
-
-    if (!vendor) {
-      throw new NotFoundError('Vendor profile not found.');
-    }
+    const vendor = await resolveVendorContext(userContext);
 
     const inventoryItem = await prisma.inventory.findUnique({
       where: { id: inventoryId },
@@ -169,16 +176,8 @@ module.exports = {
   /**
    * Delete inventory item (remove medicine from vendor's inventory)
    */
-  deleteInventoryItem: async (userId, inventoryId) => {
-    // Get vendor ID
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId },
-      select: { id: true }
-    });
-
-    if (!vendor) {
-      throw new NotFoundError('Vendor profile not found.');
-    }
+  deleteInventoryItem: async (userContext, inventoryId) => {
+    const vendor = await resolveVendorContext(userContext);
 
     // Check if inventory item exists and belongs to vendor
     const inventoryItem = await prisma.inventory.findUnique({
@@ -204,7 +203,7 @@ module.exports = {
     };
   },
 
-  addMedicineToVendorInventory: async (userId, data) => {
+  addMedicineToVendorInventory: async (userContext, data) => {
     const {
       medicineId,
       name,
@@ -217,17 +216,7 @@ module.exports = {
       throw new ValidationError('Quantity must be a positive integer');
     }
 
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId },
-      select: {
-        id: true,
-        verificationStatus: true
-      }
-    });
-
-    if (!vendor) {
-      throw new NotFoundError('Vendor profile not found. Please complete onboarding first.');
-    }
+    const vendor = await resolveVendorContext(userContext);
 
     if (vendor.verificationStatus !== 'VERIFIED') {
       throw new ForbiddenError('Vendor must be verified before adding medicines to inventory.');

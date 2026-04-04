@@ -32,32 +32,39 @@ const toDayStart = (date) => {
 };
 
 const getVendorAndInventory = async (userId) => {
-  const vendor = await prisma.vendor.findUnique({
+  const vendorWithInventory = await prisma.vendor.findUnique({
     where: { userId },
-    select: { id: true, companyName: true }
-  });
-
-  if (!vendor) {
-    return null;
-  }
-
-  const inventory = await prisma.inventory.findMany({
-    where: { vendorId: vendor.id },
     select: {
       id: true,
-      quantity: true,
-      medicineId: true,
-      medicine: {
+      companyName: true,
+      inventory: {
         select: {
           id: true,
-          name: true,
-          priceCents: true
+          quantity: true,
+          medicineId: true,
+          medicine: {
+            select: {
+              id: true,
+              name: true,
+              priceCents: true
+            }
+          }
         }
       }
     }
   });
 
-  return { vendor, inventory };
+  if (!vendorWithInventory) {
+    return null;
+  }
+
+  return {
+    vendor: {
+      id: vendorWithInventory.id,
+      companyName: vendorWithInventory.companyName
+    },
+    inventory: vendorWithInventory.inventory
+  };
 };
 
 const buildOrderWhereForVendor = (vendorId, fromDate = null) => {

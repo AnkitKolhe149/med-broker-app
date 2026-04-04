@@ -29,7 +29,7 @@ module.exports = {
 
   getProfileStatus: async (req, res, next) => {
     try {
-      const result = await authService.getProfileStatus(req.user.id);
+      const result = await authService.getProfileStatus(req.user);
       res.status(200).json({
         success: true,
         data: result

@@ -1,8 +1,13 @@
 const { PrismaClient } = require("@prisma/client");
 
+const prismaLogLevel = process.env.PRISMA_LOG_LEVEL || 'warn';
+const prismaLogConfig = prismaLogLevel === 'query'
+  ? ['query', 'error', 'warn']
+  : ['error', 'warn'];
+
 // Configure Prisma for Neon's serverless PostgreSQL
 const basePrisma = new PrismaClient({
-  log: ['query', 'error', 'warn'],
+  log: prismaLogConfig,
   datasources: {
     db: {
       url: process.env.DATABASE_URL,
