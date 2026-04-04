@@ -40,6 +40,7 @@ import CustomerProfile from '../pages/customer/Profile';
 import VendorDashboard from '../pages/vendor/Dashboard';
 import VendorOrders from '../pages/vendor/Orders';
 import VendorMedicineManager from '../pages/vendor/MedicineManager';
+import VendorStockManager from '../pages/vendor/StockManager';
 import VendorShipping from '../pages/vendor/Shipping';
 import VendorPayments from '../pages/vendor/Payments';
 import VendorAnalytics from '../pages/vendor/Analytics';
@@ -135,6 +136,11 @@ function App() {
                     <Route path="/vendor/products" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
                             <VendorLayout><VendorMedicineManager /></VendorLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/stock" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorLayout><VendorStockManager /></VendorLayout>
                         </AuthGuard>
                     } />
                     <Route path="/vendor/shipping" element={

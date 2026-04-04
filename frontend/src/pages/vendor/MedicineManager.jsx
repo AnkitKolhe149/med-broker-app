@@ -10,8 +10,10 @@ function VendorMedicineManager() {
 	const [loading, setLoading] = useState(true);
 	const [submitting, setSubmitting] = useState(false);
 	const [uploadingId, setUploadingId] = useState(null);
+	const [savingStock, setSavingStock] = useState(false);
 	const [showAddForm, setShowAddForm] = useState(false);
 	const [selectedMedicine, setSelectedMedicine] = useState(null);
+	const [stockDraft, setStockDraft] = useState('');
 	const [filterStatus, setFilterStatus] = useState('all');
 	const [uploadFile, setUploadFile] = useState(null);
 	const [newMedicine, setNewMedicine] = useState({
@@ -128,6 +130,40 @@ function VendorMedicineManager() {
 		}
 	};
 
+	const handleSaveStock = async () => {
+		if (!selectedMedicine) return;
+
+		const normalizedQuantity = Number.parseInt(stockDraft, 10);
+		if (!Number.isInteger(normalizedQuantity) || normalizedQuantity < 0) {
+			showError('Stock must be a non-negative whole number');
+			return;
+		}
+
+		try {
+			setSavingStock(true);
+			const updated = await inventoryService.updateInventoryItem(selectedMedicine.id, {
+				quantity: normalizedQuantity
+			});
+
+			setMedicines((prev) => prev.map((m) => (
+				m.id === selectedMedicine.id
+					? { ...m, stock: updated.quantity }
+					: m
+			)));
+
+			setSelectedMedicine((prev) => (
+				prev ? { ...prev, stock: updated.quantity } : prev
+			));
+			setStockDraft(String(updated.quantity));
+			showSuccess('Stock updated successfully');
+		} catch (error) {
+			console.error('Failed to update stock', error);
+			showError(error?.response?.data?.message || 'Failed to update stock');
+		} finally {
+			setSavingStock(false);
+		}
+	};
+
 	const filteredMedicines = useMemo(() => medicines.filter((m) => {
 		if (filterStatus === 'in-stock' && m.stock === 0) return false;
 		if (filterStatus === 'out-of-stock' && m.stock > 0) return false;
@@ -210,7 +246,10 @@ function VendorMedicineManager() {
 								<td className={styles.tableCell}>
 									<button
 										className={styles.editButton}
-										onClick={() => setSelectedMedicine(medicine)}
+										onClick={() => {
+											setSelectedMedicine(medicine);
+											setStockDraft(String(medicine.stock));
+										}}
 									>
 										Edit
 									</button>
@@ -317,7 +356,13 @@ function VendorMedicineManager() {
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Stock</label>
-								<input type="number" className={styles.input} value={selectedMedicine.stock} disabled />
+								<input
+									type="number"
+									className={styles.input}
+									value={stockDraft}
+									onChange={(e) => setStockDraft(e.target.value)}
+									min="0"
+								/>
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Price</label>
@@ -352,6 +397,13 @@ function VendorMedicineManager() {
 						</div>
 
 						<div className={styles.actionButtons}>
+							<button
+								className={`${styles.button} ${styles.primaryButton}`}
+								onClick={handleSaveStock}
+								disabled={savingStock}
+							>
+								{savingStock ? 'Saving...' : 'Save Stock'}
+							</button>
 							<button className={`${styles.button} ${styles.dangerButton}`} onClick={() => {
 								deleteMedicine(selectedMedicine.id);
 							}}>

@@ -59,6 +59,21 @@ const inventoryService = {
     return response.data.data;
   },
 
+  updateInventoryItem: async (inventoryId, payload) => {
+    const response = await axios.patch(`${API_URL}/inventory/${inventoryId}`, payload, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to update inventory item');
+    }
+
+    return response.data.data;
+  },
+
   deleteInventoryItem: async (inventoryId) => {
     const response = await axios.delete(`${API_URL}/inventory/${inventoryId}`, {
       headers: getAuthHeaders()

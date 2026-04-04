@@ -16,7 +16,8 @@ function VendorLayout({ children }) {
 			items: [
 				{ path: '/vendor/dashboard', label: 'Dashboard', icon: '📊', hint: 'Business overview', description: 'Track sales, orders and stock alerts' },
 				{ path: '/vendor/orders', label: 'Orders', icon: '📦', hint: 'Incoming demand', description: 'Process and update order statuses' },
-				{ path: '/vendor/products', label: 'Inventory & Stock', icon: '💊', hint: 'Add / update products', description: 'Manage medicines, prices and stock levels' },
+				{ path: '/vendor/products', label: 'Inventory & Products', icon: '💊', hint: 'Add / update products', description: 'Manage medicines, pricing, images and listing details' },
+				{ path: '/vendor/stock', label: 'Stock Manager', icon: '📦', hint: 'Live quantity control', description: 'Adjust medicine stock levels and sync customer availability' },
 				{ path: '/vendor/shipping', label: 'Shipping', icon: '🚚', hint: 'Dispatch tracking', description: 'Track deliveries and shipment status' }
 			]
 		},
@@ -147,7 +148,7 @@ function VendorLayout({ children }) {
 					</div>
 					<div className="vendor-utility-actions">
 						<button type="button" className="vendor-quick-action" onClick={() => navigate('/vendor/orders')}>Open Orders</button>
-						<button type="button" className="vendor-quick-action" onClick={() => navigate('/vendor/products')}>Manage Stock</button>
+						<button type="button" className="vendor-quick-action" onClick={() => navigate('/vendor/stock')}>Manage Stock</button>
 						<button
 							type="button"
 							className="vendor-quick-action vendor-quick-action-premium-logout"

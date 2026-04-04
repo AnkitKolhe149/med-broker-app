@@ -108,7 +108,7 @@ function VendorDashboard() {
 				subtitle={`Welcome, ${user?.vendor?.companyName || user?.email}! Here's your business overview.`}
 				actions={(
 					<>
-						<button className={styles.inventoryButton} onClick={() => navigate('/vendor/products')}>
+						<button className={styles.inventoryButton} onClick={() => navigate('/vendor/stock')}>
 							Manage Inventory & Stock
 						</button>
 						<button className={styles.logoutButton} onClick={handleLogout}>
@@ -129,7 +129,7 @@ function VendorDashboard() {
 			)}
 
 			<div className={styles.quickActionsSection}>
-				<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/products')}>
+				<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/stock')}>
 					<span className={styles.quickActionIcon}>💊</span>
 					<span className={styles.quickActionLabel}>Add / Update Stock</span>
 					<span className={styles.quickActionHint}>Manage inventory and pricing</span>
@@ -292,7 +292,7 @@ function VendorDashboard() {
 					<button
 						type="button"
 						className={styles.inlineInventoryButton}
-						onClick={() => navigate('/vendor/products')}
+						onClick={() => navigate('/vendor/stock')}
 					>
 						Update Stocks
 					</button>
