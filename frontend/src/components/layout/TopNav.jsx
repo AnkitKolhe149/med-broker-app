@@ -14,8 +14,10 @@ function TopNav() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showProfileMenu, setShowProfileMenu] = useState(false);
 	const [showMobileMenu, setShowMobileMenu] = useState(false);
+	const [showCategoryBar, setShowCategoryBar] = useState(false);
 	const profileButtonRef = useRef(null);
 	const profileMenuRef = useRef(null);
+	const categoryHideTimerRef = useRef(null);
 
 	const focusProfileMenuItem = (index) => {
 		const menuButtons = profileMenuRef.current
@@ -72,6 +74,12 @@ function TopNav() {
 
 		window.addEventListener('resize', handleResize);
 		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+
+	useEffect(() => () => {
+		if (categoryHideTimerRef.current) {
+			window.clearTimeout(categoryHideTimerRef.current);
+		}
 	}, []);
 
 	const handleSearch = (e) => {
@@ -196,11 +204,6 @@ function TopNav() {
 	const totalItems = getTotalItems();
 	const cartCountLabel = totalItems > 99 ? '99+' : String(totalItems);
 	const hasAppliedSearch = location.pathname === '/customer/catalog' && Boolean(urlSearchParams.get('search')?.trim());
-	const utilityLinks = [
-		{ label: 'Help Center', path: '/customer/profile' },
-		{ label: 'Track Orders', path: '/customer/orders' },
-		{ label: 'Profile', path: '/customer/profile' }
-	];
 	const categoryLinks = [
 		{ label: 'All Medicines', search: '' },
 		{ label: 'Diabetes Care', search: 'diabetes' },
@@ -221,27 +224,36 @@ function TopNav() {
 		handleNavigate(`/customer/catalog${search}`);
 	};
 
-	return (
-		<header style={styles.header}>
-			<div className="topnav-utility-bar" style={styles.utilityBar}>
-				<div className="topnav-container" style={styles.utilityContainer}>
-					<div style={styles.utilityLeft}>Trusted healthcare procurement platform</div>
-					<div style={styles.utilityRight}>
-						{utilityLinks.map((item) => (
-							<button
-								type="button"
-								key={item.path}
-								onClick={() => handleNavigate(item.path)}
-								className="topnav-utility-link"
-								style={styles.utilityLink}
-							>
-								{item.label}
-							</button>
-						))}
-					</div>
-				</div>
-			</div>
+	const handleSearchHover = (visible) => {
+		if (window.innerWidth <= 1024) {
+			setShowCategoryBar(false);
+			return;
+		}
 
+		if (categoryHideTimerRef.current) {
+			window.clearTimeout(categoryHideTimerRef.current);
+			categoryHideTimerRef.current = null;
+		}
+
+		if (visible) {
+			setShowCategoryBar(true);
+			return;
+		}
+
+		categoryHideTimerRef.current = window.setTimeout(() => {
+			setShowCategoryBar(false);
+			categoryHideTimerRef.current = null;
+		}, 260);
+	};
+
+	const handleSearchBlur = (e) => {
+		if (!e.currentTarget.contains(e.relatedTarget)) {
+			handleSearchHover(false);
+		}
+	};
+
+	return (
+		<header className={showCategoryBar ? 'topnav-header topnav-header-search-hover' : 'topnav-header'} style={styles.header}>
 			<div className="topnav-main-bar" style={styles.mainBar}>
 				<div className="topnav-container" style={styles.container}>
 					<div style={styles.leftSection}>
@@ -267,34 +279,6 @@ function TopNav() {
 					</button>
 
 					<div className={`topnav-right ${showMobileMenu ? 'show' : ''}`}>
-						<div className="centerSection" style={styles.centerSection}>
-							<form onSubmit={handleSearch} className="searchForm" style={styles.searchForm}>
-								<input
-									type="text"
-									placeholder="Search medicines, brands or conditions"
-									value={searchQuery}
-									onChange={(e) => setSearchQuery(e.target.value)}
-									className="searchInput"
-									style={styles.searchInput}
-								/>
-								{hasAppliedSearch && (
-									<button
-										type="button"
-										onClick={handleClearSearch}
-										className="searchClearButton"
-										style={styles.searchClearButton}
-										aria-label="Clear search"
-										title="Clear search"
-									>
-										x
-									</button>
-								)}
-								<button type="submit" className="searchButton" style={styles.searchButton}>
-									Search
-								</button>
-							</form>
-						</div>
-
 						<div className="topnav-actions" style={styles.rightSection}>
 							<button
 								type="button"
@@ -303,7 +287,7 @@ function TopNav() {
 								style={styles.cartButton}
 								title="View Cart"
 							>
-								<span style={styles.cartIcon}>🛒 Cart</span>
+								<span style={styles.cartIcon}>🛒</span>
 								{totalItems > 0 && <span style={styles.cartBadge}>{cartCountLabel}</span>}
 							</button>
 
@@ -332,7 +316,7 @@ function TopNav() {
 										</>
 									) : (
 										<>
-											<span style={styles.fallbackProfileText}>👤 Account</span>
+											<span style={styles.fallbackProfileText}>👤</span>
 											<span style={styles.profileChevron}>v</span>
 										</>
 									)}
@@ -412,11 +396,53 @@ function TopNav() {
 								)}
 							</div>
 						</div>
+
+						<div
+							className="centerSection"
+							style={styles.centerSection}
+							onMouseEnter={() => handleSearchHover(true)}
+							onMouseLeave={() => handleSearchHover(false)}
+							onFocusCapture={() => handleSearchHover(true)}
+							onBlurCapture={handleSearchBlur}
+						>
+							<form onSubmit={handleSearch} className="searchForm" style={styles.searchForm}>
+								<input
+									type="text"
+									placeholder="Search medicines, brands or conditions"
+									value={searchQuery}
+									onChange={(e) => setSearchQuery(e.target.value)}
+									className="searchInput"
+									style={styles.searchInput}
+								/>
+								{hasAppliedSearch && (
+									<button
+										type="button"
+										onClick={handleClearSearch}
+										className="searchClearButton"
+										style={styles.searchClearButton}
+										aria-label="Clear search"
+										title="Clear search"
+									>
+										x
+									</button>
+								)}
+								<button type="submit" className="searchButton" style={styles.searchButton} aria-label="Search">
+									🔍
+								</button>
+							</form>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div className="topnav-category-bar" style={styles.categoryBar}>
+			<div
+				className={`topnav-category-bar ${showCategoryBar ? 'is-visible' : ''}`}
+				style={styles.categoryBar}
+				onMouseEnter={() => handleSearchHover(true)}
+				onMouseLeave={() => handleSearchHover(false)}
+				onFocusCapture={() => handleSearchHover(true)}
+				onBlurCapture={handleSearchBlur}
+			>
 				<div className="topnav-container" style={styles.categoryContainer}>
 					<nav className="topnav-category-nav" style={styles.categoryNav} aria-label="Medicine categories">
 						{categoryLinks.map((item) => (
@@ -492,7 +518,7 @@ const styles = {
 		margin: '0 auto',
 		padding: '0 1.25rem',
 		display: 'flex',
-		justifyContent: 'space-between',
+		justifyContent: 'flex-start',
 		alignItems: 'center',
 		gap: '1.25rem',
 		overflow: 'visible',
@@ -525,9 +551,9 @@ const styles = {
 		boxShadow: '0 2px 8px rgba(16, 32, 23, 0.08)'
 	},
 	centerSection: {
-		flex: 1,
+		flex: '1 1 auto',
 		minWidth: 0,
-		maxWidth: '640px'
+		maxWidth: '960px'
 	},
 	searchForm: {
 		display: 'flex',
@@ -538,10 +564,10 @@ const styles = {
 	},
 	searchInput: {
 		flex: 1,
-		padding: '0.7rem 0.95rem',
+		padding: '0.78rem 1rem',
 		border: '1px solid rgba(21, 115, 71, 0.2)',
 		borderRadius: 'var(--radius) 0 0 var(--radius)',
-		fontSize: '0.9rem',
+		fontSize: '0.95rem',
 		fontFamily: 'inherit',
 		outline: 'none',
 		backgroundColor: 'rgba(255, 255, 255, 0.92)'
@@ -560,18 +586,18 @@ const styles = {
 		lineHeight: 1
 	},
 	searchButton: {
-		padding: '0.7rem 1rem',
+		padding: '0.78rem 0.95rem',
 		backgroundColor: 'var(--primary)',
 		color: 'white',
 		border: 'none',
 		borderRadius: '0 var(--radius) var(--radius) 0',
 		cursor: 'pointer',
-		fontSize: '0.92rem',
+		fontSize: '1rem',
 		fontWeight: 600
 	},
 	rightSection: {
 		display: 'flex',
-		gap: '0.7rem',
+		gap: '0.55rem',
 		alignItems: 'center',
 		flex: '0 0 auto'
 	},
@@ -584,7 +610,7 @@ const styles = {
 		background: 'rgba(255, 255, 255, 0.86)',
 		border: '1px solid rgba(21, 115, 71, 0.2)',
 		cursor: 'pointer',
-		padding: '0.5rem 1rem 0.5rem 0.82rem',
+		padding: '0.5rem 0.75rem',
 		minHeight: '40px',
 		borderRadius: 'var(--radius)',
 		overflow: 'visible',
@@ -593,7 +619,7 @@ const styles = {
 	},
 	cartIcon: {
 		display: 'inline-block',
-		fontSize: '0.9rem',
+		fontSize: '1rem',
 		fontWeight: 600,
 		lineHeight: 1
 	},
@@ -625,7 +651,7 @@ const styles = {
 		background: 'rgba(255, 255, 255, 0.88)',
 		border: '1px solid rgba(21, 115, 71, 0.2)',
 		cursor: 'pointer',
-		padding: '4px 10px',
+		padding: '4px 8px',
 		borderRadius: 'var(--radius-full)',
 		display: 'flex',
 		alignItems: 'center',
@@ -741,7 +767,8 @@ const styles = {
 	},
 	categoryBar: {
 		background: 'linear-gradient(90deg, rgba(10, 58, 40, 0.98) 0%, rgba(12, 73, 50, 0.98) 100%)',
-		borderBottom: '1px solid rgba(255, 255, 255, 0.12)'
+		borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+		transition: 'opacity 0.18s ease'
 	},
 	categoryContainer: {
 		maxWidth: '1320px',
