@@ -387,10 +387,10 @@ export default function Landing() {
             <div className="footer-col">
               <h4 className="footer-heading">Support</h4>
               <ul className="footer-links">
-                <li><a href="#help">Help Center</a></li>
-                <li><a href="#contact">Contact Us</a></li>
-                <li><a href="#faq">FAQ</a></li>
-                <li><a href="#terms">Terms of Service</a></li>
+                <li><a href="/support/help-center" onClick={(e) => { e.preventDefault(); navigate('/support/help-center'); }}>Help Center</a></li>
+                <li><a href="/support/contact-us" onClick={(e) => { e.preventDefault(); navigate('/support/contact-us'); }}>Contact Us</a></li>
+                <li><a href="/support/faq" onClick={(e) => { e.preventDefault(); navigate('/support/faq'); }}>FAQ</a></li>
+                <li><a href="/support/terms" onClick={(e) => { e.preventDefault(); navigate('/support/terms'); }}>Terms of Service</a></li>
               </ul>
             </div>
             <div className="footer-col">

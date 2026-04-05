@@ -54,11 +54,31 @@ function Checkout() {
 
 	const handleAddressChange = (e) => {
 		const { name, value } = e.target;
-		setDeliveryAddress(prev => ({
-			...prev,
-			[name]: value
-		}));
+		setDeliveryAddress(prev => {
+			const updates = { [name]: value };
+			
+			// Auto capture 6-digit PIN code anywhere in the address
+			if (name === 'address') {
+				const pinMatch = value.match(/\b\d{6}\b/);
+				// Update ONLY if a zipCode isn't currently manually typed OR if it's empty
+				if (pinMatch && (!prev.zipCode || prev.zipCode === pinMatch[0] || prev.zipCode.length < 6)) {
+					updates.zipCode = pinMatch[0];
+				}
+			}
+
+			return { ...prev, ...updates };
+		});
 	};
+
+	const indianStates = [
+		"Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+		"Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", 
+		"Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", 
+		"Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", 
+		"Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", 
+		"Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", 
+		"Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+	];
 
 	const validateForm = () => {
 		if (!deliveryAddress.fullName.trim()) {
@@ -270,14 +290,17 @@ function Checkout() {
 
 									<div style={styles.formGroup}>
 										<label style={styles.label}>State *</label>
-										<input
-											type="text"
+										<select
 											name="state"
 											value={deliveryAddress.state}
 											onChange={handleAddressChange}
-											style={styles.input}
-											placeholder="State"
-										/>
+											style={{ ...styles.input, backgroundColor: 'white' }}
+										>
+											<option value="">Select a State</option>
+											{indianStates.map(stateName => (
+												<option key={stateName} value={stateName}>{stateName}</option>
+											))}
+										</select>
 									</div>
 
 									<div style={styles.formGroup}>

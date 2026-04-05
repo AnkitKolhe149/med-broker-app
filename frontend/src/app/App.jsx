@@ -24,6 +24,11 @@ import Login from '../pages/public/Login';
 import Register from '../pages/public/Register';
 import VendorOnboarding from '../pages/public/VendorOnboarding';
 import CustomerOnboarding from '../pages/public/CustomerOnboarding';
+import HelpCenter from '../pages/public/HelpCenter';
+import ContactUs from '../pages/public/ContactUs';
+import FAQ from '../pages/public/FAQ';
+import TermsOfService from '../pages/public/TermsOfService';
+import HelpArticle from '../pages/public/HelpArticle';
 
 // Customer pages
 import CustomerDashboard from '../pages/customer/Dashboard';
@@ -69,6 +74,11 @@ function App() {
                     <Route path="/" element={<Landing />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/support/help-center" element={<HelpCenter />} />
+                    <Route path="/support/contact-us" element={<ContactUs />} />
+                    <Route path="/support/faq" element={<FAQ />} />
+                    <Route path="/support/terms" element={<TermsOfService />} />
+                    <Route path="/support/help-center/:topicId" element={<HelpArticle />} />
                     
                     {/* Onboarding routes (require authentication but not complete profile) */}
                     <Route path="/onboarding/vendor" element={<VendorOnboarding />} />
