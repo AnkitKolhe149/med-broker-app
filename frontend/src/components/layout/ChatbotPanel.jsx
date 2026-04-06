@@ -7,7 +7,7 @@ function ChatbotPanel({ isOpen, onClose }) {
 		{
 			id: 'welcome',
 			role: 'assistant',
-			text: 'Hi! I am your MedBroker Assistant. Ask me about orders, payments, medicines, inventory, or shipping.',
+			text: 'Hi! I am your MedIQ Assistant. Ask me about orders, payments, medicines, inventory, or shipping.',
 			timestamp: new Date().toISOString()
 		}
 	]);
@@ -96,11 +96,11 @@ function ChatbotPanel({ isOpen, onClose }) {
 	return (
 		<>
 			<div className="chatbot-panel-backdrop" onClick={onClose} />
-			<section className="chatbot-panel" role="dialog" aria-modal="true" aria-label="MedBroker Assistant">
+			<section className="chatbot-panel" role="dialog" aria-modal="true" aria-label="MedIQ Assistant">
 				<header className="chatbot-panel-header">
 					<div className="chatbot-panel-title-wrap">
 						<p className="chatbot-panel-kicker">AI Assistant</p>
-						<h3 className="chatbot-panel-title">MedBroker Chat</h3>
+						<h3 className="chatbot-panel-title">MedIQ Chat</h3>
 						<p className="chatbot-panel-subtitle">Ask questions and get quick guidance</p>
 					</div>
 					<button type="button" className="chatbot-panel-close" onClick={onClose} aria-label="Close chatbot">

@@ -11,7 +11,7 @@ function Footer() {
 				<div style={styles.grid}>
 					{/* About Section */}
 					<div style={styles.column}>
-						<h3 style={styles.columnTitle}>🏥 MedBroker</h3>
+						<h3 style={styles.columnTitle}>🏥 MedIQ</h3>
 						<p style={styles.columnDescription}>
 							Your trusted medicine marketplace connecting patients with verified pharmacies and vendors.
 						</p>
@@ -38,7 +38,7 @@ function Footer() {
 					<div style={styles.column}>
 						<h3 style={styles.columnTitle}>Support</h3>
 						<ul style={styles.linkList}>
-							<li><a href="mailto:support@medbroker.com" style={styles.link}>Contact Us</a></li>
+							<li><a href="mailto:support@mediq.com" style={styles.link}>Contact Us</a></li>
 							<li><a href="#" style={styles.link}>Help Center</a></li>
 							<li><a href="#" style={styles.link}>Track Order</a></li>
 							<li><a href="#" style={styles.link}>Return Policy</a></li>
@@ -61,7 +61,7 @@ function Footer() {
 				<div style={styles.bottomSection}>
 					<div style={styles.bottomContent}>
 						<p style={styles.copyright}>
-							© {currentYear} MedBroker. All rights reserved.
+							© {currentYear} MedIQ. All rights reserved.
 						</p>
 						<div style={styles.certifications}>
 							<span style={styles.certification}>🔒 Secure</span>

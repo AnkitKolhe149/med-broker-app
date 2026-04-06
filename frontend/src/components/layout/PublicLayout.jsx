@@ -18,7 +18,7 @@ export default function PublicLayout({ children }) {
                   <circle cx="20" cy="20" r="17" stroke="currentColor" strokeWidth="3" fill="none"/>
                 </svg>
               </div>
-              <h1 className="logo-text">MedBroker</h1>
+              <h1 className="logo-text">MedIQ</h1>
             </div>
             <nav className="header-nav">
               <a href="/#features" className="nav-link">Features</a>
@@ -40,7 +40,7 @@ export default function PublicLayout({ children }) {
         <div className="container">
           <div className="footer-grid">
             <div className="footer-col">
-              <h4 className="footer-heading">MedBroker</h4>
+              <h4 className="footer-heading">MedIQ</h4>
               <p className="footer-desc">Your trusted partner in medicine marketplace, connecting healthcare providers with quality products.</p>
             </div>
             <div className="footer-col">
@@ -64,14 +64,14 @@ export default function PublicLayout({ children }) {
             <div className="footer-col">
               <h4 className="footer-heading">Contact</h4>
               <ul className="footer-links">
-                <li>support@medbroker.com</li>
+                <li>support@mediq.com</li>
                 <li>+91 1800-XXX-XXXX</li>
                 <li>24/7 Customer Support</li>
               </ul>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; {new Date().getFullYear()} MedBroker. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} MedIQ. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -181,24 +181,11 @@ function TopNav() {
 		}
 	};
 
-	const profileMenuSections = [
-		{
-			title: 'Account',
-			items: [
-				{ label: 'Dashboard', path: '/customer/dashboard', icon: '🏠' },
-				{ label: 'Profile Settings', path: '/customer/profile', icon: '⚙️' }
-			]
-		},
-		{
-			title: 'Shopping',
-			items: [
-				{ label: 'Browse Medicines', path: '/customer/catalog', icon: '💊' },
-				{ label: 'Cart', path: '/customer/cart', icon: '🛒' },
-				{ label: 'My Orders', path: '/customer/orders', icon: '📦' },
-				{ label: 'Checkout', path: '/customer/checkout', icon: '✅' },
-				{ label: 'Payment', path: '/customer/payment', icon: '💳' }
-			]
-		}
+	const profileMenuItems = [
+		{ label: 'Profile', path: '/customer/profile', icon: '👤' },
+		{ label: 'My Orders', path: '/customer/orders', icon: '📦' },
+		{ label: 'Cart', path: '/customer/cart', icon: '🛒' },
+		{ label: 'Browse Medicines', path: '/customer/catalog', icon: '💊' }
 	];
 
 	const totalItems = getTotalItems();
@@ -262,8 +249,14 @@ function TopNav() {
 							className="topnav-logo"
 							onClick={() => navigate('/customer/dashboard')}
 							style={styles.logo}
+							aria-label="MedIQ home"
 						>
-							MedBroker
+							<span className="topnav-logo-mark" aria-hidden="true">✚</span>
+							<span className="topnav-logo-word">
+								<span className="topnav-logo-med">Med</span>
+								<span className="topnav-logo-iq">IQ</span>
+							</span>
+							<span className="topnav-logo-trust" aria-hidden="true">Trusted Care</span>
 						</button>
 					</div>
 
@@ -349,32 +342,25 @@ function TopNav() {
 														<div>
 															<p style={styles.profileName}>{user?.customer?.fullName || 'User'}</p>
 															<p style={styles.profileEmail}>{user?.email}</p>
-															{user?.customer?.buyerType && (
-																<span style={styles.buyerTypeBadge}>{user.customer.buyerType}</span>
-															)}
 														</div>
 													</div>
 													<div style={styles.menuDivider} />
 
-													{profileMenuSections.map((section, sectionIndex) => (
-														<div key={section.title} className="topnav-profile-menu-section" style={styles.menuSection}>
-															<p className="topnav-profile-menu-section-title" style={styles.menuSectionTitle}>{section.title}</p>
-															{section.items.map((item) => (
-																<button
-																	type="button"
-																	key={item.path}
-																	className="topnav-profile-menu-item"
-																	style={styles.menuItem}
-																	onClick={() => handleNavigate(item.path)}
-																	role="menuitem"
-																>
-																	<span className="topnav-profile-menu-item-icon" style={styles.menuItemIcon} aria-hidden="true">{item.icon}</span>
-																	<span>{item.label}</span>
-																</button>
-															))}
-															{sectionIndex < profileMenuSections.length - 1 && <div style={{ ...styles.menuDivider, marginTop: '0.55rem', marginBottom: '0.55rem' }} />}
-														</div>
-													))}
+													<div className="topnav-profile-menu-section" style={styles.menuSection}>
+														{profileMenuItems.map((item) => (
+															<button
+																type="button"
+																key={item.path}
+																className={`topnav-profile-menu-item ${location.pathname === item.path ? 'active' : ''}`}
+																style={styles.menuItem}
+																onClick={() => handleNavigate(item.path)}
+																role="menuitem"
+															>
+																<span className="topnav-profile-menu-item-icon" style={styles.menuItemIcon} aria-hidden="true">{item.icon}</span>
+																<span>{item.label}</span>
+															</button>
+														))}
+													</div>
 
 													<div style={{ ...styles.menuDivider, marginTop: '0.5rem', marginBottom: '0.5rem' }} />
 
@@ -516,7 +502,7 @@ const styles = {
 	container: {
 		maxWidth: '1320px',
 		margin: '0 auto',
-		padding: '0 1.25rem',
+		padding: '0 1rem 0 0.3rem',
 		display: 'flex',
 		justifyContent: 'flex-start',
 		alignItems: 'center',
@@ -525,18 +511,19 @@ const styles = {
 		contain: 'none'
 	},
 	leftSection: {
-		flex: '0 0 auto'
+		flex: '0 0 auto',
+		marginRight: '0.2rem'
 	},
 	logo: {
 		background: 'none',
 		border: 'none',
-		fontSize: '1.45rem',
-		fontWeight: '700',
+		display: 'inline-flex',
+		alignItems: 'center',
+		gap: '0.52rem',
 		color: 'var(--primary)',
 		cursor: 'pointer',
 		borderRadius: 'var(--radius)',
-		padding: '0.45rem 0.2rem',
-		letterSpacing: '0.2px',
+		padding: '0.32rem 0.24rem',
 		transition: 'transform 0.2s ease, color 0.2s ease'
 	},
 	hamburgerButton: {
@@ -704,15 +691,6 @@ const styles = {
 		fontSize: '0.85rem',
 		color: 'var(--text-secondary)'
 	},
-	buyerTypeBadge: {
-		display: 'inline-block',
-		backgroundColor: 'var(--primary)',
-		color: 'white',
-		padding: '0.25rem 0.75rem',
-		borderRadius: 'var(--radius)',
-		fontSize: '0.75rem',
-		fontWeight: 600
-	},
 	menuDivider: {
 		border: 'none',
 		borderTop: '1px solid var(--border-light)',
@@ -721,15 +699,7 @@ const styles = {
 		height: '1px'
 	},
 	menuSection: {
-		padding: '0 0.4rem'
-	},
-	menuSectionTitle: {
-		margin: '0.7rem 0.6rem 0.4rem',
-		fontSize: '0.72rem',
-		fontWeight: 700,
-		letterSpacing: '0.06em',
-		textTransform: 'uppercase',
-		color: 'var(--text-light)'
+		padding: '0.45rem 0.4rem 0.15rem'
 	},
 	menuItem: {
 		width: '100%',
