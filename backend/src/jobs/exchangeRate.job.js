@@ -6,6 +6,10 @@ const BASE_CURRENCY = getEnv("EXCHANGE_RATE_BASE", "INR").toUpperCase();
 const API_KEY = getEnv("EXCHANGE_RATE_API_KEY", "");
 const CRON_SCHEDULE = getEnv("EXCHANGE_RATE_CRON", "0 3 * * *");
 const CRON_TZ = getEnv("EXCHANGE_RATE_TZ", "Asia/Kolkata");
+const DB_RETRY_ATTEMPTS = Number(getEnv("EXCHANGE_RATE_DB_RETRY_ATTEMPTS", "3"));
+const DB_RETRY_DELAY_MS = Number(getEnv("EXCHANGE_RATE_DB_RETRY_DELAY_MS", "1500"));
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fetchRates = async () => {
   if (!API_KEY) {
@@ -92,24 +96,47 @@ const isDatabaseConnectivityError = (error) => {
     return false;
   }
 
-  const message = String(error.message || "");
-  return error.code === "P1001" || message.includes("Can't reach database server");
+  const message = String(error.message || "").toLowerCase();
+  return (
+    error.code === "P1001" ||
+    error.code === "P1017" ||
+    message.includes("can't reach database server") ||
+    message.includes("connection") ||
+    message.includes("timed out")
+  );
+};
+
+const persistRatesWithRetry = async (rateData) => {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= DB_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      await upsertRates(rateData);
+      return { persisted: true, rateData };
+    } catch (error) {
+      lastError = error;
+
+      if (!isDatabaseConnectivityError(error)) {
+        throw error;
+      }
+
+      if (attempt < DB_RETRY_ATTEMPTS) {
+        await wait(DB_RETRY_DELAY_MS * attempt);
+      }
+    }
+  }
+
+  if (isDatabaseConnectivityError(lastError)) {
+    console.warn("⚠ Exchange rates fetched from API but could not be persisted (database unavailable)");
+    return { persisted: false, rateData };
+  }
+
+  throw lastError;
 };
 
 const runExchangeRateSync = async () => {
   const rateData = await fetchRates();
-
-  try {
-    await upsertRates(rateData);
-    return { persisted: true, rateData };
-  } catch (error) {
-    if (isDatabaseConnectivityError(error)) {
-      console.warn("⚠ Exchange rates fetched from API but could not be persisted (database unavailable)");
-      return { persisted: false, rateData };
-    }
-
-    throw error;
-  }
+  return persistRatesWithRetry(rateData);
 };
 
 const startExchangeRateScheduler = () => {

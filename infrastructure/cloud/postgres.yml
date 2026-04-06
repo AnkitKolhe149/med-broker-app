@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:13
     environment:
-      POSTGRES_DB: medbroker
+      POSTGRES_DB: mediq
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:
