@@ -81,7 +81,7 @@ function Register() {
 			<div className="container auth-care-container">
 				<section className="auth-care-hero reveal">
 					<p className="auth-care-kicker">Healthcare Onboarding</p>
-					<h1 className="auth-care-title">Create your MedBroker account</h1>
+					<h1 className="auth-care-title">Create your MedIQ account</h1>
 					<p className="auth-care-subtitle">
 						Start in minutes and connect with a verified medicine marketplace tailored for clinics, hospitals, and suppliers.
 					</p>

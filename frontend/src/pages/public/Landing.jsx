@@ -18,7 +18,7 @@ export default function Landing() {
                   <circle cx="20" cy="20" r="17" stroke="currentColor" strokeWidth="3" fill="none"/>
                 </svg>
               </div>
-              <h1 className="logo-text">MedBroker</h1>
+              <h1 className="logo-text">MedIQ</h1>
             </div>
             <nav className="header-nav">
               <a href="#features" className="nav-link">Features</a>
@@ -41,7 +41,7 @@ export default function Landing() {
                 <span className="highlight"> Medicine Marketplace</span>
               </h1>
               <p className="hero-subtitle">
-                Connect with verified vendors, access quality medicines, and streamline your healthcare supply chain with MedBroker's advanced B2B/B2C platform.
+                Connect with verified vendors, access quality medicines, and streamline your healthcare supply chain with MedIQ's advanced B2B/B2C platform.
               </p>
               <div className="hero-buttons">
                 <button onClick={() => navigate('/register')} className="btn-hero-primary">
@@ -134,7 +134,7 @@ export default function Landing() {
       <section id="features" className="features-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Why Choose MedBroker?</h2>
+            <h2 className="section-title">Why Choose MedIQ?</h2>
             <p className="section-subtitle">Comprehensive features designed for modern healthcare supply chain</p>
           </div>
           <div className="features-grid">
@@ -306,7 +306,7 @@ export default function Landing() {
             <div className="trust-text">
               <h2 className="trust-title">Trusted by Healthcare Professionals</h2>
               <p className="trust-desc">
-                MedBroker is the preferred platform for pharmacies, hospitals, distributors, and healthcare providers across the country. Our commitment to quality, transparency, and reliability has made us the leader in medicine marketplace solutions.
+                MedIQ is the preferred platform for pharmacies, hospitals, distributors, and healthcare providers across the country. Our commitment to quality, transparency, and reliability has made us the leader in medicine marketplace solutions.
               </p>
               <div className="trust-features">
                 <div className="trust-feature">
@@ -372,7 +372,7 @@ export default function Landing() {
         <div className="container">
           <div className="footer-grid">
             <div className="footer-col">
-              <h4 className="footer-heading">MedBroker</h4>
+              <h4 className="footer-heading">MedIQ</h4>
               <p className="footer-desc">Your trusted partner in medicine marketplace, connecting healthcare providers with quality products.</p>
             </div>
             <div className="footer-col">
@@ -396,14 +396,14 @@ export default function Landing() {
             <div className="footer-col">
               <h4 className="footer-heading">Contact</h4>
               <ul className="footer-links">
-                <li>support@medbroker.com</li>
+                <li>support@mediq.com</li>
                 <li>+91 1800-XXX-XXXX</li>
                 <li>24/7 Customer Support</li>
               </ul>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; 2026 MedBroker. All rights reserved.</p>
+            <p>&copy; 2026 MedIQ. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -82,7 +82,7 @@ function CustomerOnboarding() {
 			await authService.completeCustomerOnboarding(formData);
 			
 			// Show success message
-			alert('Welcome to MedBroker! Your profile is now complete.');
+			alert('Welcome to MedIQ! Your profile is now complete.');
 			
 			// Redirect to customer catalog
 			navigate('/customer/catalog');

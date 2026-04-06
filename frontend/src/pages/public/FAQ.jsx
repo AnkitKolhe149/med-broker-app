@@ -73,18 +73,18 @@ export default function FAQ() {
     general: [
       {
         id: 'g1',
-        q: "What exactly is MedBroker?",
-        a: "MedBroker is India's leading B2B and B2C digital marketplace specifically built for the healthcare supply chain. We connect retail pharmacies, hospitals, and individual buyers directly with verified medical distributors and manufacturers."
+        q: "What exactly is MedIQ?",
+        a: "MedIQ is India's leading B2B and B2C digital marketplace specifically built for the healthcare supply chain. We connect retail pharmacies, hospitals, and individual buyers directly with verified medical distributors and manufacturers."
       },
       {
         id: 'g2',
-        q: "Are the medicines sold on MedBroker authentic?",
-        a: "Yes, 100%. MedBroker strictly operates on a closed-loop verification system. Every single vendor on our platform must submit active GSTIN and Drug License documentation before they can list a single product. We guarantee that all products source from authorized channels."
+        q: "Are the medicines sold on MedIQ authentic?",
+        a: "Yes, 100%. MedIQ strictly operates on a closed-loop verification system. Every single vendor on our platform must submit active GSTIN and Drug License documentation before they can list a single product. We guarantee that all products source from authorized channels."
       },
       {
         id: 'g3',
         q: "How does the pricing work?",
-        a: "Because our platform connects you directly with distributors and stockists, bypassing multiple middlemen, the prices you see are often significantly lower than standard wholesale/retail rates. MedBroker charges a small transparent commission to the vendor, meaning buyers pay the exact listed price with zero hidden fees."
+        a: "Because our platform connects you directly with distributors and stockists, bypassing multiple middlemen, the prices you see are often significantly lower than standard wholesale/retail rates. MedIQ charges a small transparent commission to the vendor, meaning buyers pay the exact listed price with zero hidden fees."
       }
     ],
     customers: [
@@ -125,7 +125,7 @@ export default function FAQ() {
       {
         id: 't1',
         q: "Is my payment information secure?",
-        a: "MedBroker uses bank-level 256-bit encryption and partners with leading RBI-approved payment gateways (like Razorpay/Stripe). We never store your raw credit card or bank account details on our servers."
+        a: "MedIQ uses bank-level 256-bit encryption and partners with leading RBI-approved payment gateways (like Razorpay/Stripe). We never store your raw credit card or bank account details on our servers."
       },
       {
         id: 't2',
@@ -146,7 +146,7 @@ export default function FAQ() {
           </div>
           <h1 style={{ fontSize: '3rem', fontWeight: '700', color: 'var(--primary-dark)', marginBottom: '1.5rem' }}>Frequently Asked Questions</h1>
           <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto' }}>
-            Find quick answers to the most common questions about the MedBroker platform, orders, vendor onboarding, and more.
+            Find quick answers to the most common questions about the MedIQ platform, orders, vendor onboarding, and more.
           </p>
         </div>
 

@@ -11,12 +11,12 @@ const IconArrowLeft = () => (
 
 const helpDocuments = {
   'getting-started': {
-    title: 'Getting Started with MedBroker',
+    title: 'Getting Started with MedIQ',
     lastUpdated: '10 days ago',
     content: (
       <>
         <h3>Introduction</h3>
-        <p>Welcome to MedBroker, the premier B2B and B2C marketplace for pharmaceutical products. This guide will walk you through setting up your account so you can start browsing and purchasing medicines.</p>
+        <p>Welcome to MedIQ, the premier B2B and B2C marketplace for pharmaceutical products. This guide will walk you through setting up your account so you can start browsing and purchasing medicines.</p>
         
         <h3>Step 1: Account Registration</h3>
         <p>To begin, click on the <strong>Register</strong> button at the top right of the homepage. You will be prompted to choose whether you are creating a Customer (Buyer) or Vendor (Seller) account. For customers, simply provide your full name, email address, and a secure password.</p>
@@ -91,7 +91,7 @@ const helpDocuments = {
     content: (
       <>
         <h3>Welcome Vendors</h3>
-        <p>MedBroker connects your pharmacy or distribution center to thousands of buyers every day. Maintaining compliance is our top priority.</p>
+        <p>MedIQ connects your pharmacy or distribution center to thousands of buyers every day. Maintaining compliance is our top priority.</p>
 
         <h3>Required Documentation for Verification</h3>
         <p>Before your storefront goes live, our trust & safety team must verify:</p>
@@ -115,7 +115,7 @@ const helpDocuments = {
     content: (
       <>
         <h3>Accepted Payment Methods</h3>
-        <p>MedBroker uses leading RBI-authorized Payment Gateways ensuring enterprise-grade encryption. We accept:</p>
+        <p>MedIQ uses leading RBI-authorized Payment Gateways ensuring enterprise-grade encryption. We accept:</p>
         <ul>
           <li>Credit/Debit Cards (Visa, Mastercard, RuPay)</li>
           <li>UPI App Transfers (GPay, PhonePe, Paytm)</li>

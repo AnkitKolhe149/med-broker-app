@@ -72,7 +72,7 @@ export default function TermsOfService() {
           {/* Main Legal Content */}
           <div className="legal-content">
             <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', lineHeight: '1.7', marginBottom: '2rem' }}>
-              Welcome to MedBroker. Please read these Terms of Service ("Terms", "Terms of Service") carefully before using the MedBroker website and mobile application (the "Service") operated by MedBroker Technologies Pvt. Ltd. ("us", "we", or "our").
+              Welcome to MedIQ. Please read these Terms of Service ("Terms", "Terms of Service") carefully before using the MedIQ website and mobile application (the "Service") operated by MedIQ Technologies Pvt. Ltd. ("us", "we", or "our").
             </p>
             
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', marginBottom: '3rem' }}>
@@ -98,7 +98,7 @@ export default function TermsOfService() {
               </p>
               <h3 style={{ fontSize: '1.2rem', margin: '1.5rem 0 0.5rem' }}>2.3 Vendor Accounts</h3>
               <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', marginBottom: '1rem' }}>
-                Vendors must maintain active licenses (GSTIN, Drug License) at all times while active on the platform. MedBroker reserves the right to suspend vendor accounts if state or federal licenses expire or are revoked.
+                Vendors must maintain active licenses (GSTIN, Drug License) at all times while active on the platform. MedIQ reserves the right to suspend vendor accounts if state or federal licenses expire or are revoked.
               </p>
             </section>
 
@@ -106,7 +106,7 @@ export default function TermsOfService() {
               <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: '1rem' }}>3. Medical Disclaimers</h2>
               <div style={{ background: 'var(--green-50)', padding: '1.5rem', borderRadius: 'var(--radius)', borderLeft: '4px solid var(--primary)', marginBottom: '1.5rem' }}>
                 <p style={{ color: 'var(--text-primary)', fontWeight: '500', lineHeight: '1.6', margin: 0 }}>
-                  MedBroker is a technology platform connecting buyers and sellers. We do not manufacture, prescribe, or physically handle any medicines. The Content on our platform is not intended to be a substitute for professional medical advice, diagnosis, or treatment.
+                  MedIQ is a technology platform connecting buyers and sellers. We do not manufacture, prescribe, or physically handle any medicines. The Content on our platform is not intended to be a substitute for professional medical advice, diagnosis, or treatment.
                 </p>
               </div>
               <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', marginBottom: '1rem' }}>
@@ -117,7 +117,7 @@ export default function TermsOfService() {
             <section id="transactions" style={{ scrollMarginTop: '100px', marginBottom: '3rem' }}>
               <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: '1rem' }}>4. Transactions & Liability</h2>
               <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', marginBottom: '1rem' }}>
-                MedBroker acts solely as a facilitator for the transaction between the Buyer and the Vendor. The Contract of Sale is strictly a bipartite contract between the Buyer and Vendor. MedBroker shall not be liable for the quality, safety, or legality of the items advertised or the truth or accuracy of the listings.
+                MedIQ acts solely as a facilitator for the transaction between the Buyer and the Vendor. The Contract of Sale is strictly a bipartite contract between the Buyer and Vendor. MedIQ shall not be liable for the quality, safety, or legality of the items advertised or the truth or accuracy of the listings.
               </p>
             </section>
 

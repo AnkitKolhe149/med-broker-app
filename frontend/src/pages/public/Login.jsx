@@ -64,7 +64,7 @@ function Login() {
 			<div className="container auth-care-container">
 				<section className="auth-care-hero reveal">
 					<p className="auth-care-kicker">Trusted Healthcare Commerce</p>
-					<h1 className="auth-care-title">Sign in to your MedBroker workspace</h1>
+					<h1 className="auth-care-title">Sign in to your MedIQ workspace</h1>
 					<p className="auth-care-subtitle">
 						Built for hospitals, clinics, and verified suppliers with secure access and role-based control.
 					</p>

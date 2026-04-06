@@ -1,5 +1,5 @@
 /**
- * MedBroker Responsive Implementation Validator
+ * MedIQ Responsive Implementation Validator
  * 
  * Run this script in Chrome DevTools Console (F12 → Console tab)
  * to validate responsive implementation on current viewport
@@ -14,7 +14,7 @@
 
 (function validateResponsiveness() {
 	console.clear();
-	console.log('%cMedBroker Responsive Implementation Validator', 'font-size:16px;font-weight:bold;color:#00A86B');
+	console.log('%cMedIQ Responsive Implementation Validator', 'font-size:16px;font-weight:bold;color:#00A86B');
 	console.log('═══════════════════════════════════════════════\n');
 
 	const results = {
