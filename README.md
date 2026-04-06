@@ -1,4 +1,4 @@
-# MedBroker - Medicine Marketplace Platform
+# MedIQ - Medicine Marketplace Platform
 
 A comprehensive B2B/B2C medicine marketplace platform with role-based access control, AI-powered features, and multi-vendor support.
 
@@ -118,7 +118,7 @@ Edit `frontend/.env` file:
 ```env
 # API endpoint (must match backend PORT)
 VITE_API_URL=http://localhost:4000/api
-VITE_APP_NAME=MedBroker
+VITE_APP_NAME=MedIQ
 ```
 
 5. Run database migrations:
@@ -335,12 +335,36 @@ docker-compose up -d
 
 ## 📖 Documentation
 
-- [Problem Statement](docs/problem_statement.md)
-- [System Architecture](docs/system_architecture.md)
-- [Database Design](docs/database_design.md)
-- [API Specification](docs/api_specification.md)
-- [AI/ML Design](docs/ai_ml_design.md)
-- [Future Scope](docs/future_scope.md)
+Complete documentation is organized into 4 main guides:
+
+1. **[DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md)** - Getting started with local development
+   - Project setup and installation
+   - Authentication system and role-based architecture
+   - Database seeding and test data
+   - API testing and debugging
+   - Development workflow
+
+2. **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and technical specifications
+   - 3-tier architecture overview
+   - Technology stack details
+   - System layers (Frontend, Backend, Database)
+   - Database schema and relationships
+   - Data flow diagrams
+   - Performance and scalability
+
+3. **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - REST API reference
+   - All API endpoints with examples
+   - Request/response formats
+   - Authentication flows
+   - Error handling
+   - Rate limiting and best practices
+
+4. **[FEATURES_AND_ROADMAP.md](FEATURES_AND_ROADMAP.md)** - Features, vision, and future plans
+   - Problem statement and industry challenges
+   - Current implemented features
+   - AI/ML capabilities (Chatbot, Disease Prediction, Recommendations)
+   - Phase-by-phase roadmap (Phase 2-5 and beyond)
+   - Success metrics and investment allocation
 
 ## 🤝 Contributing
 
@@ -356,7 +380,7 @@ This project is proprietary software.
 
 ## 👥 Team
 
-MedBroker Development Team
+MedIQ Development Team
 
 ## 📞 Support
 
