@@ -2875,8 +2875,13 @@ img {
 .topnav-container {
 	display: flex;
 	align-items: center;
-	gap: 1.25rem;
+	gap: 2rem;
 	overflow: visible;
+	max-width: none !important;
+	width: 100%;
+	margin: 0 !important;
+	padding-left: 4rem !important;
+	padding-right: 4rem !important;
 }
 
 .topnav-logo {
@@ -2884,6 +2889,11 @@ img {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	font-family: "Playfair Display", "Times New Roman", serif;
+	font-weight: 800;
+	letter-spacing: 0.03em;
+	position: relative;
+	isolation: isolate;
 }
 
 .topnav-logo:hover {
@@ -2891,21 +2901,123 @@ img {
 	transform: translateY(-1px);
 }
 
+.topnav-logo-mark {
+	width: 1.58rem;
+	height: 1.58rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 0.5rem;
+	background: linear-gradient(145deg, #1a9868 0%, #0f7f56 100%);
+	color: #ffffff;
+	font-size: 0.92rem;
+	font-weight: 800;
+	box-shadow: 0 8px 16px rgba(14, 110, 74, 0.28);
+	animation: mediq-logo-float 4.6s ease-in-out infinite;
+}
+
+.topnav-logo-word {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.02em;
+	font-size: 1.5rem;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	line-height: 1;
+	position: relative;
+	color: #154f3b;
+	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.topnav-logo-word::after {
+	content: "";
+	position: absolute;
+	left: -0.05rem;
+	right: -0.05rem;
+	bottom: -0.18rem;
+	height: 0.15rem;
+	background: linear-gradient(90deg, rgba(24, 129, 89, 0) 0%, rgba(24, 129, 89, 0.42) 52%, rgba(24, 129, 89, 0) 100%);
+	border-radius: 999px;
+	animation: mediq-logo-sweep 5s ease-in-out infinite;
+}
+
+.topnav-logo-med {
+	font-family: "Playfair Display", "Times New Roman", serif;
+	font-weight: 700;
+}
+
+.topnav-logo-iq {
+	font-family: "Space Grotesk", "Segoe UI", sans-serif;
+	font-weight: 800;
+	letter-spacing: 0.01em;
+	color: #0f7f56;
+	margin-left: 0.03em;
+}
+
+.topnav-logo-trust {
+	font-family: "Space Grotesk", "Segoe UI", sans-serif;
+	font-size: 0.56rem;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	padding: 0.2rem 0.42rem;
+	border-radius: 999px;
+	border: 1px solid rgba(24, 129, 89, 0.24);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(234, 247, 241, 0.9) 100%);
+	color: #2f6e57;
+	transform: translateY(0.03rem);
+	box-shadow: 0 4px 10px rgba(19, 65, 47, 0.1);
+	animation: mediq-logo-pulse 3.8s ease-in-out infinite;
+}
+
+@keyframes mediq-logo-float {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-1px);
+	}
+}
+
+@keyframes mediq-logo-pulse {
+	0%,
+	100% {
+		box-shadow: 0 4px 10px rgba(19, 65, 47, 0.1);
+	}
+	50% {
+		box-shadow: 0 6px 14px rgba(19, 65, 47, 0.2);
+	}
+}
+
+@keyframes mediq-logo-sweep {
+	0%,
+	100% {
+		opacity: 0.35;
+		transform: scaleX(0.82);
+	}
+	50% {
+		opacity: 0.95;
+		transform: scaleX(1);
+	}
+}
+
 .topnav-right {
 	display: flex;
 	align-items: center;
 	gap: 0.9rem;
 	flex: 1;
-	justify-content: flex-start;
+	justify-content: space-between;
 	min-width: 0;
 	overflow: visible;
+	margin-left: 0;
 }
 
 .topnav-right .centerSection {
 	flex: 1 1 auto;
 	min-width: 0;
 	max-width: 960px;
-	order: 2;
+	order: 1;
 }
 
 .topnav-utility-link {
@@ -2946,7 +3058,8 @@ img {
 	align-items: center;
 	gap: 0.55rem;
 	flex-shrink: 0;
-	order: 1;
+	order: 2;
+	margin-left: auto;
 }
 
 .topnav-container,
@@ -2959,10 +3072,11 @@ img {
 }
 
 .topnav-profile-menu {
-	background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 252, 250, 0.96) 100%) !important;
+	background: #fcfcfd !important;
 	color: var(--text-primary) !important;
-	border: 1px solid var(--border-light) !important;
-	box-shadow: 0 14px 34px rgba(16, 32, 23, 0.22) !important;
+	border: 1px solid #dadde3 !important;
+	border-radius: 20px !important;
+	box-shadow: 0 10px 24px rgba(19, 30, 43, 0.18) !important;
 	opacity: 1 !important;
 	z-index: 1100;
 }
@@ -2972,20 +3086,27 @@ img {
 }
 
 .topnav-profile-menu-header {
-	background: var(--primary-light) !important;
+	background: #ffffff !important;
 	color: var(--text-primary) !important;
+	padding-bottom: 0.7rem !important;
 }
 
 .topnav-profile-menu-item {
-	background: transparent !important;
-	color: var(--text-primary) !important;
+	background: #ffffff !important;
+	color: #1f2731 !important;
 	border: none !important;
 	text-align: left !important;
+	font-weight: 600 !important;
+	border-radius: 12px !important;
 }
 
 .topnav-profile-menu-item:hover {
-	background: rgba(21, 115, 71, 0.1) !important;
-	transform: translateY(-1px);
+	background: #eef1f4 !important;
+	transform: none;
+}
+
+.topnav-profile-menu-item.active {
+	background: #e9ecef !important;
 }
 
 .topnav-profile-menu-item:focus-visible {
@@ -2998,7 +3119,7 @@ img {
 }
 
 .topnav-profile-menu-item-icon {
-	opacity: 0.92;
+	opacity: 1;
 }
 
 .cartButton:hover,
@@ -3028,7 +3149,9 @@ img {
 /* Tablet - adjust search bar */
 @media (max-width: 1024px) {
 	.topnav-container {
-		gap: 0.75rem;
+		gap: 1rem;
+		padding-left: 1.5rem !important;
+		padding-right: 1.5rem !important;
 	}
 
 	.topnav-category-bar {
@@ -3038,6 +3161,16 @@ img {
 	.topnav-logo {
 		max-width: 170px;
 		font-size: 1.25rem !important;
+	}
+
+	.topnav-logo-word {
+		font-size: 1.3rem;
+	}
+
+	.topnav-logo-trust {
+		font-size: 0.5rem;
+		letter-spacing: 0.09em;
+		padding: 0.18rem 0.35rem;
 	}
 
 	.topnav-right .centerSection {
@@ -3056,12 +3189,26 @@ img {
 	.topnav-container {
 		flex-wrap: nowrap;
 		justify-content: space-between;
-		padding: 0.75rem 0.75rem;
+		padding: 0.75rem 0.65rem !important;
 	}
 
 	.topnav-logo {
 		max-width: calc(100vw - 120px);
 		font-size: 1.2rem !important;
+	}
+
+	.topnav-logo-trust {
+		display: none;
+	}
+
+	.topnav-logo-word {
+		font-size: 1.22rem;
+	}
+
+	.topnav-logo-mark {
+		width: 1.38rem;
+		height: 1.38rem;
+		font-size: 0.8rem;
 	}
 	
 	.topnav-right {
@@ -3081,6 +3228,7 @@ img {
 		max-height: calc(100vh - 64px);
 		overflow-y: auto;
 		-webkit-overflow-scrolling: touch;
+		margin-left: 0;
 	}
 
 	.topnav-right [data-profile-menu] {
