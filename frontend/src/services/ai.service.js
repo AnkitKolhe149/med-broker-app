@@ -22,7 +22,7 @@ const localFallbackResponse = (message) => {
 	}
 
 	if (text.includes('hello') || text.includes('hi') || text.includes('hey')) {
-		return 'Hello! I am your MedBroker Assistant. I can help with orders, payments, inventory, shipping, and account guidance.';
+		return 'Hello! I am your MedIQ Assistant. I can help with orders, payments, inventory, shipping, and account guidance.';
 	}
 
 	return 'I can help with orders, payments, inventory, shipping, and account settings. Tell me what you want to do, and I will guide you step by step.';

@@ -34,7 +34,7 @@ function OrderConfirmation() {
 		// In a real application, this would generate a PDF invoice
 		const invoiceContent = `
 ========================================
-				MedBroker Invoice
+				MedIQ Invoice
 ========================================
 
 Order ID: ${orderData.orderId}
@@ -86,7 +86,7 @@ ${orderData.orderNotes || 'None'}
 
 ========================================
 Thank you for your order!
-Track your delivery at www.medbroker.com/track/${orderData.orderId}
+Track your delivery at www.mediq.com/track/${orderData.orderId}
 ========================================
 		`;
 
@@ -293,8 +293,8 @@ Track your delivery at www.medbroker.com/track/${orderData.orderId}
 
 								<div className={styles.supportBox}>
 									<p className={styles.supportTitle}>Need Help?</p>
-									<a href="mailto:support@medbroker.com" className={styles.supportLink}>
-										📧 support@medbroker.com
+									<a href="mailto:support@mediq.com" className={styles.supportLink}>
+										📧 support@mediq.com
 									</a>
 									<p className={styles.supportPhone}>📱 +91-1234-567-890</p>
 								</div>

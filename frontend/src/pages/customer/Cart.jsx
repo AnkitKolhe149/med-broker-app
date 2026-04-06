@@ -11,6 +11,7 @@ function Cart() {
 	const { showError, showSuccess } = useNotification();
 	const [appliedCoupon, setAppliedCoupon] = useState('');
 	const [couponInput, setCouponInput] = useState('');
+	const [orderNotes, setOrderNotes] = useState('');
 	const [discountPercent, setDiscountPercent] = useState(0);
 	const cartCurrency = cartItems[0]?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
 	const formatPrice = (value) => formatCurrency(value, cartCurrency, true);
@@ -24,12 +25,9 @@ function Cart() {
 	};
 
 	const subtotal = getTotalPrice();
-	const retailSubtotal = cartItems.reduce((total, item) => total + (item.retailPrice * item.quantity), 0);
-	const buyerMargin = Math.max(0, retailSubtotal - subtotal);
-	const platformCharge = subtotal * 0.02; // Placeholder until backend pricing engine
+	const deliveryFee = cartItems.length > 0 ? 10 : 0;
 	const discount = (subtotal * discountPercent) / 100;
-	const tax = (subtotal - discount + platformCharge) * 0.05; // 5% GST
-	const total = subtotal - discount + platformCharge + tax;
+	const total = subtotal - discount + deliveryFee;
 
 	const handleApplyCoupon = () => {
 		const coupon = couponInput.toUpperCase();
@@ -61,6 +59,10 @@ function Cart() {
 		navigate('/customer/catalog');
 	};
 
+	const handleUploadPrescription = () => {
+		showSuccess('Prescription upload will be enabled once backend document storage is connected.');
+	};
+
 	if (cartItems.length === 0) {
 		return (
 			<main className="page">
@@ -86,192 +88,130 @@ function Cart() {
 	return (
 		<main className="page">
 			<div className="container">
-				<div className="page-header">
-					<div className="title-group">
-						<h1 className="section-title">Shopping Cart</h1>
-						<p className="section-subtitle">Review items and proceed to checkout</p>
-					</div>
-				</div>
+				<h1 className={styles.pageTitle}>Cart ({cartItems.length})</h1>
 
 				<div className={styles.mainContent}>
-					{/* Cart Items */}
-					<section className="section" style={{ padding: '1.5rem' }}>
-						<div className={styles.cartHeader}>
-							<p className={styles.itemCount}>
-								{cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in cart
-							</p>
-						</div>
-
-						{cartItems.map(item => (
-							<div key={item.medicineId} className={styles.cartItem}>
-								<div className={styles.itemContent}>
+					<section className={styles.cartColumn}>
+						<div className={styles.itemsPanel}>
+							{cartItems.map(item => (
+								<article key={item.medicineId} className={styles.cartItem}>
 									<div className={styles.itemImage}>
-										<span>💊</span>
+										{item.imageUrl ? (
+											<img src={item.imageUrl} alt={item.name} className={styles.itemImageMedia} loading="lazy" />
+										) : (
+											<span>{(item.name || 'M').charAt(0).toUpperCase()}</span>
+										)}
 									</div>
 
-									<div className={styles.itemDetails}>
+									<div className={styles.itemBody}>
+										<p className={styles.itemType}>● {item.category || 'Medicine'}</p>
 										<h3 className={styles.itemName}>{item.name}</h3>
-										<p className={styles.itemCategory}>{item.category}</p>
-										<p className={styles.itemVendor}>Vendor: {item.vendor}</p>
-										<p className={styles.itemPrice}>{formatPrice(item.basePrice)} each</p>
+										<p className={styles.itemSubline}>{item.vendor || 'Trusted pharmacy partner'}</p>
+										<p className={styles.itemPrice}>{formatPrice(item.basePrice)}</p>
 									</div>
-								</div>
 
-								<div className={styles.itemQuantity}>
-									<button
-										onClick={() => updateQuantity(item.medicineId, item.quantity - 1)}
-										className={styles.quantityBtn}
-										style={{ backgroundColor: '#FEE2E2' }}
-									>
-										−
-									</button>
-									<input
-										type="number"
-										min="1"
-										value={item.quantity}
-										onChange={(e) => updateQuantity(item.medicineId, Math.max(1, parseInt(e.target.value) || 1))}
-										className={styles.quantityInput}
-									/>
-									<button
-										onClick={() => updateQuantity(item.medicineId, item.quantity + 1)}
-										className={styles.quantityBtn}
-										style={{ backgroundColor: '#DCFCE7' }}
-									>
-										+
-									</button>
-								</div>
+									<div className={styles.itemActions}>
+										<div className={styles.itemQuantity}>
+											<button
+												onClick={() => updateQuantity(item.medicineId, item.quantity - 1)}
+												className={styles.quantityBtn}
+												aria-label={`Decrease quantity for ${item.name}`}
+											>
+												{'<'}
+											</button>
+											<span className={styles.quantityValue}>{item.quantity}</span>
+											<button
+												onClick={() => updateQuantity(item.medicineId, item.quantity + 1)}
+												className={styles.quantityBtn}
+												aria-label={`Increase quantity for ${item.name}`}
+											>
+												{'>'}
+											</button>
+										</div>
 
-								<div className={styles.itemTotal}>
-									<p className={styles.totalPrice}>{formatPrice(item.basePrice * item.quantity)}</p>
-									<button
-										onClick={() => removeFromCart(item.medicineId)}
-										className={styles.removeButton}
-									>
-										🗑️ Remove
-									</button>
-								</div>
-							</div>
-						))}
-					</section>
-
-					{/* Order Summary */}
-					<div className={styles.summarySection}>
-						<div className={styles.summaryCard}>
-							<h2 className={styles.summaryTitle}>Order Summary</h2>
-
-							{/* Coupon Section */}
-							<div className={styles.couponSection}>
-								<h3 className={styles.sectionSubtitle}>Apply Coupon</h3>
-								{!appliedCoupon ? (
-									<div className={styles.couponInput}>
-										<input
-											type="text"
-											placeholder="Enter coupon code"
-											value={couponInput}
-											onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-											className={styles.couponCodeInput}
-										/>
 										<button
-											onClick={handleApplyCoupon}
-											className={styles.applyCouponButton}
-										>
-											Apply
-										</button>
-									</div>
-								) : (
-									<div className={styles.appliedCoupon}>
-										<span className={styles.couponBadge}>{appliedCoupon}</span>
-										<button
-											onClick={handleRemoveCoupon}
-											className={styles.removeCouponButton}
+											onClick={() => removeFromCart(item.medicineId)}
+											className={styles.removeButton}
 										>
 											Remove
 										</button>
 									</div>
-								)}
-								<p className={styles.couponHint}>Try: SAVE10, SAVE20, MEDHEALTH, BULK25</p>
+								</article>
+							))}
+						</div>
+
+						<div className={styles.bottomInputs}>
+							<div className={styles.inputCard}>
+								<h3>Add request / notes with order</h3>
+								<textarea
+									value={orderNotes}
+									onChange={(e) => setOrderNotes(e.target.value)}
+									placeholder="Write any product issue / special request from pharmacy"
+									className={styles.notesInput}
+								/>
 							</div>
 
-							<hr className={styles.divider} />
+							<div className={styles.inputCard}>
+								<h3>Upload a Prescription Image</h3>
+								<div className={styles.uploadCard}>
+									<p>There is no uploaded prescription</p>
+									<button type="button" onClick={handleUploadPrescription} className={styles.uploadButton}>
+										Upload Prescription
+									</button>
+								</div>
+							</div>
+						</div>
+					</section>
 
-							{/* Price Breakdown */}
+					<aside className={styles.summarySection}>
+						<div className={styles.summaryCard}>
+							<h2 className={styles.summaryTitle}>Order Summary</h2>
+
+							<div className={styles.promoRow}>
+								<p>Have a promo Code?</p>
+								<div className={styles.couponInput}>
+									<input
+										type="text"
+										placeholder="Promo code"
+										value={couponInput}
+										onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+										className={styles.couponCodeInput}
+									/>
+									<button onClick={handleApplyCoupon} className={styles.applyCouponButton}>Add</button>
+								</div>
+								{appliedCoupon && (
+									<div className={styles.appliedCoupon}>
+										<span className={styles.couponBadge}>{appliedCoupon} ({discountPercent}% off)</span>
+										<button onClick={handleRemoveCoupon} className={styles.removeCouponButton}>Remove</button>
+									</div>
+								)}
+							</div>
+
 							<div className={styles.priceBreakdown}>
 								<div className={styles.priceRow}>
-									<span>Subtotal</span>
+									<span>Sub-Total</span>
 									<span>{formatPrice(subtotal)}</span>
 								</div>
-								{buyerMargin > 0 && (
-									<div className={styles.priceRow} style={{ color: 'var(--success)' }}>
-										<span>Buyer Margin</span>
-										<span>−{formatPrice(buyerMargin)}</span>
-									</div>
-								)}
 								<div className={styles.priceRow}>
-									<span>Platform Charges</span>
-									<span>{formatPrice(platformCharge)}</span>
+									<span>Delivery Fees</span>
+									<span>{formatPrice(deliveryFee)}</span>
 								</div>
 								{discountPercent > 0 && (
-									<div className={styles.priceRow} style={{ color: 'var(--success)' }}>
-										<span>Discount ({discountPercent}%)</span>
-										<span>−{formatPrice(discount)}</span>
+									<div className={styles.priceRow}>
+										<span>Promo Discount</span>
+										<span>-{formatPrice(discount)}</span>
 									</div>
 								)}
-								<div className={styles.priceRow}>
-									<span>Tax (5% GST)</span>
-									<span>{formatPrice(tax)}</span>
-								</div>
 								<div className={styles.totalRow}>
-									<span>Total Amount</span>
+									<span>Total</span>
 									<span>{formatPrice(total)}</span>
 								</div>
 							</div>
 
-							<button 
-								onClick={handleCheckout}
-								className={styles.checkoutButton}
-							>
-								Proceed to Checkout
-							</button>
-
-							<button 
-								onClick={handleContinueShopping}
-								className={styles.continueButton}
-							>
-								Continue Shopping
-							</button>
+							<button onClick={handleCheckout} className={styles.checkoutButton}>Proceed To Checkout</button>
+							<button onClick={handleContinueShopping} className={styles.continueButton}>Continue Shopping</button>
 						</div>
-
-						{/* Information Cards */}
-						<div className={styles.infoCard}>
-							<div className={styles.infoCardContent}>
-								<span className={styles.infoIcon}>🚚</span>
-								<div>
-									<h4 className={styles.infoCardTitle}>Free Delivery</h4>
-									<p className={styles.infoCardText}>On orders above {formatPrice(500)}</p>
-								</div>
-							</div>
-						</div>
-
-						<div className={styles.infoCard}>
-							<div className={styles.infoCardContent}>
-								<span className={styles.infoIcon}>✓</span>
-								<div>
-									<h4 className={styles.infoCardTitle}>Verified Medicines</h4>
-									<p className={styles.infoCardText}>All medicines are certified</p>
-								</div>
-							</div>
-						</div>
-
-						<div className={styles.infoCard}>
-							<div className={styles.infoCardContent}>
-								<span className={styles.infoIcon}>🔒</span>
-								<div>
-									<h4 className={styles.infoCardTitle}>Secure Checkout</h4>
-									<p className={styles.infoCardText}>Safe & encrypted payment</p>
-								</div>
-							</div>
-						</div>
-					</div>
+					</aside>
 				</div>
 			</div>
 		</main>

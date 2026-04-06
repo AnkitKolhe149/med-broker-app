@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
 import { useCart } from '../../context/CartContext';
@@ -8,10 +8,8 @@ import styles from './Dashboard.module.css';
 
 function CustomerDashboard() {
 	const navigate = useNavigate();
-	const location = useLocation();
 	const { user } = useUser();
 	const { getTotalItems } = useCart();
-	const [activeTab, setActiveTab] = useState('overview');
 
 	// Mock data
 	const activeOrders = [
@@ -42,13 +40,6 @@ function CustomerDashboard() {
 		authService.logout();
 		navigate('/login');
 	};
-
-	const tabItems = [
-		{ id: 'overview', label: 'Overview', icon: '📊' },
-		{ id: 'orders', label: 'Orders', icon: '📦' },
-		{ id: 'medicines', label: 'Medicines', icon: '💊' },
-		{ id: 'settings', label: 'Settings', icon: '⚙️' }
-	];
 
 	const orderStages = ['Ordered', 'Confirmed', 'Shipped', 'Delivered'];
 
@@ -301,24 +292,6 @@ function CustomerDashboard() {
 				)}
 			</div>
 
-			{/* Bottom Navigation */}
-			<nav className={styles.bottomNav}>
-				{tabItems.map(tab => (
-					<button
-						key={tab.id}
-						className={`${styles.navTab} ${activeTab === tab.id ? styles.active : ''}`}
-						onClick={() => {
-							setActiveTab(tab.id);
-							if (tab.id === 'orders') navigate('/customer/orders');
-							else if (tab.id === 'medicines') navigate('/customer/catalog');
-							else if (tab.id === 'settings') navigate('/customer/profile');
-						}}
-					>
-						<span className={styles.tabIcon}>{tab.icon}</span>
-						<span className={styles.tabLabel}>{tab.label}</span>
-					</button>
-				))}
-			</nav>
 		</main>
 	);
 }

@@ -42,7 +42,7 @@ function Payment() {
 
 	const generateUPILink = () => {
 		const amount = calculateTotal();
-		const upiString = `upi://pay?pa=${upiId}&pn=MedBroker&am=${amount}&tn=Medicine%20Purchase&tr=${generateTransactionId()}`;
+		const upiString = `upi://pay?pa=${upiId}&pn=MedIQ&am=${amount}&tn=Medicine%20Purchase&tr=${generateTransactionId()}`;
 		return upiString;
 	};
 
@@ -52,9 +52,9 @@ function Payment() {
 
 	const generateQRCode = () => {
 		const amount = calculateTotal();
-		const merchantUPI = 'medbroker@icici';
+		const merchantUPI = 'mediq@icici';
 		const transactionId = generateTransactionId();
-		const upiString = `upi://pay?pa=${merchantUPI}&pn=MedBroker&am=${amount}&tn=Medicine%20Purchase&tr=${transactionId}`;
+		const upiString = `upi://pay?pa=${merchantUPI}&pn=MedIQ&am=${amount}&tn=Medicine%20Purchase&tr=${transactionId}`;
 		return upiString;
 	};
 
@@ -275,7 +275,7 @@ const handlePaymentProcess = async (e) => {
 										onChange={(e) => setPaymentMethod(e.target.value)}
 										className={styles.radioInput}
 									/>
-									<span className={styles.methodTitle}>MedBroker Wallet</span>
+									<span className={styles.methodTitle}>MedIQ Wallet</span>
 								</label>
 
 								{paymentMethod === 'wallet' && (

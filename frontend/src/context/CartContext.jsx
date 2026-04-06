@@ -8,7 +8,7 @@ export const CartProvider = ({ children }) => {
 	// Load cart from localStorage on mount
 	useEffect(() => {
 		try {
-			const savedCart = localStorage.getItem('medbroker_cart');
+			const savedCart = localStorage.getItem('mediq_cart');
 			if (savedCart) {
 				setCartItems(JSON.parse(savedCart));
 			}
@@ -20,7 +20,7 @@ export const CartProvider = ({ children }) => {
 	// Save cart to localStorage whenever it changes
 	useEffect(() => {
 		try {
-			localStorage.setItem('medbroker_cart', JSON.stringify(cartItems));
+			localStorage.setItem('mediq_cart', JSON.stringify(cartItems));
 		} catch (error) {
 			console.error('Failed to save cart to localStorage:', error);
 		}
@@ -42,6 +42,7 @@ export const CartProvider = ({ children }) => {
 					medicineId: medicine.id,
 					name: medicine.name,
 					category: medicine.category,
+					imageUrl: medicine.imageUrl,
 					vendor: medicine.vendor,
 					vendorId: medicine.vendorId,
 					quantity,
