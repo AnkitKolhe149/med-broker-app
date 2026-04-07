@@ -12,7 +12,7 @@ function Footer() {
 				<div style={styles.grid}>
 					{/* About Section */}
 					<div style={styles.column}>
-						<h3 style={styles.columnTitle}>MedBroker</h3>
+						<h3 style={styles.columnTitle}>medIQ</h3>
 						<p style={styles.columnDescription}>
 							Your trusted medicine marketplace connecting patients with verified pharmacies and vendors.
 						</p>
