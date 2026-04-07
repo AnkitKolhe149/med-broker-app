@@ -1,0 +1,152 @@
+[
+  {
+    "id": "kb-fever-pain-otc",
+    "content": "For mild fever and body pain under 3 days, consider paracetamol-based OTC options. Ensure hydration and rest. Avoid overdosing and avoid if severe liver disease unless prescribed.",
+    "metadata": {
+      "symptoms": ["fever", "body pain", "headache", "bodyache"],
+      "productKeywords": ["paracetamol", "acetaminophen", "calpol", "dolo", "crocin", "metacin"],
+      "rx": false,
+      "followUp": "How long have you had the fever? What is the highest temperature recorded?"
+    }
+  },
+  {
+    "id": "kb-cold-cough",
+    "content": "For common cold symptoms like runny nose, mild sore throat, or dry cough, supportive medicines and hydration may help. Persistent breathing issues require urgent evaluation.",
+    "metadata": {
+      "symptoms": ["cough", "cold", "sore throat", "runny nose", "nasal congestion"],
+      "productKeywords": ["cough syrup", "cetirizine", "levocetirizine", "lozenge", "grilinctus", "ascoril", "sinarest"],
+      "rx": false,
+      "followUp": "Is your cough dry or with mucus? How many days have you had symptoms?"
+    }
+  },
+  {
+    "id": "kb-acidity-digestion",
+    "content": "For acidity, heartburn and mild indigestion, antacid or PPI products may provide temporary relief. Recurrent vomiting, blood in stool, or severe abdominal pain are red flags.",
+    "metadata": {
+      "symptoms": ["acidity", "heartburn", "indigestion", "gas", "bloating"],
+      "productKeywords": ["antacid", "pantoprazole", "omeprazole", "gelusil", "digene", "eno", "hifenac"],
+      "rx": false,
+      "followUp": "Do symptoms worsen after meals or at night? How frequent are they?"
+    }
+  },
+  {
+    "id": "kb-allergy",
+    "content": "For mild allergy symptoms like sneezing, itching, and runny nose, antihistamine medicines can help. Swelling of lips/tongue or breathing difficulty is an emergency.",
+    "metadata": {
+      "symptoms": ["allergy", "itching", "sneezing", "rash", "hives"],
+      "productKeywords": ["cetirizine", "levocetirizine", "fexofenadine", "allegra", "avil", "loratadine"],
+      "rx": false,
+      "followUp": "Do you also have breathing difficulty or swelling in face/lips?"
+    }
+  },
+  {
+    "id": "kb-diarrhea",
+    "content": "For mild loose motions or diarrhea, oral rehydration and probiotics help. Avoid if there is blood in stool, high fever, or severe dehydration.",
+    "metadata": {
+      "symptoms": ["diarrhea", "loose motion", "stomach upset"],
+      "productKeywords": ["ors", "electral", "probiotic", "racecadotril", "loperamide", "norflox"],
+      "rx": false,
+      "followUp": "How many days have you had loose motions? Is there blood or mucus in stool?"
+    }
+  },
+  {
+    "id": "kb-constipation",
+    "content": "For occasional constipation, fibre supplements, mild laxatives and hydration are helpful. Long-term use should be avoided without doctor advice.",
+    "metadata": {
+      "symptoms": ["constipation", "hard stool"],
+      "productKeywords": ["isabgol", "lactulose", "cremaffin", "softovac", "triphala"],
+      "rx": false,
+      "followUp": "How many days since your last proper bowel movement?"
+    }
+  },
+  {
+    "id": "kb-vomiting-nausea",
+    "content": "For mild nausea or vomiting due to motion sickness or acidity, anti-nausea medicines may help. Persistent vomiting needs medical attention.",
+    "metadata": {
+      "symptoms": ["vomiting", "nausea", "motion sickness"],
+      "productKeywords": ["ondansetron", "domperidone", "avomine", "emset"],
+      "rx": false,
+      "followUp": "How many times have you vomited today? Is it associated with headache or dizziness?"
+    }
+  },
+  {
+    "id": "kb-menstrual-pain",
+    "content": "For menstrual cramps and pain, mild pain relievers and antispasmodics provide relief. Apply hot water bag and rest.",
+    "metadata": {
+      "symptoms": ["period pain", "menstrual cramps", "dysmenorrhea"],
+      "productKeywords": ["meftal", "meftal spas", "drotin", "paracetamol", "ibuprofen"],
+      "rx": false,
+      "followUp": "How severe is the pain on a scale of 1-10? Any heavy bleeding?"
+    }
+  },
+  {
+    "id": "kb-toothache",
+    "content": "For temporary toothache relief, painkillers and clove oil can help. Dental consultation is strongly recommended.",
+    "metadata": {
+      "symptoms": ["toothache", "dental pain"],
+      "productKeywords": ["paracetamol", "ibuprofen", "amox", "clove oil"],
+      "rx": false,
+      "followUp": "Is there swelling in the gums or face?"
+    }
+  },
+  {
+    "id": "kb-mouth-ulcer",
+    "content": "For mouth ulcers, use topical gels and vitamin supplements. Avoid spicy food and maintain oral hygiene.",
+    "metadata": {
+      "symptoms": ["mouth ulcer", "oral ulcer"],
+      "productKeywords": ["smyle", "orajel", "zytee", "b complex", "becosules"],
+      "rx": false,
+      "followUp": "How long have the ulcers been present?"
+    }
+  },
+  {
+    "id": "kb-sinus-nasal",
+    "content": "For sinus congestion and headache, saline nasal drops, steam inhalation and decongestants can provide relief.",
+    "metadata": {
+      "symptoms": ["sinus", "nasal congestion", "blocked nose"],
+      "productKeywords": ["sinarest", "o trivin", "nasivion", "steam inhalation"],
+      "rx": false,
+      "followUp": "Do you have facial pain or headache along with it?"
+    }
+  },
+  {
+    "id": "kb-skin-rash",
+    "content": "For mild skin rashes or itching, moisturizers and mild steroid creams (short term) may help. Consult doctor if spreading rapidly.",
+    "metadata": {
+      "symptoms": ["skin rash", "itching", "dry skin"],
+      "productKeywords": ["moisturizer", "cetaphil", "betnovate", "ring guard", "terbinafine"],
+      "rx": false,
+      "followUp": "Is the rash spreading or is there pus/discharge?"
+    }
+  },
+  {
+    "id": "kb-eye-irritation",
+    "content": "For mild eye irritation or redness due to dust/allergy, lubricant eye drops can be used. Avoid if there is severe pain or vision changes.",
+    "metadata": {
+      "symptoms": ["eye irritation", "red eyes", "dry eyes"],
+      "productKeywords": ["lubricant eye drops", "refresh tears", "sys tears"],
+      "rx": false,
+      "followUp": "Is there pain, blurred vision or light sensitivity?"
+    }
+  },
+  {
+    "id": "kb-mild-fever-child",
+    "content": "For mild fever in children, paracetamol syrup is commonly used. Dosage depends on age and weight. Always consult pediatrician for children under 5.",
+    "metadata": {
+      "symptoms": ["child fever", "baby fever"],
+      "productKeywords": ["paracetamol syrup", "calpol", "dolo syrup"],
+      "rx": false,
+      "followUp": "What is the child's age and exact temperature?"
+    }
+  },
+  {
+    "id": "kb-general-body-pain",
+    "content": "For general body ache and muscle pain after exertion, rest, hydration and mild pain relievers help.",
+    "metadata": {
+      "symptoms": ["body ache", "muscle pain", "joint pain"],
+      "productKeywords": ["dolo", "crocin", "volini gel", "moov", "diclofenac"],
+      "rx": false,
+      "followUp": "Is the pain after physical activity or sudden?"
+    }
+  }
+]
