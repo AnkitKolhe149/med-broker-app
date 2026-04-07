@@ -28,7 +28,7 @@ export default function Landing() {
             <nav className="header-nav">
               <a href="#features" className="nav-link">Features</a>
               <a href="#benefits" className="nav-link">Benefits</a>
-              <a href="#about" className="nav-link">About</a>
+              <button onClick={() => navigate('/about')} className="nav-link">About</button>
               <button onClick={() => navigate('/login')} className="btn-outline">Sign In</button>
               <button onClick={() => navigate('/register')} className="btn-primary">Get Started</button>
             </nav>
@@ -325,7 +325,7 @@ export default function Landing() {
               <ul className="footer-links">
                 <li><a href="#features">Features</a></li>
                 <li><a href="#benefits">Benefits</a></li>
-                <li><a href="#about">About Us</a></li>
+                <li><button onClick={() => navigate('/about')}>About Us</button></li>
                 <li><button onClick={() => navigate('/login')}>Sign In</button></li>
               </ul>
             </div>

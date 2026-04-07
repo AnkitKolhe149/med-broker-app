@@ -103,7 +103,7 @@ function VendorLayout({ children }) {
 					{!isCollapsed && (
 						<div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
 							<div className="vendor-menu-item-icon"><Pill size={18} strokeWidth={1.5} /></div>
-							<h2>MedBroker</h2>
+							<h2>medIQ</h2>
 						</div>
 					)}
 					<button

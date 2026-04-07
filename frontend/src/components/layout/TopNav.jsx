@@ -361,18 +361,23 @@ function TopNav() {
 													<div style={styles.menuDivider} />
 
 													<div className="topnav-profile-menu-section" style={styles.menuSection}>
-														{profileMenuItems.map((item) => (
-															<button
-																type="button"
-																key={item.path}
-																className={`topnav-profile-menu-item ${location.pathname === item.path ? 'active' : ''}`}
-																style={styles.menuItem}
-																onClick={() => handleNavigate(item.path)}
-																role="menuitem"
-															>
-																<span className="topnav-profile-menu-item-icon" style={styles.menuItemIcon} aria-hidden="true">{item.icon}</span>
-																<span>{item.label}</span>
-															</button>
+														{profileMenuSections.map((section, idx) => (
+															<React.Fragment key={idx}>
+																{idx > 0 && <div style={{ ...styles.menuDivider, margin: '0.25rem 0' }} />}
+																{section.items.map((item) => (
+																	<button
+																		type="button"
+																		key={item.path}
+																		className={`topnav-profile-menu-item ${location.pathname === item.path ? 'active' : ''}`}
+																		style={styles.menuItem}
+																		onClick={() => handleNavigate(item.path)}
+																		role="menuitem"
+																	>
+																		<span className="topnav-profile-menu-item-icon" style={styles.menuItemIcon} aria-hidden="true">{item.icon}</span>
+																		<span>{item.label}</span>
+																	</button>
+																))}
+															</React.Fragment>
 														))}
 													</div>
 

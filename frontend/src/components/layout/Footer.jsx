@@ -12,7 +12,7 @@ function Footer() {
 				<div style={styles.grid}>
 					{/* About Section */}
 					<div style={styles.column}>
-						<h3 style={styles.columnTitle}>MedBroker</h3>
+						<h3 style={styles.columnTitle}>medIQ</h3>
 						<p style={styles.columnDescription}>
 							Your trusted medicine marketplace connecting patients with verified pharmacies and vendors.
 						</p>
@@ -28,6 +28,7 @@ function Footer() {
 					<div style={styles.column}>
 						<h3 style={styles.columnTitle}>Quick Links</h3>
 						<ul style={styles.linkList}>
+							<li><button onClick={() => navigate('/about')} style={styles.link}>About Us</button></li>
 							<li><button onClick={() => navigate('/customer/catalog')} style={styles.link}>Browse Medicines</button></li>
 							<li><button onClick={() => navigate('/customer/orders')} style={styles.link}>My Orders</button></li>
 							<li><button onClick={() => navigate('/customer/dashboard')} style={styles.link}>Dashboard</button></li>
