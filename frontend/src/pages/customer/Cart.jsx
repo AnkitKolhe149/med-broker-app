@@ -132,8 +132,11 @@ function Cart() {
 											</button>
 										</div>
 									</div>
-								</div>
+								</article>
+							))}
+						</div>
 					</section>
+
 
 					<aside className={styles.summarySection}>
 						<div className={styles.summaryCard}>
@@ -214,10 +217,11 @@ function Cart() {
 								</div>
 							</div>
 						</div>
+					</aside>
 				</div>
 			</div>
-		</div>
-		</main >
+		</main>
+
 	);
 }
 
