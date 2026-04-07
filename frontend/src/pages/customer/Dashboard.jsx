@@ -7,6 +7,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { formatCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import styles from './Dashboard.module.css';
+import { BarChart2, Package, Pill, Settings, ClipboardList, Heart, TrendingUp, Timer, Sparkles, Gift } from 'lucide-react';
 
 function CustomerDashboard() {
 	const navigate = useNavigate();
@@ -70,6 +71,13 @@ function CustomerDashboard() {
 		navigate('/login');
 	};
 
+	const tabItems = [
+		{ id: 'overview', label: 'Overview', icon: <BarChart2 size={18} strokeWidth={1.5} /> },
+		{ id: 'orders', label: 'Orders', icon: <Package size={18} strokeWidth={1.5} /> },
+		{ id: 'medicines', label: 'Medicines', icon: <Pill size={18} strokeWidth={1.5} /> },
+		{ id: 'settings', label: 'Settings', icon: <Settings size={18} strokeWidth={1.5} /> }
+	];
+
 	const orderStages = ['Ordered', 'Confirmed', 'Shipped', 'Delivered'];
 
 	const getOrderStageIndex = (status = '') => {
@@ -131,11 +139,29 @@ function CustomerDashboard() {
 					<div className={styles.sidebarDivider}></div>
 
 					<nav className={styles.sidebarNav}>
-						<button className={styles.navItem} onClick={() => navigate('/customer/catalog')}>
-							<span>💊</span> Browse Medicines
+						<button 
+							className={styles.navItem}
+							onClick={() => navigate('/customer/catalog')}
+						>
+							<Pill size={16} strokeWidth={1.5} /> Browse Medicines
 						</button>
-						<button className={styles.navItem} onClick={() => navigate('/customer/orders')}>
-							<span>📦</span> My Orders
+						<button 
+							className={styles.navItem}
+							onClick={() => navigate('/customer/orders')}
+						>
+							<Package size={16} strokeWidth={1.5} /> My Orders
+						</button>
+						<button 
+							className={styles.navItem}
+							onClick={() => navigate('/customer/prescriptions')}
+						>
+							<ClipboardList size={16} strokeWidth={1.5} /> Prescriptions
+						</button>
+						<button 
+							className={styles.navItem}
+							onClick={() => navigate('/customer/favorites')}
+						>
+							<Heart size={16} strokeWidth={1.5} /> Favorites
 						</button>
 					</nav>
 				</div>
@@ -186,28 +212,28 @@ function CustomerDashboard() {
 
 				<section className={styles.quickStats}>
 					<div className={`${styles.statBox} card`}>
-						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(21, 115, 71, 0.15)' }}>📈</div>
+						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(21, 115, 71, 0.15)' }}><TrendingUp size={20} strokeWidth={1.5} /></div>
 						<div>
 							<p className={styles.statBoxLabel}>Total Spent</p>
 							<p className={styles.statBoxValue}>{formatPrice(metrics.totalSpent)}</p>
 						</div>
 					</div>
 					<div className={`${styles.statBox} card`}>
-						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)' }}>📦</div>
+						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)' }}><Package size={20} strokeWidth={1.5} /></div>
 						<div>
 							<p className={styles.statBoxLabel}>Avg. Order</p>
 							<p className={styles.statBoxValue}>{formatPrice(metrics.avgOrderValue)}</p>
 						</div>
 					</div>
 					<div className={`${styles.statBox} card`}>
-						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)' }}>⏱️</div>
+						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)' }}><Timer size={20} strokeWidth={1.5} /></div>
 						<div>
 							<p className={styles.statBoxLabel}>Active Orders</p>
 							<p className={styles.statBoxValue}>{metrics.activeOrders.length}</p>
 						</div>
 					</div>
 					<div className={`${styles.statBox} card`}>
-						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(236, 72, 153, 0.15)' }}>✨</div>
+						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(236, 72, 153, 0.15)' }}><Sparkles size={20} strokeWidth={1.5} /></div>
 						<div>
 							<p className={styles.statBoxLabel}>Member Since</p>
 							<p className={styles.statBoxValue}>{user?.createdAt ? new Date(user.createdAt).getFullYear() : 'N/A'}</p>
@@ -297,7 +323,7 @@ function CustomerDashboard() {
 				{buyerType === 'WHOLESALE' && (
 					<section className={styles.promoBanner}>
 						<div className={styles.promoBannerContent}>
-							<span className={styles.promoIcon}>🎁</span>
+							<Gift size={24} strokeWidth={1.5} className={styles.promoIcon} />
 							<div>
 								<h4>Wholesale Benefits Active</h4>
 								<p>You are eligible for wholesale pricing and priority support on qualifying orders.</p>

@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
 import Avatar from '../common/Avatar';
+import { Home, Settings, Pill, ShoppingCart, Package, CheckCircle, CreditCard, Search, LogOut, User, Menu, X } from 'lucide-react';
 
 function TopNav() {
 	const navigate = useNavigate();
@@ -181,11 +182,24 @@ function TopNav() {
 		}
 	};
 
-	const profileMenuItems = [
-		{ label: 'Profile', path: '/customer/profile', icon: '👤' },
-		{ label: 'My Orders', path: '/customer/orders', icon: '📦' },
-		{ label: 'Cart', path: '/customer/cart', icon: '🛒' },
-		{ label: 'Browse Medicines', path: '/customer/catalog', icon: '💊' }
+	const profileMenuSections = [
+		{
+			title: 'Account',
+			items: [
+				{ label: 'Dashboard', path: '/customer/dashboard', icon: <Home size={16} strokeWidth={1.5} /> },
+				{ label: 'Profile Settings', path: '/customer/profile', icon: <Settings size={16} strokeWidth={1.5} /> }
+			]
+		},
+		{
+			title: 'Shopping',
+			items: [
+				{ label: 'Browse Medicines', path: '/customer/catalog', icon: <Pill size={16} strokeWidth={1.5} /> },
+				{ label: 'Cart', path: '/customer/cart', icon: <ShoppingCart size={16} strokeWidth={1.5} /> },
+				{ label: 'My Orders', path: '/customer/orders', icon: <Package size={16} strokeWidth={1.5} /> },
+				{ label: 'Checkout', path: '/customer/checkout', icon: <CheckCircle size={16} strokeWidth={1.5} /> },
+				{ label: 'Payment', path: '/customer/payment', icon: <CreditCard size={16} strokeWidth={1.5} /> }
+			]
+		}
 	];
 
 	const totalItems = getTotalItems();
@@ -268,7 +282,7 @@ function TopNav() {
 						aria-label="Toggle mobile menu"
 						aria-expanded={showMobileMenu}
 					>
-						{showMobileMenu ? '✕ Close' : '☰ Menu'}
+						{showMobileMenu ? <><X size={16} /> Close</> : <><Menu size={16} /> Menu</>}
 					</button>
 
 					<div className={`topnav-right ${showMobileMenu ? 'show' : ''}`}>
@@ -280,7 +294,7 @@ function TopNav() {
 								style={styles.cartButton}
 								title="View Cart"
 							>
-								<span style={styles.cartIcon}>🛒</span>
+								<span style={styles.cartIcon}><ShoppingCart size={20} strokeWidth={1.5} /></span>
 								{totalItems > 0 && <span style={styles.cartBadge}>{cartCountLabel}</span>}
 							</button>
 
@@ -309,7 +323,7 @@ function TopNav() {
 										</>
 									) : (
 										<>
-											<span style={styles.fallbackProfileText}>👤</span>
+											<User size={20} strokeWidth={1.5} />
 											<span style={styles.profileChevron}>v</span>
 										</>
 									)}
@@ -371,7 +385,7 @@ function TopNav() {
 														onClick={handleLogout}
 														role="menuitem"
 													>
-														🚪 Logout
+														<LogOut size={16} strokeWidth={1.5} /> Logout
 													</button>
 												</>
 											) : (
@@ -412,9 +426,7 @@ function TopNav() {
 										x
 									</button>
 								)}
-								<button type="submit" className="searchButton" style={styles.searchButton} aria-label="Search">
-									🔍
-								</button>
+								<button type="submit" className="searchButton" style={styles.searchButton} aria-label="Search"><Search size={18} strokeWidth={1.5} /></button>
 							</form>
 						</div>
 					</div>

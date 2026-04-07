@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useNotification } from '../../context/NotificationContext';
 import { formatCurrency } from '../../utils/currency';
 import styles from './Cart.module.css';
+import { Pill, Trash2, Truck, Check, Lock, ShoppingCart } from 'lucide-react';
 
 function Cart() {
 	const navigate = useNavigate();
@@ -64,12 +65,12 @@ function Cart() {
 			<main className="page">
 				<div className="container">
 					<div className={styles.emptyCart}>
-						<div className={styles.emptyCartIcon}>🛒</div>
+						<div className={styles.emptyCartIcon}><ShoppingCart size={48} strokeWidth={1} /></div>
 						<h2 className={styles.emptyCartTitle}>Your Cart is Empty</h2>
 						<p className={styles.emptyCartText}>
 							Add some medicines to your cart and come back to checkout.
 						</p>
-						<button 
+						<button
 							onClick={handleContinueShopping}
 							className={styles.continueShoppingButton}
 						>
@@ -92,11 +93,7 @@ function Cart() {
 							{cartItems.map(item => (
 								<article key={item.medicineId} className={styles.cartItem}>
 									<div className={styles.itemImage}>
-										{item.imageUrl ? (
-											<img src={item.imageUrl} alt={item.name} className={styles.itemImageMedia} loading="lazy" />
-										) : (
-											<span>{(item.name || 'M').charAt(0).toUpperCase()}</span>
-										)}
+										<Pill size={24} strokeWidth={1.5} />
 									</div>
 
 									<div className={styles.itemBody}>
@@ -125,38 +122,17 @@ function Cart() {
 											</button>
 										</div>
 
-										<button
-											onClick={() => removeFromCart(item.medicineId)}
-											className={styles.removeButton}
-										>
-											Remove
-										</button>
+										<div className={styles.itemTotal}>
+											<p className={styles.totalPrice}>{formatPrice(item.basePrice * item.quantity)}</p>
+											<button
+												onClick={() => removeFromCart(item.medicineId)}
+												className={styles.removeButton}
+											>
+												<Trash2 size={14} strokeWidth={1.5} /> Remove
+											</button>
+										</div>
 									</div>
-								</article>
-							))}
-						</div>
-
-						<div className={styles.bottomInputs}>
-							<div className={styles.inputCard}>
-								<h3>Add request / notes with order</h3>
-								<textarea
-									value={orderNotes}
-									onChange={(e) => setOrderNotes(e.target.value)}
-									placeholder="Write any product issue / special request from pharmacy"
-									className={styles.notesInput}
-								/>
-							</div>
-
-							<div className={styles.inputCard}>
-								<h3>Upload a Prescription Image</h3>
-								<div className={styles.uploadCard}>
-									<p>Prescription upload happens during checkout and is required before payment.</p>
-									<p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--primary)' }}>
-										Continue to checkout to upload the file securely.
-									</p>
 								</div>
-							</div>
-						</div>
 					</section>
 
 					<aside className={styles.summarySection}>
@@ -207,10 +183,41 @@ function Cart() {
 							<button onClick={handleCheckout} className={styles.checkoutButton}>Proceed To Checkout</button>
 							<button onClick={handleContinueShopping} className={styles.continueButton}>Continue Shopping</button>
 						</div>
-					</aside>
+
+						{/* Information Cards */}
+						<div className={styles.infoCard}>
+							<div className={styles.infoCardContent}>
+								<span className={styles.infoIcon}><Truck size={18} strokeWidth={1.5} /></span>
+								<div>
+									<h4 className={styles.infoCardTitle}>Free Delivery</h4>
+									<p className={styles.infoCardText}>On orders above {formatPrice(500)}</p>
+								</div>
+							</div>
+						</div>
+
+						<div className={styles.infoCard}>
+							<div className={styles.infoCardContent}>
+								<span className={styles.infoIcon}><Check size={18} strokeWidth={1.5} /></span>
+								<div>
+									<h4 className={styles.infoCardTitle}>Verified Medicines</h4>
+									<p className={styles.infoCardText}>All medicines are certified</p>
+								</div>
+							</div>
+						</div>
+
+						<div className={styles.infoCard}>
+							<div className={styles.infoCardContent}>
+								<span className={styles.infoIcon}><Lock size={18} strokeWidth={1.5} /></span>
+								<div>
+									<h4 className={styles.infoCardTitle}>Secure Checkout</h4>
+									<p className={styles.infoCardText}>Safe & encrypted payment</p>
+								</div>
+							</div>
+						</div>
 				</div>
 			</div>
-		</main>
+		</div>
+		</main >
 	);
 }
 

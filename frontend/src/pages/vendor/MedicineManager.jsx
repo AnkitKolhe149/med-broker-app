@@ -3,6 +3,7 @@ import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useNotification } from '../../context/NotificationContext';
 import inventoryService from '../../services/inventory.service';
 import styles from './MedicineManager.module.css';
+import { Check, X } from 'lucide-react';
 
 function VendorMedicineManager() {
 	const { showSuccess, showError } = useNotification();
@@ -266,7 +267,7 @@ function VendorMedicineManager() {
 											backgroundColor: medicine.stock > 0 ? 'var(--success)' : 'var(--error)'
 										}}
 									>
-										{medicine.stock > 0 ? '✓ In Stock' : '✗ Out'}
+										{medicine.stock > 0 ? <><Check size={12} strokeWidth={2} /> In Stock</> : <><X size={12} strokeWidth={2} /> Out</>}
 									</div>
 								</td>
 								<td className={styles.tableCell}>
@@ -299,7 +300,7 @@ function VendorMedicineManager() {
 									setUploadFiles([]);
 								}}
 						>
-							✕
+						<X size={16} />
 						</button>
 					</div>
 
@@ -373,7 +374,7 @@ function VendorMedicineManager() {
 									setUploadFiles([]);
 								}}
 							>
-								✕
+							<X size={16} />
 							</button>
 						</div>
 

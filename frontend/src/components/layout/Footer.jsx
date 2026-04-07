@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShieldCheck, Check, ClipboardList, Camera } from 'lucide-react';
 
 function Footer() {
 	const navigate = useNavigate();
@@ -11,7 +12,7 @@ function Footer() {
 				<div style={styles.grid}>
 					{/* About Section */}
 					<div style={styles.column}>
-						<h3 style={styles.columnTitle}>🏥 MedIQ</h3>
+						<h3 style={styles.columnTitle}>MedBroker</h3>
 						<p style={styles.columnDescription}>
 							Your trusted medicine marketplace connecting patients with verified pharmacies and vendors.
 						</p>
@@ -19,7 +20,7 @@ function Footer() {
 							<a href="#" style={styles.socialLink} title="Facebook">f</a>
 							<a href="#" style={styles.socialLink} title="Twitter">𝕏</a>
 							<a href="#" style={styles.socialLink} title="LinkedIn">in</a>
-							<a href="#" style={styles.socialLink} title="Instagram">📷</a>
+							<a href="#" style={styles.socialLink} title="Instagram"><Camera size={14} /></a>
 						</div>
 					</div>
 
@@ -64,9 +65,9 @@ function Footer() {
 							© {currentYear} MedIQ. All rights reserved.
 						</p>
 						<div style={styles.certifications}>
-							<span style={styles.certification}>🔒 Secure</span>
-							<span style={styles.certification}>✓ Verified Vendors</span>
-							<span style={styles.certification}>📋 Licensed</span>
+							<span style={styles.certification}><ShieldCheck size={14} strokeWidth={1.5} /> Secure</span>
+							<span style={styles.certification}><Check size={14} strokeWidth={1.5} /> Verified Vendors</span>
+							<span style={styles.certification}><ClipboardList size={14} strokeWidth={1.5} /> Licensed</span>
 						</div>
 					</div>
 				</div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import vendorService from '../../services/vendor.service';
 import styles from './Analytics.module.css';
+import { Lightbulb } from 'lucide-react';
 
 function VendorAnalytics() {
 	const [timeRange, setTimeRange] = useState('month');
@@ -198,7 +199,7 @@ function VendorAnalytics() {
 
 			{/* AI Insights */}
 			<div className={styles.insightBox}>
-				<strong>💡 AI Insights:</strong> Based on current trends, your top-selling product (Paracetamol 500mg) has a rising demand in North India.
+				<strong><Lightbulb size={16} strokeWidth={1.5} /> AI Insights:</strong> Based on current trends, your top-selling product (Paracetamol 500mg) has a rising demand in North India.
 				Consider increasing inventory by 20% to avoid stockouts. Also, your Cetirizine 10mg could benefit from a 5-10% price optimization
 				based on market competition.
 			</div>

@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../../services/auth.service';
+import {
+  BarChart2, Package, PackageSearch, Pill,
+  Truck, TrendingUp, Wallet, ClipboardList,
+  MessageSquare, Settings, LogOut
+} from 'lucide-react';
 import './VendorLayout.css';
 
 function VendorLayout({ children }) {
@@ -14,26 +19,26 @@ function VendorLayout({ children }) {
 		{
 			title: 'Operations',
 			items: [
-				{ path: '/vendor/dashboard', label: 'Dashboard', icon: '📊', hint: 'Business overview', description: 'Track sales, orders and stock alerts' },
-				{ path: '/vendor/orders', label: 'Orders', icon: '📦', hint: 'Incoming demand', description: 'Process and update order statuses' },
-				{ path: '/vendor/products', label: 'Inventory & Products', icon: '💊', hint: 'Add / update products', description: 'Manage medicines, pricing, images and listing details' },
-				{ path: '/vendor/stock', label: 'Stock Manager', icon: '📦', hint: 'Live quantity control', description: 'Adjust medicine stock levels and sync customer availability' },
-				{ path: '/vendor/shipping', label: 'Shipping', icon: '🚚', hint: 'Dispatch tracking', description: 'Track deliveries and shipment status' }
+				{ path: '/vendor/dashboard', label: 'Dashboard', icon: <BarChart2 size={18} strokeWidth={1.5} />, hint: 'Business overview', description: 'Track sales, orders and stock alerts' },
+				{ path: '/vendor/orders', label: 'Orders', icon: <Package size={18} strokeWidth={1.5} />, hint: 'Incoming demand', description: 'Process and update order statuses' },
+				{ path: '/vendor/products', label: 'Inventory & Products', icon: <Pill size={18} strokeWidth={1.5} />, hint: 'Add / update products', description: 'Manage medicines, pricing, images and listing details' },
+				{ path: '/vendor/stock', label: 'Stock Manager', icon: <PackageSearch size={18} strokeWidth={1.5} />, hint: 'Live quantity control', description: 'Adjust medicine stock levels and sync customer availability' },
+				{ path: '/vendor/shipping', label: 'Shipping', icon: <Truck size={18} strokeWidth={1.5} />, hint: 'Dispatch tracking', description: 'Track deliveries and shipment status' }
 			]
 		},
 		{
 			title: 'Business Intelligence',
 			items: [
-				{ path: '/vendor/analytics', label: 'Analytics', icon: '📈', hint: 'Performance insights', description: 'Monitor trends and business KPIs' },
-				{ path: '/vendor/payments', label: 'Payments', icon: '💰', hint: 'Payouts & ledger', description: 'Review transactions and settlement details' },
-				{ path: '/vendor/compliance', label: 'Compliance', icon: '📋', hint: 'Document health', description: 'Manage documents, audits and compliance tasks' }
+				{ path: '/vendor/analytics', label: 'Analytics', icon: <TrendingUp size={18} strokeWidth={1.5} />, hint: 'Performance insights', description: 'Monitor trends and business KPIs' },
+				{ path: '/vendor/payments', label: 'Payments', icon: <Wallet size={18} strokeWidth={1.5} />, hint: 'Payouts & ledger', description: 'Review transactions and settlement details' },
+				{ path: '/vendor/compliance', label: 'Compliance', icon: <ClipboardList size={18} strokeWidth={1.5} />, hint: 'Document health', description: 'Manage documents, audits and compliance tasks' }
 			]
 		},
 		{
 			title: 'Support',
 			items: [
-				{ path: '/vendor/chat', label: 'Chat', icon: '💬', hint: 'Conversations', description: 'Respond to customer and partner messages' },
-				{ path: '/vendor/settings', label: 'Settings', icon: '⚙️', hint: 'Account controls', description: 'Update account, notification and security settings' }
+				{ path: '/vendor/chat', label: 'Chat', icon: <MessageSquare size={18} strokeWidth={1.5} />, hint: 'Conversations', description: 'Respond to customer and partner messages' },
+				{ path: '/vendor/settings', label: 'Settings', icon: <Settings size={18} strokeWidth={1.5} />, hint: 'Account controls', description: 'Update account, notification and security settings' }
 			]
 		}
 	];
@@ -97,8 +102,8 @@ function VendorLayout({ children }) {
 				<div className="vendor-sidebar-header">
 					{!isCollapsed && (
 						<div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-							<div className="vendor-menu-item-icon">💊</div>
-							<h2>MedIQ</h2>
+							<div className="vendor-menu-item-icon"><Pill size={18} strokeWidth={1.5} /></div>
+							<h2>MedBroker</h2>
 						</div>
 					)}
 					<button
@@ -154,7 +159,7 @@ function VendorLayout({ children }) {
 							className="vendor-quick-action vendor-quick-action-premium-logout"
 							onClick={handleLogout}
 						>
-							<span aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#FFFFFF"><path d="M443.79-444q15.21 0 25.71-10.29t10.5-25.5q0-15.21-10.29-25.71t-25.5-10.5q-15.21 0-25.71 10.29t-10.5 25.5q0 15.21 10.29 25.71t25.5 10.5ZM288-145v-71l240-48v-393q0-16.92-10.5-30.46T490-704l-202-40v-72l217 40q41.8 8.07 68.4 41.35Q600-701.37 600-657v450l-312 62Zm-144 1v-72h72v-528q0-30 21.15-51T288-816h384q30 0 51 21t21 51v528h72v72H144Zm144-72h384v-528H288v528Z"/></svg></span> Logout
+							<span aria-hidden="true"><LogOut size={18} strokeWidth={1.5} /></span> Logout
 						</button>
 					</div>
 				</div>

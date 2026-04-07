@@ -3,6 +3,7 @@ import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useNotification } from '../../context/NotificationContext';
 import vendorService from '../../services/vendor.service';
 import styles from './Settings.module.css';
+import { Smartphone } from 'lucide-react';
 
 const DEFAULT_PROFILE_SETTINGS = {
 	businessName: '',
@@ -375,7 +376,7 @@ function VendorSettings() {
 									fontSize: '2rem',
 									marginBottom: '1rem'
 								}}>
-									📱
+								<Smartphone size={48} strokeWidth={1} />
 								</div>
 								<p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
 									Manual entry code: 123456789012345678

@@ -3,6 +3,7 @@ import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './Orders.module.css';
+import { Clock, CreditCard, Package, X, Check } from 'lucide-react';
 
 const STATUS_OPTIONS = ['all', 'pending', 'paid', 'shipped', 'cancelled'];
 
@@ -56,11 +57,11 @@ function VendorOrders() {
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case 'pending': return '⏳ Pending';
-      case 'paid': return '💳 Paid';
-      case 'shipped': return '📦 Shipped';
-      case 'cancelled': return '✗ Cancelled';
-      case 'delivered': return '✓ Delivered';
+      case 'pending': return <><Clock size={12} /> Pending</>;
+      case 'paid': return <><CreditCard size={12} /> Paid</>;
+      case 'shipped': return <><Package size={12} /> Shipped</>;
+      case 'cancelled': return <><X size={12} /> Cancelled</>;
+      case 'delivered': return <><Check size={12} /> Delivered</>;
       default: return status ? status.toUpperCase() : 'Unknown';
     }
   };
@@ -218,7 +219,7 @@ function VendorOrders() {
                 className={styles.closeButton}
                 onClick={() => setSelectedOrder(null)}
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
 
@@ -251,7 +252,7 @@ function VendorOrders() {
                 <div className={styles.statusBadge} style={{
                   backgroundColor: selectedOrder.paymentStatus === 'succeeded' ? 'var(--success)' : 'var(--warning)'
                 }}>
-                  {selectedOrder.paymentStatus === 'succeeded' ? '✓ Paid' : selectedOrder.paymentStatus.toUpperCase()}
+                  {selectedOrder.paymentStatus === 'succeeded' ? <><Check size={12} /> Paid</> : selectedOrder.paymentStatus.toUpperCase()}
                 </div>
               </div>
             </div>
