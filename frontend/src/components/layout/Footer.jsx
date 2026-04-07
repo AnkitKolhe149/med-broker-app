@@ -28,6 +28,7 @@ function Footer() {
 					<div style={styles.column}>
 						<h3 style={styles.columnTitle}>Quick Links</h3>
 						<ul style={styles.linkList}>
+							<li><button onClick={() => navigate('/about')} style={styles.link}>About Us</button></li>
 							<li><button onClick={() => navigate('/customer/catalog')} style={styles.link}>Browse Medicines</button></li>
 							<li><button onClick={() => navigate('/customer/orders')} style={styles.link}>My Orders</button></li>
 							<li><button onClick={() => navigate('/customer/dashboard')} style={styles.link}>Dashboard</button></li>
