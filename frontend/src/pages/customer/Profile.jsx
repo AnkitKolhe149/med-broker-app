@@ -201,44 +201,44 @@ function CustomerProfile() {
 								)}
 							</div>
 
-{/* Profile Avatar Section */}
-						<div className={styles.avatarSection}>
-							<div style={{ position: 'relative' }}>
-								<Avatar 
-									src={previewImage}
-									name={formData.fullName}
-									size={80}
-								/>
-								{isEditing && (
-									<label 
-										className={styles.uploadImageButton}
-										title="Upload profile picture"
-									>
-										📷
-										<input
-											type="file"
-											acccept="image/*"
-											style={{ display: 'none' }}
-											onChange={handleImageChange}
-										/>
-									</label>
-								)}
-							</div>
-							<div>
-								<p className={styles.userName}>{formData.fullName || 'User'}</p>
-								<p className={styles.userEmail}>{user?.email}</p>
-								<p className={styles.buyerTypeInfo}>
-									Buyer Type: <span className={styles.buyerTypeBadge}>{formData.buyerType}</span>
-								</p>
-								{previewImage && isEditing && (
-									<button
-										type="button"
-										className={styles.removeImageButton}
-										onClick={handleRemoveImage}
-									>
-										✕ Remove Image
-									</button>
-								)}
+							{/* Profile Avatar Section */}
+							<div className={styles.avatarSection}>
+								<div style={{ position: 'relative' }}>
+									<Avatar
+										src={previewImage}
+										name={formData.fullName}
+										size={80}
+									/>
+									{isEditing && (
+										<label
+											className={styles.uploadImageButton}
+											title="Upload profile picture"
+										>
+											📷
+											<input
+												type="file"
+												accept="image/*"
+												style={{ display: 'none' }}
+												onChange={handleImageChange}
+											/>
+										</label>
+									)}
+								</div>
+								<div>
+									<p className={styles.userName}>{formData.fullName || 'User'}</p>
+									<p className={styles.userEmail}>{user?.email}</p>
+									<p className={styles.buyerTypeInfo}>
+										Buyer Type: <span className={styles.buyerTypeBadge}>{formData.buyerType}</span>
+									</p>
+									{previewImage && isEditing && (
+										<button
+											type="button"
+											className={styles.removeImageButton}
+											onClick={handleRemoveImage}
+										>
+											✕ Remove Image
+										</button>
+									)}
 								</div>
 							</div>
 
