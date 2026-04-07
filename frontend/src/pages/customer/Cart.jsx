@@ -59,10 +59,6 @@ function Cart() {
 		navigate('/customer/catalog');
 	};
 
-	const handleUploadPrescription = () => {
-		showSuccess('Prescription upload will be enabled once backend document storage is connected.');
-	};
-
 	if (cartItems.length === 0) {
 		return (
 			<main className="page">
@@ -154,10 +150,10 @@ function Cart() {
 							<div className={styles.inputCard}>
 								<h3>Upload a Prescription Image</h3>
 								<div className={styles.uploadCard}>
-									<p>There is no uploaded prescription</p>
-									<button type="button" onClick={handleUploadPrescription} className={styles.uploadButton}>
-										Upload Prescription
-									</button>
+									<p>Prescription upload happens during checkout and is required before payment.</p>
+									<p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--primary)' }}>
+										Continue to checkout to upload the file securely.
+									</p>
 								</div>
 							</div>
 						</div>

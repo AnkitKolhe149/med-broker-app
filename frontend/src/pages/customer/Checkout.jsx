@@ -5,6 +5,7 @@ import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { formatCurrency } from '../../utils/currency';
+import orderService from '../../services/order.service';
 
 function Checkout() {
 	const navigate = useNavigate();
@@ -28,6 +29,10 @@ function Checkout() {
 	});
 
 	const [orderNotes, setOrderNotes] = useState('');
+	const [prescriptionFile, setPrescriptionFile] = useState(null);
+	const [prescriptionUrl, setPrescriptionUrl] = useState('');
+	const [prescriptionName, setPrescriptionName] = useState('');
+	const [isUploadingPrescription, setIsUploadingPrescription] = useState(false);
 	const [agreeTerms, setAgreeTerms] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -70,6 +75,33 @@ function Checkout() {
 		});
 	};
 
+	const handlePrescriptionChange = async (e) => {
+		const file = e.target.files?.[0] || null;
+		setPrescriptionFile(file);
+		setPrescriptionUrl('');
+		setPrescriptionName('');
+
+		if (!file) {
+			return;
+		}
+
+		setIsUploadingPrescription(true);
+		try {
+			const result = await orderService.uploadPrescription(file);
+			setPrescriptionUrl(result.prescriptionUrl);
+			setPrescriptionName(file.name);
+		} catch (error) {
+			console.error('Failed to upload prescription:', error);
+			showError(error.message || 'Failed to upload prescription image');
+			setPrescriptionFile(null);
+			setPrescriptionUrl('');
+			setPrescriptionName('');
+			e.target.value = '';
+		} finally {
+			setIsUploadingPrescription(false);
+		}
+	};
+
 	const indianStates = [
 		"Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
 		"Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", 
@@ -105,6 +137,14 @@ function Checkout() {
 			showError('Please agree to the terms and conditions');
 			return false;
 		}
+		if (!prescriptionUrl) {
+			showError('Please upload your prescription image before continuing');
+			return false;
+		}
+		if (isUploadingPrescription) {
+			showError('Please wait for the prescription upload to finish');
+			return false;
+		}
 		return true;
 	};
 
@@ -121,6 +161,8 @@ function Checkout() {
 				deliveryAddress,
 				deliveryType,
 				orderNotes,
+				prescriptionUrl,
+				prescriptionName,
 				discountPercent,
 				appliedCoupon,
 				subtotal: getTotalPrice(),
@@ -330,6 +372,29 @@ function Checkout() {
 
 							{/* Order Notes */}
 							<div style={styles.formCard}>
+								<h2 style={styles.cardTitle}>Prescription Upload *</h2>
+								<p style={{ margin: '0 0 0.75rem 0', color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+									Upload a clear image of your doctor's prescription. The file is uploaded to Cloudinary before you continue.
+								</p>
+								<div style={styles.uploadZone}>
+									<input
+										type="file"
+										accept="image/*"
+										onChange={handlePrescriptionChange}
+										style={styles.fileInput}
+									/>
+									<p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+										{isUploadingPrescription ? 'Uploading prescription...' : prescriptionName ? `Uploaded: ${prescriptionName}` : 'No prescription uploaded yet'}
+									</p>
+									{prescriptionUrl && (
+										<p style={{ margin: '0.4rem 0 0', fontSize: '0.82rem', color: 'var(--success)' }}>
+											✓ Prescription stored in Cloudinary
+										</p>
+									)}
+								</div>
+							</div>
+
+							<div style={styles.formCard}>
 								<h2 style={styles.cardTitle}>Special Instructions (Optional)</h2>
 								<textarea
 									value={orderNotes}
@@ -520,6 +585,20 @@ const styles = {
 		display: 'flex',
 		flexDirection: 'column',
 		gap: '0.5rem'
+	},
+	uploadZone: {
+		border: '1px dashed #c8d5de',
+		borderRadius: '10px',
+		padding: '1rem',
+		backgroundColor: '#fbfdfe'
+	},
+	fileInput: {
+		display: 'block',
+		width: '100%',
+		padding: '0.55rem',
+		border: '1px solid #d7e1e8',
+		borderRadius: '8px',
+		backgroundColor: '#ffffff'
 	},
 	label: {
 		fontSize: '0.9rem',

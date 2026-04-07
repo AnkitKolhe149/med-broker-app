@@ -41,6 +41,24 @@ const orderService = {
     return response.data.data;
   },
 
+  uploadPrescription: async (file) => {
+    const formData = new FormData();
+    formData.append('prescription', file);
+
+    const response = await axios.post(`${API_URL}/orders/prescription/upload`, formData, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to upload prescription');
+    }
+
+    return response.data.data;
+  },
+
   downloadOrderReceipt: async (orderId) => {
     const response = await axios.get(`${API_URL}/orders/${orderId}/receipt`, {
       headers: getAuthHeaders(),

@@ -3,6 +3,7 @@ const router = express.Router();
 const orderController = require('./orders.controller');
 const { authenticate } = require('../../middlewares/auth.middleware');
 const { restrictTo } = require('../../middlewares/role.middleware');
+const { medicineImageUpload } = require('../../middlewares/upload.middleware');
 
 // All routes require authentication
 router.use(authenticate);
@@ -20,6 +21,13 @@ router.post('/', orderController.createOrder);
  * @access  Private
  */
 router.get('/', orderController.getUserOrders);
+
+/**
+ * @route   POST /api/orders/prescription/upload
+ * @desc    Upload a prescription image to Cloudinary
+ * @access  Private
+ */
+router.post('/prescription/upload', medicineImageUpload.single('prescription'), orderController.uploadPrescription);
 
 /**
  * @route   GET /api/orders/:id/receipt

@@ -122,6 +122,25 @@ module.exports = {
   },
 
   /**
+   * POST /api/orders/prescription/upload
+   * Upload prescription image to Cloudinary
+   */
+  uploadPrescription: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      const result = await orderService.uploadPrescription(userId, req.file);
+
+      res.status(201).json({
+        success: true,
+        message: 'Prescription uploaded successfully',
+        data: result
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * GET /api/orders/:id/receipt
    * Download order receipt as PDF
    */

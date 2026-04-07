@@ -1,15 +1,20 @@
 const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
+const { uploadPrescriptionImage } = require('../../services/cloudinary.service');
 
 /**
  * Create a new order from cart items
  */
 const createOrder = async (userId, orderData) => {
-  const { items } = orderData;
+  const { items, prescriptionUrl } = orderData;
 
   // Validation
   if (!items || !Array.isArray(items) || items.length === 0) {
     throw new ValidationError('Order must contain at least one item');
+  }
+
+  if (!prescriptionUrl || typeof prescriptionUrl !== 'string') {
+    throw new ValidationError('Prescription upload is required');
   }
 
   // Validate each item
@@ -66,6 +71,21 @@ const createOrder = async (userId, orderData) => {
   });
 
   return order;
+};
+
+/**
+ * Upload a prescription image for order processing
+ */
+const uploadPrescription = async (userId, file) => {
+  if (!file || !file.buffer || !file.mimetype) {
+    throw new ValidationError('Prescription image is required');
+  }
+
+  const prescriptionUrl = await uploadPrescriptionImage(file.buffer, file.mimetype, userId);
+
+  return {
+    prescriptionUrl
+  };
 };
 
 /**
@@ -285,5 +305,6 @@ module.exports = {
   getOrderById,
   updateOrderStatus,
   cancelOrder,
-  getOrderForReceipt
+  getOrderForReceipt,
+  uploadPrescription
 };
