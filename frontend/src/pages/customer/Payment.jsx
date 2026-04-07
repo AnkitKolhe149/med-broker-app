@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNotification } from '../../context/NotificationContext';
 import { formatCurrency } from '../../utils/currency';
+import orderService from '../../services/order.service';
 import styles from './Payment.module.css';
 
 function Payment() {
@@ -100,15 +101,24 @@ const handlePaymentProcess = async (e) => {
 			}),
 		});
 
-		// 🔥 STEP 4: COMPLETE ORDER
-		const orderId = 'ORD' + Date.now();
+		// 🔥 STEP 4: PERSIST ORDER IN BACKEND
+		const createdOrder = await orderService.createOrder({
+			items: orderData.cartItems.map((item) => ({
+				medicineId: item.medicineId,
+				quantity: item.quantity
+			})),
+			prescriptionUrl: orderData.prescriptionUrl
+		});
+
+		// 🔥 STEP 5: COMPLETE ORDER
+		const orderId = createdOrder.id;
 
 		const completedOrder = {
 			...orderData,
 			orderId,
 			paymentMethod,
 			paymentStatus: 'completed',
-			orderStatus: 'confirmed',
+			orderStatus: createdOrder.status || 'pending',
 			completedAt: new Date().toISOString(),
 			total: totalAmount
 		};

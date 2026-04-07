@@ -10,6 +10,37 @@ const getAuthHeaders = () => {
 };
 
 const orderService = {
+  createOrder: async (payload) => {
+    const response = await axios.post(`${API_URL}/orders`, payload, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to create order');
+    }
+
+    return response.data.data;
+  },
+
+  getCustomerOrders: async (params = {}) => {
+    const response = await axios.get(`${API_URL}/orders`, {
+      headers: getAuthHeaders(),
+      params
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to load orders');
+    }
+
+    return {
+      orders: response.data.data || [],
+      pagination: response.data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
+    };
+  },
+
   getVendorOrders: async (params = {}) => {
     const response = await axios.get(`${API_URL}/vendor-insights/orders`, {
       headers: getAuthHeaders(),

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Avatar from '../../components/common/Avatar';
 import { useUser } from '../../context/UserContext';
 import { formatCurrency } from '../../utils/currency';
+import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
 
 const ORDER_STAGES = ['Confirmed', 'Preparing', 'Picked up', 'Delivered'];
@@ -12,61 +13,23 @@ function OrdersHistory() {
 	const { user } = useUser();
 	const [orders, setOrders] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState('');
 	const [activeTab, setActiveTab] = useState('upcoming');
 	const ordersListRef = useRef(null);
 	const defaultCurrencyCode = localStorage.getItem('preferredCurrency') || 'USD';
 	const formatPrice = (value, currencyCode = defaultCurrencyCode) => formatCurrency(value, currencyCode, true);
 
-	const sampleOrders = [
-		{
-			orderId: '1125',
-			status: 'in_transit',
-			currencyCode: defaultCurrencyCode,
-			total: 213.0,
-			items: [{ name: 'Paracetamol 500mg', quantity: 2, price: 65 }],
-			paymentMethod: 'Cash on Delivery',
-			orderedAgo: '2 mins ago',
-			etaText: 'Delivery within 25 mins'
-		},
-		{
-			orderId: '1126',
-			status: 'confirmed',
-			currencyCode: defaultCurrencyCode,
-			total: 450.0,
-			items: [{ name: 'Amoxicillin 250mg', quantity: 1, price: 120 }],
-			paymentMethod: 'UPI',
-			orderedAgo: '9 mins ago',
-			etaText: 'Delivery within 40 mins'
-		},
-		{
-			orderId: '1101',
-			status: 'delivered',
-			currencyCode: defaultCurrencyCode,
-			total: 182.0,
-			items: [{ name: 'Cetirizine 10mg', quantity: 1, price: 25 }],
-			paymentMethod: 'Card',
-			orderedAgo: 'Yesterday',
-			etaText: 'Delivered in 21 mins'
-		},
-		{
-			orderId: 'SCH-17',
-			status: 'scheduled',
-			currencyCode: defaultCurrencyCode,
-			total: 320.0,
-			items: [{ name: 'Vitamin D3', quantity: 1, price: 90 }],
-			paymentMethod: 'Card',
-			orderedAgo: 'Today',
-			etaText: 'Scheduled for 08:00 PM'
-		}
-	];
-
 	useEffect(() => {
 		const loadOrders = async () => {
 			try {
-				await new Promise((resolve) => setTimeout(resolve, 350));
-				setOrders(sampleOrders);
+				setLoading(true);
+				setError('');
+				const result = await orderService.getCustomerOrders({ page: 1, limit: 100 });
+				setOrders(result.orders || []);
 			} catch (error) {
 				console.error('Failed to load orders:', error);
+				setError(error.message || 'Failed to load orders');
+				setOrders([]);
 			} finally {
 				setLoading(false);
 			}
@@ -76,9 +39,9 @@ function OrdersHistory() {
 	}, []);
 
 	const orderBuckets = useMemo(() => {
-		const upcoming = orders.filter((order) => ['confirmed', 'in_transit', 'processing'].includes(order.status));
-		const previous = orders.filter((order) => ['delivered', 'cancelled'].includes(order.status));
-		const scheduled = orders.filter((order) => order.status === 'scheduled');
+		const upcoming = orders.filter((order) => order.bucket === 'upcoming');
+		const previous = orders.filter((order) => order.bucket === 'previous');
+		const scheduled = orders.filter((order) => order.bucket === 'scheduled');
 		return { upcoming, previous, scheduled };
 	}, [orders]);
 
@@ -114,6 +77,24 @@ function OrdersHistory() {
 			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
 				<p>Loading orders...</p>
 			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<main className="page">
+				<div className={`container ${styles.ordersPage}`}>
+					<section className={styles.contentPanel}>
+						<div className={styles.emptyState}>
+							<p className={styles.emptyTitle}>Unable to load orders</p>
+							<p className={styles.emptyText}>{error}</p>
+							<button type="button" className="button" onClick={() => navigate('/customer/catalog')}>
+								Browse Medicines
+							</button>
+						</div>
+					</section>
+				</div>
+			</main>
 		);
 	}
 
@@ -193,8 +174,8 @@ function OrdersHistory() {
 							</div>
 						) : (
 							visibleOrders.map((order) => {
-								const stageIndex = getStageIndex(order.status);
-								const canCancel = ['confirmed', 'processing', 'in_transit'].includes(order.status);
+								const stageIndex = getStageIndex(order.displayStatus);
+								const canCancel = ['confirmed', 'processing', 'in_transit'].includes(order.displayStatus);
 
 								return (
 									<article key={order.orderId} className={styles.orderCard}>
@@ -203,7 +184,7 @@ function OrdersHistory() {
 												<span className={styles.orderIcon}>🧪</span>
 												<div>
 													<p className={styles.orderNo}>Order no #{order.orderId}</p>
-													<p className={styles.orderPrice}>{formatPrice(order.total, order.currencyCode)}</p>
+													<p className={styles.orderPrice}>{formatPrice((order.totalCents || 0) / 100, order.currencyCode || defaultCurrencyCode)}</p>
 												</div>
 											</div>
 
@@ -234,7 +215,7 @@ function OrdersHistory() {
 										</div>
 
 										<p className={styles.orderMeta}>
-											{order.items.length} item{order.items.length > 1 ? 's' : ''}
+											{order.itemsCount} item{order.itemsCount > 1 ? 's' : ''}
 											<span>•</span>
 											{order.paymentMethod}
 											<span>•</span>

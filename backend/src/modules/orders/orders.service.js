@@ -2,6 +2,92 @@ const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
 const { uploadPrescriptionImage } = require('../../services/cloudinary.service');
 
+const formatRelativeTime = (value) => {
+  if (!value) return 'Recently';
+
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) return 'Recently';
+
+  const diffMs = Date.now() - timestamp;
+  const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
+  if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes === 1 ? '' : 's'} ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+};
+
+const mapDisplayStatus = (status) => {
+  switch (String(status || '').toUpperCase()) {
+    case 'PAID':
+      return 'confirmed';
+    case 'SHIPPED':
+      return 'in_transit';
+    case 'CANCELLED':
+      return 'cancelled';
+    case 'PENDING':
+    default:
+      return 'processing';
+  }
+};
+
+const mapBucket = (displayStatus) => {
+  if (['delivered', 'cancelled'].includes(displayStatus)) {
+    return 'previous';
+  }
+
+  if (displayStatus === 'scheduled') {
+    return 'scheduled';
+  }
+
+  return 'upcoming';
+};
+
+const mapEtaText = (status) => {
+  switch (String(status || '').toUpperCase()) {
+    case 'PAID':
+      return 'Order confirmed';
+    case 'SHIPPED':
+      return 'Out for delivery';
+    case 'CANCELLED':
+      return 'Order cancelled';
+    case 'PENDING':
+    default:
+      return 'Awaiting payment';
+  }
+};
+
+const mapPaymentMethod = (payment) => {
+  if (!payment?.provider) return 'Unknown';
+  return String(payment.provider).toUpperCase();
+};
+
+const formatCustomerOrder = (order) => {
+  const displayStatus = mapDisplayStatus(order.status);
+
+  return {
+    id: order.id,
+    orderId: order.id,
+    status: order.status,
+    displayStatus,
+    bucket: mapBucket(displayStatus),
+    totalCents: order.totalCents,
+    paymentMethod: mapPaymentMethod(order.payment),
+    orderedAgo: formatRelativeTime(order.createdAt),
+    etaText: mapEtaText(order.status),
+    createdAt: order.createdAt,
+    itemsCount: order.items.length,
+    items: order.items.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCents,
+      medicineName: item.medicine?.name || 'Medicine'
+    }))
+  };
+};
+
 /**
  * Create a new order from cart items
  */
@@ -118,8 +204,10 @@ const getUserOrders = async (userId, options = {}) => {
     prisma.order.count({ where })
   ]);
 
+  const formattedOrders = orders.map(formatCustomerOrder);
+
   return {
-    orders,
+    orders: formattedOrders,
     pagination: {
       page,
       limit,
