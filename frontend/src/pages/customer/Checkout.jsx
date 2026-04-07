@@ -154,9 +154,16 @@ function Checkout() {
 
 		setIsSubmitting(true);
 		try {
-			// In a real implementation, this would create the order in the database
-			// For now, we'll store the order details and navigate to payment
+			const createdOrder = await orderService.createCustomerOrder({
+				items: cartItems.map((item) => ({
+					medicineId: item.medicineId,
+					quantity: item.quantity,
+					selectedSize: item.selectedSize || 'standard'
+				}))
+			});
+
 			const orderData = {
+				orderId: createdOrder.id,
 				cartItems,
 				deliveryAddress,
 				deliveryType,
@@ -165,7 +172,7 @@ function Checkout() {
 				prescriptionName,
 				discountPercent,
 				appliedCoupon,
-				subtotal: getTotalPrice(),
+				subtotal: createdOrder.totalCents ? createdOrder.totalCents / 100 : getTotalPrice(),
 				currencyCode,
 				timestamp: new Date().toISOString()
 			};

@@ -1,107 +1,15 @@
 const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
-const { uploadPrescriptionImage } = require('../../services/cloudinary.service');
-const { resolveOrderItemUnitPriceCents } = require('./orderPricing.util');
-
-const formatRelativeTime = (value) => {
-  if (!value) return 'Recently';
-
-  const timestamp = new Date(value).getTime();
-  if (Number.isNaN(timestamp)) return 'Recently';
-
-  const diffMs = Date.now() - timestamp;
-  const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
-  if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes === 1 ? '' : 's'} ago`;
-
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-};
-
-const mapDisplayStatus = (status) => {
-  switch (String(status || '').toUpperCase()) {
-    case 'PAID':
-      return 'confirmed';
-    case 'SHIPPED':
-      return 'in_transit';
-    case 'CANCELLED':
-      return 'cancelled';
-    case 'PENDING':
-    default:
-      return 'processing';
-  }
-};
-
-const mapBucket = (displayStatus) => {
-  if (['delivered', 'cancelled'].includes(displayStatus)) {
-    return 'previous';
-  }
-
-  if (displayStatus === 'scheduled') {
-    return 'scheduled';
-  }
-
-  return 'upcoming';
-};
-
-const mapEtaText = (status) => {
-  switch (String(status || '').toUpperCase()) {
-    case 'PAID':
-      return 'Order confirmed';
-    case 'SHIPPED':
-      return 'Out for delivery';
-    case 'CANCELLED':
-      return 'Order cancelled';
-    case 'PENDING':
-    default:
-      return 'Awaiting payment';
-  }
-};
-
-const mapPaymentMethod = (payment) => {
-  if (!payment?.provider) return 'Unknown';
-  return String(payment.provider).toUpperCase();
-};
-
-const formatCustomerOrder = (order) => {
-  const displayStatus = mapDisplayStatus(order.status);
-
-  return {
-    id: order.id,
-    orderId: order.id,
-    status: order.status,
-    displayStatus,
-    bucket: mapBucket(displayStatus),
-    totalCents: order.totalCents,
-    paymentMethod: mapPaymentMethod(order.payment),
-    orderedAgo: formatRelativeTime(order.createdAt),
-    etaText: mapEtaText(order.status),
-    createdAt: order.createdAt,
-    itemsCount: order.items.length,
-    items: order.items.map((item) => ({
-      id: item.id,
-      quantity: item.quantity,
-      unitPriceCents: item.unitPriceCents,
-      medicineName: item.medicine?.name || 'Medicine'
-    }))
-  };
-};
 
 /**
  * Create a new order from cart items
  */
 const createOrder = async (userId, orderData) => {
-  const { items, prescriptionUrl } = orderData;
+  const { items } = orderData;
 
   // Validation
   if (!items || !Array.isArray(items) || items.length === 0) {
     throw new ValidationError('Order must contain at least one item');
-  }
-
-  if (!prescriptionUrl || typeof prescriptionUrl !== 'string') {
-    throw new ValidationError('Prescription upload is required');
   }
 
   // Validate each item
@@ -111,91 +19,87 @@ const createOrder = async (userId, orderData) => {
     }
   }
 
-  // Fetch medicine prices and validate existence
-  const medicineIds = items.map(item => item.medicineId);
-  const [customer, medicines] = await Promise.all([
-    prisma.customer.findUnique({
-      where: { userId },
-      select: {
-        buyerType: true
-      }
-    }),
-    prisma.medicine.findMany({
-      where: { id: { in: medicineIds } },
-      select: {
-        id: true,
-        priceCents: true,
-        wholesalePriceCents: true,
-        bulkMinQty: true,
-        bulkPriceCents: true
-      }
-    })
-  ]);
-
-  const buyerType = customer?.buyerType || 'RETAIL';
-
-  if (medicines.length !== medicineIds.length) {
-    throw new NotFoundError('One or more medicines not found');
-  }
-
-  // Create a map for quick price lookup
-  const medicineMap = new Map(medicines.map(m => [m.id, m]));
-
-  // Calculate total and prepare order items
-  let totalCents = 0;
-  const orderItems = items.map(item => {
-    const medicine = medicineMap.get(item.medicineId);
-    const unitPriceCents = resolveOrderItemUnitPriceCents({
-      medicine,
-      buyerType,
-      quantity: item.quantity,
-      packageType: item.packageType
-    });
-    const itemTotal = unitPriceCents * item.quantity;
-    totalCents += itemTotal;
-
-    return {
-      medicineId: item.medicineId,
-      quantity: item.quantity,
-      unitPriceCents
-    };
+  const customer = await prisma.customer.findUnique({
+    where: { userId },
+    select: { buyerType: true }
   });
 
-  // Create order with items in a transaction
-  const order = await prisma.order.create({
-    data: {
-      userId,
-      totalCents,
-      status: 'PENDING',
-      items: {
-        create: orderItems
-      }
-    },
-    include: {
-      items: {
-        include: {
-          medicine: true
+  const inventoryIds = [...new Set(items.map((item) => item.medicineId))];
+  const inventoryRecords = await prisma.inventory.findMany({
+    where: { id: { in: inventoryIds } },
+    select: {
+      id: true,
+      medicineId: true,
+      quantity: true,
+      medicine: {
+        select: {
+          priceCents: true
         }
       }
     }
   });
 
-  return order;
-};
-
-/**
- * Upload a prescription image for order processing
- */
-const uploadPrescription = async (userId, file) => {
-  if (!file || !file.buffer || !file.mimetype) {
-    throw new ValidationError('Prescription image is required');
+  if (inventoryRecords.length !== inventoryIds.length) {
+    throw new NotFoundError('One or more inventory items not found');
   }
 
-  const prescriptionUrl = await uploadPrescriptionImage(file.buffer, file.mimetype, userId);
+  const inventoryMap = new Map(inventoryRecords.map((record) => [record.id, record]));
 
-  return {
-    prescriptionUrl
-  };
+  let totalCents = 0;
+  const orderItems = items.map((item) => {
+    const inventory = inventoryMap.get(item.medicineId);
+    if (!inventory) {
+      throw new NotFoundError(`Inventory item not found: ${item.medicineId}`);
+    }
+
+    if (inventory.quantity < item.quantity) {
+      throw new ValidationError('Insufficient stock for one or more items');
+    }
+
+    const retailPriceCents = inventory.medicine.priceCents;
+    const wholesalePriceCents = Math.round(retailPriceCents * 0.9);
+    const useWholesalePrice = customer?.buyerType === 'WHOLESALE' || item.selectedSize === 'bulk';
+    const unitPriceCents = useWholesalePrice ? wholesalePriceCents : retailPriceCents;
+    const itemTotal = unitPriceCents * item.quantity;
+    totalCents += itemTotal;
+
+    return {
+      medicineId: inventory.medicineId,
+      quantity: item.quantity,
+      unitPriceCents
+    };
+  });
+
+  const order = await prisma.$transaction(async (tx) => {
+    const createdOrder = await tx.order.create({
+      data: {
+        userId,
+        totalCents,
+        status: 'PENDING',
+        items: {
+          create: orderItems
+        }
+      },
+      include: {
+        items: {
+          include: {
+            medicine: true
+          }
+        }
+      }
+    });
+
+    await Promise.all(
+      items.map((item) => tx.inventory.update({
+        where: { id: item.medicineId },
+        data: { quantity: { decrement: item.quantity } }
+      }))
+    );
+
+    return createdOrder;
+  });
+
+  return order;
 };
 
 /**
@@ -228,10 +132,8 @@ const getUserOrders = async (userId, options = {}) => {
     prisma.order.count({ where })
   ]);
 
-  const formattedOrders = orders.map(formatCustomerOrder);
-
   return {
-    orders: formattedOrders,
+    orders,
     pagination: {
       page,
       limit,
@@ -417,6 +319,5 @@ module.exports = {
   getOrderById,
   updateOrderStatus,
   cancelOrder,
-  getOrderForReceipt,
-  uploadPrescription
+  getOrderForReceipt
 };
