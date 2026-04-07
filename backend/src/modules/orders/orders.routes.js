@@ -22,6 +22,13 @@ router.post('/', orderController.createOrder);
 router.get('/', orderController.getUserOrders);
 
 /**
+ * @route   GET /api/orders/:id/receipt
+ * @desc    Download order receipt PDF
+ * @access  Private
+ */
+router.get('/:id/receipt', orderController.downloadReceipt);
+
+/**
  * @route   GET /api/orders/:id
  * @desc    Get order details by ID
  * @access  Private

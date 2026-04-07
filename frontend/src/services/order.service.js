@@ -39,6 +39,15 @@ const orderService = {
     }
 
     return response.data.data;
+  },
+
+  downloadOrderReceipt: async (orderId) => {
+    const response = await axios.get(`${API_URL}/orders/${orderId}/receipt`, {
+      headers: getAuthHeaders(),
+      responseType: 'blob'
+    });
+
+    return response.data;
   }
 };
 

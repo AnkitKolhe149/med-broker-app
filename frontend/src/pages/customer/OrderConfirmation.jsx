@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Avatar from '../../components/common/Avatar';
 import { useUser } from '../../context/UserContext';
 import { formatCurrency } from '../../utils/currency';
+import orderService from '../../services/order.service';
 import styles from './OrderConfirmation.module.css';
 
 function OrderConfirmation() {
@@ -12,6 +13,7 @@ function OrderConfirmation() {
 	const [orderData, setOrderData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
+	const [invoiceError, setInvoiceError] = useState('');
 	const currencyCode = orderData?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
 
@@ -30,75 +32,24 @@ function OrderConfirmation() {
 		setLoading(false);
 	}, [navigate]);
 
-	const handleDownloadInvoice = () => {
-		// In a real application, this would generate a PDF invoice
-		const invoiceContent = `
-========================================
-				MedIQ Invoice
-========================================
+	const handleDownloadInvoice = async () => {
+		try {
+			setInvoiceError('');
+			const blob = await orderService.downloadOrderReceipt(orderData.orderId);
+			const downloadUrl = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = downloadUrl;
+			link.download = `receipt_${orderData.orderId}.pdf`;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(downloadUrl);
 
-Order ID: ${orderData.orderId}
-Order Date: ${new Date(orderData.completedAt).toLocaleDateString()}
-Order Time: ${new Date(orderData.completedAt).toLocaleTimeString()}
-
-CUSTOMER DETAILS
-==================
-Name: ${orderData.deliveryAddress.fullName}
-Phone: ${orderData.deliveryAddress.phone}
-Email: ${orderData.deliveryAddress.email}
-
-DELIVERY ADDRESS
-==================
-${orderData.deliveryAddress.address}
-${orderData.deliveryAddress.city}, ${orderData.deliveryAddress.state} ${orderData.deliveryAddress.zipCode}
-${orderData.deliveryAddress.country}
-
-ITEMS ORDERED
-==================
-${orderData.cartItems.map(item => `
-${item.name}
-Quantity: ${item.quantity} × ${formatPrice(item.basePrice)} = ${formatPrice(item.basePrice * item.quantity)}
-Category: ${item.category}
-Vendor: ${item.vendor}
-`).join('\n')}
-
-PRICE SUMMARY
-==================
-Subtotal: ${formatPrice(orderData.subtotal)}
-${orderData.discountPercent > 0 ? `Discount (${orderData.discountPercent}%): -${formatPrice(orderData.subtotal * orderData.discountPercent / 100)}` : ''}
-Delivery Charge: ${orderData.subtotal > 500 ? 'Free' : formatPrice(50)}
-Tax (5% GST): ${formatPrice(calculateTax())}
----
-Total Amount: ${formatPrice(orderData.total)}
-
-PAYMENT METHOD
-==================
-${orderData.paymentMethod.toUpperCase()}
-Status: COMPLETED
-
-DELIVERY TYPE
-==================
-${orderData.deliveryType === 'home_delivery' ? 'Home Delivery' : 'Store Pickup'}
-
-SPECIAL INSTRUCTIONS
-==================
-${orderData.orderNotes || 'None'}
-
-========================================
-Thank you for your order!
-Track your delivery at www.mediq.com/track/${orderData.orderId}
-========================================
-		`;
-
-		const element = document.createElement('a');
-		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(invoiceContent));
-		element.setAttribute('download', `invoice_${orderData.orderId}.txt`);
-		element.style.display = 'none';
-		document.body.appendChild(element);
-		element.click();
-		document.body.removeChild(element);
-
-		setInvoiceDownloaded(true);
+			setInvoiceDownloaded(true);
+		} catch (error) {
+			console.error('Failed to download receipt:', error);
+			setInvoiceError('Unable to download receipt right now. Please try again.');
+		}
 	};
 
 	const calculateTax = () => {
@@ -236,6 +187,12 @@ Track your delivery at www.mediq.com/track/${orderData.orderId}
 							{invoiceDownloaded && (
 								<div className={styles.successMessage}>
 									✓ Invoice downloaded successfully
+								</div>
+							)}
+
+							{invoiceError && (
+								<div className={styles.emptyState}>
+									{invoiceError}
 								</div>
 							)}
 						</div>

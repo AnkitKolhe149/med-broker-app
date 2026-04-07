@@ -1,4 +1,5 @@
 const orderService = require('./orders.service');
+const { buildOrderReceiptPdf } = require('./orders.receipt');
 
 module.exports = {
   /**
@@ -115,6 +116,29 @@ module.exports = {
         message: 'Order cancelled successfully',
         data: order
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/orders/:id/receipt
+   * Download order receipt as PDF
+   */
+  downloadReceipt: async (req, res, next) => {
+    try {
+      const orderId = req.params.id;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+
+      const order = await orderService.getOrderForReceipt(orderId, userId, userRole);
+      const doc = buildOrderReceiptPdf(order);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=receipt_${order.id}.pdf`);
+
+      doc.pipe(res);
+      doc.end();
     } catch (error) {
       next(error);
     }
