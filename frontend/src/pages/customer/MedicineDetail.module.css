@@ -1,302 +1,707 @@
-.headerNav {
-	margin-bottom: 1.5rem;
-	width: 100%;
+/* ============================================
+   PRODUCT DETAILS PAGE - MedIQ Theme
+   ============================================ */
+
+.productDetailsPage {
+	min-height: 100vh;
+	background: linear-gradient(135deg, #f8fafb 0%, #f0f5f8 100%);
+	padding: 3rem 1rem;
 }
 
-.backButton {
+.container {
+	max-width: 1400px;
+	margin: 0 auto;
+}
+
+/* ============================================
+   BREADCRUMB
+   ============================================ */
+
+.breadcrumb {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 2rem;
+	font-size: 0.9rem;
+	color: var(--text-secondary);
+}
+
+.breadcrumbLink {
 	background: none;
 	border: none;
 	color: var(--primary);
 	cursor: pointer;
-	font-size: 0.95rem;
-	margin-bottom: 1.5rem;
-	padding: 0.5rem 0;
 	font-weight: 500;
+	transition: color 0.2s;
 }
 
-.mainContent {
+.breadcrumbLink:hover {
+	color: var(--primary-dark);
+	text-decoration: underline;
+}
+
+.breadcrumbCurrent {
+	color: var(--text-primary);
+	font-weight: 600;
+}
+
+/* ============================================
+   MAIN PRODUCT GRID
+   ============================================ */
+
+.productGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 1.5rem;
-	margin-bottom: 2rem;
-	width: 100%;
+	gap: 3rem;
+	margin-bottom: 3rem;
+	align-items: start;
 }
 
-.leftSection {
+/* ============================================
+   GALLERY SECTION (LEFT)
+   ============================================ */
+
+.gallerySection {
+	position: sticky;
+	top: 5rem;
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-	width: 100%;
-	overflow-x: hidden;
 }
 
-.medicineImagePlaceholder {
+.mainImage {
 	width: 100%;
 	aspect-ratio: 1;
-	background-color: var(--primary-light);
-	border-radius: var(--radius-lg);
+	background: white;
+	border-radius: 1rem;
+	overflow: hidden;
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: var(--shadow-md);
-	overflow: hidden;
 }
 
-.medicineEmoji {
-	font-size: 5rem;
-}
-
-.medicineImage {
+.mainImage img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	display: block;
+	transition: transform 0.3s ease;
 }
 
-.basicInfo {
+.mainImage:hover img {
+	transform: scale(1.05);
+}
+
+.imagePlaceholder {
+	font-size: 6rem;
+	opacity: 0.5;
+}
+
+.prescriptionBadge {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	background: linear-gradient(135deg, #ff6b6b 0%, #ee5a68 100%);
+	color: white;
+	padding: 0.6rem 1rem;
+	border-radius: 0.5rem;
+	font-weight: 600;
+	font-size: 0.85rem;
+	box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.thumbnailGallery {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 0.75rem;
+}
+
+.thumbnail {
+	aspect-ratio: 1;
+	background: white;
+	border: 2px solid transparent;
+	border-radius: 0.75rem;
+	overflow: hidden;
+	cursor: pointer;
+	transition: all 0.2s;
+	padding: 0;
+}
+
+.thumbnail img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.thumbnail:hover {
+	border-color: var(--primary);
+	box-shadow: 0 4px 12px rgba(0, 168, 107, 0.2);
+}
+
+.thumbnail.active {
+	border-color: var(--primary);
+	box-shadow: 0 4px 16px rgba(0, 168, 107, 0.3);
+}
+
+/* ============================================
+   DETAILS SECTION (RIGHT)
+   ============================================ */
+
+.detailsSection {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.5rem;
 }
 
-.medicineName {
-	font-size: 1.75rem;
-	font-weight: 700;
-	color: var(--text-primary);
-	margin: 0;
-}
-
-.badges {
-	display: flex;
-	gap: 0.75rem;
-	flex-wrap: wrap;
-}
-
-.categoryBadge {
+.vendorBadge {
 	display: inline-block;
-	background-color: var(--primary);
-	color: white;
-	padding: 0.4rem 0.8rem;
-	border-radius: var(--radius);
+	background: #f0f5f8;
+	color: var(--primary);
+	padding: 0.5rem 1rem;
+	border-radius: 0.5rem;
 	font-size: 0.8rem;
 	font-weight: 600;
+	letter-spacing: 0.05em;
+	width: fit-content;
 }
 
-.vendorInfo {
-	background-color: var(--surface);
-	padding: 1rem;
-	border-radius: var(--radius);
-	border: 1px solid var(--border);
-}
-
-.vendorLabel {
-	font-size: 0.85rem;
-	color: var(--text-secondary);
-	margin: 0 0 0.25rem 0;
-}
-
-.vendorName {
-	font-size: 1rem;
-	font-weight: 600;
+.productTitle {
+	font-size: 2rem;
+	font-weight: 700;
 	color: var(--text-primary);
+	line-height: 1.2;
 	margin: 0;
 }
 
-.stockStatus {
-	padding: 0.75rem;
+/* ============================================
+   RATING SECTION
+   ============================================ */
+
+.ratingSection {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem 0;
+	border-bottom: 1px solid var(--border);
 }
 
-.availableUnits {
-	margin: 0.4rem 0 0;
-	font-size: 0.9rem;
+.stars {
+	font-size: 1.2rem;
+	letter-spacing: 0.2em;
+	color: #ffc107;
+}
+
+.ratingValue {
+	font-weight: 700;
+	color: var(--text-primary);
+	font-size: 1.1rem;
+}
+
+.reviewCount {
 	color: var(--text-secondary);
-	font-weight: 500;
+	font-size: 0.95rem;
 }
 
-.inStock {
-	color: var(--success);
-	font-weight: 600;
+/* ============================================
+   PRICE SECTION
+   ============================================ */
+
+.priceSection {
+	padding: 1.5rem 0;
+	border-bottom: 1px solid var(--border);
 }
 
-.outOfStock {
-	color: var(--error);
-	font-weight: 600;
-}
-
-.pricing {
-	display: grid;
+.priceMain {
+	display: flex;
+	align-items: center;
 	gap: 1rem;
 }
 
-.priceCard {
-	background-color: var(--primary-light);
-	padding: 1.25rem;
-	border-radius: var(--radius-lg);
-	border-left: 4px solid var(--primary);
-	border: 1px solid var(--primary);
-}
-
-.priceLabel {
-	font-size: 0.85rem;
-	color: var(--text-secondary);
-	margin: 0 0 0.5rem 0;
-}
-
-.priceValue {
+.currentPrice {
 	font-size: 2rem;
 	font-weight: 700;
 	color: var(--primary);
-	margin: 0;
 }
 
-.savingsInfo {
+.originalPrice {
+	font-size: 1.1rem;
+	color: var(--text-secondary);
+	text-decoration: line-through;
+}
+
+.discount {
+	background: #ffe0e0;
+	color: var(--error);
+	padding: 0.4rem 0.8rem;
+	border-radius: 0.4rem;
+	font-weight: 600;
 	font-size: 0.85rem;
-	color: var(--success);
-	margin: 0.5rem 0 0 0;
-	font-weight: 500;
 }
 
-.quantitySelector {
+/* ============================================
+   OPTIONS GROUP
+   ============================================ */
+
+.optionGroup {
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
+	padding: 1rem 0;
+	border-bottom: 1px solid var(--border);
 }
 
-.quantityLabel {
+.optionLabel {
+	font-weight: 600;
+	color: var(--text-primary);
 	font-size: 0.9rem;
-	font-weight: 600;
-	color: var(--text-primary);
 }
 
-.quantityControls {
+.optionButtons {
 	display: flex;
-	gap: 0.5rem;
-	align-items: center;
+	gap: 0.75rem;
 }
 
-.quantityButton {
-	width: 40px;
-	height: 40px;
-	border-radius: var(--radius);
-	border: 1px solid var(--border);
-	background-color: var(--surface);
+.optionButton {
+	flex: 1;
+	padding: 0.75rem 1rem;
+	border: 2px solid var(--border);
+	background: white;
+	border-radius: 0.5rem;
 	cursor: pointer;
-	font-size: 1.2rem;
-	font-weight: 600;
-	color: var(--text-primary);
+	font-weight: 500;
 	transition: all 0.2s;
 }
 
-.quantityInput {
-	flex: 1;
-	padding: 0.5rem 0.75rem;
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	font-size: 1rem;
-	text-align: center;
-	font-weight: 600;
+.optionButton:hover {
+	border-color: var(--primary);
+	background: var(--primary-light);
 }
 
-.actionButtons {
+.optionButton.selected {
+	border-color: var(--primary);
+	background: var(--primary);
+	color: white;
+}
+
+/* ============================================
+   CART SECTION
+   ============================================ */
+
+.cartSection {
 	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
+	gap: 1rem;
+	padding: 1rem 0;
+	border-bottom: 1px solid var(--border);
+	align-items: center;
+}
+
+.quantityControl {
+	display: flex;
+	align-items: center;
+	border: 2px solid var(--border);
+	border-radius: 0.5rem;
+	background: white;
+}
+
+.quantityBtn {
+	width: 40px;
+	height: 40px;
+	border: none;
+	background: none;
+	cursor: pointer;
+	font-size: 1.2rem;
+	color: var(--primary);
+	transition: all 0.2s;
+}
+
+.quantityBtn:hover {
+	background: var(--primary-light);
+}
+
+.quantityInput {
+	width: 50px;
+	height: 100%;
+	border: none;
+	text-align: center;
+	font-weight: 600;
+	font-size: 1rem;
+	background: none;
+	color: var(--text-primary);
+}
+
+.quantityInput:focus {
+	outline: none;
 }
 
 .addToCartButton {
-	width: 100%;
-	padding: 1rem;
-	background-color: var(--primary);
+	flex: 1;
+	padding: 0.85rem 2rem;
+	background: linear-gradient(135deg, var(--primary) 0%, #008a4d 100%);
 	color: white;
 	border: none;
-	border-radius: var(--radius-lg);
+	border-radius: 0.5rem;
+	font-weight: 700;
 	font-size: 1rem;
-	font-weight: 600;
 	cursor: pointer;
-	transition: background-color 0.2s;
+	transition: all 0.3s;
+	box-shadow: 0 4px 12px rgba(0, 168, 107, 0.25);
+}
+
+.addToCartButton:hover:not(:disabled) {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(0, 168, 107, 0.3);
+}
+
+.addToCartButton:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.wishlistButton {
+	width: 50px;
+	height: 50px;
+	border: 2px solid var(--border);
+	background: white;
+	border-radius: 0.5rem;
+	font-size: 1.5rem;
+	cursor: pointer;
+	transition: all 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.wishlistButton:hover {
+	border-color: var(--error);
+}
+
+.wishlistButton.favorited {
+	border-color: var(--error);
+	background: #ffe0e0;
+	color: var(--error);
 }
 
 .successMessage {
-	text-align: center;
+	display: inline-block;
+	background: var(--success-light);
 	color: var(--success);
+	padding: 0.75rem 1rem;
+	border-radius: 0.5rem;
 	font-weight: 600;
-	font-size: 0.9rem;
+	animation: slideIn 0.3s ease;
 }
 
-.rightSection {
+@keyframes slideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* ============================================
+   SHIPPING INFO
+   ============================================ */
+
+.shippingInfo {
+	background: linear-gradient(135deg, #f0f5f8 0%, #e8f1f6 100%);
+	padding: 1rem;
+	border-radius: 0.75rem;
+	color: var(--text-primary);
+	font-weight: 500;
+	font-size: 0.95rem;
+	border-left: 4px solid var(--primary);
+}
+
+/* ============================================
+   TRUST SECTION
+   ============================================ */
+
+.trustSection {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 1rem;
+	padding: 1.5rem;
+	background: white;
+	border-radius: 1rem;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.trustIcon {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	gap: 0.5rem;
+}
+
+.trustIconBg {
+	width: 60px;
+	height: 60px;
+	background: linear-gradient(135deg, var(--primary-light) 0%, #e8f5f0 100%);
+	border-radius: 0.75rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.8rem;
+}
+
+.trustLabel {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	line-height: 1.3;
+}
+
+/* ============================================
+   QUICK INFO
+   ============================================ */
+
+.quickInfo {
+	background: white;
+	padding: 1.5rem;
+	border-radius: 1rem;
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-	width: 100%;
-	overflow-x: hidden;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.infoCard {
-	background-color: white;
-	padding: 1.25rem;
-	border-radius: var(--radius-lg);
-	border: 1px solid var(--border);
-	box-shadow: var(--shadow-sm);
+.infoItem {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--border);
 }
 
-.cardTitle {
-	font-size: 1.1rem;
-	font-weight: 700;
-	color: var(--text-primary);
-	margin: 0 0 1rem 0;
-	padding-bottom: 0.75rem;
-	border-bottom: 2px solid var(--primary);
-}
-
-.infoTable {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 0.9rem;
-}
-
-.infoRow {
-	border-bottom: 1px solid var(--border-light);
+.infoItem:last-child {
+	border-bottom: none;
 }
 
 .infoLabel {
-	font-weight: 600;
 	color: var(--text-secondary);
-	padding: 0.75rem 0;
-	width: 150px;
-	vertical-align: top;
+	font-weight: 500;
 }
 
 .infoValue {
 	color: var(--text-primary);
-	padding: 0.75rem 0 0.75rem 1rem;
+	font-weight: 600;
 }
 
-.subTitle {
-	font-size: 0.95rem;
+/* ============================================
+   DETAILED SECTION
+   ============================================ */
+
+.detailedSection {
+	margin-top: 3rem;
+	background: white;
+	border-radius: 1rem;
+	overflow: hidden;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.detailAccordion {
+	border-bottom: 1px solid var(--border);
+}
+
+.detailAccordion:last-child {
+	border-bottom: none;
+}
+
+.detailAccordion.open .accordionHeader {
+	background: var(--primary-light);
+	color: var(--primary);
+}
+
+.accordionHeader {
+	width: 100%;
+	padding: 1.5rem;
+	background: white;
+	border: none;
+	text-align: left;
 	font-weight: 600;
 	color: var(--text-primary);
-	margin: 1rem 0 0.5rem 0;
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	transition: all 0.2s;
 }
 
-.description {
-	font-size: 0.9rem;
-	line-height: 1.6;
-	color: var(--text-secondary);
-	margin: 0;
+.accordionHeader:hover {
+	background: var(--primary-light);
+	color: var(--primary);
 }
+
+.accordionIcon {
+	font-size: 1.5rem;
+	font-weight: 300;
+}
+
+.accordionContent {
+	padding: 1.5rem;
+	background: #fafbfc;
+	color: var(--text-secondary);
+	line-height: 1.6;
+	animation: expandDown 0.3s ease;
+}
+
+@keyframes expandDown {
+	from {
+		opacity: 0;
+		max-height: 0;
+	}
+	to {
+		opacity: 1;
+		max-height: 500px;
+	}
+}
+
+/* ============================================
+   DISCLAIMER
+   ============================================ */
 
 .disclaimer {
-	background-color: #FEF3C7;
-	border: 1px solid #F59E0B;
-	border-radius: var(--radius);
-	padding: 1rem;
-	font-size: 0.85rem;
-	color: #92400E;
-	line-height: 1.5;
+	margin-top: 3rem;
+	padding: 1.5rem;
+	background: linear-gradient(135deg, #fff8f0 0%, #fff0f5 100%);
+	border-left: 4px solid var(--warning);
+	border-radius: 0.75rem;
+	color: var(--text-primary);
+	line-height: 1.6;
+	font-size: 0.9rem;
 }
 
-@media (max-width: 900px) {
-	.mainContent {
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 1024px) {
+	.productGrid {
 		grid-template-columns: 1fr;
+		gap: 2rem;
+	}
+
+	.gallerySection {
+		position: relative;
+		top: auto;
+	}
+
+	.productTitle {
+		font-size: 1.5rem;
+	}
+
+	.trustSection {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 768px) {
+	.productDetailsPage {
+		padding: 1.5rem 1rem;
+	}
+
+	.productGrid {
+		gap: 1.5rem;
+	}
+
+	.mainImage {
+		aspect-ratio: 3/4;
+	}
+
+	.thumbnailGallery {
+		grid-template-columns: repeat(4, 1fr);
+	}
+
+	.productTitle {
+		font-size: 1.25rem;
+	}
+
+	.currentPrice {
+		font-size: 1.5rem;
+	}
+
+	.cartSection {
+		flex-direction: column;
+	}
+
+	.addToCartButton {
+		width: 100%;
+	}
+
+	.trustSection {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.75rem;
+	}
+
+	.trustIconBg {
+		width: 50px;
+		height: 50px;
+		font-size: 1.5rem;
+	}
+
+	.trustLabel {
+		font-size: 0.7rem;
+	}
+
+	.optionButtons {
+		gap: 0.5rem;
+	}
+}
+
+@media (max-width: 480px) {
+	.productDetailsPage {
+		padding: 1rem;
+	}
+
+	.productGrid {
+		gap: 1rem;
+	}
+
+	.mainImage {
+		aspect-ratio: 1;
+	}
+
+	.thumbnailGallery {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.productTitle {
+		font-size: 1.1rem;
+	}
+
+	.ratingSection {
+		gap: 0.5rem;
+	}
+
+	.ratingValue {
+		font-size: 1rem;
+	}
+
+	.reviewCount {
+		font-size: 0.8rem;
+	}
+
+	.currentPrice {
+		font-size: 1.25rem;
+	}
+
+	.trustSection {
+		gap: 0.5rem;
+		padding: 1rem;
+	}
+
+	.accordionHeader {
+		padding: 1rem;
+		font-size: 0.95rem;
+	}
+
+	.accordionContent {
+		padding: 1rem;
+		font-size: 0.9rem;
 	}
 }

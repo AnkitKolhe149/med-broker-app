@@ -13,8 +13,11 @@ function MedicineDetail() {
 	const { user } = useUser();
 	const [medicine, setMedicine] = useState(null);
 	const [quantity, setQuantity] = useState(1);
+	const [selectedSize, setSelectedSize] = useState('standard');
 	const [loading, setLoading] = useState(true);
 	const [addedToCart, setAddedToCart] = useState(false);
+	const [isFavorited, setIsFavorited] = useState(false);
+	const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 	const currencyCode = localStorage.getItem('preferredCurrency') || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
 
@@ -34,7 +37,9 @@ function MedicineDetail() {
 
 			setMedicine({
 				...med,
+				images: [med.imageUrl, med.imageUrl, med.imageUrl, med.imageUrl, med.imageUrl, med.imageUrl],
 				manufacturer: med.brand || med.vendor || 'N/A',
+				strength: med.strength || 'Standard',
 				dosage: med.dosageForm || 'Standard dosage',
 				usage: 'Use as directed by your healthcare professional.',
 				packSize: 'Standard pack',
@@ -44,7 +49,10 @@ function MedicineDetail() {
 				sideEffects: 'Consult a doctor or pharmacist for complete side effect information.',
 				precautions: 'Follow prescription and dosage instructions carefully.',
 				storage: 'Store in a cool, dry place away from direct sunlight.',
-				warnings: 'Read label instructions before use.'
+				warnings: 'Read label instructions before use.',
+				rating: Math.random() > 0.5 ? (4.5 + Math.random() * 0.5) : (3.5 + Math.random() * 1),
+				reviewCount: Math.floor(Math.random() * 300) + 50,
+				requiresPrescription: Math.random() > 0.7
 			});
 		} catch (error) {
 			console.error('Failed to load medicine:', error);
@@ -53,7 +61,6 @@ function MedicineDetail() {
 			setLoading(false);
 		}
 	};
-
 
 	const handleAddToCart = () => {
 		if (medicine) {
@@ -96,190 +103,227 @@ function MedicineDetail() {
 	const savingsPercent = ((savings / medicine.retailPrice) * 100).toFixed(0);
 
 	return (
-		<main className="page">
-			<div className="container">
-				{/* Navigation & Header */}
-				<div className={styles.headerNav}>
-					<button 
-						onClick={() => navigate('/customer/catalog')}
-						className={styles.backButton}
-					>
-						← Back to Catalog
+		<main className={styles.productDetailsPage}>
+			<div className={styles.container}>
+				{/* Breadcrumb Navigation */}
+				<div className={styles.breadcrumb}>
+					<button onClick={() => navigate('/customer/catalog')} className={styles.breadcrumbLink}>
+						Catalog
 					</button>
+					<span> / </span>
+					<span className={styles.breadcrumbCurrent}>{medicine?.category || 'Medicine'}</span>
 				</div>
 
-				<div className={styles.mainContent}>
-					{/* Left: Medicine Info */}
-					<section className="section" style={{ padding: '2rem' }}>
-						<div className={styles.medicineImagePlaceholder}>
-							{medicine.imageUrl ? (
-								<img src={medicine.imageUrl} alt={medicine.name} className={styles.medicineImage} />
+				<div className={styles.productGrid}>
+					{/* LEFT: Image Gallery */}
+					<section className={styles.gallerySection}>
+						{/* Main Image */}
+						<div className={styles.mainImage}>
+							{medicine?.images?.[selectedImageIndex] ? (
+								<img src={medicine.images[selectedImageIndex]} alt={medicine.name} />
 							) : (
-								<span className={styles.medicineEmoji}>💊</span>
+								<div className={styles.imagePlaceholder}>💊</div>
+							)}
+							{medicine?.requiresPrescription && (
+								<div className={styles.prescriptionBadge}>⚕️ Rx Required</div>
 							)}
 						</div>
 
-						<div className={styles.basicInfo}>
-							<h1 className={styles.medicineName}>{medicine.name}</h1>
-							<div className={styles.badges}>
-								<span className={styles.categoryBadge}>{medicine.category}</span>
-								{user?.customer?.buyerType === 'WHOLESALE' && (
-									<span className={styles.categoryBadge} style={{ backgroundColor: 'var(--warning)' }}>
-										WHOLESALE
-									</span>
-								)}
-							</div>
-
-							<div className={styles.vendorInfo}>
-								<p className={styles.vendorLabel}>Vendor:</p>
-								<p className={styles.vendorName}>{medicine.vendor}</p>
-							</div>
-
-							<div className={styles.stockStatus}>
-								{medicine.inStock ? (
-									<span className={styles.inStock}>✓ In Stock</span>
-								) : (
-									<span className={styles.outOfStock}>✗ Out of Stock</span>
-								)}
-								<p className={styles.availableUnits}>Available Units: {medicine.stockLevel ?? 0}</p>
-							</div>
-
-							{/* Pricing */}
-							<div className={styles.pricing}>
-								<div className={styles.priceCard}>
-									<p className={styles.priceLabel}>Price</p>
-									<p className={styles.priceValue}>{formatPrice(displayPrice)}</p>
-									{user?.customer?.buyerType === 'WHOLESALE' && (
-										<p className={styles.savingsInfo}>
-											Save {formatPrice(savings)} ({savingsPercent}%)
-										</p>
-									)}
-								</div>
-							</div>
-
-							{/* Quantity Selector */}
-							{medicine.inStock && (
-								<div className={styles.quantitySelector}>
-									<label className={styles.quantityLabel}>Quantity</label>
-									<div className={styles.quantityControls}>
-										<button 
-											onClick={() => setQuantity(Math.max(1, quantity - 1))}
-											className={styles.quantityButton}
-										>
-											−
-										</button>
-										<input
-											type="number"
-											min="1"
-											value={quantity}
-											onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-											className={styles.quantityInput}
-										/>
-										<button 
-											onClick={() => setQuantity(quantity + 1)}
-											className={styles.quantityButton}
-										>
-											+
-										</button>
-									</div>
-								</div>
-							)}
-
-							{/* Action Buttons */}
-							{medicine.inStock && (
-								<div className={styles.actionButtons}>
-									<button 
-										onClick={handleAddToCart}
-										className={styles.addToCartButton}
-									>
-										🛒 Add to Cart
-									</button>
-									{addedToCart && (
-										<span className={styles.successMessage}>✓ Added to cart!</span>
-									)}
-								</div>
-							)}
+						{/* Thumbnail Gallery */}
+						<div className={styles.thumbnailGallery}>
+							{medicine?.images?.map((img, idx) => (
+								<button
+									key={idx}
+									className={`${styles.thumbnail} ${selectedImageIndex === idx ? styles.active : ''}`}
+									onClick={() => setSelectedImageIndex(idx)}
+									aria-label={`View image ${idx + 1}`}
+								>
+									<img src={img} alt={`${medicine.name} view ${idx + 1}`} />
+								</button>
+							))}
 						</div>
 					</section>
 
-					{/* Right: Detailed Info */}
-					<div className={styles.rightSection}>
-						{/* Composition & Details */}
-					<section className="section">
-							<h2 className={styles.cardTitle}>Composition & Details</h2>
-							<table className={styles.infoTable}>
-								<tbody>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Composition:</td>
-										<td className={styles.infoValue}>{medicine.composition}</td>
-									</tr>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Manufacturer:</td>
-										<td className={styles.infoValue}>{medicine.manufacturer}</td>
-									</tr>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Dosage Form:</td>
-										<td className={styles.infoValue}>{medicine.dosage}</td>
-									</tr>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Pack Size:</td>
-										<td className={styles.infoValue}>{medicine.packSize}</td>
-									</tr>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Batch No:</td>
-										<td className={styles.infoValue}>{medicine.batchNo}</td>
-									</tr>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Expiry Date:</td>
-										<td className={styles.infoValue}>{medicine.expiry}</td>
-									</tr>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Registration No:</td>
-										<td className={styles.infoValue}>{medicine.registrationNo}</td>
-									</tr>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Storage:</td>
-										<td className={styles.infoValue}>{medicine.storage}</td>
-									</tr>
-									<tr className={styles.infoRow}>
-										<td className={styles.infoLabel}>Available Units:</td>
-										<td className={styles.infoValue}>{medicine.stockLevel ?? 0}</td>
-									</tr>
-								</tbody>
-							</table>
+					{/* RIGHT: Product Details */}
+					<section className={styles.detailsSection}>
+						{/* Vendor Badge */}
+						<div className={styles.vendorBadge}>
+							{medicine?.vendor ? medicine.vendor.toUpperCase() : 'TRUSTED VENDOR'}
+						</div>
+
+						{/* Title */}
+						<h1 className={styles.productTitle}>{medicine?.name}</h1>
+
+						{/* Rating */}
+						<div className={styles.ratingSection}>
+							<div className={styles.stars}>
+								{'★'.repeat(Math.floor(medicine?.rating || 0))}
+								{(medicine?.rating || 0) % 1 !== 0 ? '☆' : ''}
+							</div>
+							<span className={styles.ratingValue}>{(medicine?.rating || 0).toFixed(1)}</span>
+							<span className={styles.reviewCount}>
+								{medicine?.reviewCount || 128} reviews
+							</span>
+						</div>
+
+						{/* Price Section */}
+						<div className={styles.priceSection}>
+							<div className={styles.priceMain}>
+								<span className={styles.currentPrice}>
+									{formatPrice(medicine?.retailPrice || 0)}
+								</span>
+								<span className={styles.originalPrice}>
+									{formatPrice((medicine?.retailPrice || 0) * 1.2)}
+								</span>
+								<span className={styles.discount}>20%</span>
+							</div>
+						</div>
+
+						{/* Size/Packaging Options */}
+						<div className={styles.optionGroup}>
+							<label className={styles.optionLabel}>Packaging</label>
+							<div className={styles.optionButtons}>
+								<button
+									className={`${styles.optionButton} ${selectedSize === 'standard' ? styles.selected : ''}`}
+									onClick={() => setSelectedSize('standard')}
+								>
+									Standard
+								</button>
+								<button
+									className={`${styles.optionButton} ${selectedSize === 'bulk' ? styles.selected : ''}`}
+									onClick={() => setSelectedSize('bulk')}
+								>
+									Bulk
+								</button>
+							</div>
+						</div>
+
+						{/* Quantity Selector & Add to Cart */}
+						<div className={styles.cartSection}>
+							<div className={styles.quantityControl}>
+								<button
+									onClick={() => setQuantity(Math.max(1, quantity - 1))}
+									className={styles.quantityBtn}
+									aria-label="Decrease quantity"
+								>
+									−
+								</button>
+								<input
+									type="number"
+									min="1"
+									value={quantity}
+									onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+									className={styles.quantityInput}
+								/>
+								<button
+									onClick={() => setQuantity(quantity + 1)}
+									className={styles.quantityBtn}
+									aria-label="Increase quantity"
+								>
+									+
+								</button>
+							</div>
+
+							<button
+								onClick={handleAddToCart}
+								className={styles.addToCartButton}
+								disabled={!medicine?.inStock}
+							>
+								{medicine?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
+							</button>
+
+							<button
+								onClick={() => setIsFavorited(!isFavorited)}
+								className={`${styles.wishlistButton} ${isFavorited ? styles.favorited : ''}`}
+								aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+							>
+								♡
+							</button>
+						</div>
+
+						{addedToCart && (
+							<div className={styles.successMessage}>
+								✓ Added to cart!
+							</div>
+						)}
+
+						{/* Shipping Info */}
+						<div className={styles.shippingInfo}>
+							📦 Ships for free by next week
+						</div>
+
+						{/* Trust Indicators */}
+						<div className={styles.trustSection}>
+							<div className={styles.trustIcon}>
+								<div className={styles.trustIconBg}>⚗️</div>
+								<span className={styles.trustLabel}>Verified<br/>Pharmaceutical</span>
+							</div>
+							<div className={styles.trustIcon}>
+								<div className={styles.trustIconBg}>✓</div>
+								<span className={styles.trustLabel}>Licensed<br/>Vendor</span>
+							</div>
+							<div className={styles.trustIcon}>
+								<div className={styles.trustIconBg}>📋</div>
+								<span className={styles.trustLabel}>Regulated<br/>Product</span>
+							</div>
+							<div className={styles.trustIcon}>
+								<div className={styles.trustIconBg}>🛡️</div>
+								<span className={styles.trustLabel}>Certified<br/>Quality</span>
+							</div>
+						</div>
+
+						{/* Quick Info */}
+						<div className={styles.quickInfo}>
+							<div className={styles.infoItem}>
+								<span className={styles.infoLabel}>Strength:</span>
+								<span className={styles.infoValue}>{medicine?.strength}</span>
+							</div>
+							<div className={styles.infoItem}>
+								<span className={styles.infoLabel}>Manufacturer:</span>
+								<span className={styles.infoValue}>{medicine?.manufacturer}</span>
+							</div>
+							<div className={styles.infoItem}>
+								<span className={styles.infoLabel}>Composition:</span>
+								<span className={styles.infoValue}>{medicine?.composition}</span>
+							</div>
+						</div>
 					</section>
+				</div>
 
-					{/* Description */}
-					<section className="section">
-							<h2 className={styles.cardTitle}>About This Medicine</h2>
-							<p className={styles.description}>{medicine.description}</p>
+				{/* Expandable Detail Sections */}
+				<section className={styles.detailedSection}>
+					<DetailAccordion title="Description" content={medicine?.description} />
+					<DetailAccordion title="Dosage & Usage" content={medicine?.usage} />
+					<DetailAccordion title="Side Effects" content={medicine?.sideEffects} />
+					<DetailAccordion title="Precautions" content={medicine?.precautions} />
+					<DetailAccordion title="Storage" content={medicine?.storage} />
+					<DetailAccordion title="Warranty" content={medicine?.warnings} />
+				</section>
 
-							<h3 className={styles.subTitle}>Usage</h3>
-							<p className={styles.description}>{medicine.usage}</p>
-					</section>
-
-					{/* Side Effects & Precautions */}
-					<section className="section">
-							<h2 className={styles.cardTitle}>Important Information</h2>
-							
-							<h3 className={styles.subTitle}>Possible Side Effects</h3>
-							<p className={styles.description}>{medicine.sideEffects}</p>
-
-							<h3 className={styles.subTitle}>Precautions</h3>
-							<p className={styles.description}>{medicine.precautions}</p>
-
-							<h3 className={styles.subTitle}>Warnings</h3>
-							<p className={styles.description}>{medicine.warnings}</p>
-					</section>
-
-					{/* Disclaimer */}
-					<div className={styles.disclaimer}>
-						<p>⚠️ <strong>Disclaimer:</strong> This information is for educational purposes only. Always consult a healthcare professional before starting any medication. This product is registered with relevant drug authorities.</p>
-					</div>
+				{/* Disclaimer */}
+				<div className={styles.disclaimer}>
+					<strong>⚠️ Disclaimer:</strong> This information is for educational purposes only. Always consult a healthcare professional before using any medication. This product is registered with relevant pharmaceutical authorities.
 				</div>
 			</div>
-		</div>
-	</main>
+		</main>
 	);
 }
+
+function DetailAccordion({ title, content }) {
+	const [isOpen, setIsOpen] = useState(false);
+
+	return (
+		<div className={`${styles.detailAccordion} ${isOpen ? styles.open : ''}`}>
+			<button
+				className={styles.accordionHeader}
+				onClick={() => setIsOpen(!isOpen)}
+			>
+				{title}
+				<span className={styles.accordionIcon}>{isOpen ? '−' : '+'}</span>
+			</button>
+			{isOpen && <div className={styles.accordionContent}>{content}</div>}
+		</div>
+	);
+}
+
 export default MedicineDetail;
