@@ -6,6 +6,22 @@ const {
 } = require('../../utils/errors');
 const { uploadMedicineImage } = require('../../services/cloudinary.service');
 
+const MAX_MEDICINE_IMAGES = 4;
+
+const normalizeImageUrls = (inventoryItem = {}) => {
+  const urls = [];
+
+  if (inventoryItem.imageUrl) {
+    urls.push(inventoryItem.imageUrl);
+  }
+
+  if (Array.isArray(inventoryItem.imageUrls)) {
+    urls.push(...inventoryItem.imageUrls);
+  }
+
+  return [...new Set(urls.filter(Boolean))].slice(0, MAX_MEDICINE_IMAGES);
+};
+
 const resolveVendorContext = async (userContext) => {
   const userId = typeof userContext === 'string' ? userContext : userContext?.id;
   const userVendor = typeof userContext === 'object' ? userContext?.vendor : null;
@@ -130,11 +146,11 @@ module.exports = {
   },
 
   /**
-   * Upload or replace image for a vendor-owned inventory item
+   * Upload medicine images for a vendor-owned inventory item
    */
-  uploadInventoryMedicineImage: async (userContext, inventoryId, file) => {
-    if (!file || !file.buffer || !file.mimetype) {
-      throw new ValidationError('Medicine image is required');
+  uploadInventoryMedicineImage: async (userContext, inventoryId, files) => {
+    if (!Array.isArray(files) || files.length === 0) {
+      throw new ValidationError('At least one medicine image is required');
     }
 
     const vendor = await resolveVendorContext(userContext);
@@ -144,7 +160,9 @@ module.exports = {
       select: {
         id: true,
         vendorId: true,
-        medicineId: true
+        medicineId: true,
+        imageUrl: true,
+        imageUrls: true
       }
     });
 
@@ -156,11 +174,38 @@ module.exports = {
       throw new ForbiddenError('You can only upload images for your own inventory items');
     }
 
-    const imageUrl = await uploadMedicineImage(file.buffer, file.mimetype, inventoryItem.id);
+    const existingImageUrls = normalizeImageUrls(inventoryItem);
+    const availableSlots = MAX_MEDICINE_IMAGES - existingImageUrls.length;
+
+    if (availableSlots <= 0) {
+      throw new ValidationError('This medicine already has the maximum of 4 images');
+    }
+
+    if (files.length > availableSlots) {
+      throw new ValidationError(`You can upload up to ${availableSlots} more image(s) for this medicine`);
+    }
+
+    const uploadedImageUrls = await Promise.all(
+      files.map((file) => {
+        if (!file || !file.buffer || !file.mimetype) {
+          throw new ValidationError('Each medicine image must be a valid image file');
+        }
+
+        return uploadMedicineImage(file.buffer, file.mimetype, inventoryItem.id);
+      })
+    );
+
+    const imageUrls = normalizeImageUrls({
+      imageUrl: existingImageUrls[0] || null,
+      imageUrls: [...existingImageUrls.slice(1), ...uploadedImageUrls]
+    });
 
     const updatedInventory = await prisma.inventory.update({
       where: { id: inventoryItem.id },
-      data: { imageUrl },
+      data: {
+        imageUrl: imageUrls[0] || null,
+        imageUrls
+      },
       include: {
         medicine: true
       }
@@ -169,7 +214,8 @@ module.exports = {
     return {
       inventoryId: updatedInventory.id,
       medicineId: updatedInventory.medicineId,
-      imageUrl: updatedInventory.imageUrl
+      imageUrl: updatedInventory.imageUrl,
+      imageUrls: updatedInventory.imageUrls || []
     };
   },
 

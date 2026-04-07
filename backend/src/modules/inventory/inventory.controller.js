@@ -49,7 +49,7 @@ module.exports = {
 
   /**
    * POST /api/inventory/:id/image
-   * Upload/replace medicine image for an inventory item
+   * Upload medicine images for an inventory item
    */
   uploadInventoryMedicineImage: async (req, res, next) => {
     try {
@@ -57,12 +57,12 @@ module.exports = {
       const result = await inventoryService.uploadInventoryMedicineImage(
         req.user,
         inventoryId,
-        req.file
+        req.files || (req.file ? [req.file] : [])
       );
 
       res.status(200).json({
         success: true,
-        message: 'Medicine image uploaded successfully',
+        message: 'Medicine images uploaded successfully',
         data: result
       });
     } catch (error) {
