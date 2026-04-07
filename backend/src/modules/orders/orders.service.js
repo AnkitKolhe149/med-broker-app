@@ -247,10 +247,43 @@ const cancelOrder = async (orderId, userId, userRole) => {
   return cancelledOrder;
 };
 
+/**
+ * Get order data for receipt generation
+ */
+const getOrderForReceipt = async (orderId, userId, userRole) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      items: {
+        include: {
+          medicine: true
+        }
+      },
+      payment: true,
+      user: {
+        include: {
+          customer: true
+        }
+      }
+    }
+  });
+
+  if (!order) {
+    throw new NotFoundError('Order not found');
+  }
+
+  if (userRole === 'CUSTOMER' && order.userId !== userId) {
+    throw new ForbiddenError('You can only access your own orders');
+  }
+
+  return order;
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
   getOrderById,
   updateOrderStatus,
-  cancelOrder
+  cancelOrder,
+  getOrderForReceipt
 };
