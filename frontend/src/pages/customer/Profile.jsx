@@ -217,7 +217,7 @@ function CustomerProfile() {
 										📷
 										<input
 											type="file"
-											acccept="image/*"
+											accept="image/*"
 											style={{ display: 'none' }}
 											onChange={handleImageChange}
 										/>
