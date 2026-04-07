@@ -37,6 +37,9 @@ venv.bak/
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
+frontend/.env
+node_modules/
 
 # Logs
 logs

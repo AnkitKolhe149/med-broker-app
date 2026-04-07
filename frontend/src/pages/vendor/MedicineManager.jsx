@@ -3,6 +3,7 @@ import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useNotification } from '../../context/NotificationContext';
 import inventoryService from '../../services/inventory.service';
 import styles from './MedicineManager.module.css';
+import { Check, X } from 'lucide-react';
 
 function VendorMedicineManager() {
 	const { showSuccess, showError } = useNotification();
@@ -15,7 +16,7 @@ function VendorMedicineManager() {
 	const [selectedMedicine, setSelectedMedicine] = useState(null);
 	const [stockDraft, setStockDraft] = useState('');
 	const [filterStatus, setFilterStatus] = useState('all');
-	const [uploadFile, setUploadFile] = useState(null);
+	const [uploadFiles, setUploadFiles] = useState([]);
 	const [newMedicine, setNewMedicine] = useState({
 		name: '',
 		stock: '',
@@ -35,7 +36,12 @@ function VendorMedicineManager() {
 					description: item.medicine?.description || '',
 					stock: item.quantity || 0,
 					price: Number(((item.medicine?.priceCents || 0) / 100).toFixed(2)),
-					imageUrl: item.imageUrl || null
+					imageUrl: item.imageUrl || item.imageUrls?.[0] || null,
+					imageUrls: Array.isArray(item.imageUrls)
+						? item.imageUrls
+						: item.imageUrl
+							? [item.imageUrl]
+							: []
 				})));
 			} catch (error) {
 				console.error('Failed to load inventory', error);
@@ -71,7 +77,12 @@ function VendorMedicineManager() {
 				description: inventory.medicine?.description || payload.description || '',
 				stock: inventory.quantity || payload.quantity,
 				price: Number((((inventory.medicine?.priceCents) || payload.priceCents) / 100).toFixed(2)),
-				imageUrl: inventory.imageUrl || null
+				imageUrl: inventory.imageUrl || inventory.imageUrls?.[0] || null,
+				imageUrls: Array.isArray(inventory.imageUrls)
+					? inventory.imageUrls
+					: inventory.imageUrl
+						? [inventory.imageUrl]
+						: []
 			};
 
 			setMedicines((prev) => {
@@ -100,6 +111,7 @@ function VendorMedicineManager() {
 			await inventoryService.deleteInventoryItem(id);
 			setMedicines((prev) => prev.filter((m) => m.id !== id));
 			setSelectedMedicine(null);
+			setUploadFiles([]);
 			showSuccess('Product deleted successfully');
 		} catch (error) {
 			console.error('Failed to delete product', error);
@@ -108,20 +120,35 @@ function VendorMedicineManager() {
 	};
 
 	const handleUploadImage = async () => {
-		if (!selectedMedicine || !uploadFile) {
-			showError('Please select an image file first');
+		if (!selectedMedicine || uploadFiles.length === 0) {
+			showError('Please select at least one image file first');
+			return;
+		}
+
+		if (uploadFiles.length > 4) {
+			showError('You can upload up to 4 images at once');
 			return;
 		}
 
 		try {
 			setUploadingId(selectedMedicine.id);
-			const result = await inventoryService.uploadMedicineImage(selectedMedicine.id, uploadFile);
+			const result = await inventoryService.uploadMedicineImage(selectedMedicine.id, uploadFiles);
 			setMedicines((prev) => prev.map((m) => (
-				m.id === selectedMedicine.id ? { ...m, imageUrl: result.imageUrl } : m
+				m.id === selectedMedicine.id
+					? {
+						...m,
+						imageUrl: result.imageUrl,
+						imageUrls: Array.isArray(result.imageUrls) ? result.imageUrls : (result.imageUrl ? [result.imageUrl] : [])
+					}
+					: m
 			)));
-			setSelectedMedicine((prev) => (prev ? { ...prev, imageUrl: result.imageUrl } : prev));
-			setUploadFile(null);
-			showSuccess('Medicine image uploaded');
+			setSelectedMedicine((prev) => (prev ? {
+				...prev,
+				imageUrl: result.imageUrl,
+				imageUrls: Array.isArray(result.imageUrls) ? result.imageUrls : (result.imageUrl ? [result.imageUrl] : [])
+			} : prev));
+			setUploadFiles([]);
+			showSuccess('Medicine images uploaded');
 		} catch (error) {
 			console.error('Failed to upload image', error);
 			showError(error?.response?.data?.message || 'Failed to upload image');
@@ -240,7 +267,7 @@ function VendorMedicineManager() {
 											backgroundColor: medicine.stock > 0 ? 'var(--success)' : 'var(--error)'
 										}}
 									>
-										{medicine.stock > 0 ? '✓ In Stock' : '✗ Out'}
+										{medicine.stock > 0 ? <><Check size={12} strokeWidth={2} /> In Stock</> : <><X size={12} strokeWidth={2} /> Out</>}
 									</div>
 								</td>
 								<td className={styles.tableCell}>
@@ -268,9 +295,12 @@ function VendorMedicineManager() {
 						<div>Add New Product</div>
 						<button
 							className={styles.closeButton}
-							onClick={() => setShowAddForm(false)}
+								onClick={() => {
+									setShowAddForm(false);
+									setUploadFiles([]);
+								}}
 						>
-							✕
+						<X size={16} />
 						</button>
 					</div>
 
@@ -339,9 +369,12 @@ function VendorMedicineManager() {
 							<div>Edit Product</div>
 							<button
 								className={styles.closeButton}
-								onClick={() => setSelectedMedicine(null)}
+								onClick={() => {
+									setSelectedMedicine(null);
+									setUploadFiles([]);
+								}}
 							>
-								✕
+							<X size={16} />
 							</button>
 						</div>
 
@@ -374,24 +407,39 @@ function VendorMedicineManager() {
 						<div className={styles.formGridFull}>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Medicine Image</label>
-								{selectedMedicine.imageUrl ? (
-									<img src={selectedMedicine.imageUrl} alt={selectedMedicine.name} className={styles.previewImage} />
+								<div className={styles.imageSummary}>
+									<span>{(selectedMedicine.imageUrls || []).length || 0} / 4 uploaded</span>
+									<span>{uploadFiles.length} selected</span>
+								</div>
+								{(selectedMedicine.imageUrls || []).length > 0 ? (
+									<div className={styles.previewStrip}>
+										{(selectedMedicine.imageUrls || []).map((imageUrl, index) => (
+											<img key={`${imageUrl}-${index}`} src={imageUrl} alt={`${selectedMedicine.name} ${index + 1}`} className={styles.previewThumb} />
+										))}
+									</div>
 								) : (
 									<div className={styles.previewPlaceholder}>No image uploaded</div>
 								)}
 								<input
 									type="file"
 									accept="image/*"
+									multiple
 									className={styles.input}
-									onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+									onChange={(e) => {
+										const files = Array.from(e.target.files || []).slice(0, 4);
+										setUploadFiles(files);
+										if ((e.target.files || []).length > 4) {
+											showError('You can select a maximum of 4 images');
+										}
+									}}
 								/>
 								<button
 									type="button"
 									className={`${styles.button} ${styles.primaryButton}`}
 									onClick={handleUploadImage}
-									disabled={!uploadFile || uploadingId === selectedMedicine.id}
+									disabled={uploadFiles.length === 0 || uploadingId === selectedMedicine.id}
 								>
-									{uploadingId === selectedMedicine.id ? 'Uploading...' : 'Upload Image'}
+									{uploadingId === selectedMedicine.id ? 'Uploading...' : 'Upload Images'}
 								</button>
 							</div>
 						</div>
@@ -409,7 +457,10 @@ function VendorMedicineManager() {
 							}}>
 								Delete Product
 							</button>
-							<button className={`${styles.button} ${styles.secondaryButton}`} onClick={() => setSelectedMedicine(null)}>
+							<button className={`${styles.button} ${styles.secondaryButton}`} onClick={() => {
+								setSelectedMedicine(null);
+								setUploadFiles([]);
+							}}>
 								Close
 							</button>
 						</div>

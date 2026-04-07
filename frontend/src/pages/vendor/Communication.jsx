@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styles from './Communication.module.css';
+import { User2, Building2, Hotel, Paperclip } from 'lucide-react';
 
 function VendorCommunication() {
 	const [conversations, setConversations] = useState([
@@ -9,7 +10,7 @@ function VendorCommunication() {
 			lastMessage: 'Can you provide bulk pricing for Paracetamol?',
 			timestamp: '2 hours ago',
 			unread: true,
-			avatar: '👨‍⚕️'
+			avatarIcon: <User2 size={18} strokeWidth={1.5} />
 		},
 		{
 			id: 2,
@@ -17,7 +18,7 @@ function VendorCommunication() {
 			lastMessage: 'Order received in good condition. Thanks!',
 			timestamp: '5 hours ago',
 			unread: false,
-			avatar: '🏥'
+			avatarIcon: <Building2 size={18} strokeWidth={1.5} />
 		},
 		{
 			id: 3,
@@ -25,7 +26,7 @@ function VendorCommunication() {
 			lastMessage: 'When can you deliver the order?',
 			timestamp: '1 day ago',
 			unread: false,
-			avatar: '🏨'
+			avatarIcon: <Hotel size={18} strokeWidth={1.5} />
 		}
 	]);
 
@@ -98,7 +99,7 @@ function VendorCommunication() {
 							onClick={() => setSelectedConversation(conv)}
 						>
 							<div className={styles.conversationHeader}>
-								<span className={styles.conversationAvatar}>{conv.avatar}</span>
+								<span className={styles.conversationAvatar}>{conv.avatarIcon}</span>
 								<div style={{ flex: 1 }}>
 									<div className={styles.conversationName}>{conv.customerName}</div>
 									<div className={styles.conversationMeta}>{conv.timestamp}</div>
@@ -145,7 +146,7 @@ function VendorCommunication() {
 									...(msg.sender === 'vendor' ? { alignSelf: 'flex-end' } : {})
 								}}>
 									<div className={styles.fileMessage}>
-										📎 {msg.text}
+										<Paperclip size={14} strokeWidth={1.5} /> {msg.text}
 									</div>
 									<div className={styles.messageTime}>{msg.timestamp}</div>
 								</div>

@@ -10,7 +10,7 @@ const getAuthHeaders = () => {
 };
 
 const orderService = {
-  createOrder: async (payload) => {
+  createCustomerOrder: async (payload) => {
     const response = await axios.post(`${API_URL}/orders`, payload, {
       headers: {
         ...getAuthHeaders(),
@@ -41,6 +41,30 @@ const orderService = {
     };
   },
 
+  getCustomerOrderById: async (orderId) => {
+    const response = await axios.get(`${API_URL}/orders/${orderId}`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to load order details');
+    }
+
+    return response.data.data;
+  },
+
+  cancelCustomerOrder: async (orderId) => {
+    const response = await axios.patch(`${API_URL}/orders/${orderId}/cancel`, {}, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to cancel order');
+    }
+
+    return response.data.data;
+  },
+
   getVendorOrders: async (params = {}) => {
     const response = await axios.get(`${API_URL}/vendor-insights/orders`, {
       headers: getAuthHeaders(),
@@ -67,24 +91,6 @@ const orderService = {
 
     if (!response.data?.success) {
       throw new Error(response.data?.message || 'Failed to update order status');
-    }
-
-    return response.data.data;
-  },
-
-  uploadPrescription: async (file) => {
-    const formData = new FormData();
-    formData.append('prescription', file);
-
-    const response = await axios.post(`${API_URL}/orders/prescription/upload`, formData, {
-      headers: {
-        ...getAuthHeaders(),
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-
-    if (!response.data?.success) {
-      throw new Error(response.data?.message || 'Failed to upload prescription');
     }
 
     return response.data.data;

@@ -24,10 +24,10 @@ router.post('/medicines', inventoryController.addMedicineToInventory);
 
 /**
  * @route   POST /api/inventory/:id/image
- * @desc    Upload/replace medicine image for an inventory item
+ * @desc    Upload medicine images for an inventory item (up to 4)
  * @access  Private (Vendor)
  */
-router.post('/:id/image', medicineImageUpload.single('image'), inventoryController.uploadInventoryMedicineImage);
+router.post('/:id/image', medicineImageUpload.array('images', 4), inventoryController.uploadInventoryMedicineImage);
 
 /**
  * @route   PATCH /api/inventory/:id

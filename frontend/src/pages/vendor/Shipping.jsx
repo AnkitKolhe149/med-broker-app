@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Shipping.module.css';
+import { Clock, Package, Truck, Check, X, AlertTriangle, MapPin } from 'lucide-react';
 
 function VendorShipping() {
 	const [shipments, setShipments] = useState([
@@ -55,11 +56,11 @@ function VendorShipping() {
 
 	const getStatusLabel = (status) => {
 		switch(status) {
-			case 'pending': return '⏳ Pending';
-			case 'shipped': return '📦 Shipped';
-			case 'in-transit': return '🚚 In Transit';
-			case 'delivered': return '✓ Delivered';
-			case 'failed': return '✗ Failed';
+			case 'pending': return <><Clock size={12} strokeWidth={1.5} /> Pending</>;
+			case 'shipped': return <><Package size={12} strokeWidth={1.5} /> Shipped</>;
+			case 'in-transit': return <><Truck size={12} strokeWidth={1.5} /> In Transit</>;
+			case 'delivered': return <><Check size={12} strokeWidth={1.5} /> Delivered</>;
+			case 'failed': return <><X size={12} strokeWidth={1.5} /> Failed</>;
 			default: return 'Unknown';
 		}
 	};
@@ -78,17 +79,17 @@ function VendorShipping() {
 				<div className={styles.statCard}>
 					<div className={styles.statLabel}>Pending Shipments</div>
 					<div className={styles.statNumber}>3</div>
-					<small style={{ color: 'var(--warning)' }}>⚠ Action needed</small>
+					<small style={{ color: 'var(--warning)' }}><AlertTriangle size={12} strokeWidth={1.5} /> Action needed</small>
 				</div>
 				<div className={styles.statCard}>
 					<div className={styles.statLabel}>In Transit</div>
 					<div className={styles.statNumber}>5</div>
-					<small style={{ color: 'var(--primary)' }}>📍 Being delivered</small>
+					<small style={{ color: 'var(--primary)' }}><MapPin size={12} strokeWidth={1.5} /> Being delivered</small>
 				</div>
 				<div className={styles.statCard}>
 					<div className={styles.statLabel}>Delivered</div>
 					<div className={styles.statNumber}>148</div>
-					<small style={{ color: 'var(--success)' }}>✓ This month</small>
+					<small style={{ color: 'var(--success)' }}><Check size={12} strokeWidth={1.5} /> This month</small>
 				</div>
 				<div className={styles.statCard}>
 					<div className={styles.statLabel}>Avg Delivery</div>
@@ -178,7 +179,7 @@ function VendorShipping() {
 								className={styles.closeButton}
 								onClick={() => setSelectedShipment(null)}
 							>
-								✕
+								<X size={16} strokeWidth={1.5} />
 							</button>
 						</div>
 
@@ -244,7 +245,7 @@ function VendorShipping() {
 										</div>
 										{(selectedShipment.status === 'delivered' || selectedShipment.status === 'in-transit') && (
 											<div className={styles.timelineItem}>
-												<div className={styles.timelineMarker}>✓</div>
+												<div className={styles.timelineMarker}><Check size={14} strokeWidth={2} /></div>
 												<div className={styles.timelineContent}>
 													<div className={styles.timelineTitle}>
 														{selectedShipment.status === 'delivered' ? 'Delivered' : 'Out for Delivery'}

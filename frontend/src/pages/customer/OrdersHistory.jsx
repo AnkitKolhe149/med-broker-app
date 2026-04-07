@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Avatar from '../../components/common/Avatar';
 import { useUser } from '../../context/UserContext';
 import { formatCurrency } from '../../utils/currency';
+import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
 
@@ -11,25 +12,59 @@ const ORDER_STAGES = ['Confirmed', 'Preparing', 'Picked up', 'Delivered'];
 function OrdersHistory() {
 	const navigate = useNavigate();
 	const { user } = useUser();
+	const { showError, showSuccess } = useNotification();
 	const [orders, setOrders] = useState([]);
 	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
 	const [activeTab, setActiveTab] = useState('upcoming');
+	const [cancellingOrderId, setCancellingOrderId] = useState(null);
 	const ordersListRef = useRef(null);
 	const defaultCurrencyCode = localStorage.getItem('preferredCurrency') || 'USD';
 	const formatPrice = (value, currencyCode = defaultCurrencyCode) => formatCurrency(value, currencyCode, true);
+
+	const toUiStatus = (status = '') => {
+		const normalized = status.toUpperCase();
+		if (normalized === 'SHIPPED') return 'in_transit';
+		if (normalized === 'PAID') return 'processing';
+		if (normalized === 'PENDING') return 'confirmed';
+		if (normalized === 'CANCELLED') return 'cancelled';
+		return 'delivered';
+	};
+
+	const toEtaText = (uiStatus) => {
+		if (uiStatus === 'confirmed') return 'Order confirmed';
+		if (uiStatus === 'processing') return 'Preparing for dispatch';
+		if (uiStatus === 'in_transit') return 'On the way';
+		if (uiStatus === 'cancelled') return 'Order cancelled';
+		return 'Delivered';
+	};
 
 	useEffect(() => {
 		const loadOrders = async () => {
 			try {
 				setLoading(true);
-				setError('');
-				const result = await orderService.getCustomerOrders({ page: 1, limit: 100 });
-				setOrders(result.orders || []);
+				const result = await orderService.getCustomerOrders({ page: 1, limit: 50 });
+				const mappedOrders = (result.orders || []).map((order) => {
+					const uiStatus = toUiStatus(order.status);
+					const createdAt = order.createdAt ? new Date(order.createdAt) : new Date();
+					return {
+						orderId: order.id,
+						status: uiStatus,
+						currencyCode: defaultCurrencyCode,
+						total: Number(((order.totalCents || 0) / 100).toFixed(2)),
+						items: (order.items || []).map((item) => ({
+							name: item.medicine?.name || 'Medicine',
+							quantity: item.quantity,
+							price: Number(((item.unitPriceCents || 0) / 100).toFixed(2))
+						})),
+						paymentMethod: order.payment?.provider || 'Pending payment',
+						orderedAgo: createdAt.toLocaleDateString(),
+						etaText: toEtaText(uiStatus)
+					};
+				});
+				setOrders(mappedOrders);
 			} catch (error) {
 				console.error('Failed to load orders:', error);
-				setError(error.message || 'Failed to load orders');
-				setOrders([]);
+				showError(error?.response?.data?.message || 'Failed to load orders');
 			} finally {
 				setLoading(false);
 			}
@@ -38,10 +73,28 @@ function OrdersHistory() {
 		loadOrders();
 	}, []);
 
+	const handleCancelOrder = async (orderId) => {
+		try {
+			setCancellingOrderId(orderId);
+			await orderService.cancelCustomerOrder(orderId);
+			setOrders((prev) => prev.map((order) => (
+				order.orderId === orderId
+					? { ...order, status: 'cancelled', etaText: 'Order cancelled' }
+					: order
+			)));
+			showSuccess('Order cancelled successfully');
+		} catch (error) {
+			console.error('Failed to cancel order:', error);
+			showError(error?.response?.data?.message || 'Failed to cancel order');
+		} finally {
+			setCancellingOrderId(null);
+		}
+	};
+
 	const orderBuckets = useMemo(() => {
-		const upcoming = orders.filter((order) => order.bucket === 'upcoming');
-		const previous = orders.filter((order) => order.bucket === 'previous');
-		const scheduled = orders.filter((order) => order.bucket === 'scheduled');
+		const upcoming = orders.filter((order) => ['confirmed', 'in_transit', 'processing'].includes(order.status));
+		const previous = orders.filter((order) => ['delivered', 'cancelled'].includes(order.status));
+		const scheduled = orders.filter((order) => order.status === 'scheduled');
 		return { upcoming, previous, scheduled };
 	}, [orders]);
 
@@ -77,24 +130,6 @@ function OrdersHistory() {
 			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
 				<p>Loading orders...</p>
 			</div>
-		);
-	}
-
-	if (error) {
-		return (
-			<main className="page">
-				<div className={`container ${styles.ordersPage}`}>
-					<section className={styles.contentPanel}>
-						<div className={styles.emptyState}>
-							<p className={styles.emptyTitle}>Unable to load orders</p>
-							<p className={styles.emptyText}>{error}</p>
-							<button type="button" className="button" onClick={() => navigate('/customer/catalog')}>
-								Browse Medicines
-							</button>
-						</div>
-					</section>
-				</div>
-			</main>
 		);
 	}
 
@@ -174,8 +209,8 @@ function OrdersHistory() {
 							</div>
 						) : (
 							visibleOrders.map((order) => {
-								const stageIndex = getStageIndex(order.displayStatus);
-								const canCancel = ['confirmed', 'processing', 'in_transit'].includes(order.displayStatus);
+								const stageIndex = getStageIndex(order.status);
+								const canCancel = ['confirmed', 'processing', 'in_transit'].includes(order.status);
 
 								return (
 									<article key={order.orderId} className={styles.orderCard}>
@@ -184,13 +219,22 @@ function OrdersHistory() {
 												<span className={styles.orderIcon}>🧪</span>
 												<div>
 													<p className={styles.orderNo}>Order no #{order.orderId}</p>
-													<p className={styles.orderPrice}>{formatPrice((order.totalCents || 0) / 100, order.currencyCode || defaultCurrencyCode)}</p>
+													<p className={styles.orderPrice}>{formatPrice(order.total, order.currencyCode)}</p>
 												</div>
 											</div>
 
 											<div className={styles.orderActions}>
 												<button type="button" className={styles.detailsButton}>Order Details</button>
-												{canCancel && <button type="button" className={styles.cancelButton}>Cancel Order</button>}
+												{canCancel && (
+													<button
+														type="button"
+														className={styles.cancelButton}
+														onClick={() => handleCancelOrder(order.orderId)}
+														disabled={cancellingOrderId === order.orderId}
+													>
+														{cancellingOrderId === order.orderId ? 'Cancelling...' : 'Cancel Order'}
+													</button>
+												)}
 											</div>
 										</div>
 
@@ -215,7 +259,7 @@ function OrdersHistory() {
 										</div>
 
 										<p className={styles.orderMeta}>
-											{order.itemsCount} item{order.itemsCount > 1 ? 's' : ''}
+											{order.items.length} item{order.items.length > 1 ? 's' : ''}
 											<span>•</span>
 											{order.paymentMethod}
 											<span>•</span>

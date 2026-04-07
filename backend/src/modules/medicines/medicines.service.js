@@ -14,6 +14,7 @@ const MAX_LIMIT = 100;
 const COUNT_CACHE_TTL_MS = 30 * 1000;
 const BASE_CURRENCY = getEnv('EXCHANGE_RATE_BASE', 'INR').toUpperCase();
 const DEFAULT_CURRENCY = getEnv('DEFAULT_CURRENCY', 'USD').toUpperCase();
+const MAX_MEDICINE_IMAGES = 4;
 
 let inventoryCountCache = {
   value: null,
@@ -59,6 +60,11 @@ const resolveViewerCurrency = ({ query = {}, viewerContext = {} }) => {
 };
 
 const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRateRecord) => {
+  const imageUrls = [...new Set([
+    inventory.imageUrl,
+    ...(Array.isArray(inventory.imageUrls) ? inventory.imageUrls : [])
+  ].filter(Boolean))].slice(0, MAX_MEDICINE_IMAGES);
+
   const sourceCurrencyCode = BASE_CURRENCY;
   const sourceRetailPrice = Number((inventory.medicine.priceCents / 100).toFixed(2));
   const sourceWholesalePrice = Number((((inventory.medicine.wholesalePriceCents ?? inventory.medicine.priceCents) || 0) / 100).toFixed(2));
@@ -114,7 +120,9 @@ const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRa
     popularity: Math.min(100, Math.max(50, inventory.quantity)),
     addedAt: inventory.medicine.createdAt,
     requiresPrescription: Boolean(inventory.medicine.requiresPrescription),
-    imageUrl: inventory.imageUrl || null,
+    imageUrl: imageUrls[0] || null,
+    imageUrls,
+    images: imageUrls,
     vendor: inventory.vendor.companyName,
     vendorId: inventory.vendor.id,
     inStock: inventory.quantity > 0,
@@ -141,7 +149,10 @@ module.exports = {
         select: {
           id: true,
           quantity: true,
+          bulkMinQty: true,
+          bulkDiscountPercent: true,
           imageUrl: true,
+          imageUrls: true,
           medicine: {
             select: {
               id: true,
@@ -189,7 +200,10 @@ module.exports = {
       select: {
         id: true,
         quantity: true,
+        bulkMinQty: true,
+        bulkDiscountPercent: true,
         imageUrl: true,
+        imageUrls: true,
         medicine: {
           select: {
             id: true,

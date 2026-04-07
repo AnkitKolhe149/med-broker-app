@@ -41,9 +41,15 @@ const inventoryService = {
     return response.data.data;
   },
 
-  uploadMedicineImage: async (inventoryId, file) => {
+  uploadMedicineImage: async (inventoryId, files) => {
     const formData = new FormData();
-    formData.append('image', file);
+    const imageFiles = Array.isArray(files) ? files : [files];
+
+    imageFiles.slice(0, 4).forEach((file) => {
+      if (file) {
+        formData.append('images', file);
+      }
+    });
 
     const response = await axios.post(`${API_URL}/inventory/${inventoryId}/image`, formData, {
       headers: {

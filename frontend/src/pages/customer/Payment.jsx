@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNotification } from '../../context/NotificationContext';
-import { formatCurrency } from '../../utils/currency';
 import { useCart } from '../../context/CartContext';
-import orderService from '../../services/order.service';
+import { formatCurrency } from '../../utils/currency';
 import paymentService from '../../services/payment.service';
 import styles from './Payment.module.css';
 
@@ -17,8 +16,6 @@ function Payment() {
 	const [loading, setLoading] = useState(true);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [upiId, setUpiId] = useState('customer@upi');
-	const [paymentReference, setPaymentReference] = useState(`MED-${Date.now()}`);
-	const [activeOrderId, setActiveOrderId] = useState('');
 	const currencyCode = orderData?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
 
@@ -39,18 +36,12 @@ function Payment() {
 
 	const calculateTotal = () => {
 		if (!orderData) return 0;
-		const subtotal = orderData.subtotal;
-		const discount = (subtotal * orderData.discountPercent) / 100;
-		const deliveryCharge = subtotal > 500 ? 0 : 50;
-		const tax = (subtotal - discount + deliveryCharge) * 0.05;
-		return subtotal - discount + deliveryCharge + tax;
+		return Number(orderData.subtotal || 0);
 	};
 
 	const generateUPILink = () => {
 		const amount = calculateTotal();
-		const transactionRef = paymentReference || generateTransactionId();
-		const note = encodeURIComponent(activeOrderId ? `Order ${activeOrderId}` : 'Medicine Purchase');
-		const upiString = `upi://pay?pa=${upiId}&pn=MedIQ&am=${amount.toFixed(2)}&tn=${note}&tr=${transactionRef}`;
+		const upiString = `upi://pay?pa=${upiId}&pn=MedIQ&am=${amount}&tn=Medicine%20Purchase&tr=${generateTransactionId()}`;
 		return upiString;
 	};
 
@@ -61,9 +52,8 @@ function Payment() {
 	const generateQRCode = () => {
 		const amount = calculateTotal();
 		const merchantUPI = 'mediq@icici';
-		const transactionId = paymentReference || generateTransactionId();
-		const note = encodeURIComponent(activeOrderId ? `Order ${activeOrderId}` : 'Medicine Purchase');
-		const upiString = `upi://pay?pa=${merchantUPI}&pn=MedIQ&am=${amount.toFixed(2)}&tn=${note}&tr=${transactionId}`;
+		const transactionId = generateTransactionId();
+		const upiString = `upi://pay?pa=${merchantUPI}&pn=MedIQ&am=${amount}&tn=Medicine%20Purchase&tr=${transactionId}`;
 		return upiString;
 	};
 
@@ -73,45 +63,38 @@ const handlePaymentProcess = async (e) => {
 
 	try {
 		const totalAmount = calculateTotal();
+		const backendOrderId = orderData?.orderId;
 
-		// STEP 1: Create order in backend
-		const createdOrder = await orderService.createOrder({
-			items: orderData.cartItems.map((item) => ({
-				medicineId: item.actualMedicineId || item.medicineId,
-				quantity: item.quantity,
-				packageType: item.packageType || 'standard'
-			})),
-			prescriptionUrl: orderData.prescriptionUrl
-		});
-		setActiveOrderId(createdOrder.id);
+		if (!backendOrderId) {
+			throw new Error('Missing backend order ID. Please retry checkout.');
+		}
 
-		// STEP 2: Initiate payment in backend
 		const initiatedPayment = await paymentService.initiatePayment({
-			orderId: createdOrder.id,
-			provider: 'mock',
-			returnUrl: `${window.location.origin}/customer/order-confirmation/${createdOrder.id}`
+			orderId: backendOrderId,
+			provider: 'mock'
 		});
-		setPaymentReference(initiatedPayment.paymentId);
 
-		// STEP 3: Simulate payment completion for mock flow and verify
-		await new Promise((resolve) => setTimeout(resolve, 800));
-		const verification = await paymentService.verifyPayment({
+		if (!initiatedPayment?.paymentId) {
+			throw new Error('No payment id received');
+		}
+
+		// Simulate user confirmation in mock mode
+		await new Promise(resolve => setTimeout(resolve, 1000));
+
+		await paymentService.verifyPayment({
 			paymentId: initiatedPayment.paymentId,
-			orderId: createdOrder.id,
+			orderId: backendOrderId,
 			status: 'SUCCEEDED'
 		});
 
-		const verifiedOrder = verification?.order || createdOrder;
-
-		// STEP 4: Complete local confirmation payload
-		const orderId = verifiedOrder.id || createdOrder.id;
+		const orderId = backendOrderId;
 
 		const completedOrder = {
 			...orderData,
 			orderId,
 			paymentMethod,
 			paymentStatus: 'completed',
-			orderStatus: verifiedOrder.status || 'PAID',
+			orderStatus: 'confirmed',
 			completedAt: new Date().toISOString(),
 			total: totalAmount
 		};
@@ -123,8 +106,8 @@ const handlePaymentProcess = async (e) => {
 		navigate(`/customer/order-confirmation/${orderId}`);
 
 	} catch (error) {
-		console.error("❌ PAYMENT ERROR:", error);
-		showError(error.message || 'Payment failed');
+		console.error('Payment failed:', error);
+		showError(error?.response?.data?.message || error.message || 'Payment failed');
 	} finally {
 		setIsProcessing(false);
 	}
@@ -190,9 +173,6 @@ const handlePaymentProcess = async (e) => {
 												level="H"
 												includeMargin={true}
 											/>
-											<p className={styles.qrHint} style={{ marginTop: '0.5rem' }}>
-												Ref: {paymentReference}
-											</p>
 											<p className={styles.qrHint}>
 												Scan the QR code with Google Pay, PhonePe, Paytm or any UPI app
 											</p>
@@ -376,11 +356,11 @@ const handlePaymentProcess = async (e) => {
 								)}
 								<div className={styles.pricingRow}>
 									<span>Delivery</span>
-									<span>{orderData.subtotal > 500 ? 'Free' : formatPrice(50)}</span>
+									<span>Included</span>
 								</div>
 								<div className={styles.pricingRow}>
-									<span>Tax (5% GST)</span>
-									<span>{formatPrice((((orderData.subtotal * (100 - orderData.discountPercent) / 100) + (orderData.subtotal > 500 ? 0 : 50)) * 0.05))}</span>
+									<span>Tax</span>
+									<span>Included</span>
 								</div>
 								<div className={styles.totalRow}>
 									<span>Total Amount Due</span>

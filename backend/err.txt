@@ -1,0 +1,9 @@
+
+Invalid `prisma.inventory.findMany()` invocation in
+D:\med-broker-app\backend\src\modules\medicines\medicines.service.js:145:24
+
+  142 const exchangeRateRecord = await getLatestRates(BASE_CURRENCY);
+  143 
+  144 const [items, total] = await Promise.all([
+→ 145   prisma.inventory.findMany(
+The column `Inventory.bulkMinQty` does not exist in the current database.

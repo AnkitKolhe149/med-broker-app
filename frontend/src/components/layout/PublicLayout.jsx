@@ -23,6 +23,7 @@ export default function PublicLayout({ children }) {
             <nav className="header-nav">
               <a href="/#features" className="nav-link">Features</a>
               <a href="/#benefits" className="nav-link">Benefits</a>
+              <button onClick={() => navigate('/about')} className="nav-link">About</button>
               <button onClick={() => navigate('/login')} className="btn-outline">Sign In</button>
               <button onClick={() => navigate('/register')} className="btn-primary">Get Started</button>
             </nav>
@@ -48,17 +49,17 @@ export default function PublicLayout({ children }) {
               <ul className="footer-links">
                 <li><a href="/#features">Features</a></li>
                 <li><a href="/#benefits">Benefits</a></li>
-                <li><a href="/#about">About Us</a></li>
-                <li><button onClick={() => navigate('/login')} style={{background:'none', border:'none', padding:0, color: 'var(--text-secondary)', cursor:'pointer'}}>Sign In</button></li>
+                <li><button onClick={() => navigate('/about')}>About Us</button></li>
+                <li><button onClick={() => navigate('/login')}>Sign In</button></li>
               </ul>
             </div>
             <div className="footer-col">
               <h4 className="footer-heading">Support</h4>
               <ul className="footer-links">
-                <li><button onClick={() => navigate('/support/help-center')} style={{background:'none', border:'none', padding:0, color: 'var(--text-secondary)', cursor:'pointer'}}>Help Center</button></li>
-                <li><button onClick={() => navigate('/support/contact-us')} style={{background:'none', border:'none', padding:0, color: 'var(--text-secondary)', cursor:'pointer'}}>Contact Us</button></li>
-                <li><button onClick={() => navigate('/support/faq')} style={{background:'none', border:'none', padding:0, color: 'var(--text-secondary)', cursor:'pointer'}}>FAQ</button></li>
-                <li><button onClick={() => navigate('/support/terms')} style={{background:'none', border:'none', padding:0, color: 'var(--text-secondary)', cursor:'pointer'}}>Terms of Service</button></li>
+                <li><button onClick={() => navigate('/support/help-center')}>Help Center</button></li>
+                <li><button onClick={() => navigate('/support/contact-us')}>Contact Us</button></li>
+                <li><button onClick={() => navigate('/support/faq')}>FAQ</button></li>
+                <li><button onClick={() => navigate('/support/terms')}>Terms of Service</button></li>
               </ul>
             </div>
             <div className="footer-col">

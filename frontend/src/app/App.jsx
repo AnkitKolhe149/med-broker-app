@@ -29,6 +29,8 @@ import ContactUs from '../pages/public/ContactUs';
 import FAQ from '../pages/public/FAQ';
 import TermsOfService from '../pages/public/TermsOfService';
 import HelpArticle from '../pages/public/HelpArticle';
+import About from '../pages/public/About';
+import PublicLayout from '../components/layout/PublicLayout';
 
 // Customer pages
 import CustomerDashboard from '../pages/customer/Dashboard';
@@ -79,6 +81,7 @@ function App() {
                     <Route path="/support/faq" element={<FAQ />} />
                     <Route path="/support/terms" element={<TermsOfService />} />
                     <Route path="/support/help-center/:topicId" element={<HelpArticle />} />
+                    <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
                     
                     {/* Onboarding routes (require authentication but not complete profile) */}
                     <Route path="/onboarding/vendor" element={<VendorOnboarding />} />

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Payments.module.css';
+import { Banknote, Undo2, Check, Clock } from 'lucide-react';
 
 function VendorPayments() {
 	const [paymentData, setPaymentData] = useState({
@@ -158,7 +159,7 @@ function VendorPayments() {
 											color: txn.type === 'order' ? 'var(--success)' : 'var(--error)'
 											}}
 										>
-											{txn.type === 'order' ? '💰 Sale' : '↩️ Refund'}
+											{txn.type === 'order' ? <><Banknote size={12} strokeWidth={1.5} /> Sale</> : <><Undo2 size={12} strokeWidth={1.5} /> Refund</>}
 										</span>
 									</td>
 									<td className={styles.tableCell}>
@@ -174,7 +175,7 @@ function VendorPayments() {
 											color: txn.status === 'settled' ? 'var(--success)' : 'var(--warning)'
 											}}
 										>
-											{txn.status === 'settled' ? '✓ Settled' : '⏳ Pending'}
+											{txn.status === 'settled' ? <><Check size={12} strokeWidth={1.5} /> Settled</> : <><Clock size={12} strokeWidth={1.5} /> Pending</>}
 										</span>
 									</td>
 								</tr>
@@ -213,7 +214,7 @@ function VendorPayments() {
 											color: 'var(--success)'
 											}}
 										>
-											✓ {settlement.status}
+											<Check size={12} strokeWidth={1.5} /> {settlement.status}
 										</span>
 									</td>
 								</tr>

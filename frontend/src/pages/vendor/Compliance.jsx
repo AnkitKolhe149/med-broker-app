@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Compliance.module.css';
+import { Check, AlertTriangle, Clock, X, FileText, ClipboardList } from 'lucide-react';
 
 function VendorCompliance() {
 	const [documents, setDocuments] = useState([
@@ -58,10 +59,10 @@ function VendorCompliance() {
 
 	const getStatusLabel = (status) => {
 		switch(status) {
-			case 'verified': return '✓ Verified';
-			case 'expiring-soon': return '⚠ Expiring Soon';
-			case 'pending': return '⏳ Pending Review';
-			case 'rejected': return '✗ Rejected';
+			case 'verified': return <><Check size={12} /> Verified</>;
+			case 'expiring-soon': return <><AlertTriangle size={12} /> Expiring Soon</>;
+			case 'pending': return <><Clock size={12} /> Pending Review</>;
+			case 'rejected': return <><X size={12} /> Rejected</>;
 			default: return 'Unknown';
 		}
 	};
@@ -75,7 +76,7 @@ function VendorCompliance() {
 
 			{/* Compliance Alert */}
 			<div className={styles.complianceAlert}>
-				<div>⚠️</div>
+				<AlertTriangle size={20} strokeWidth={1.5} />
 				<div className={styles.alertContent}>
 					<div className={styles.alertTitle}>Action Required</div>
 					<div className={styles.alertMessage}>
@@ -90,7 +91,7 @@ function VendorCompliance() {
 				<div className={styles.scoreText}>
 					<div className={styles.scoreLabel}>Compliance Score</div>
 					<div className={styles.scoreDesc}>Excellent - Keep It Up!</div>
-					<div className={styles.scoreStatus}>✓ All major requirements met. 1 document renewal pending.</div>
+					<div className={styles.scoreStatus}><Check size={14} /> All major requirements met. 1 document renewal pending.</div>
 				</div>
 			</div>
 
@@ -101,7 +102,7 @@ function VendorCompliance() {
 					{documents.map(doc => (
 						<div key={doc.id} className={styles.documentCard}>
 							<div className={styles.documentInfo}>
-								<div className={styles.documentName}>📄 {doc.name}</div>
+								<div className={styles.documentName}><FileText size={16} strokeWidth={1.5} /> {doc.name}</div>
 								{doc.uploadedDate && (
 									<>
 										<div className={styles.documentMeta}>Uploaded: {doc.uploadedDate}</div>
@@ -165,7 +166,7 @@ function VendorCompliance() {
 										backgroundColor: log.status === 'success' ? 'var(--green-100)' : 'var(--red-100)',
 										color: log.status === 'success' ? 'var(--success)' : 'var(--error)'
 									}}>
-										{log.status === 'success' ? '✓ Success' : '✗ Failed'}
+										{log.status === 'success' ? <><Check size={12} /> Success</> : <><X size={12} /> Failed</>}
 									</span>
 								</td>
 							</tr>
@@ -179,7 +180,7 @@ function VendorCompliance() {
 				<div className={styles.sectionTitle}>Compliance Guidelines</div>
 				<div className={styles.tipsGrid}>
 					<div className={styles.tipCard}>
-						<h4 className={styles.tipTitle}>📋 Document Requirements</h4>
+						<h4 className={styles.tipTitle}><ClipboardList size={16} strokeWidth={1.5} /> Document Requirements</h4>
 						<ul className={styles.tipList}>
 							<li>Current Business License</li>
 							<li>Valid GST Certificate</li>
@@ -188,7 +189,7 @@ function VendorCompliance() {
 						</ul>
 					</div>
 					<div className={styles.tipCard}>
-						<h4 className={styles.tipTitle}>✓ Best Practices</h4>
+						<h4 className={styles.tipTitle}><Check size={16} strokeWidth={1.5} /> Best Practices</h4>
 						<ul className={styles.tipList}>
 							<li>Renew documents 30 days before expiry</li>
 							<li>Keep copies in secure location</li>
