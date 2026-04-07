@@ -100,14 +100,18 @@ model Customer {
 }
 
 model Medicine {
-  id          String      @id @default(uuid())
-  name        String
-  description String?
-  priceCents  Int
-  inventory   Inventory[]
-  orderItems  OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                   String      @id @default(uuid())
+  name                 String
+  description          String?
+  priceCents           Int
+  wholesalePriceCents  Int?
+  bulkMinQty           Int?
+  bulkPriceCents       Int?
+  requiresPrescription Boolean     @default(false)
+  inventory            Inventory[]
+  orderItems           OrderItem[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
 
   @@index([updatedAt])
 }

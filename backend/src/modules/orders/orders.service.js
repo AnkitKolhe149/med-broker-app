@@ -1,6 +1,7 @@
 const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
 const { uploadPrescriptionImage } = require('../../services/cloudinary.service');
+const { resolveOrderItemUnitPriceCents } = require('./orderPricing.util');
 
 const formatRelativeTime = (value) => {
   if (!value) return 'Recently';
@@ -112,9 +113,26 @@ const createOrder = async (userId, orderData) => {
 
   // Fetch medicine prices and validate existence
   const medicineIds = items.map(item => item.medicineId);
-  const medicines = await prisma.medicine.findMany({
-    where: { id: { in: medicineIds } }
-  });
+  const [customer, medicines] = await Promise.all([
+    prisma.customer.findUnique({
+      where: { userId },
+      select: {
+        buyerType: true
+      }
+    }),
+    prisma.medicine.findMany({
+      where: { id: { in: medicineIds } },
+      select: {
+        id: true,
+        priceCents: true,
+        wholesalePriceCents: true,
+        bulkMinQty: true,
+        bulkPriceCents: true
+      }
+    })
+  ]);
+
+  const buyerType = customer?.buyerType || 'RETAIL';
 
   if (medicines.length !== medicineIds.length) {
     throw new NotFoundError('One or more medicines not found');
@@ -127,13 +145,19 @@ const createOrder = async (userId, orderData) => {
   let totalCents = 0;
   const orderItems = items.map(item => {
     const medicine = medicineMap.get(item.medicineId);
-    const itemTotal = medicine.priceCents * item.quantity;
+    const unitPriceCents = resolveOrderItemUnitPriceCents({
+      medicine,
+      buyerType,
+      quantity: item.quantity,
+      packageType: item.packageType
+    });
+    const itemTotal = unitPriceCents * item.quantity;
     totalCents += itemTotal;
 
     return {
       medicineId: item.medicineId,
       quantity: item.quantity,
-      unitPriceCents: medicine.priceCents
+      unitPriceCents
     };
   });
 

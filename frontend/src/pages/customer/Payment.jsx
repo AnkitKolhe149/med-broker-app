@@ -77,8 +77,9 @@ const handlePaymentProcess = async (e) => {
 		// STEP 1: Create order in backend
 		const createdOrder = await orderService.createOrder({
 			items: orderData.cartItems.map((item) => ({
-				medicineId: item.medicineId,
-				quantity: item.quantity
+				medicineId: item.actualMedicineId || item.medicineId,
+				quantity: item.quantity,
+				packageType: item.packageType || 'standard'
 			})),
 			prescriptionUrl: orderData.prescriptionUrl
 		});

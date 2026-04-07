@@ -207,7 +207,10 @@ function Catalog() {
 			medicine.retailPrice,
 			medicine.wholesalePrice,
 			buyerType,
-			medicine.currencyCode || viewerCurrency
+			medicine.currencyCode || viewerCurrency,
+			'standard',
+			medicine.bulkPrice,
+			medicine.bulkMinQty
 		);
 		showSuccess(`${medicine.name} added to cart`);
 	};

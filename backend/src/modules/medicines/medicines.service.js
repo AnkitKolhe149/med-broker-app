@@ -61,7 +61,9 @@ const resolveViewerCurrency = ({ query = {}, viewerContext = {} }) => {
 const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRateRecord) => {
   const sourceCurrencyCode = BASE_CURRENCY;
   const sourceRetailPrice = Number((inventory.medicine.priceCents / 100).toFixed(2));
-  const sourceWholesalePrice = Number((sourceRetailPrice * 0.9).toFixed(2));
+  const sourceWholesalePrice = Number((((inventory.medicine.wholesalePriceCents ?? inventory.medicine.priceCents) || 0) / 100).toFixed(2));
+  const sourceBulkPrice = Number((((inventory.medicine.bulkPriceCents ?? inventory.medicine.wholesalePriceCents ?? inventory.medicine.priceCents) || 0) / 100).toFixed(2));
+  const bulkMinQty = inventory.medicine.bulkMinQty || 1;
 
   const convertedRetail = convertAmount({
     amount: sourceRetailPrice,
@@ -82,6 +84,16 @@ const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRa
   const retailPrice = Number((convertedRetail ?? sourceRetailPrice).toFixed(2));
   const wholesalePrice = Number((convertedWholesale ?? sourceWholesalePrice).toFixed(2));
 
+  const convertedBulk = convertAmount({
+    amount: sourceBulkPrice,
+    fromCurrency: sourceCurrencyCode,
+    toCurrency: viewerCurrencyCode,
+    baseCurrency: exchangeRateRecord?.baseCode || BASE_CURRENCY,
+    rates: exchangeRateRecord?.rates || {}
+  });
+
+  const bulkPrice = Number((convertedBulk ?? sourceBulkPrice).toFixed(2));
+
   return {
     id: inventory.id,
     medicineId: inventory.medicine.id,
@@ -92,13 +104,16 @@ const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRa
     dosageForm: 'Tablet',
     retailPrice,
     wholesalePrice,
+    bulkPrice,
+    bulkMinQty,
     currencyCode: viewerCurrencyCode,
     sourceCurrencyCode,
     sourceRetailPrice,
     sourceWholesalePrice,
+    sourceBulkPrice,
     popularity: Math.min(100, Math.max(50, inventory.quantity)),
     addedAt: inventory.medicine.createdAt,
-    requiresPrescription: false,
+    requiresPrescription: Boolean(inventory.medicine.requiresPrescription),
     imageUrl: inventory.imageUrl || null,
     vendor: inventory.vendor.companyName,
     vendorId: inventory.vendor.id,
@@ -133,6 +148,10 @@ module.exports = {
               name: true,
               description: true,
               priceCents: true,
+              wholesalePriceCents: true,
+              bulkMinQty: true,
+              bulkPriceCents: true,
+              requiresPrescription: true,
               createdAt: true
             }
           },
@@ -177,6 +196,10 @@ module.exports = {
             name: true,
             description: true,
             priceCents: true,
+            wholesalePriceCents: true,
+            bulkMinQty: true,
+            bulkPriceCents: true,
+            requiresPrescription: true,
             createdAt: true
           }
         },

@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { formatCurrency } from '../../utils/currency';
 import medicineService from '../../services/medicine.service';
+import pricingService from '../../services/pricing.service';
 import styles from './MedicineDetail.module.css';
 
 function MedicineDetail() {
@@ -52,7 +53,7 @@ function MedicineDetail() {
 				warnings: 'Read label instructions before use.',
 				rating: Math.random() > 0.5 ? (4.5 + Math.random() * 0.5) : (3.5 + Math.random() * 1),
 				reviewCount: Math.floor(Math.random() * 300) + 50,
-				requiresPrescription: Math.random() > 0.7
+				requiresPrescription: Boolean(med.requiresPrescription)
 			});
 		} catch (error) {
 			console.error('Failed to load medicine:', error);
@@ -70,7 +71,10 @@ function MedicineDetail() {
 				medicine.retailPrice,
 				medicine.wholesalePrice,
 				user?.customer?.buyerType || 'RETAIL',
-				currencyCode
+				currencyCode,
+				selectedSize,
+				medicine.bulkPrice,
+				medicine.bulkMinQty
 			);
 			setAddedToCart(true);
 			setTimeout(() => setAddedToCart(false), 2000);
@@ -98,7 +102,15 @@ function MedicineDetail() {
 		);
 	}
 
-	const displayPrice = user?.customer?.buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice;
+	const displayPrice = pricingService.resolveUnitPrice({
+		buyerType: user?.customer?.buyerType || 'RETAIL',
+		quantity,
+		packageType: selectedSize,
+		retailPrice: medicine.retailPrice,
+		wholesalePrice: medicine.wholesalePrice,
+		bulkPrice: medicine.bulkPrice,
+		bulkMinQty: medicine.bulkMinQty
+	});
 	const savings = medicine.retailPrice - medicine.wholesalePrice;
 	const savingsPercent = ((savings / medicine.retailPrice) * 100).toFixed(0);
 
@@ -170,7 +182,7 @@ function MedicineDetail() {
 						<div className={styles.priceSection}>
 							<div className={styles.priceMain}>
 								<span className={styles.currentPrice}>
-									{formatPrice(medicine?.retailPrice || 0)}
+									{formatPrice(displayPrice || 0)}
 								</span>
 								<span className={styles.originalPrice}>
 									{formatPrice((medicine?.retailPrice || 0) * 1.2)}
