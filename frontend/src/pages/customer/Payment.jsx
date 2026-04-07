@@ -3,17 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNotification } from '../../context/NotificationContext';
 import { formatCurrency } from '../../utils/currency';
+import { useCart } from '../../context/CartContext';
 import orderService from '../../services/order.service';
+import paymentService from '../../services/payment.service';
 import styles from './Payment.module.css';
 
 function Payment() {
 	const navigate = useNavigate();
 	const { showError } = useNotification();
+	const { clearCart } = useCart();
 	const [orderData, setOrderData] = useState(null);
 	const [paymentMethod, setPaymentMethod] = useState('upi');
 	const [loading, setLoading] = useState(true);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [upiId, setUpiId] = useState('customer@upi');
+	const [paymentReference, setPaymentReference] = useState(`MED-${Date.now()}`);
+	const [activeOrderId, setActiveOrderId] = useState('');
 	const currencyCode = orderData?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
 
@@ -43,7 +48,9 @@ function Payment() {
 
 	const generateUPILink = () => {
 		const amount = calculateTotal();
-		const upiString = `upi://pay?pa=${upiId}&pn=MedIQ&am=${amount}&tn=Medicine%20Purchase&tr=${generateTransactionId()}`;
+		const transactionRef = paymentReference || generateTransactionId();
+		const note = encodeURIComponent(activeOrderId ? `Order ${activeOrderId}` : 'Medicine Purchase');
+		const upiString = `upi://pay?pa=${upiId}&pn=MedIQ&am=${amount.toFixed(2)}&tn=${note}&tr=${transactionRef}`;
 		return upiString;
 	};
 
@@ -54,8 +61,9 @@ function Payment() {
 	const generateQRCode = () => {
 		const amount = calculateTotal();
 		const merchantUPI = 'mediq@icici';
-		const transactionId = generateTransactionId();
-		const upiString = `upi://pay?pa=${merchantUPI}&pn=MedIQ&am=${amount}&tn=Medicine%20Purchase&tr=${transactionId}`;
+		const transactionId = paymentReference || generateTransactionId();
+		const note = encodeURIComponent(activeOrderId ? `Order ${activeOrderId}` : 'Medicine Purchase');
+		const upiString = `upi://pay?pa=${merchantUPI}&pn=MedIQ&am=${amount.toFixed(2)}&tn=${note}&tr=${transactionId}`;
 		return upiString;
 	};
 
@@ -66,42 +74,7 @@ const handlePaymentProcess = async (e) => {
 	try {
 		const totalAmount = calculateTotal();
 
-		// 🔥 STEP 1: CREATE PAYMENT
-		const res = await fetch("http://localhost:4000/api/custom-payments/create", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				amount: totalAmount,
-				userId: "user123",
-				orderId: "order_" + Date.now(),
-			}),
-		});
-
-		const data = await res.json();
-
-		console.log("🔥 CREATE RESPONSE:", data);
-
-		if (!data.paymentIntentId) {
-			throw new Error("No paymentIntentId received");
-		}
-
-		// 🔥 STEP 2: SIMULATE SUCCESS
-		await new Promise(resolve => setTimeout(resolve, 1000));
-
-		// 🔥 STEP 3: UPDATE STATUS
-		await fetch("http://localhost:4000/api/custom-payments/success", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				paymentIntentId: data.paymentIntentId,
-			}),
-		});
-
-		// 🔥 STEP 4: PERSIST ORDER IN BACKEND
+		// STEP 1: Create order in backend
 		const createdOrder = await orderService.createOrder({
 			items: orderData.cartItems.map((item) => ({
 				medicineId: item.medicineId,
@@ -109,28 +82,48 @@ const handlePaymentProcess = async (e) => {
 			})),
 			prescriptionUrl: orderData.prescriptionUrl
 		});
+		setActiveOrderId(createdOrder.id);
 
-		// 🔥 STEP 5: COMPLETE ORDER
-		const orderId = createdOrder.id;
+		// STEP 2: Initiate payment in backend
+		const initiatedPayment = await paymentService.initiatePayment({
+			orderId: createdOrder.id,
+			provider: 'mock',
+			returnUrl: `${window.location.origin}/customer/order-confirmation/${createdOrder.id}`
+		});
+		setPaymentReference(initiatedPayment.paymentId);
+
+		// STEP 3: Simulate payment completion for mock flow and verify
+		await new Promise((resolve) => setTimeout(resolve, 800));
+		const verification = await paymentService.verifyPayment({
+			paymentId: initiatedPayment.paymentId,
+			orderId: createdOrder.id,
+			status: 'SUCCEEDED'
+		});
+
+		const verifiedOrder = verification?.order || createdOrder;
+
+		// STEP 4: Complete local confirmation payload
+		const orderId = verifiedOrder.id || createdOrder.id;
 
 		const completedOrder = {
 			...orderData,
 			orderId,
 			paymentMethod,
 			paymentStatus: 'completed',
-			orderStatus: createdOrder.status || 'pending',
+			orderStatus: verifiedOrder.status || 'PAID',
 			completedAt: new Date().toISOString(),
 			total: totalAmount
 		};
 
 		sessionStorage.setItem('completed_order', JSON.stringify(completedOrder));
 		sessionStorage.removeItem('pending_order');
+		clearCart();
 
 		navigate(`/customer/order-confirmation/${orderId}`);
 
 	} catch (error) {
 		console.error("❌ PAYMENT ERROR:", error);
-		showError("Payment failed");
+		showError(error.message || 'Payment failed');
 	} finally {
 		setIsProcessing(false);
 	}
@@ -196,6 +189,9 @@ const handlePaymentProcess = async (e) => {
 												level="H"
 												includeMargin={true}
 											/>
+											<p className={styles.qrHint} style={{ marginTop: '0.5rem' }}>
+												Ref: {paymentReference}
+											</p>
 											<p className={styles.qrHint}>
 												Scan the QR code with Google Pay, PhonePe, Paytm or any UPI app
 											</p>

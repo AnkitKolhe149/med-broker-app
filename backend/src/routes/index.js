@@ -1,4 +1,3 @@
-const paymentCustomRoutes = require("../routes/payment");
 const express = require("express");
 const { prisma } = require("../database/prisma");
 const authRoutes = require("../modules/auth/auth.routes");
@@ -33,7 +32,6 @@ router.use("/orders", orderRoutes);
 
 // Payment routes
 router.use("/payments", paymentRoutes);
-router.use("/custom-payments", paymentCustomRoutes);
 
 // Vendor dashboard/analytics routes
 router.use("/vendor-insights", vendorInsightsRoutes);
