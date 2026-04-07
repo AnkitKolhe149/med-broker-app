@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
 import { useCart } from '../../context/CartContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
-import { formatCurrency } from '../../utils/currency';
+import { convertPrice, formatCurrency, getCurrencyForCountry } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import styles from './Dashboard.module.css';
 import { BarChart2, Package, Pill, Settings, ClipboardList, Heart, TrendingUp, Timer, Sparkles, Gift } from 'lucide-react';
@@ -13,11 +14,12 @@ function CustomerDashboard() {
 	const navigate = useNavigate();
 	const { user } = useUser();
 	const { getTotalItems } = useCart();
+	const { currency, exchangeRates } = useCurrency();
 	const { showError } = useNotification();
 	const [orders, setOrders] = useState([]);
 	const [loadingOrders, setLoadingOrders] = useState(true);
-	const currencyCode = localStorage.getItem('preferredCurrency') || 'USD';
-	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const currencyCode = getCurrencyForCountry(user?.customer?.country || user?.vendor?.country, currency || 'USD');
+	const formatPrice = (value) => formatCurrency(convertPrice(value, 'INR', currencyCode, exchangeRates), currencyCode, true);
 	const savedAddress = user?.customer
 		? `${user.customer.address || ''}, ${user.customer.city || ''}, ${user.customer.state || ''} ${user.customer.zipCode || ''}`
 		: 'No saved address';
@@ -28,7 +30,7 @@ function CustomerDashboard() {
 		const loadOrders = async () => {
 			try {
 				setLoadingOrders(true);
-				const result = await orderService.getCustomerOrders({ page: 1, limit: 20 });
+				const result = await orderService.getCustomerOrders({ page: 1, limit: 100 });
 				setOrders(result.orders || []);
 			} catch (error) {
 				console.error('Failed to load dashboard orders', error);
@@ -97,6 +99,73 @@ function CustomerDashboard() {
 		if (normalized.includes('cancel')) return 'Cancelled';
 		return 'Pending update';
 	};
+
+	const extractMedicineQuantityMap = (order) => {
+		const groupedByMedicine = new Map();
+		(order.items || []).forEach((item) => {
+			const medicineName = item?.medicine?.name;
+			if (!medicineName) return;
+			const quantity = Math.max(1, Number(item?.quantity) || 1);
+			groupedByMedicine.set(medicineName, (groupedByMedicine.get(medicineName) || 0) + quantity);
+		});
+		return groupedByMedicine;
+	};
+
+	const getOrderDisplayName = (medicineQuantityMap) => {
+		const groupedEntries = Array.from(medicineQuantityMap.entries());
+		if (groupedEntries.length === 0) {
+			return 'Medicine order';
+		}
+
+		if (groupedEntries.length === 1) {
+			const [medicineName, totalQuantity] = groupedEntries[0];
+			return `${medicineName} x${totalQuantity}`;
+		}
+
+		if (groupedEntries.length === 2) {
+			const [firstMedicineName, firstQuantity] = groupedEntries[0];
+			const [secondMedicineName, secondQuantity] = groupedEntries[1];
+			return `${firstMedicineName} x${firstQuantity}, ${secondMedicineName} x${secondQuantity}`;
+		}
+
+		const [firstMedicineName, firstQuantity] = groupedEntries[0];
+		return `${firstMedicineName} x${firstQuantity} + ${groupedEntries.length - 1} more`;
+	};
+
+	const getTotalQuantity = (medicineQuantityMap) => (
+		Array.from(medicineQuantityMap.values()).reduce((sum, qty) => sum + qty, 0)
+	);
+
+	const groupedActiveOrders = useMemo(() => {
+		const grouped = new Map();
+
+		metrics.activeOrders.forEach((order) => {
+			const medicineQuantityMap = extractMedicineQuantityMap(order);
+			const medicineKey = Array.from(medicineQuantityMap.keys()).sort().join('|') || 'unknown';
+			const groupKey = `${order.status}::${medicineKey}`;
+
+			if (!grouped.has(groupKey)) {
+				grouped.set(groupKey, {
+					status: order.status,
+					medicineQuantityMap: new Map(),
+					orderCount: 0,
+					latestCreatedAt: order.createdAt ? new Date(order.createdAt).toISOString() : new Date(0).toISOString()
+				});
+			}
+
+			const group = grouped.get(groupKey);
+			group.orderCount += 1;
+			group.latestCreatedAt = new Date(order.createdAt || 0) > new Date(group.latestCreatedAt)
+				? new Date(order.createdAt).toISOString()
+				: group.latestCreatedAt;
+
+			medicineQuantityMap.forEach((qty, name) => {
+				group.medicineQuantityMap.set(name, (group.medicineQuantityMap.get(name) || 0) + qty);
+			});
+		});
+
+		return Array.from(grouped.values()).sort((a, b) => new Date(b.latestCreatedAt) - new Date(a.latestCreatedAt));
+	}, [metrics.activeOrders]);
 
 	return (
 		<main className={styles.dashboardMain}>
@@ -176,7 +245,7 @@ function CustomerDashboard() {
 						<div className={styles.heroChips}>
 							<span className={styles.heroChip}>Buyer: {buyerType}</span>
 							<span className={styles.heroChip}>Currency: {currencyCode}</span>
-							<span className={styles.heroChip}>{metrics.activeOrders.length} active orders</span>
+							<span className={styles.heroChip}>{metrics.activeOrders.length} open of {metrics.totalOrders} total</span>
 						</div>
 						<div className={styles.heroActionsRow}>
 							<button className="button" onClick={() => navigate('/customer/catalog')}>Browse medicines</button>
@@ -228,7 +297,7 @@ function CustomerDashboard() {
 					<div className={`${styles.statBox} card`}>
 						<div className={styles.statBoxIcon} style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)' }}><Timer size={20} strokeWidth={1.5} /></div>
 						<div>
-							<p className={styles.statBoxLabel}>Active Orders</p>
+							<p className={styles.statBoxLabel}>Open Orders</p>
 							<p className={styles.statBoxValue}>{metrics.activeOrders.length}</p>
 						</div>
 					</div>
@@ -244,8 +313,8 @@ function CustomerDashboard() {
 				<section className={styles.ordersSection}>
 					<div className={styles.sectionHeaderMain}>
 						<div>
-							<h3 className={styles.sectionTitleMain}>Active Orders</h3>
-							<p className={styles.sectionSubtitle}>Track your current deliveries</p>
+							<h3 className={styles.sectionTitleMain}>Open Orders</h3>
+							<p className={styles.sectionSubtitle}>Track current deliveries ({metrics.activeOrders.length} of {metrics.totalOrders})</p>
 						</div>
 						<button className="button-outline" onClick={() => navigate('/customer/orders')}>View all</button>
 					</div>
@@ -256,20 +325,22 @@ function CustomerDashboard() {
 						) : metrics.activeOrders.length === 0 ? (
 							<div className={`${styles.orderCard} card`}>No active orders yet.</div>
 						) : (
-							metrics.activeOrders.map((order) => {
-								const stageIndex = getOrderStageIndex(order.status);
+							groupedActiveOrders.map((group, index) => {
+								const stageIndex = getOrderStageIndex(group.status);
+								const totalQuantity = getTotalQuantity(group.medicineQuantityMap);
 								return (
-									<div key={order.id} className={`${styles.orderCard} card`}>
+									<div key={`${group.status}-${index}`} className={`${styles.orderCard} card`}>
 										<div className={styles.orderCardTop}>
 											<div>
-												<p className={styles.orderId}>{order.id}</p>
-												<p className={styles.orderEta}>Status: {getEtaLabel(order.status)}</p>
+												<p className={styles.orderId}>{getOrderDisplayName(group.medicineQuantityMap)}</p>
+												<p className={styles.orderRef}>Combined {group.orderCount} order{group.orderCount > 1 ? 's' : ''}</p>
+												<p className={styles.orderEta}>Status: {getEtaLabel(group.status)} • Qty {totalQuantity}</p>
 											</div>
-											<span className={`badge badge-success`}>{order.status}</span>
+											<span className={`badge badge-success`}>{group.status}</span>
 										</div>
 										<div className={styles.stageRow}>
 											{orderStages.map((stage, idx) => (
-												<React.Fragment key={`${order.id}-${stage}`}>
+												<React.Fragment key={`${group.status}-${index}-${stage}`}>
 													<div className={styles.stageItem}>
 														<span className={`${styles.stageDot} ${idx <= stageIndex ? styles.stageDotActive : ''}`}></span>
 														<span className={`${styles.stageText} ${idx <= stageIndex ? styles.stageTextActive : ''}`}>{stage}</span>

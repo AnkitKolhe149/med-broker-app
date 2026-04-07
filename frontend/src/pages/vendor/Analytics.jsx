@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
+import { useCurrency } from '../../context/CurrencyContext';
 import vendorService from '../../services/vendor.service';
+import { formatCurrency } from '../../utils/currency';
 import styles from './Analytics.module.css';
 import { Lightbulb } from 'lucide-react';
 
 function VendorAnalytics() {
+	const { currency, convert } = useCurrency();
 	const [timeRange, setTimeRange] = useState('month');
 	const [loading, setLoading] = useState(true);
 	const [analyticsData, setAnalyticsData] = useState({
@@ -55,6 +58,7 @@ function VendorAnalytics() {
 
 	const maxSalesTrend = Math.max(...analyticsData.salesTrend.map((data) => data.sales), 1);
 	const maxRegionOrders = Math.max(...analyticsData.regionData.map((region) => region.orders), 1);
+	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 
 	return (
 		<div className={styles.container}>
@@ -81,7 +85,7 @@ function VendorAnalytics() {
 			<div className={styles.metricsGrid}>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Total Sales</div>
-					<div className={styles.metricValue}>₹{analyticsData.totalSales.toLocaleString()}</div>
+					<div className={styles.metricValue}>{formatMoney(analyticsData.totalSales)}</div>
 					<div className={styles.metricChange}>↑ 12.5% from last month</div>
 				</div>
 				<div className={styles.metricCard}>
@@ -91,7 +95,7 @@ function VendorAnalytics() {
 				</div>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Avg Order Value</div>
-					<div className={styles.metricValue}>₹{analyticsData.avgOrderValue.toFixed(2)}</div>
+					<div className={styles.metricValue}>{formatMoney(analyticsData.avgOrderValue)}</div>
 					<div className={styles.metricChange}>↑ 2.1% from last month</div>
 				</div>
 				<div className={styles.metricCard}>
@@ -126,7 +130,7 @@ function VendorAnalytics() {
 										height: `${(data.sales / maxSalesTrend) * 250}px`
 									}}
 								>
-									₹{(data.sales / 1000).toFixed(0)}K
+										{formatMoney(data.sales)}
 								</div>
 								<span className={styles.monthLabel}>{data.month}</span>
 							</div>
@@ -185,7 +189,7 @@ function VendorAnalytics() {
 									<strong>{product.name}</strong>
 								</td>
 								<td className={styles.tableCell}>{product.sales}</td>
-								<td className={styles.tableCell}>₹{product.revenue.toLocaleString()}</td>
+								<td className={styles.tableCell}>{formatMoney(product.revenue)}</td>
 								<td className={styles.tableCell}>
 									<button className={styles.detailsButton}>
 										View Details

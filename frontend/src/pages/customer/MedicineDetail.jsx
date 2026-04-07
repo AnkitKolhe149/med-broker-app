@@ -1,9 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useFavorites } from '../../context/FavoritesContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
+import { useNotification } from '../../context/NotificationContext';
 import { formatCurrency } from '../../utils/currency';
 import medicineService from '../../services/medicine.service';
+import pricingService from '../../services/pricing.service';
 import styles from './MedicineDetail.module.css';
 
 const FALLBACK_IMAGE =
@@ -13,20 +17,30 @@ function MedicineDetail() {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const { addToCart } = useCart();
+	const { isFavorited, toggleFavorite } = useFavorites();
+	const { currency } = useCurrency();
 	const { user } = useUser();
+	const { showError } = useNotification();
 	const [medicine, setMedicine] = useState(null);
 	const [quantity, setQuantity] = useState(1);
 	const [selectedSize, setSelectedSize] = useState('standard');
 	const [loading, setLoading] = useState(true);
 	const [addedToCart, setAddedToCart] = useState(false);
-	const [isFavorited, setIsFavorited] = useState(false);
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-	const currencyCode = localStorage.getItem('preferredCurrency') || 'USD';
-	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const displayCurrencyCode = medicine?.currencyCode || currency || 'USD';
+	const formatPrice = (value) => formatCurrency(value, displayCurrencyCode, true);
+	const isWholesaleBuyer = user?.customer?.buyerType === 'WHOLESALE';
+	const canUseBulk = isWholesaleBuyer;
 
 	useEffect(() => {
 		loadMedicineData();
 	}, [id]);
+
+	useEffect(() => {
+		if (!canUseBulk && selectedSize === 'bulk') {
+			setSelectedSize('standard');
+		}
+	}, [canUseBulk, selectedSize]);
 
 	const loadMedicineData = async () => {
 		try {
@@ -46,24 +60,33 @@ function MedicineDetail() {
 			const wholesalePrice = Number(med.wholesalePrice ?? med.sourceWholesalePrice ?? retailPrice);
 			const stockLevel = Number(med.stockLevel ?? med.quantity ?? 0);
 			const inStock = typeof med.inStock === 'boolean' ? med.inStock : stockLevel > 0;
+			const providedUsage = med.usage || med.dosageInstructions || null;
+			const providedPrecautions = med.precautions || null;
+			const providedStorage = med.storage || null;
+			const providedWarnings = med.warnings || null;
+			const providedStrength = med.strength || med.dosage || med.dosageForm || null;
+			const providedDosageForm = med.dosageForm || med.dosage || null;
+			const providedPackSize = med.packSize || med.packageSize || null;
+			const reviewCount = Number(med.reviewCount ?? 0);
+			const rating = typeof med.rating === 'number' ? med.rating : null;
 
 			setMedicine({
 				...med,
 				images: galleryImages,
-				manufacturer: med.brand || med.vendor || med.manufacturer || 'MedIQ Partner',
-				strength: med.strength || med.dosage || med.dosageForm || 'Standard strength',
-				dosage: med.dosageForm || 'Tablet',
-				usage: med.usage || med.dosageInstructions || 'Take exactly as prescribed by your healthcare professional.',
-				packSize: med.packSize || med.packageSize || 'Standard pack',
-				expiry: med.expiry || med.expiryDate || 'Check package',
-				batchNo: med.batchNo || 'N/A',
-				registrationNo: med.registrationNo || med.registrationNumber || 'N/A',
-				sideEffects: med.sideEffects || 'Consult a doctor or pharmacist for complete side effect information.',
-				precautions: med.precautions || 'Follow prescription and dosage instructions carefully.',
-				storage: med.storage || 'Store in a cool, dry place away from direct sunlight.',
-				warnings: med.warnings || 'Read the label and consult a clinician before use.',
-				rating: Number(med.rating ?? 4.6),
-				reviewCount: Number(med.reviewCount ?? Math.max(24, stockLevel * 2)),
+				manufacturer: med.brand || med.vendor || med.manufacturer || null,
+				strength: providedStrength,
+				dosage: providedDosageForm,
+				usage: providedUsage,
+				packSize: providedPackSize,
+				expiry: med.expiry || med.expiryDate || null,
+				batchNo: med.batchNo || null,
+				registrationNo: med.registrationNo || med.registrationNumber || null,
+				sideEffects: med.sideEffects || null,
+				precautions: providedPrecautions,
+				storage: providedStorage,
+				warnings: providedWarnings,
+				rating,
+				reviewCount,
 				requiresPrescription: typeof med.requiresPrescription === 'boolean' ? med.requiresPrescription : Boolean(med.prescriptionRequired),
 				bulkMinQty: Number(med.bulkMinQty ?? 100),
 				bulkDiscountPercent: Number(med.bulkDiscountPercent ?? 10),
@@ -102,21 +125,32 @@ function MedicineDetail() {
 		);
 	}
 
-	const isWholesaleBuyer = user?.customer?.buyerType === 'WHOLESALE';
 	const maxQuantity = medicine.stockLevel > 0 ? medicine.stockLevel : 99;
-	const currentPrice = isWholesaleBuyer ? medicine.wholesalePrice : medicine.retailPrice;
-	const comparePrice = isWholesaleBuyer ? medicine.retailPrice : medicine.wholesalePrice;
-	const savings = Math.max(0, medicine.retailPrice - medicine.wholesalePrice);
-	const savingsPercent = medicine.retailPrice > 0 && savings > 0 ? Math.round((savings / medicine.retailPrice) * 100) : 0;
 
-	const isBulkSelected = selectedSize === 'bulk';
-	const dynamicCurrentPrice = Number((isBulkSelected || isWholesaleBuyer ? medicine.wholesalePrice : medicine.retailPrice).toFixed(2));
-	const dynamicComparePrice = Number((isBulkSelected || isWholesaleBuyer ? medicine.retailPrice : medicine.wholesalePrice).toFixed(2));
+	const isBulkSelected = canUseBulk && selectedSize === 'bulk';
+	const minBulkQty = Math.max(1, Number(medicine.bulkMinQty || 1));
+	const dynamicCurrentPrice = Number(pricingService.resolveUnitPrice({
+		buyerType: user?.customer?.buyerType || 'RETAIL',
+		quantity,
+		packageType: canUseBulk ? selectedSize : 'standard',
+		retailPrice: medicine.retailPrice,
+		wholesalePrice: medicine.wholesalePrice,
+		bulkPrice: medicine.bulkPrice,
+		bulkMinQty: medicine.bulkMinQty
+	}).toFixed(2));
+
 	const selectedImage = medicine.images?.[selectedImageIndex] || medicine.images?.[0] || null;
-	const packLabel = selectedSize === 'bulk' ? 'Bulk / Wholesale pack' : 'Standard pack';
-	const packHint = selectedSize === 'bulk'
-		? 'Bulk uses wholesale pricing.'
-		: 'Best for first orders and small refills.';
+	const packLabel = medicine.packSize || (selectedSize === 'bulk' ? 'Bulk / Wholesale pack' : null);
+	const shouldShowStrengthFact = Boolean(medicine.strength) && medicine.strength !== medicine.dosage;
+	const detailFacts = [
+		{ label: 'Strength', value: shouldShowStrengthFact ? medicine.strength : null },
+		{ label: 'Manufacturer', value: medicine.manufacturer },
+		{ label: 'Pack', value: packLabel },
+		{ label: 'Expiry', value: medicine.expiry },
+		{ label: 'Batch No.', value: medicine.batchNo },
+		{ label: 'Registration No.', value: medicine.registrationNo }
+	].filter((item) => Boolean(item.value));
+	const hasRatingData = typeof medicine.rating === 'number' && medicine.reviewCount > 0;
 	const availabilityLabel = medicine.inStock
 		? medicine.stockLevel > 0
 			? `${medicine.stockLevel} units available`
@@ -128,13 +162,23 @@ function MedicineDetail() {
 			return;
 		}
 
+		if (isBulkSelected && quantity < minBulkQty) {
+			showError(`Bulk pack requires minimum quantity of ${minBulkQty}`);
+			return;
+		}
+
+		const packageTypeForCart = canUseBulk ? selectedSize : 'standard';
+
 		addToCart(
-			{ ...medicine, selectedSize, isBulkSelected },
+			{ ...medicine, selectedSize: packageTypeForCart, isBulkSelected },
 			quantity,
-			dynamicCurrentPrice,
-			dynamicComparePrice,
+			medicine.retailPrice,
+			medicine.wholesalePrice,
 			user?.customer?.buyerType || 'RETAIL',
-			currencyCode
+			displayCurrencyCode,
+			packageTypeForCart,
+			medicine.bulkPrice,
+			medicine.bulkMinQty
 		);
 		setAddedToCart(true);
 		setTimeout(() => setAddedToCart(false), 2000);
@@ -191,32 +235,34 @@ function MedicineDetail() {
 						<div className={styles.summaryTopRow}>
 							<div className={styles.vendorBadge}>{medicine?.vendor ? medicine.vendor.toUpperCase() : 'MEDIQ PARTNER'}</div>
 							<button
-								onClick={() => setIsFavorited(!isFavorited)}
-								className={`${styles.favoriteButton} ${isFavorited ? styles.favoriteButtonActive : ''}`}
-								aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+								onClick={() => toggleFavorite(medicine)}
+								className={`${styles.favoriteButton} ${isFavorited(medicine.id) ? styles.favoriteButtonActive : ''}`}
+								aria-label={isFavorited(medicine.id) ? 'Remove from favorites' : 'Add to favorites'}
 							>
-								{isFavorited ? '♥' : '♡'}
+								{isFavorited(medicine.id) ? '♥' : '♡'}
 							</button>
 						</div>
 
 						<div className={styles.titleBlock}>
 							<h1 className={styles.productTitle}>{medicine?.name}</h1>
 							<p className={styles.subtitle}>
-								{medicine.category || 'General'} • {medicine.dosage}
+								{medicine.category || 'General'}{medicine.dosage ? ` • ${medicine.dosage}` : ''}
 							</p>
 						</div>
 
 						<div className={styles.statusRow}>
 							<span className={styles.statusBadge}>{medicine.requiresPrescription ? 'Prescription' : 'OTC'}</span>
 							<span className={styles.statusBadge}>{availabilityLabel}</span>
-							<span className={styles.statusBadge}>{medicine.reviewCount} reviews</span>
+							{hasRatingData ? <span className={styles.statusBadge}>{medicine.reviewCount} reviews</span> : <span className={styles.statusBadge}>Review data unavailable</span>}
 						</div>
 
-						<div className={styles.ratingRow}>
-							<div className={styles.stars}>{'★'.repeat(Math.floor(medicine.rating || 0))}</div>
-							<span className={styles.ratingValue}>{(medicine.rating || 0).toFixed(1)}</span>
-							<span className={styles.reviewCount}>Trusted by verified buyers</span>
-						</div>
+						{hasRatingData && (
+							<div className={styles.ratingRow}>
+								<div className={styles.stars}>{'★'.repeat(Math.floor(medicine.rating || 0))}</div>
+								<span className={styles.ratingValue}>{(medicine.rating || 0).toFixed(1)}</span>
+								<span className={styles.reviewCount}>Trusted by verified buyers</span>
+							</div>
+						)}
 
 						<div className={styles.priceBlock}>
 							<div>
@@ -224,11 +270,7 @@ function MedicineDetail() {
 								<div className={styles.currentPrice}>{formatPrice(dynamicCurrentPrice || 0)}</div>
 							</div>
 							<div className={styles.priceMeta}>
-								<div className={styles.priceNote}>
-									{comparePrice > 0 ? `${isWholesaleBuyer ? 'Retail' : 'Wholesale'}: ${formatPrice(dynamicComparePrice || comparePrice)}` : 'Price shown for your account type'}
-								</div>
-								{savingsPercent > 0 && <span className={styles.priceChip}>{savingsPercent}% tier gap</span>}
-								{selectedSize === 'bulk' && (
+								{canUseBulk && selectedSize === 'bulk' && (
 									<div style={{ padding: '0.75rem', borderRadius: '0.85rem', background: 'rgba(21, 115, 71, 0.08)', border: '1px solid rgba(21, 115, 71, 0.15)', marginTop: '0.5rem' }}>
 										<p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary-dark)', fontWeight: 600 }}>
 											Bulk uses wholesale pricing.
@@ -239,42 +281,39 @@ function MedicineDetail() {
 						</div>
 
 						<div className={styles.factGrid}>
-							<div className={styles.factCard}>
-								<span className={styles.factLabel}>Strength</span>
-								<strong className={styles.factValue}>{medicine.strength}</strong>
-							</div>
-							<div className={styles.factCard}>
-								<span className={styles.factLabel}>Manufacturer</span>
-								<strong className={styles.factValue}>{medicine.manufacturer}</strong>
-							</div>
-							<div className={styles.factCard}>
-								<span className={styles.factLabel}>Pack</span>
-								<strong className={styles.factValue}>{packLabel}</strong>
-							</div>
-							<div className={styles.factCard}>
-								<span className={styles.factLabel}>Stock</span>
-								<strong className={styles.factValue}>{availabilityLabel}</strong>
-							</div>
+							{detailFacts.map((fact) => (
+								<div className={styles.factCard} key={fact.label}>
+									<span className={styles.factLabel}>{fact.label}</span>
+									<strong className={styles.factValue}>{fact.value}</strong>
+								</div>
+							))}
 						</div>
 
-						<div className={styles.optionGroup}>
-							<label className={styles.optionLabel}>Packaging</label>
-							<div className={styles.optionButtons}>
-								<button
-									className={`${styles.optionButton} ${selectedSize === 'standard' ? styles.optionButtonActive : ''}`}
-									onClick={() => setSelectedSize('standard')}
-								>
-									Standard
-								</button>
-								<button
-									className={`${styles.optionButton} ${selectedSize === 'bulk' ? styles.optionButtonActive : ''}`}
-									onClick={() => setSelectedSize('bulk')}
-								>
-									Bulk
-								</button>
+						{canUseBulk && (
+							<div className={styles.optionGroup}>
+								<label className={styles.optionLabel}>Packaging</label>
+								<div className={styles.optionButtons}>
+									<button
+										className={`${styles.optionButton} ${selectedSize === 'standard' ? styles.optionButtonActive : ''}`}
+										onClick={() => setSelectedSize('standard')}
+									>
+										Standard
+									</button>
+									<button
+										className={`${styles.optionButton} ${selectedSize === 'bulk' ? styles.optionButtonActive : ''}`}
+										onClick={() => {
+											setSelectedSize('bulk');
+											if (quantity < minBulkQty) {
+												setQuantity(minBulkQty);
+											}
+										}}
+									>
+										Bulk
+									</button>
+								</div>
+								<p className={styles.packHint}>Bulk uses wholesale pricing. Min qty: {minBulkQty}.</p>
 							</div>
-							<p className={styles.packHint}>{packHint}</p>
-						</div>
+						)}
 
 						<div className={styles.cartSection}>
 							<div className={styles.quantityControl}>
@@ -317,20 +356,26 @@ function MedicineDetail() {
 				<section className={styles.infoSection}>
 					<article className={styles.infoCard}>
 						<h2 className={styles.infoCardTitle}>Overview</h2>
-						<p className={styles.infoCardText}>{medicine.description}</p>
+							<p className={styles.infoCardText}>{medicine.description || 'No overview provided.'}</p>
 					</article>
-					<article className={styles.infoCard}>
-						<h2 className={styles.infoCardTitle}>Usage</h2>
-						<p className={styles.infoCardText}>{medicine.usage}</p>
-					</article>
-					<article className={styles.infoCard}>
-						<h2 className={styles.infoCardTitle}>Safety</h2>
-						<p className={styles.infoCardText}>{medicine.precautions}</p>
-					</article>
-					<article className={styles.infoCard}>
-						<h2 className={styles.infoCardTitle}>Storage</h2>
-						<p className={styles.infoCardText}>{medicine.storage}</p>
-					</article>
+						{medicine.usage && (
+							<article className={styles.infoCard}>
+								<h2 className={styles.infoCardTitle}>Usage</h2>
+								<p className={styles.infoCardText}>{medicine.usage}</p>
+							</article>
+						)}
+						{medicine.precautions && (
+							<article className={styles.infoCard}>
+								<h2 className={styles.infoCardTitle}>Safety</h2>
+								<p className={styles.infoCardText}>{medicine.precautions}</p>
+							</article>
+						)}
+						{medicine.storage && (
+							<article className={styles.infoCard}>
+								<h2 className={styles.infoCardTitle}>Storage</h2>
+								<p className={styles.infoCardText}>{medicine.storage}</p>
+							</article>
+						)}
 				</section>
 
 				<div className={styles.disclaimer}>

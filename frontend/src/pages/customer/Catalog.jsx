@@ -188,7 +188,7 @@ function Catalog() {
 	// Get pricing tier label for transparency
 	const getPricingTier = () => {
 		if (buyerType === 'WHOLESALE') return '(Wholesale)';
-		return '';
+		return '(Retail)';
 	};
 
 	// Get stock status with professional language (no aggressive urgency)
@@ -277,7 +277,7 @@ function Catalog() {
 	}
 
 	return (
-		<main className="page">
+		<main className={`page ${styles.catalogPage}`}>
 			<div className="container">
 				{/* Mobile Filter Toggle Button */}
 				<button 
@@ -597,10 +597,6 @@ function Catalog() {
 										<div className={styles.pricingSection}>
 											<p className={styles.priceLabel}>Price {getPricingTier()}</p>
 											<p className={styles.priceValue}>{formatDisplayPrice(getDisplayPrice(medicine))}</p>
-											<div className={styles.priceCompareRow}>
-												<span>Retail {formatDisplayPrice(medicine.retailPrice)}</span>
-												<span>Wholesale {formatDisplayPrice(medicine.wholesalePrice)}</span>
-											</div>
 											</div>
 
 											{/* ACTIONS */}

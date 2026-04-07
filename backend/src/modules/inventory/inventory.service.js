@@ -255,7 +255,10 @@ module.exports = {
       name,
       description,
       priceCents,
-      quantity
+      quantity,
+      wholesalePriceCents,
+      bulkPriceCents,
+      bulkMinQty
     } = data;
 
     if (!Number.isInteger(quantity) || quantity <= 0) {
@@ -263,6 +266,26 @@ module.exports = {
     }
 
     const vendor = await resolveVendorContext(userContext);
+
+    const normalizedWholesalePriceCents = Number.isInteger(wholesalePriceCents)
+      ? wholesalePriceCents
+      : (Number.isInteger(priceCents) ? priceCents : null);
+    const normalizedBulkMinQty = Number.isInteger(bulkMinQty) && bulkMinQty > 0 ? bulkMinQty : null;
+    const normalizedBulkPriceCents = Number.isInteger(bulkPriceCents)
+      ? bulkPriceCents
+      : normalizedWholesalePriceCents;
+
+    if (normalizedWholesalePriceCents !== null && normalizedWholesalePriceCents <= 0) {
+      throw new ValidationError('wholesalePriceCents must be a positive integer');
+    }
+
+    if (normalizedBulkPriceCents !== null && normalizedBulkPriceCents <= 0) {
+      throw new ValidationError('bulkPriceCents must be a positive integer');
+    }
+
+    if (normalizedBulkMinQty !== null && normalizedBulkMinQty < 1) {
+      throw new ValidationError('bulkMinQty must be at least 1');
+    }
 
     if (vendor.verificationStatus !== 'VERIFIED') {
       throw new ForbiddenError('Vendor must be verified before adding medicines to inventory.');
@@ -280,6 +303,15 @@ module.exports = {
         if (!medicine) {
           throw new NotFoundError('Medicine not found');
         }
+
+        medicine = await tx.medicine.update({
+          where: { id: medicine.id },
+          data: {
+            wholesalePriceCents: normalizedWholesalePriceCents ?? medicine.wholesalePriceCents,
+            bulkPriceCents: normalizedBulkPriceCents ?? medicine.bulkPriceCents,
+            bulkMinQty: normalizedBulkMinQty ?? medicine.bulkMinQty
+          }
+        });
       } else {
         if (!name || typeof name !== 'string' || !name.trim()) {
           throw new ValidationError('Medicine name is required when medicineId is not provided');
@@ -293,7 +325,10 @@ module.exports = {
           data: {
             name: name.trim(),
             description: description || null,
-            priceCents
+            priceCents,
+            wholesalePriceCents: normalizedWholesalePriceCents,
+            bulkPriceCents: normalizedBulkPriceCents,
+            bulkMinQty: normalizedBulkMinQty
           }
         });
 

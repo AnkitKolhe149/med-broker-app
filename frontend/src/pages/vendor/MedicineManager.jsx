@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
+import { convertPrice, formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import inventoryService from '../../services/inventory.service';
 import styles from './MedicineManager.module.css';
 import { Check, X } from 'lucide-react';
 
 function VendorMedicineManager() {
+	const { currency, exchangeRates, convert } = useCurrency();
 	const { showSuccess, showError } = useNotification();
 	const [medicines, setMedicines] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -17,10 +20,16 @@ function VendorMedicineManager() {
 	const [stockDraft, setStockDraft] = useState('');
 	const [filterStatus, setFilterStatus] = useState('all');
 	const [uploadFiles, setUploadFiles] = useState([]);
+	const currencySymbol = getCurrencySymbol(currency);
+	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
+	const toBaseAmount = (value) => convertPrice(value, currency, 'INR', exchangeRates);
 	const [newMedicine, setNewMedicine] = useState({
 		name: '',
 		stock: '',
 		price: '',
+		wholesalePrice: '',
+		bulkMinQty: '',
+		bulkPrice: '',
 		description: ''
 	});
 
@@ -35,7 +44,10 @@ function VendorMedicineManager() {
 					name: item.medicine?.name || 'Unknown medicine',
 					description: item.medicine?.description || '',
 					stock: item.quantity || 0,
-					price: Number(((item.medicine?.priceCents || 0) / 100).toFixed(2)),
+					price: Number(convert((item.medicine?.priceCents || 0) / 100, 'INR').toFixed(2)),
+					wholesalePrice: Number(convert((((item.medicine?.wholesalePriceCents ?? item.medicine?.priceCents) || 0) / 100), 'INR').toFixed(2)),
+					bulkMinQty: item.medicine?.bulkMinQty || null,
+					bulkPrice: Number(convert((((item.medicine?.bulkPriceCents ?? item.medicine?.wholesalePriceCents ?? item.medicine?.priceCents) || 0) / 100), 'INR').toFixed(2)),
 					imageUrl: item.imageUrl || item.imageUrls?.[0] || null,
 					imageUrls: Array.isArray(item.imageUrls)
 						? item.imageUrls
@@ -56,16 +68,33 @@ function VendorMedicineManager() {
 
 	const handleAddMedicine = async () => {
 		if (!newMedicine.name || !newMedicine.price || !newMedicine.stock) {
-			showError('Please enter medicine name, price, and initial stock');
+			showError('Please enter medicine name, retail price, and initial stock');
+			return;
+		}
+
+		if (newMedicine.wholesalePrice && Number(newMedicine.wholesalePrice) > Number(newMedicine.price)) {
+			showError('Wholesale price cannot be higher than retail price');
+			return;
+		}
+
+		if (newMedicine.bulkPrice && Number(newMedicine.bulkPrice) > Number(newMedicine.wholesalePrice || newMedicine.price)) {
+			showError('Bulk price should be less than or equal to wholesale price');
 			return;
 		}
 
 		try {
 			setSubmitting(true);
+			const retailPriceCents = Math.round(toBaseAmount(Number(newMedicine.price)) * 100);
+			const wholesalePriceCents = Math.round(toBaseAmount(Number((newMedicine.wholesalePrice || newMedicine.price))) * 100);
+			const bulkPriceCents = Math.round(toBaseAmount(Number((newMedicine.bulkPrice || newMedicine.wholesalePrice || newMedicine.price))) * 100);
+			const normalizedBulkMinQty = newMedicine.bulkMinQty ? Math.max(1, Number.parseInt(newMedicine.bulkMinQty, 10) || 1) : null;
 			const payload = {
 				name: newMedicine.name.trim(),
 				description: newMedicine.description?.trim() || null,
-				priceCents: Math.round(Number(newMedicine.price) * 100),
+				priceCents: retailPriceCents,
+				wholesalePriceCents,
+				bulkPriceCents,
+				bulkMinQty: normalizedBulkMinQty,
 				quantity: Number(newMedicine.stock)
 			};
 
@@ -76,7 +105,10 @@ function VendorMedicineManager() {
 				name: inventory.medicine?.name || payload.name,
 				description: inventory.medicine?.description || payload.description || '',
 				stock: inventory.quantity || payload.quantity,
-				price: Number((((inventory.medicine?.priceCents) || payload.priceCents) / 100).toFixed(2)),
+				price: Number(convert((((inventory.medicine?.priceCents) || payload.priceCents) / 100), 'INR').toFixed(2)),
+				wholesalePrice: Number(convert((((inventory.medicine?.wholesalePriceCents) || payload.wholesalePriceCents) / 100), 'INR').toFixed(2)),
+				bulkMinQty: inventory.medicine?.bulkMinQty || payload.bulkMinQty,
+				bulkPrice: Number(convert((((inventory.medicine?.bulkPriceCents) || payload.bulkPriceCents) / 100), 'INR').toFixed(2)),
 				imageUrl: inventory.imageUrl || inventory.imageUrls?.[0] || null,
 				imageUrls: Array.isArray(inventory.imageUrls)
 					? inventory.imageUrls
@@ -95,7 +127,15 @@ function VendorMedicineManager() {
 				return [mapped, ...prev];
 			});
 
-			setNewMedicine({ name: '', stock: '', price: '', description: '' });
+			setNewMedicine({
+				name: '',
+				stock: '',
+				price: '',
+				wholesalePrice: '',
+				bulkMinQty: '',
+				bulkPrice: '',
+				description: ''
+			});
 			setShowAddForm(false);
 			showSuccess('Medicine added to inventory');
 		} catch (error) {
@@ -258,7 +298,10 @@ function VendorMedicineManager() {
 									<strong>{medicine.stock} units</strong>
 								</td>
 								<td className={styles.tableCell}>
-									<strong>₹{medicine.price}</strong>
+									<strong>{formatMoney(medicine.price)}</strong>
+									<div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+										Wholesale {formatMoney(medicine.wholesalePrice)} {medicine.bulkMinQty ? `• Bulk ${medicine.bulkMinQty}+ @ ${formatMoney(medicine.bulkPrice)}` : ''}
+									</div>
 								</td>
 								<td className={styles.tableCell}>
 									<div
@@ -326,7 +369,7 @@ function VendorMedicineManager() {
 							/>
 						</div>
 					<div className={styles.formGroup}>
-						<label className={styles.label}>Selling Price (₹)</label>
+						<label className={styles.label}>Selling Price ({currencySymbol})</label>
 						<input
 							type="number"
 							className={styles.input}
@@ -336,6 +379,38 @@ function VendorMedicineManager() {
 								onChange={(e) => setNewMedicine({ ...newMedicine, price: e.target.value })}
 							/>
 						</div>
+					<div className={styles.formGroup}>
+						<label className={styles.label}>Wholesale Price ({currencySymbol})</label>
+						<input
+							type="number"
+							className={styles.input}
+							placeholder="Optional"
+							step="0.01"
+							value={newMedicine.wholesalePrice}
+							onChange={(e) => setNewMedicine({ ...newMedicine, wholesalePrice: e.target.value })}
+						/>
+					</div>
+					<div className={styles.formGroup}>
+						<label className={styles.label}>Bulk Min Qty</label>
+						<input
+							type="number"
+							className={styles.input}
+							placeholder="Optional"
+							value={newMedicine.bulkMinQty}
+							onChange={(e) => setNewMedicine({ ...newMedicine, bulkMinQty: e.target.value })}
+						/>
+					</div>
+					<div className={styles.formGroup}>
+						<label className={styles.label}>Bulk Price ({currencySymbol})</label>
+						<input
+							type="number"
+							className={styles.input}
+							placeholder="Optional"
+							step="0.01"
+							value={newMedicine.bulkPrice}
+							onChange={(e) => setNewMedicine({ ...newMedicine, bulkPrice: e.target.value })}
+						/>
+					</div>
 					</div>
 
 						<div className={styles.formGridFull}>

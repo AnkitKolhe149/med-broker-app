@@ -1,9 +1,59 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import pricingService from '../services/pricing.service';
 
-const CartContext = createContext();
+const DEFAULT_CART_CONTEXT = {
+	cartItems: [],
+	addToCart: () => {},
+	removeFromCart: () => {},
+	updateQuantity: () => {},
+	clearCart: () => {},
+	getTotalItems: () => 0,
+	getTotalUnits: () => 0,
+	getTotalPrice: () => 0
+};
+
+const CartContext = createContext(DEFAULT_CART_CONTEXT);
 
 export const CartProvider = ({ children }) => {
 	const [cartItems, setCartItems] = useState([]);
+
+	const normalizePackageType = (value) => (String(value || 'standard').toLowerCase() === 'bulk' ? 'bulk' : 'standard');
+
+	const normalizeAddToCartInput = ({
+		medicine,
+		quantity,
+		retailPrice,
+		wholesalePrice,
+		buyerType,
+		currencyCode,
+		packageType,
+		bulkPrice,
+		bulkMinQty
+	}) => {
+		const normalizedQuantity = Math.max(1, Number.parseInt(quantity, 10) || 1);
+		const normalizedBuyerType = String(buyerType || 'RETAIL').toUpperCase();
+		const pricing = pricingService.mapMedicinePricing({
+			retailPrice: retailPrice ?? medicine?.retailPrice ?? medicine?.price ?? 0,
+			wholesalePrice: wholesalePrice ?? medicine?.wholesalePrice,
+			bulkPrice: bulkPrice ?? medicine?.bulkPrice,
+			bulkMinQty: bulkMinQty ?? medicine?.bulkMinQty
+		});
+
+		const normalizedPackageType = normalizePackageType(
+			packageType
+				|| medicine?.selectedSize
+				|| medicine?.packageType
+				|| 'standard'
+		);
+
+		return {
+			normalizedQuantity,
+			normalizedBuyerType,
+			normalizedCurrencyCode: currencyCode || medicine?.currencyCode || 'USD',
+			normalizedPackageType,
+			pricing
+		};
+	};
 
 	// Load cart from localStorage on mount
 	useEffect(() => {
@@ -26,25 +76,67 @@ export const CartProvider = ({ children }) => {
 		}
 	}, [cartItems]);
 
-	const addToCart = (medicine, quantity = 1, retailPrice, wholesalePrice, buyerType, currencyCode = 'USD') => {
+	const addToCart = (
+		medicine,
+		quantity = 1,
+		retailPrice,
+		wholesalePrice,
+		buyerType,
+		currencyCode = 'USD',
+		packageType = 'standard',
+		bulkPrice,
+		bulkMinQty
+	) => {
+		const {
+			normalizedQuantity,
+			normalizedBuyerType,
+			normalizedCurrencyCode,
+			normalizedPackageType,
+			pricing
+		} = normalizeAddToCartInput({
+			medicine,
+			quantity,
+			retailPrice,
+			wholesalePrice,
+			buyerType,
+			currencyCode,
+			packageType,
+			bulkPrice,
+			bulkMinQty
+		});
+
 		setCartItems(prevItems => {
 			const existingItem = prevItems.find(item => item.medicineId === medicine.id);
 			if (existingItem) {
-				return prevItems.map(item =>
-					item.medicineId === medicine.id
-						? {
-							...item,
-							quantity: item.quantity + quantity,
-							currencyCode,
-							retailPrice,
-							wholesalePrice,
-							buyerType,
-							selectedSize: medicine.selectedSize || item.selectedSize || 'standard',
-							basePrice: buyerType === 'WHOLESALE' || medicine.selectedSize === 'bulk' ? wholesalePrice : retailPrice
-						}
-						: item
-				);
+				return prevItems.map(item => {
+					if (item.medicineId !== medicine.id) {
+						return item;
+					}
+
+					const repriced = pricingService.repriceCartItem({
+						cartItem: item,
+						medicinePricing: pricing,
+						buyerType: normalizedBuyerType,
+						quantity: item.quantity + normalizedQuantity,
+						packageType: normalizedPackageType
+					});
+
+					return {
+						...repriced,
+						currencyCode: normalizedCurrencyCode,
+						buyerType: normalizedBuyerType,
+						selectedSize: repriced.packageType
+					};
+				});
 			}
+
+			const unitPrice = pricingService.resolveUnitPrice({
+				buyerType: normalizedBuyerType,
+				quantity: normalizedQuantity,
+				packageType: normalizedPackageType,
+				...pricing
+			});
+
 			return [
 				...prevItems,
 				{
@@ -54,13 +146,13 @@ export const CartProvider = ({ children }) => {
 					imageUrl: medicine.imageUrl,
 					vendor: medicine.vendor,
 					vendorId: medicine.vendorId,
-					quantity,
-					retailPrice,
-					wholesalePrice,
-					buyerType,
-					selectedSize: medicine.selectedSize || 'standard',
-					currencyCode,
-					basePrice: buyerType === 'WHOLESALE' || medicine.selectedSize === 'bulk' ? wholesalePrice : retailPrice,
+					quantity: normalizedQuantity,
+					...pricing,
+					buyerType: normalizedBuyerType,
+					packageType: normalizedPackageType,
+					selectedSize: normalizedPackageType,
+					currencyCode: normalizedCurrencyCode,
+					basePrice: unitPrice,
 					addedAt: new Date().toISOString()
 				}
 			];
@@ -77,11 +169,35 @@ export const CartProvider = ({ children }) => {
 			return;
 		}
 		setCartItems(prevItems =>
-			prevItems.map(item =>
-				item.medicineId === medicineId
-					? { ...item, quantity }
-					: item
-			)
+			prevItems.map(item => {
+				if (item.medicineId !== medicineId) {
+					return item;
+				}
+
+				const normalizedPackageType = item.packageType || item.selectedSize || 'standard';
+				const minAllowedQty = normalizedPackageType === 'bulk'
+					? Math.max(1, Number.parseInt(item.bulkMinQty, 10) || 1)
+					: 1;
+				const safeQuantity = Math.max(minAllowedQty, Number.parseInt(quantity, 10) || minAllowedQty);
+
+				const repriced = pricingService.repriceCartItem({
+					cartItem: item,
+					medicinePricing: {
+						retailPrice: item.retailPrice,
+						wholesalePrice: item.wholesalePrice,
+						bulkPrice: item.bulkPrice,
+						bulkMinQty: item.bulkMinQty
+					},
+					buyerType: item.buyerType,
+					quantity: safeQuantity,
+					packageType: normalizedPackageType
+				});
+
+				return {
+					...repriced,
+					selectedSize: repriced.packageType
+				};
+			})
 		);
 	};
 
@@ -90,6 +206,11 @@ export const CartProvider = ({ children }) => {
 	};
 
 	const getTotalItems = () => {
+		// Distinct product lines in cart, used by badges and cart counters.
+		return cartItems.length;
+	};
+
+	const getTotalUnits = () => {
 		return cartItems.reduce((total, item) => total + item.quantity, 0);
 	};
 
@@ -104,6 +225,7 @@ export const CartProvider = ({ children }) => {
 		updateQuantity,
 		clearCart,
 		getTotalItems,
+		getTotalUnits,
 		getTotalPrice
 	};
 
@@ -112,8 +234,8 @@ export const CartProvider = ({ children }) => {
 
 export const useCart = () => {
 	const context = useContext(CartContext);
-	if (!context) {
-		throw new Error('useCart must be used within CartProvider');
+	if (context === DEFAULT_CART_CONTEXT) {
+		console.warn('useCart is using fallback context. Ensure CartProvider wraps this tree.');
 	}
 	return context;
 };

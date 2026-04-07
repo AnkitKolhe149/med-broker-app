@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import vendorService from '../../services/vendor.service';
+import { useCurrency } from '../../context/CurrencyContext';
+import { formatCurrency } from '../../utils/currency';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Dashboard.module.css';
 import { Pill, Package, Truck, Wallet, Star, Check, Clock, X } from 'lucide-react';
 
 function VendorDashboard() {
 	const navigate = useNavigate();
+	const { currency, convert } = useCurrency();
 	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [dashboardData, setDashboardData] = useState({
@@ -23,6 +26,7 @@ function VendorDashboard() {
 		recentOrders: [],
 		lowStockProducts: []
 	});
+	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 
 	useEffect(() => {
 		loadUserData();
@@ -81,12 +85,15 @@ function VendorDashboard() {
 			fontWeight: '600'
 		};
 
-		if (status === 'VERIFIED')
+		if (status === 'VERIFIED') {
 			return <span style={{ ...badgeStyle, backgroundColor: 'var(--green-100)', color: 'var(--success)' }}><Check size={12} /> Verified</span>;
-		if (status === 'PENDING')
+		}
+		if (status === 'PENDING') {
 			return <span style={{ ...badgeStyle, backgroundColor: 'var(--yellow-100)', color: 'var(--warning)' }}><Clock size={12} /> Pending</span>;
-		if (status === 'REJECTED')
+		}
+		if (status === 'REJECTED') {
 			return <span style={{ ...badgeStyle, backgroundColor: 'var(--red-100)', color: 'var(--error)' }}><X size={12} /> Rejected</span>;
+		}
 		return null;
 	};
 
@@ -118,8 +125,6 @@ function VendorDashboard() {
 					</>
 				)}
 			>
-
-				{/* Verification Alert */}
 				{user?.vendor?.verificationStatus === 'PENDING' && (
 					<div className={styles.alertBox}>
 						<strong><Clock size={14} strokeWidth={1.5} /> Verification in Progress</strong>
@@ -152,11 +157,10 @@ function VendorDashboard() {
 					</button>
 				</div>
 
-				{/* Key Metrics */}
 				<div className={styles.metricsGrid}>
 					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Today's Sales</div>
-						<div className={styles.metricValue}>₹{dashboardData.todaySales.toLocaleString()}</div>
+						<div className={styles.metricValue}>{formatMoney(dashboardData.todaySales)}</div>
 						<div className={styles.metricChange}>↑ 12.5% from yesterday</div>
 					</div>
 					<div className={styles.metricCard}>
@@ -181,9 +185,7 @@ function VendorDashboard() {
 					</div>
 				</div>
 
-				{/* Charts */}
 				<div className={styles.chartsGrid}>
-					{/* Weekly Sales Trend */}
 					<div className={styles.section}>
 						<h2 className={styles.sectionTitle}>Weekly Sales Trend</h2>
 						<div className={styles.chart}>
@@ -196,7 +198,7 @@ function VendorDashboard() {
 											height: `${(data.sales / maxWeeklySales) * 150}px`
 										}}
 									>
-										₹{(data.sales / 1000).toFixed(0)}K
+										{formatMoney(data.sales)}
 									</div>
 									<span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{data.day}</span>
 								</div>
@@ -204,7 +206,6 @@ function VendorDashboard() {
 						</div>
 					</div>
 
-					{/* Business Info Card */}
 					<div className={styles.section}>
 						<h2 className={styles.sectionTitle}>Business Profile</h2>
 						<div style={{ display: 'grid', gap: '0.8rem' }}>
@@ -224,15 +225,13 @@ function VendorDashboard() {
 								<div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', marginBottom: '0.2rem' }}>
 									INVENTORY VALUE
 								</div>
-								<div style={{ color: 'var(--primary)', fontWeight: '600' }}>₹{dashboardData.totalInventoryValue.toLocaleString()}</div>
+								<div style={{ color: 'var(--primary)', fontWeight: '600' }}>{formatMoney(dashboardData.totalInventoryValue)}</div>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				{/* Recent Orders & Low Stock */}
 				<div className={styles.chartsGrid}>
-					{/* Recent Orders */}
 					<div className={styles.section}>
 						<h2 className={styles.sectionTitle}>Recent Orders</h2>
 						<table className={styles.table}>
@@ -251,7 +250,7 @@ function VendorDashboard() {
 											<strong>{order.id}</strong>
 										</td>
 										<td className={styles.tableCell}>{order.customer}</td>
-										<td className={styles.tableCell}>₹{order.amount.toLocaleString()}</td>
+										<td className={styles.tableCell}>{formatMoney(order.amount)}</td>
 										<td className={styles.tableCell}>
 											<span
 												className={styles.statusBadge}
@@ -260,22 +259,22 @@ function VendorDashboard() {
 														order.status === 'pending'
 															? 'var(--yellow-100)'
 															: order.status === 'paid'
-																? 'var(--blue-100)'
-																: order.status === 'shipped'
-																	? 'var(--green-100)'
-																	: order.status === 'cancelled'
-																		? 'var(--red-100)'
-																		: 'var(--green-100)',
+															? 'var(--blue-100)'
+															: order.status === 'shipped'
+															? 'var(--green-100)'
+															: order.status === 'cancelled'
+															? 'var(--red-100)'
+															: 'var(--green-100)',
 													color:
 														order.status === 'pending'
 															? 'var(--warning)'
 															: order.status === 'paid'
-																? 'var(--primary)'
-																: order.status === 'shipped'
-																	? 'var(--success)'
-																	: order.status === 'cancelled'
-																		? 'var(--error)'
-																		: 'var(--success)'
+															? 'var(--primary)'
+															: order.status === 'shipped'
+															? 'var(--success)'
+															: order.status === 'cancelled'
+															? 'var(--error)'
+															: 'var(--success)'
 												}}
 											>
 												{order.status.toUpperCase()}
@@ -287,7 +286,6 @@ function VendorDashboard() {
 						</table>
 					</div>
 
-					{/* Low Stock Alert */}
 					<div className={styles.section}>
 						<h2 className={styles.sectionTitle}>Low Stock Alert</h2>
 						<button

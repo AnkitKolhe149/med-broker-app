@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
+import { formatCurrency } from '../../utils/currency';
 import styles from './Orders.module.css';
 import { Clock, CreditCard, Package, X, Check } from 'lucide-react';
 
 const STATUS_OPTIONS = ['all', 'pending', 'paid', 'shipped', 'cancelled'];
 
 function VendorOrders() {
+  const { currency, convert } = useCurrency();
   const { showError, showSuccess } = useNotification();
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -74,6 +77,8 @@ function VendorOrders() {
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
   };
+
+  const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -152,7 +157,7 @@ function VendorOrders() {
                   </td>
                   <td className={styles.tableCell}>{order.customer}</td>
                   <td className={styles.tableCell}>
-                    <strong>₹{Math.round(order.amountCents / 100).toLocaleString()}</strong>
+                    <strong>{formatMoney(Math.round(order.amountCents / 100))}</strong>
                   </td>
                   <td className={styles.tableCell}>
                     <div
@@ -234,7 +239,7 @@ function VendorOrders() {
               </div>
               <div className={styles.modalField}>
                 <div className={styles.label}>Amount</div>
-                <div className={styles.value} style={{ color: 'var(--primary)' }}>₹{Math.round(selectedOrder.amountCents / 100).toLocaleString()}</div>
+                <div className={styles.value} style={{ color: 'var(--primary)' }}>{formatMoney(Math.round(selectedOrder.amountCents / 100))}</div>
               </div>
               <div className={styles.modalField}>
                 <div className={styles.label}>Status</div>
@@ -263,7 +268,7 @@ function VendorOrders() {
                 {selectedOrder.items.map((item) => (
                   <div key={item.id} className={styles.item}>
                     <span className={styles.itemName}>{item.name} x {item.quantity}</span>
-                    <span className={styles.itemPrice}>₹{Math.round((item.unitPriceCents * item.quantity) / 100).toLocaleString()}</span>
+                    <span className={styles.itemPrice}>{formatMoney(Math.round((item.unitPriceCents * item.quantity) / 100))}</span>
                   </div>
                 ))}
               </div>

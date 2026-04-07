@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
+import { useCurrency } from '../../context/CurrencyContext';
+import { formatCurrency } from '../../utils/currency';
 import styles from './Payments.module.css';
 import { Banknote, Undo2, Check, Clock } from 'lucide-react';
 
 function VendorPayments() {
+	const { currency, convert } = useCurrency();
 	const [paymentData, setPaymentData] = useState({
 		totalEarnings: 245750,
 		pendingAmount: 12450,
@@ -74,9 +77,10 @@ function VendorPayments() {
 	const [showWithdrawal, setShowWithdrawal] = useState(false);
 	const [withdrawAmount, setWithdrawAmount] = useState('');
 	const [activeTab, setActiveTab] = useState('transactions');
+	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 
 	const handleWithdrawal = () => {
-		alert(`Withdrawal request of ₹${withdrawAmount} initiated. You will receive funds within 1-2 business days.`);
+		alert(`Withdrawal request of ${formatMoney(Number(withdrawAmount) || 0)} initiated. You will receive funds within 1-2 business days.`);
 		setShowWithdrawal(false);
 		setWithdrawAmount('');
 	};
@@ -92,23 +96,23 @@ function VendorPayments() {
 			<div className={styles.metricsGrid}>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Total Earnings</div>
-					<div className={styles.metricValue}>₹{paymentData.totalEarnings.toLocaleString()}</div>
+					<div className={styles.metricValue}>{formatMoney(paymentData.totalEarnings)}</div>
 					<div className={styles.metricChange}>↑ 23.5% this month</div>
 				</div>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Current Balance</div>
-					<div className={styles.metricValue}>₹{paymentData.currentBalance.toLocaleString()}</div>
+					<div className={styles.metricValue}>{formatMoney(paymentData.currentBalance)}</div>
 					<div className={styles.metricChange}>Ready to withdraw</div>
 				</div>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Pending Amount</div>
-					<div className={styles.metricValue}>₹{paymentData.pendingAmount.toLocaleString()}</div>
+					<div className={styles.metricValue}>{formatMoney(paymentData.pendingAmount)}</div>
 					<div className={styles.metricChange}>Will settle on Jan 20</div>
 				</div>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Total Settlements</div>
 					<div className={styles.metricValue}>{paymentData.totalSettlements}</div>
-					<div className={styles.metricChange}>₹{(paymentData.totalEarnings * 0.95).toLocaleString()} withdrawn</div>
+					<div className={styles.metricChange}>{formatMoney(paymentData.totalEarnings * 0.95)} withdrawn</div>
 					<button
 						className={styles.withdrawButton}
 						onClick={() => setShowWithdrawal(true)}
@@ -164,7 +168,7 @@ function VendorPayments() {
 									</td>
 									<td className={styles.tableCell}>
 										<span className={`${txn.amount > 0 ? styles.amountPositive : styles.amountNegative}`}>
-											{txn.amount > 0 ? '+' : ''}₹{Math.abs(txn.amount).toLocaleString()}
+											{txn.amount > 0 ? '+' : ''}{formatMoney(Math.abs(txn.amount))}
 										</span>
 									</td>
 									<td className={styles.tableCell}>
@@ -202,7 +206,7 @@ function VendorPayments() {
 										<strong>{settlement.settlementId}</strong>
 									</td>
 									<td className={styles.tableCell}>
-										<strong>₹{settlement.amount.toLocaleString()}</strong>
+										<strong>{formatMoney(settlement.amount)}</strong>
 									</td>
 									<td className={styles.tableCell}>{settlement.date}</td>
 									<td className={styles.tableCell}>{settlement.method}</td>
@@ -276,7 +280,7 @@ function VendorPayments() {
 					<div className={styles.formGroup}>
 						<label className={styles.label}>Available Balance</label>
 						<div className={styles.availableBalanceValue}>
-							₹{paymentData.currentBalance.toLocaleString()}
+							{formatMoney(paymentData.currentBalance)}
 						</div>
 					</div>
 
@@ -292,7 +296,7 @@ function VendorPayments() {
 							onChange={(e) => setWithdrawAmount(e.target.value)}
 						/>
 						<small className={styles.withdrawalHint}>
-							Minimum withdrawal: ₹100 | Maximum: ₹{paymentData.currentBalance.toLocaleString()}
+							Minimum withdrawal: {formatMoney(100)} | Maximum: {formatMoney(paymentData.currentBalance)}
 						</small>
 					</div>
 

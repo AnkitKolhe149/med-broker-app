@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNotification } from '../../context/NotificationContext';
 import { useCart } from '../../context/CartContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { formatCurrency } from '../../utils/currency';
 import paymentService from '../../services/payment.service';
 import styles from './Payment.module.css';
@@ -11,13 +12,15 @@ function Payment() {
 	const navigate = useNavigate();
 	const { showError } = useNotification();
 	const { clearCart } = useCart();
+	const { currency, convert } = useCurrency();
 	const [orderData, setOrderData] = useState(null);
 	const [paymentMethod, setPaymentMethod] = useState('upi');
 	const [loading, setLoading] = useState(true);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [upiId, setUpiId] = useState('customer@upi');
-	const currencyCode = orderData?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+	const currencyCode = orderData?.currencyCode || currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const toDisplayAmount = (value) => convert(value, 'INR');
 
 	useEffect(() => {
 		const pendingOrder = sessionStorage.getItem('pending_order');
@@ -36,6 +39,9 @@ function Payment() {
 
 	const calculateTotal = () => {
 		if (!orderData) return 0;
+		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
+			return Number(orderData.subtotal || toDisplayAmount(orderData.subtotalBase) || 0);
+		}
 		return Number(orderData.subtotal || 0);
 	};
 

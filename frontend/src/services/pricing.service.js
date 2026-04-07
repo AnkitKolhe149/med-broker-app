@@ -24,12 +24,13 @@ const pricingService = {
 		const retail = toNumber(retailPrice, 0);
 		const wholesale = toNumber(wholesalePrice, retail);
 		const bulk = toNumber(bulkPrice, wholesale);
+		const normalizedBuyerType = String(buyerType).toUpperCase();
 
-		if (normalizedPackage === 'bulk') {
+		if (normalizedPackage === 'bulk' && normalizedBuyerType === 'WHOLESALE') {
 			return bulk;
 		}
 
-		if (String(buyerType).toUpperCase() === 'WHOLESALE') {
+		if (normalizedBuyerType === 'WHOLESALE') {
 			return qty >= minQty ? bulk : wholesale;
 		}
 

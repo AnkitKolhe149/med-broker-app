@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Avatar from '../../components/common/Avatar';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
 import { formatCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
@@ -10,12 +11,14 @@ function OrderConfirmation() {
 	const { orderId } = useParams();
 	const navigate = useNavigate();
 	const { user } = useUser();
+	const { currency, convert } = useCurrency();
 	const [orderData, setOrderData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
 	const [invoiceError, setInvoiceError] = useState('');
-	const currencyCode = orderData?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+	const currencyCode = orderData?.currencyCode || currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const toDisplayAmount = (value) => convert(value, 'INR');
 
 	useEffect(() => {
 		const completedOrder = sessionStorage.getItem('completed_order');
@@ -53,7 +56,9 @@ function OrderConfirmation() {
 	};
 
 	const calculateTax = () => {
-		const subtotal = orderData.subtotal;
+		const subtotal = orderData.subtotalBase !== undefined && orderData.subtotalBase !== null
+			? toDisplayAmount(orderData.subtotalBase)
+			: orderData.subtotal;
 		const discount = (subtotal * orderData.discountPercent) / 100;
 		const deliveryCharge = subtotal > 500 ? 0 : 50;
 		return (subtotal - discount + deliveryCharge) * 0.05;
@@ -205,17 +210,17 @@ function OrderConfirmation() {
 								<div className={styles.summaryContent}>
 									<div className={styles.summaryRow}>
 										<span>Subtotal</span>
-										<span>{formatPrice(orderData.subtotal)}</span>
+										<span>{formatPrice(orderData.subtotalBase !== undefined && orderData.subtotalBase !== null ? toDisplayAmount(orderData.subtotalBase) : orderData.subtotal)}</span>
 									</div>
 									{orderData.discountPercent > 0 && (
 										<div className={styles.summaryRow} style={{ color: 'var(--success)' }}>
 											<span>Discount ({orderData.discountPercent}%)</span>
-											<span>−{formatPrice(orderData.subtotal * orderData.discountPercent / 100)}</span>
+											<span>−{formatPrice((orderData.subtotalBase !== undefined && orderData.subtotalBase !== null ? toDisplayAmount(orderData.subtotalBase) : orderData.subtotal) * orderData.discountPercent / 100)}</span>
 										</div>
 									)}
 									<div className={styles.summaryRow}>
 										<span>Delivery Charge</span>
-										<span>{orderData.subtotal > 500 ? 'Free' : formatPrice(50)}</span>
+										<span>{(orderData.subtotalBase !== undefined && orderData.subtotalBase !== null ? toDisplayAmount(orderData.subtotalBase) : orderData.subtotal) > 500 ? 'Free' : formatPrice(50)}</span>
 									</div>
 									<div className={styles.summaryRow}>
 										<span>Tax (5% GST)</span>
@@ -223,7 +228,7 @@ function OrderConfirmation() {
 									</div>
 									<div className={styles.summaryTotal}>
 										<span>Total Paid</span>
-										<span>{formatPrice(orderData.total)}</span>
+										<span>{formatPrice(orderData.totalBase !== undefined && orderData.totalBase !== null ? toDisplayAmount(orderData.totalBase) : orderData.total)}</span>
 									</div>
 								</div>
 

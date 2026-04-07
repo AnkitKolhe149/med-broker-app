@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -11,6 +12,7 @@ function Checkout() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { cartItems, getTotalPrice } = useCart();
+	const { currency, convert } = useCurrency();
 	const { user, loading: userLoading } = useUser();
 	const { showError } = useNotification();
 	const { width } = useResponsive();
@@ -38,8 +40,9 @@ function Checkout() {
 
 	const discountPercent = location.state?.discountPercent || 0;
 	const appliedCoupon = location.state?.appliedCoupon || '';
-	const currencyCode = location.state?.currencyCode || cartItems[0]?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+	const currencyCode = location.state?.currencyCode || cartItems[0]?.currencyCode || currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const toDisplayAmount = (value) => convert(value, 'INR');
 
 	useEffect(() => {
 		if (user?.customer) {
@@ -145,6 +148,15 @@ function Checkout() {
 			showError('Please wait for the prescription upload to finish');
 			return false;
 		}
+
+		for (const item of cartItems) {
+			const packageType = String(item.selectedSize || item.packageType || 'standard').toLowerCase();
+			const bulkMinQty = Math.max(1, Number.parseInt(item.bulkMinQty, 10) || 1);
+			if (packageType === 'bulk' && Number(item.quantity) < bulkMinQty) {
+				showError(`${item.name || 'Bulk item'} requires at least ${bulkMinQty} units`);
+				return false;
+			}
+		}
 		return true;
 	};
 
@@ -172,7 +184,8 @@ function Checkout() {
 				prescriptionName,
 				discountPercent,
 				appliedCoupon,
-				subtotal: createdOrder.totalCents ? createdOrder.totalCents / 100 : getTotalPrice(),
+				subtotalBase: createdOrder.totalCents ? createdOrder.totalCents / 100 : getTotalPrice(),
+				subtotal: createdOrder.totalCents ? toDisplayAmount(createdOrder.totalCents / 100) : getTotalPrice(),
 				currencyCode,
 				timestamp: new Date().toISOString()
 			};

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
 import { formatCurrency } from '../../utils/currency';
 import styles from './Cart.module.css';
@@ -9,12 +10,13 @@ import { Pill, Trash2, Truck, Check, Lock, ShoppingCart } from 'lucide-react';
 function Cart() {
 	const navigate = useNavigate();
 	const { cartItems, removeFromCart, updateQuantity, getTotalPrice } = useCart();
+	const { currency } = useCurrency();
 	const { showError, showSuccess } = useNotification();
 	const [appliedCoupon, setAppliedCoupon] = useState('');
 	const [couponInput, setCouponInput] = useState('');
 	const [orderNotes, setOrderNotes] = useState('');
 	const [discountPercent, setDiscountPercent] = useState(0);
-	const cartCurrency = cartItems[0]?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+	const cartCurrency = cartItems[0]?.currencyCode || currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, cartCurrency, true);
 
 	// Sample coupons for demo

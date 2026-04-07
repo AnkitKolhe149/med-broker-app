@@ -1,5 +1,21 @@
 const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
+const { uploadPrescriptionImage } = require('../../services/cloudinary.service');
+const { resolveOrderItemUnitPriceCents } = require('./orderPricing.util');
+
+const normalizePackageType = (value) => (String(value || 'standard').toLowerCase() === 'bulk' ? 'bulk' : 'standard');
+
+const buildOrderSignature = (items = []) => {
+  return items
+    .map((item) => ({
+      medicineId: item.medicineId,
+      quantity: Math.max(1, Number(item.quantity) || 1),
+      packageType: normalizePackageType(item.selectedSize || item.packageType)
+    }))
+    .sort((a, b) => a.medicineId.localeCompare(b.medicineId))
+    .map((item) => `${item.medicineId}:${item.quantity}:${item.packageType}`)
+    .join('|');
+};
 
 /**
  * Create a new order from cart items
@@ -12,10 +28,17 @@ const createOrder = async (userId, orderData) => {
     throw new ValidationError('Order must contain at least one item');
   }
 
+	const recentDuplicateCutoff = new Date(Date.now() - 10 * 60 * 1000);
+
   // Validate each item
   for (const item of items) {
     if (!item.medicineId || !item.quantity || item.quantity < 1) {
       throw new ValidationError('Each item must have medicineId and quantity >= 1');
+    }
+
+    const rawPackageType = String(item.selectedSize || item.packageType || 'standard').toLowerCase();
+    if (!['standard', 'bulk'].includes(rawPackageType)) {
+      throw new ValidationError('Item package type must be either standard or bulk');
     }
   }
 
@@ -24,6 +47,39 @@ const createOrder = async (userId, orderData) => {
     select: { buyerType: true }
   });
 
+  const normalizedRequestSignature = buildOrderSignature(items);
+
+  const recentOrders = await prisma.order.findMany({
+    where: {
+      userId,
+      createdAt: { gte: recentDuplicateCutoff }
+    },
+    include: {
+      items: true
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 10
+  });
+
+  const matchingRecentOrder = recentOrders.find((order) => {
+    const existingSignature = buildOrderSignature(order.items);
+    return existingSignature === normalizedRequestSignature;
+  });
+
+  if (matchingRecentOrder) {
+    return prisma.order.findUnique({
+      where: { id: matchingRecentOrder.id },
+      include: {
+        items: {
+          include: {
+            medicine: true
+          }
+        },
+        payment: true
+      }
+    });
+  }
+
   const inventoryIds = [...new Set(items.map((item) => item.medicineId))];
   const inventoryRecords = await prisma.inventory.findMany({
     where: { id: { in: inventoryIds } },
@@ -31,9 +87,13 @@ const createOrder = async (userId, orderData) => {
       id: true,
       medicineId: true,
       quantity: true,
+      bulkMinQty: true,
       medicine: {
         select: {
-          priceCents: true
+          priceCents: true,
+          wholesalePriceCents: true,
+          bulkMinQty: true,
+          bulkPriceCents: true
         }
       }
     }
@@ -56,10 +116,18 @@ const createOrder = async (userId, orderData) => {
       throw new ValidationError('Insufficient stock for one or more items');
     }
 
-    const retailPriceCents = inventory.medicine.priceCents;
-    const wholesalePriceCents = Math.round(retailPriceCents * 0.9);
-    const useWholesalePrice = customer?.buyerType === 'WHOLESALE' || item.selectedSize === 'bulk';
-    const unitPriceCents = useWholesalePrice ? wholesalePriceCents : retailPriceCents;
+    const packageType = normalizePackageType(item.selectedSize || item.packageType);
+    const unitPriceCents = resolveOrderItemUnitPriceCents({
+      medicine: {
+        priceCents: inventory.medicine.priceCents,
+        wholesalePriceCents: inventory.medicine.wholesalePriceCents,
+        bulkPriceCents: inventory.medicine.bulkPriceCents,
+        bulkMinQty: inventory.medicine.bulkMinQty ?? inventory.bulkMinQty
+      },
+      buyerType: customer?.buyerType,
+      quantity: item.quantity,
+      packageType
+    });
     const itemTotal = unitPriceCents * item.quantity;
     totalCents += itemTotal;
 
@@ -239,7 +307,8 @@ const cancelOrder = async (orderId, userId, userRole) => {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
-      payment: true
+      payment: true,
+      items: true
     }
   });
 
@@ -265,17 +334,39 @@ const cancelOrder = async (orderId, userId, userRole) => {
     throw new ValidationError('Cannot cancel paid orders. Please request a refund instead.');
   }
 
-  // Cancel the order
-  const cancelledOrder = await prisma.order.update({
-    where: { id: orderId },
-    data: { status: 'CANCELLED' },
-    include: {
-      items: {
-        include: {
-          medicine: true
+  // Cancel the order and restore inventory stock for each item.
+  const cancelledOrder = await prisma.$transaction(async (tx) => {
+    const updated = await tx.order.update({
+      where: { id: orderId },
+      data: { status: 'CANCELLED' },
+      include: {
+        items: {
+          include: {
+            medicine: true
+          }
         }
       }
-    }
+    });
+
+    await Promise.all(
+      order.items.map(async (item) => {
+        const candidateInventories = await tx.inventory.findMany({
+          where: { medicineId: item.medicineId },
+          select: { id: true },
+          take: 2
+        });
+
+        // Restore stock only when the mapping is unambiguous.
+        if (candidateInventories.length === 1) {
+          await tx.inventory.update({
+            where: { id: candidateInventories[0].id },
+            data: { quantity: { increment: item.quantity } }
+          });
+        }
+      })
+    );
+
+    return updated;
   });
 
   return cancelledOrder;
@@ -313,11 +404,24 @@ const getOrderForReceipt = async (orderId, userId, userRole) => {
   return order;
 };
 
+const uploadPrescription = async (userId, file) => {
+  if (!file || !file.buffer || !file.mimetype) {
+    throw new ValidationError('Prescription file is required');
+  }
+
+  const prescriptionUrl = await uploadPrescriptionImage(file.buffer, file.mimetype, userId);
+
+  return {
+    prescriptionUrl
+  };
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
   getOrderById,
   updateOrderStatus,
   cancelOrder,
-  getOrderForReceipt
+  getOrderForReceipt,
+  uploadPrescription
 };

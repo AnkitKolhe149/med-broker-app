@@ -1,34 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import Avatar from '../../components/common/Avatar';
+import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
+import { useCurrency } from '../../context/CurrencyContext';
+import { useNotification } from '../../context/NotificationContext';
 import styles from './Profile.module.css';
+
+const MENU_ITEMS = [
+	{ key: 'profile', label: 'My Profile' },
+	{ key: 'addresses', label: 'Address Book' },
+	{ key: 'preferences', label: 'Preferences' },
+	{ key: 'security', label: 'Security' },
+	{ key: 'billing', label: 'Billing' },
+	{ key: 'data', label: 'Data Export' }
+];
 
 function CustomerProfile() {
 	const navigate = useNavigate();
+	const location = useLocation();
+	const { currency, setCurrency, availableCurrencies } = useCurrency();
+	const { showSuccess, showError } = useNotification();
 	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(true);
-	const [isEditing, setIsEditing] = useState(false);
+	const [activePanel, setActivePanel] = useState('profile');
+	const [isEditingProfile, setIsEditingProfile] = useState(false);
+	const [isEditingAddress, setIsEditingAddress] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
-	const [successMessage, setSuccessMessage] = useState('');
+	const [previewImage, setPreviewImage] = useState(null);
 
 	const [formData, setFormData] = useState({
 		fullName: '',
 		phoneNumber: '',
 		email: '',
+		bio: '',
 		address: '',
 		city: '',
 		state: '',
 		zipCode: '',
+		country: 'India',
 		buyerType: 'RETAIL',
 		profileImage: null
 	});
-	const [previewImage, setPreviewImage] = useState(null);
-	const [imageFile, setImageFile] = useState(null);
+
+	const [preferences, setPreferences] = useState({
+		language: 'en',
+		emailNotifications: true,
+		smsNotifications: true,
+		marketingOptIn: false
+	});
 
 	useEffect(() => {
 		loadUserData();
 	}, []);
+
+	useEffect(() => {
+		const section = new URLSearchParams(location.search).get('section');
+		if (['profile', 'addresses', 'preferences', 'security', 'billing', 'data'].includes(section)) {
+			setActivePanel(section);
+		}
+	}, [location.search]);
+
+	const stats = useMemo(() => ({
+		memberSince: new Date(user?.createdAt || Date.now()).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }),
+		totalOrders: Number(user?.customer?.totalOrders || 0),
+		accountStatus: 'Active'
+	}), [user]);
 
 	const loadUserData = async () => {
 		try {
@@ -39,480 +76,285 @@ function CustomerProfile() {
 					fullName: userData.customer.fullName || '',
 					phoneNumber: userData.customer.phoneNumber || '',
 					email: userData.email || '',
+					bio: userData.customer.bio || userData.customer.buyerType || 'Customer',
 					address: userData.customer.address || '',
 					city: userData.customer.city || '',
 					state: userData.customer.state || '',
 					zipCode: userData.customer.zipCode || '',
-					buyerType: userData.customer.buyerType || 'RETAIL'
+					country: userData.customer.country || 'India',
+					buyerType: userData.customer.buyerType || 'RETAIL',
+					profileImage: userData.customer.profileImage || null
 				});
+				setPreviewImage(userData.customer.profileImage || null);
 			}
 		} catch (error) {
 			console.error('Failed to load user data:', error);
+			showError('Failed to load profile data');
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleInputChange = (e) => {
-		const { name, value } = e.target;
-		setFormData(prev => ({
+	const handleInputChange = (event) => {
+		const { name, value } = event.target;
+		setFormData((prev) => ({ ...prev, [name]: value }));
+	};
+
+	const handlePreferenceChange = (event) => {
+		const { name, type, checked, value } = event.target;
+		setPreferences((prev) => ({
 			...prev,
-			[name]: value
+			[name]: type === 'checkbox' ? checked : value
 		}));
 	};
 
-	const handleImageChange = (e) => {
-		const file = e.target.files[0];
-		if (file) {
-			// Validate file type
-			const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-			if (!validTypes.includes(file.type)) {
-				alert('Please upload a valid image (JPG, PNG, or WebP)');
-				return;
-			}
-			// Validate file size (max 5MB)
-			if (file.size > 5 * 1024 * 1024) {
-				alert('Image size must be less than 5MB');
-				return;
-			}
-			setImageFile(file);
-			// Create preview
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				setPreviewImage(reader.result);
-			};
-			reader.readAsDataURL(file);
+	const handleImageChange = (event) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+			showError('Please upload JPG, PNG, or WebP image');
+			return;
 		}
+
+		if (file.size > 5 * 1024 * 1024) {
+			showError('Image size must be below 5MB');
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onloadend = () => {
+			setPreviewImage(reader.result);
+			setFormData((prev) => ({ ...prev, profileImage: reader.result }));
+		};
+		reader.readAsDataURL(file);
 	};
 
-	const handleRemoveImage = () => {
-		setPreviewImage(null);
-		setImageFile(null);
-		setFormData(prev => ({
-			...prev,
-			profileImage: null
-		}));
-	};
+	const handleSave = async () => {
+		if (!formData.fullName.trim()) {
+			showError('Full name is required');
+			return;
+		}
 
-	const handleSaveProfile = async (e) => {
-		e.preventDefault();
-		if (!validateForm()) return;
+		if (!formData.phoneNumber.trim() || formData.phoneNumber.length < 10) {
+			showError('Enter a valid phone number');
+			return;
+		}
 
 		setIsSaving(true);
 		try {
-			// In real implementation, this would call an API
-			await new Promise(resolve => setTimeout(resolve, 1000));
-
-			// Handle image upload if new image selected
-			if (imageFile) {
-				const imgData = previewImage; // In real app, upload to server
-				formData.profileImage = imgData;
-			}
-
-			// Update local state
-			setUser(prev => ({
+			await new Promise((resolve) => setTimeout(resolve, 800));
+			setUser((prev) => ({
 				...prev,
-				customer: { ...prev.customer, ...formData }
+				customer: {
+					...prev.customer,
+					...formData
+				}
 			}));
-
-			setImageFile(null);
-			setIsEditing(false);
-			setSuccessMessage('Profile updated successfully!');
-			setTimeout(() => setSuccessMessage(''), 3000);
+			setIsEditingProfile(false);
+			setIsEditingAddress(false);
+			showSuccess('Profile settings updated');
 		} catch (error) {
-			console.error('Failed to update profile:', error);
-			alert('Failed to update profile. Please try again.');
+			console.error('Save failed:', error);
+			showError('Unable to save profile changes');
 		} finally {
 			setIsSaving(false);
 		}
 	};
 
-	const validateForm = () => {
-		if (!formData.fullName.trim()) {
-			alert('Please enter your full name');
-			return false;
-		}
-		if (!formData.phoneNumber.trim() || formData.phoneNumber.length < 10) {
-			alert('Please enter a valid phone number');
-			return false;
-		}
-		if (!formData.address.trim()) {
-			alert('Please enter your address');
-			return false;
-		}
-		if (!formData.city.trim()) {
-			alert('Please enter your city');
-			return false;
-		}
-		if (!formData.zipCode.trim()) {
-			alert('Please enter your ZIP code');
-			return false;
-		}
-		return true;
-	};
-
 	const handleLogout = () => {
-		if (window.confirm('Are you sure you want to logout?')) {
-			authService.logout();
-			navigate('/login');
-		}
+		authService.logout();
+		navigate('/login');
 	};
 
-	const hasOrders = (user?.customer?.totalOrders || 0) > 0;
+	const hiddenSidebarItems = useMemo(() => ['address-book', 'account-settings'], []);
 
 	if (loading) {
 		return (
-			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-				<p>Loading profile...</p>
+			<div className={styles.loaderWrap}>
+				<p>Loading account settings...</p>
 			</div>
 		);
 	}
 
 	return (
-		<main className="page">
-			<div className="container">
-				<div className="page-header">
-					<div className="title-group">
-						<h1 className="section-title">My Profile</h1>
-						<p className="section-subtitle">Manage your personal information and account settings</p>
-					</div>
+		<CustomerAccountPageLayout
+			user={user}
+			hiddenItemKeys={hiddenSidebarItems}
+			title="Account Settings"
+			subtitle="Manage profile, security, addresses, and account preferences."
+		>
+			<section className={styles.panelArea}>
+				<div className={styles.panelTabs}>
+					{MENU_ITEMS.map((item) => (
+						<button
+							key={item.key}
+							type="button"
+							onClick={() => setActivePanel(item.key)}
+							className={`${styles.panelTab} ${activePanel === item.key ? styles.panelTabActive : ''}`}
+						>
+							{item.label}
+						</button>
+					))}
 				</div>
 
-				<div className={styles.mainContent}>
-					{/* Left: Profile Form */}
-					<section className="section">
-						{successMessage && (
-							<div className={styles.successAlert}>
-								✓ {successMessage}
+				{activePanel === 'profile' && (
+					<>
+						<div className={styles.card}>
+							<div className={styles.cardHeader}>
+								<h2>My Profile</h2>
+								<button type="button" className={styles.cardEditButton} onClick={() => setIsEditingProfile((prev) => !prev)}>
+									{isEditingProfile ? 'Done' : 'Edit'}
+								</button>
 							</div>
-						)}
-
-						<form onSubmit={handleSaveProfile}>
-							<div className={styles.formHeader}>
-								<h2 className={styles.formTitle}>Personal Information</h2>
-								{!isEditing && (
-									<button
-										type="button"
-										onClick={() => setIsEditing(true)}
-										className={styles.editButton}
-									>
-										✏️ Edit Profile
-									</button>
-								)}
-							</div>
-
-							{/* Profile Avatar Section */}
-							<div className={styles.avatarSection}>
-								<div style={{ position: 'relative' }}>
-									<Avatar
-										src={previewImage}
-										name={formData.fullName}
-										size={80}
-									/>
-									{isEditing && (
-										<label
-											className={styles.uploadImageButton}
-											title="Upload profile picture"
-										>
-											📷
-											<input
-												type="file"
-												accept="image/*"
-												style={{ display: 'none' }}
-												onChange={handleImageChange}
-											/>
+							<div className={styles.profileTopRow}>
+								<div className={styles.avatarWrap}>
+									<Avatar src={previewImage} name={formData.fullName || 'Customer'} size={72} />
+									{isEditingProfile && (
+										<label className={styles.uploadImageButton}>
+											Upload
+											<input type="file" accept="image/*" onChange={handleImageChange} />
 										</label>
 									)}
 								</div>
 								<div>
-									<p className={styles.userName}>{formData.fullName || 'User'}</p>
-									<p className={styles.userEmail}>{user?.email}</p>
-									<p className={styles.buyerTypeInfo}>
-										Buyer Type: <span className={styles.buyerTypeBadge}>{formData.buyerType}</span>
-									</p>
-									{previewImage && isEditing && (
-										<button
-											type="button"
-											className={styles.removeImageButton}
-											onClick={handleRemoveImage}
-										>
-											✕ Remove Image
+									<p className={styles.personName}>{formData.fullName || 'Customer'}</p>
+									<p className={styles.personRole}>{formData.buyerType === 'WHOLESALE' ? 'Wholesale Buyer' : 'Retail Buyer'}</p>
+									<p className={styles.personLocation}>{formData.city || 'City not set'}, {formData.country || 'Country not set'}</p>
+								</div>
+							</div>
+
+										<div className={styles.gridTwo}>
+											<label className={styles.fieldLabel}>Full Name
+												<input className={styles.fieldInput} name="fullName" value={formData.fullName} onChange={handleInputChange} disabled={!isEditingProfile} />
+											</label>
+											<label className={styles.fieldLabel}>Phone
+												<input className={styles.fieldInput} name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} disabled={!isEditingProfile} />
+											</label>
+											<label className={styles.fieldLabel}>Email
+												<input className={styles.fieldInput} name="email" value={formData.email} disabled />
+											</label>
+											<label className={styles.fieldLabel}>Bio
+												<input className={styles.fieldInput} name="bio" value={formData.bio} onChange={handleInputChange} disabled={!isEditingProfile} />
+											</label>
+										</div>
+									</div>
+
+									<div className={styles.card}>
+										<div className={styles.cardHeader}>
+											<h3>Identity & Compliance</h3>
+										</div>
+										<div className={styles.gridTwo}>
+											<div className={styles.metaItem}><span>Buyer Type</span><strong>{formData.buyerType}</strong></div>
+											<div className={styles.metaItem}><span>KYC Status</span><strong>Verified</strong></div>
+											<div className={styles.metaItem}><span>Prescription Consent</span><strong>Enabled</strong></div>
+											<div className={styles.metaItem}><span>Account Status</span><strong>Active</strong></div>
+										</div>
+									</div>
+
+									<div className={styles.cardActionsRow}>
+										<button type="button" className={styles.ghostButton} onClick={() => navigate('/customer/dashboard')}>Go to Dashboard</button>
+										<button type="button" className={styles.ghostButton} onClick={() => navigate('/customer/orders')}>View Orders</button>
+										<button type="button" className={styles.primaryButton} onClick={handleSave} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</button>
+									</div>
+								</>
+							)}
+
+							{activePanel === 'addresses' && (
+								<div className={styles.card}>
+									<div className={styles.cardHeader}>
+										<h2>Address Book</h2>
+										<button type="button" className={styles.cardEditButton} onClick={() => setIsEditingAddress((prev) => !prev)}>
+											{isEditingAddress ? 'Done' : 'Edit'}
 										</button>
-									)}
-								</div>
-							</div>
-
-							<hr className={styles.divider} />
-
-							{/* Form Fields */}
-							<div className={styles.formGroup}>
-								<label className={styles.label}>Full Name</label>
-								<input
-									type="text"
-									name="fullName"
-									value={formData.fullName}
-									onChange={handleInputChange}
-									disabled={!isEditing}
-									className={styles.input}
-									style={{
-										backgroundColor: isEditing ? 'white' : 'var(--surface)',
-										cursor: isEditing ? 'text' : 'not-allowed'
-									}}
-								/>
-							</div>
-
-							<div className={styles.formGrid}>
-								<div className={styles.formGroup}>
-									<label className={styles.label}>Phone Number</label>
-									<input
-										type="tel"
-										name="phoneNumber"
-										value={formData.phoneNumber}
-										onChange={handleInputChange}
-										disabled={!isEditing}
-										className={styles.input}
-										style={{
-											backgroundColor: isEditing ? 'white' : 'var(--surface)',
-											cursor: isEditing ? 'text' : 'not-allowed'
-										}}
-									/>
-								</div>
-
-								<div className={styles.formGroup}>
-									<label className={styles.label}>Email</label>
-									<input
-										type="email"
-										name="email"
-										value={formData.email}
-										disabled
-										className={styles.input}
-										style={{
-											backgroundColor: 'var(--surface)',
-											cursor: 'not-allowed'
-										}}
-									/>
-									<p className={styles.fieldNote}>Email cannot be changed</p>
-								</div>
-							</div>
-
-							{/* Address Section */}
-							<div className={styles.sectionDivider} />
-							<h3 className={styles.sectionTitle}>Address</h3>
-
-							<div className={styles.formGroup}>
-								<label className={styles.label}>Street Address</label>
-								<input
-									type="text"
-									name="address"
-									value={formData.address}
-									onChange={handleInputChange}
-									disabled={!isEditing}
-									className={styles.input}
-									style={{
-										backgroundColor: isEditing ? 'white' : 'var(--surface)',
-										cursor: isEditing ? 'text' : 'not-allowed'
-									}}
-								/>
-							</div>
-
-							<div className={styles.formGrid}>
-								<div className={styles.formGroup}>
-									<label className={styles.label}>City</label>
-									<input
-										type="text"
-										name="city"
-										value={formData.city}
-										onChange={handleInputChange}
-										disabled={!isEditing}
-										className={styles.input}
-										style={{
-											backgroundColor: isEditing ? 'white' : 'var(--surface)',
-											cursor: isEditing ? 'text' : 'not-allowed'
-										}}
-									/>
-								</div>
-
-								<div className={styles.formGroup}>
-									<label className={styles.label}>State</label>
-									<input
-										type="text"
-										name="state"
-										value={formData.state}
-										onChange={handleInputChange}
-										disabled={!isEditing}
-										className={styles.input}
-										style={{
-											backgroundColor: isEditing ? 'white' : 'var(--surface)',
-											cursor: isEditing ? 'text' : 'not-allowed'
-										}}
-									/>
-								</div>
-
-								<div className={styles.formGroup}>
-									<label className={styles.label}>PIN Code</label>
-									<input
-										type="text"
-										name="zipCode"
-										value={formData.zipCode}
-										onChange={handleInputChange}
-										disabled={!isEditing}
-										className={styles.input}
-										style={{
-											backgroundColor: isEditing ? 'white' : 'var(--surface)',
-											cursor: isEditing ? 'text' : 'not-allowed'
-										}}
-									/>
-								</div>
-							</div>
-
-							{/* Buyer Type Section */}
-							<div className={styles.sectionDivider} />
-							<h3 className={styles.sectionTitle}>Buyer Type</h3>
-
-							<div className={styles.buyerTypeSection}>
-								<p className={styles.buyerTypeNote}>
-									Your current buyer type determines the pricing you receive. Changing this requires verification.
-								</p>
-								{hasOrders && (
-									<p className={styles.buyerTypeWarning}>
-										Buyer type cannot be changed after placing orders.
-									</p>
-								)}
-								<div className={styles.radioGroup}>
-									<label className={styles.radioLabel}>
-										<input
-											type="radio"
-											name="buyerType"
-											value="RETAIL"
-											checked={formData.buyerType === 'RETAIL'}
-											onChange={handleInputChange}
-											disabled={!isEditing || hasOrders}
-											className={styles.radioInput}
-										/>
-										<span>
-											<strong>Retail</strong>
-											<p className={styles.typeDescription}>Regular customer pricing</p>
-										</span>
-									</label>
-
-									<label className={styles.radioLabel}>
-										<input
-											type="radio"
-											name="buyerType"
-											value="WHOLESALE"
-											checked={formData.buyerType === 'WHOLESALE'}
-											onChange={handleInputChange}
-											disabled={!isEditing || hasOrders}
-											className={styles.radioInput}
-										/>
-										<span>
-											<strong>Wholesale</strong>
-											<p className={styles.typeDescription}>Bulk pricing with discounts</p>
-										</span>
-									</label>
-								</div>
-							</div>
-
-							{/* Form Actions */}
-							{isEditing && (
-								<div className={styles.formActions}>
-									<button
-										type="submit"
-										disabled={isSaving}
-										className={styles.saveButton}
-										style={{
-											opacity: isSaving ? 0.6 : 1
-										}}
-									>
-										{isSaving ? 'Saving...' : '💾 Save Changes'}
-									</button>
-									<button
-										type="button"
-										onClick={() => {
-											setIsEditing(false);
-											loadUserData();
-										}}
-										className={styles.cancelButton}
-									>
-										✕ Cancel
-									</button>
+									</div>
+									<div className={styles.gridTwo}>
+										<label className={styles.fieldLabel}>Street Address
+											<input className={styles.fieldInput} name="address" value={formData.address} onChange={handleInputChange} disabled={!isEditingAddress} />
+										</label>
+										<label className={styles.fieldLabel}>City
+											<input className={styles.fieldInput} name="city" value={formData.city} onChange={handleInputChange} disabled={!isEditingAddress} />
+										</label>
+										<label className={styles.fieldLabel}>State
+											<input className={styles.fieldInput} name="state" value={formData.state} onChange={handleInputChange} disabled={!isEditingAddress} />
+										</label>
+										<label className={styles.fieldLabel}>ZIP Code
+											<input className={styles.fieldInput} name="zipCode" value={formData.zipCode} onChange={handleInputChange} disabled={!isEditingAddress} />
+										</label>
+										<label className={styles.fieldLabel}>Country
+											<input className={styles.fieldInput} name="country" value={formData.country} onChange={handleInputChange} disabled={!isEditingAddress} />
+										</label>
+									</div>
+									<div className={styles.cardActionsRow}>
+										<button type="button" className={styles.primaryButton} onClick={handleSave} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Address'}</button>
+									</div>
 								</div>
 							)}
-						</form>
-					</section>
 
-					{/* Right: Additional Info & Actions */}
-					<div className={styles.infoSection}>
-						{/* Account Stats */}
-						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 className={styles.cardTitle}>Account Stats</h2>
-							<div className={styles.stat}>
-								<p className={styles.statLabel}>Member Since</p>
-								<p className={styles.statValue}>
-									{new Date(user?.createdAt || Date.now()).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })}
-								</p>
-							</div>
-							<div className={styles.stat}>
-								<p className={styles.statLabel}>Total Orders</p>
-								<p className={styles.statValue}>4</p>
-							</div>
-							<div className={styles.stat}>
-								<p className={styles.statLabel}>Account Status</p>
-								<p className={styles.statValue} style={{ color: 'var(--success)' }}>✓ Active</p>
-							</div>
-						</section>
+							{activePanel === 'preferences' && (
+								<div className={styles.card}>
+									<div className={styles.cardHeader}><h2>Preferences</h2></div>
+									<div className={styles.gridTwo}>
+										<label className={styles.fieldLabel}>Language
+											<select className={styles.fieldInput} name="language" value={preferences.language} onChange={handlePreferenceChange}>
+												<option value="en">English</option>
+												<option value="hi">Hindi</option>
+											</select>
+										</label>
+										<label className={styles.fieldLabel}>Currency
+											<select className={styles.fieldInput} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+												{Object.keys(availableCurrencies || {}).map((code) => (
+													<option key={code} value={code}>{code}</option>
+												))}
+											</select>
+										</label>
+									</div>
+									<div className={styles.checkboxList}>
+										<label><input type="checkbox" name="emailNotifications" checked={preferences.emailNotifications} onChange={handlePreferenceChange} /> Email notifications</label>
+										<label><input type="checkbox" name="smsNotifications" checked={preferences.smsNotifications} onChange={handlePreferenceChange} /> SMS updates</label>
+										<label><input type="checkbox" name="marketingOptIn" checked={preferences.marketingOptIn} onChange={handlePreferenceChange} /> Marketing and offers</label>
+									</div>
+									<div className={styles.cardActionsRow}>
+										<button type="button" className={styles.primaryButton} onClick={() => showSuccess('Preferences saved')}>Save Preferences</button>
+									</div>
+								</div>
+							)}
 
-						{/* Quick Actions */}
-						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 className={styles.cardTitle}>Quick Actions</h2>
-							<button className={styles.actionLink}>🛒 Continue Shopping</button>
-							<button className={styles.actionLink}>📦 My Orders</button>
-							<button className={styles.actionLink}>❤️ Wishlist</button>
-							<button className={styles.actionLink}>🔔 Notifications</button>
-						</section>
+							{activePanel === 'security' && (
+								<div className={styles.card}>
+									<div className={styles.cardHeader}><h2>Security</h2></div>
+									<div className={styles.actionGrid}>
+										<button type="button" className={styles.ghostButton}>Change Password</button>
+										<button type="button" className={styles.ghostButton}>Set Up Two-Factor Auth</button>
+										<button type="button" className={styles.ghostButton}>View Active Sessions</button>
+										<button type="button" className={styles.ghostButton} onClick={handleLogout}>Logout from This Device</button>
+									</div>
+								</div>
+							)}
 
-						{/* Account Security */}
-						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 className={styles.cardTitle}>Account Security</h2>
-							<button className={styles.actionLink}>🔐 Change Password</button>
-							<button className={styles.actionLink}>📱 Two-Factor Auth</button>
-							<button className={styles.actionLink}>🔗 Linked Accounts</button>
-						</section>
+							{activePanel === 'billing' && (
+								<div className={styles.card}>
+									<div className={styles.cardHeader}><h2>Billing</h2></div>
+									<div className={styles.metaItem}><span>Saved Payment Methods</span><strong>0 methods</strong></div>
+									<div className={styles.metaItem}><span>Billing Email</span><strong>{formData.email || '-'}</strong></div>
+									<div className={styles.metaItem}><span>Default Method</span><strong>Not set</strong></div>
+									<p className={styles.helpText}>Add payment method during checkout. Card data is tokenized and never stored raw.</p>
+								</div>
+							)}
 
-						{/* Preferences */}
-						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 className={styles.cardTitle}>Preferences</h2>
-							<label className={styles.checkboxLabel}>
-								<input type="checkbox" defaultChecked className={styles.checkbox} />
-								<span>Email notifications</span>
-							</label>
-							<label className={styles.checkboxLabel}>
-								<input type="checkbox" defaultChecked className={styles.checkbox} />
-								<span>SMS updates</span>
-							</label>
-							<label className={styles.checkboxLabel}>
-								<input type="checkbox" className={styles.checkbox} />
-								<span>Marketing emails</span>
-							</label>
-						</section>
-
-						{/* Danger Zone */}
-						<section className="section" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-							<h2 className={styles.cardTitle} style={{ color: 'var(--error)' }}>Danger Zone</h2>
-							<button className={styles.logoutButton} onClick={handleLogout}>
-								🚪 Logout
-							</button>
-							<button className={styles.deleteButton}>
-								🗑️ Delete Account
-							</button>
-							<p className={styles.warningText}>
-								Deleting your account is permanent and cannot be undone.
-							</p>
-						</section>
-					</div>
-				</div>
-			</div>
-		</main>
+							{activePanel === 'data' && (
+								<div className={styles.card}>
+									<div className={styles.cardHeader}><h2>Data & Account Actions</h2></div>
+									<div className={styles.actionGrid}>
+										<button type="button" className={styles.ghostButton}>Download My Data</button>
+										<button type="button" className={styles.ghostButton}>Deactivate Account</button>
+										<button type="button" className={styles.dangerButton}>Delete Account Permanently</button>
+									</div>
+									<p className={styles.helpText}>Member since {stats.memberSince} • Total orders {stats.totalOrders} • Status {stats.accountStatus}</p>
+								</div>
+							)}
+			</section>
+		</CustomerAccountPageLayout>
 	);
 }
 

@@ -10,6 +10,24 @@ const getAuthHeaders = () => {
 };
 
 const orderService = {
+  uploadPrescription: async (file) => {
+    const formData = new FormData();
+    formData.append('prescription', file);
+
+    const response = await axios.post(`${API_URL}/orders/prescription/upload`, formData, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to upload prescription');
+    }
+
+    return response.data.data;
+  },
+
   createCustomerOrder: async (payload) => {
     const response = await axios.post(`${API_URL}/orders`, payload, {
       headers: {

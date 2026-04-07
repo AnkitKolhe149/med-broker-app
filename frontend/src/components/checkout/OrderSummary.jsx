@@ -1,9 +1,11 @@
 import React from 'react';
+import { useCurrency } from '../../context/CurrencyContext';
 import { formatCurrency } from '../../utils/currency';
 import styles from './Checkout.module.css';
 
 export function OrderSummary({ cartItems, getTotalPrice, discountPercent, appliedCoupon }) {
-  const currencyCode = cartItems[0]?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+  const { currency } = useCurrency();
+  const currencyCode = cartItems[0]?.currencyCode || currency || 'USD';
   const formatPrice = (value) => formatCurrency(value, currencyCode, true);
   const subtotal = getTotalPrice();
   const discount = (subtotal * discountPercent) / 100;

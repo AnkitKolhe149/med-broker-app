@@ -4,6 +4,7 @@ import './App.css';
 
 // Context providers
 import { CartProvider } from '../context/CartContext';
+import { FavoritesProvider } from '../context/FavoritesContext';
 import { UserProvider } from '../context/UserContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import { CurrencyProvider } from '../context/CurrencyContext';
@@ -36,6 +37,7 @@ import PublicLayout from '../components/layout/PublicLayout';
 import CustomerDashboard from '../pages/customer/Dashboard';
 import Catalog from '../pages/customer/Catalog';
 import MedicineDetail from '../pages/customer/MedicineDetail';
+import Favorites from '../pages/customer/Favorites';
 import Cart from '../pages/customer/Cart';
 import Checkout from '../pages/customer/Checkout';
 import Payment from '../pages/customer/Payment';
@@ -65,7 +67,8 @@ function App() {
         <NotificationProvider>
             <UserProvider>
                 <CurrencyProvider>
-                    <CartProvider>
+                        <FavoritesProvider>
+                        <CartProvider>
                         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                             {/* Animated background layer */}
                             <AnimatedBackground />
@@ -102,6 +105,11 @@ function App() {
                     <Route path="/customer/medicine/:id" element={
                         <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
                             <AppShell><MedicineDetail /></AppShell>
+                        </AuthGuard>
+                    } />
+                    <Route path="/customer/favorites" element={
+                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                            <AppShell><Favorites /></AppShell>
                         </AuthGuard>
                     } />
                     <Route path="/customer/cart" element={
@@ -203,8 +211,9 @@ function App() {
                             onClick={() => setIsChatOpen((prev) => !prev)}
                         />
                         </div>
-                    </Router>
-                </CartProvider>
+                        </Router>
+                        </CartProvider>
+                        </FavoritesProvider>
             </CurrencyProvider>
             </UserProvider>
         </NotificationProvider>
