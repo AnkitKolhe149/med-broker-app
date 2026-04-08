@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Download, Mail, MapPin, Package, Phone, ShoppingCart } from 'lucide-react';
 import Avatar from '../../components/common/Avatar';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
@@ -60,7 +61,7 @@ function OrderConfirmation() {
 			? toDisplayAmount(orderData.subtotalBase)
 			: orderData.subtotal;
 		const discount = (subtotal * orderData.discountPercent) / 100;
-		const deliveryCharge = subtotal > 500 ? 0 : 50;
+		const deliveryCharge = orderData.deliveryType === 'express' ? 9 : 0;
 		return (subtotal - discount + deliveryCharge) * 0.05;
 	};
 
@@ -143,14 +144,14 @@ function OrderConfirmation() {
 									<p className={styles.address}>{orderData.deliveryAddress.address}</p>
 									<p className={styles.address}>{orderData.deliveryAddress.city}, {orderData.deliveryAddress.state} {orderData.deliveryAddress.zipCode}</p>
 									<p className={styles.address}>{orderData.deliveryAddress.country}</p>
-									<p className={styles.phone}>📱 {orderData.deliveryAddress.phone}</p>
-									<p className={styles.email}>📧 {orderData.deliveryAddress.email}</p>
+									<p className={styles.phone}><Phone size={14} strokeWidth={1.75} /> {orderData.deliveryAddress.phone}</p>
+									<p className={styles.email}><Mail size={14} strokeWidth={1.75} /> {orderData.deliveryAddress.email}</p>
 								</div>
 
 								{orderData.deliveryType === 'home_delivery' && (
 									<div className={styles.infoBox}>
 										<p className={styles.infoText}>
-											📍 <strong>Estimated Delivery:</strong> Within 2-3 business days
+											<MapPin size={14} strokeWidth={1.75} /> <strong>Estimated Delivery:</strong> Within 2-3 business days
 										</p>
 									</div>
 								)}
@@ -171,21 +172,21 @@ function OrderConfirmation() {
 									className={styles.button}
 									style={{ backgroundColor: 'var(--primary)' }}
 								>
-									📥 Download Invoice
+									<Download size={14} strokeWidth={1.75} /> Download Invoice
 								</button>
 								<button 
 									onClick={() => navigate('/customer/orders')}
 									className={styles.button}
 									style={{ backgroundColor: 'var(--secondary)' }}
 								>
-									📦 Track Orders
+									<Package size={14} strokeWidth={1.75} /> Track Orders
 								</button>
 								<button 
 									onClick={() => navigate('/customer/catalog')}
 									className={styles.button}
 									style={{ backgroundColor: 'var(--text-secondary)' }}
 								>
-									🛒 Continue Shopping
+									<ShoppingCart size={14} strokeWidth={1.75} /> Continue Shopping
 								</button>
 							</div>
 
@@ -242,7 +243,7 @@ function OrderConfirmation() {
 								</div>
 
 								<div className={styles.trackingCard}>
-									<p className={styles.trackingLabel}>📍 Track Your Order</p>
+									<p className={styles.trackingLabel}><MapPin size={14} strokeWidth={1.75} /> Track Your Order</p>
 									<button
 										type="button"
 										onClick={() => navigate('/customer/orders')}
@@ -256,9 +257,9 @@ function OrderConfirmation() {
 								<div className={styles.supportBox}>
 									<p className={styles.supportTitle}>Need Help?</p>
 									<a href="mailto:support@mediq.com" className={styles.supportLink}>
-										📧 support@mediq.com
+										<Mail size={14} strokeWidth={1.75} /> support@mediq.com
 									</a>
-									<p className={styles.supportPhone}>📱 +91-1234-567-890</p>
+									<p className={styles.supportPhone}><Phone size={14} strokeWidth={1.75} /> +91-1234-567-890</p>
 								</div>
 							</div>
 						</div>

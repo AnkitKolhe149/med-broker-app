@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { ShieldCheck } from 'lucide-react';
 import { useNotification } from '../../context/NotificationContext';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -376,7 +377,7 @@ const handlePaymentProcess = async (e) => {
 
 							{/* Security Badge */}
 							<div className={styles.securityBadge}>
-								<span className={styles.badgeIcon}>🔒</span>
+								<span className={styles.badgeIcon}><ShieldCheck size={16} strokeWidth={1.75} /></span>
 								<div>
 									<p className={styles.badgeTitle}>Secure Payment</p>
 									<p className={styles.badgeText}>SSL encrypted & PCI compliant</p>
