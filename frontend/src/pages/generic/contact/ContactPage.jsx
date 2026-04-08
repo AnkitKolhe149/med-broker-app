@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BriefcaseBusiness, Mail, MapPin } from 'lucide-react';
 import './ContactPage.css';
 
 const ContactPage = () => {
@@ -113,7 +114,7 @@ const ContactPage = () => {
             <h2>Get in Touch</h2>
             <div className="info-content">
               <div className="info-item">
-                <div className="icon-box">✉️</div>
+                <div className="icon-box"><Mail size={18} strokeWidth={1.75} /></div>
                 <div>
                   <h3>Email</h3>
                   <p>shubham@medai.com</p>
@@ -121,7 +122,7 @@ const ContactPage = () => {
               </div>
               
               <div className="info-item">
-                <div className="icon-box">📍</div>
+                <div className="icon-box"><MapPin size={18} strokeWidth={1.75} /></div>
                 <div>
                   <h3>Headquarters</h3>
                   <p>RCOEM,<br/>Nagpur, India</p>
@@ -129,7 +130,7 @@ const ContactPage = () => {
               </div>
 
               <div className="info-item">
-                <div className="icon-box">💼</div>
+                <div className="icon-box"><BriefcaseBusiness size={18} strokeWidth={1.75} /></div>
                 <div>
                   <h3>Careers</h3>
                   <p>Join our team of AI experts.</p>

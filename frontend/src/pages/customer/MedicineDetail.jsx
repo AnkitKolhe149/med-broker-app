@@ -5,6 +5,7 @@ import { useFavorites } from '../../context/FavoritesContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
+import { BadgeCheck, Check, ClipboardList, Heart, Pill, ShieldCheck, Star } from 'lucide-react';
 import { formatCurrency } from '../../utils/currency';
 import medicineService from '../../services/medicine.service';
 import pricingService from '../../services/pricing.service';
@@ -207,7 +208,7 @@ function MedicineDetail() {
 								<img className={styles.mainImage} src={selectedImage} alt={medicine.name} />
 							) : (
 								<div className={styles.imagePlaceholder}>
-									<div className={styles.imageGlyph}>💊</div>
+									<div className={styles.imageGlyph}><Pill size={32} strokeWidth={1.75} /></div>
 									<p>No image available</p>
 								</div>
 							)}
@@ -239,7 +240,7 @@ function MedicineDetail() {
 								className={`${styles.favoriteButton} ${isFavorited(medicine.id) ? styles.favoriteButtonActive : ''}`}
 								aria-label={isFavorited(medicine.id) ? 'Remove from favorites' : 'Add to favorites'}
 							>
-								{isFavorited(medicine.id) ? '♥' : '♡'}
+								<Heart size={16} strokeWidth={1.75} fill={isFavorited(medicine.id) ? 'currentColor' : 'none'} />
 							</button>
 						</div>
 
@@ -258,7 +259,11 @@ function MedicineDetail() {
 
 						{hasRatingData && (
 							<div className={styles.ratingRow}>
-								<div className={styles.stars}>{'★'.repeat(Math.floor(medicine.rating || 0))}</div>
+								<div className={styles.stars}>
+									{Array.from({ length: Math.floor(medicine.rating || 0) }).map((_, index) => (
+										<Star key={`rating-star-${index}`} size={14} strokeWidth={1.75} fill="currentColor" />
+									))}
+								</div>
 								<span className={styles.ratingValue}>{(medicine.rating || 0).toFixed(1)}</span>
 								<span className={styles.reviewCount}>Trusted by verified buyers</span>
 							</div>
@@ -345,10 +350,10 @@ function MedicineDetail() {
 						</div>
 
 						<div className={styles.trustGrid}>
-							<div className={styles.trustItem}><span className={styles.trustIcon}>⚕️</span><span className={styles.trustText}>Verified pharmaceutical</span></div>
-							<div className={styles.trustItem}><span className={styles.trustIcon}>✓</span><span className={styles.trustText}>Licensed vendor</span></div>
-							<div className={styles.trustItem}><span className={styles.trustIcon}>📋</span><span className={styles.trustText}>Regulated product</span></div>
-							<div className={styles.trustItem}><span className={styles.trustIcon}>🛡️</span><span className={styles.trustText}>Certified quality</span></div>
+							<div className={styles.trustItem}><span className={styles.trustIcon}><BadgeCheck size={16} strokeWidth={1.75} /></span><span className={styles.trustText}>Verified pharmaceutical</span></div>
+							<div className={styles.trustItem}><span className={styles.trustIcon}><Check size={16} strokeWidth={1.75} /></span><span className={styles.trustText}>Licensed vendor</span></div>
+							<div className={styles.trustItem}><span className={styles.trustIcon}><ClipboardList size={16} strokeWidth={1.75} /></span><span className={styles.trustText}>Regulated product</span></div>
+							<div className={styles.trustItem}><span className={styles.trustIcon}><ShieldCheck size={16} strokeWidth={1.75} /></span><span className={styles.trustText}>Certified quality</span></div>
 						</div>
 					</div>
 				</section>

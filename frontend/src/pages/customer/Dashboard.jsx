@@ -56,7 +56,14 @@ function CustomerDashboard() {
 				date: order.createdAt,
 				total: Number(((order.totalCents || 0) / 100).toFixed(2)),
 				items: (order.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0),
-				status: order.status
+				status: order.status,
+				medicineQuantityMap: (order.items || []).reduce((map, item) => {
+					const name = item?.medicine?.name;
+					if (!name) return map;
+					const qty = Math.max(1, Number(item?.quantity) || 1);
+					map.set(name, (map.get(name) || 0) + qty);
+					return map;
+				}, new Map())
 			}));
 
 		return {
@@ -166,6 +173,9 @@ function CustomerDashboard() {
 
 		return Array.from(grouped.values()).sort((a, b) => new Date(b.latestCreatedAt) - new Date(a.latestCreatedAt));
 	}, [metrics.activeOrders]);
+
+	const previewActiveOrders = useMemo(() => groupedActiveOrders.slice(0, 3), [groupedActiveOrders]);
+	const previewRecentOrders = useMemo(() => metrics.recentOrders.slice(0, 3), [metrics.recentOrders]);
 
 	return (
 		<main className={styles.dashboardMain}>
@@ -314,7 +324,7 @@ function CustomerDashboard() {
 					<div className={styles.sectionHeaderMain}>
 						<div>
 							<h3 className={styles.sectionTitleMain}>Open Orders</h3>
-							<p className={styles.sectionSubtitle}>Track current deliveries ({metrics.activeOrders.length} of {metrics.totalOrders})</p>
+							<p className={styles.sectionSubtitle}>Track current deliveries ({metrics.activeOrders.length} of {metrics.totalOrders}){groupedActiveOrders.length > 3 ? ' • showing first 3' : ''}</p>
 						</div>
 						<button className="button-outline" onClick={() => navigate('/customer/orders')}>View all</button>
 					</div>
@@ -325,7 +335,7 @@ function CustomerDashboard() {
 						) : metrics.activeOrders.length === 0 ? (
 							<div className={`${styles.orderCard} card`}>No active orders yet.</div>
 						) : (
-							groupedActiveOrders.map((group, index) => {
+							previewActiveOrders.map((group, index) => {
 								const stageIndex = getOrderStageIndex(group.status);
 								const totalQuantity = getTotalQuantity(group.medicineQuantityMap);
 								return (
@@ -362,8 +372,9 @@ function CustomerDashboard() {
 					<div className={styles.sectionHeaderMain}>
 						<div>
 							<h3 className={styles.sectionTitleMain}>Recent Purchases</h3>
-							<p className={styles.sectionSubtitle}>Your order history</p>
+							<p className={styles.sectionSubtitle}>Your order history{metrics.recentOrders.length > 3 ? ' • showing first 3' : ''}</p>
 						</div>
+						<button className="button-outline" onClick={() => navigate('/customer/orders')}>View all</button>
 					</div>
 
 					<div className={styles.purchasesList}>
@@ -372,14 +383,14 @@ function CustomerDashboard() {
 						) : metrics.recentOrders.length === 0 ? (
 							<div className={`${styles.purchaseItem} card`}>No orders placed yet.</div>
 						) : (
-							metrics.recentOrders.map((order) => (
+							previewRecentOrders.map((order) => (
 								<div key={order.id} className={`${styles.purchaseItem} card`}>
 									<div className={styles.purchaseLeft}>
-										<p className={styles.purchaseOrderId}>{order.id}</p>
+										<p className={styles.purchaseOrderId}>{getOrderDisplayName(order.medicineQuantityMap)}</p>
 										<p className={styles.purchaseDate}>{order.date ? new Date(order.date).toLocaleDateString('en-IN') : '-'}</p>
 									</div>
 									<div className={styles.purchaseMiddle}>
-										<p className={styles.purchaseItems}>{order.items} items</p>
+										<p className={styles.purchaseItems}>{getTotalQuantity(order.medicineQuantityMap)} units • Order #{String(order.id).slice(0, 8)}</p>
 										<span className={`badge badge-info`}>{order.status}</span>
 									</div>
 									<div className={styles.purchaseRight}>

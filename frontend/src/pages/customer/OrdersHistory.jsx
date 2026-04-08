@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { FlaskConical } from 'lucide-react';
 import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
@@ -275,7 +276,7 @@ function OrdersHistory() {
 									<article key={`${order.status}-${order.paymentMethod}-${order.orderIds?.[0] || 'group'}`} className={styles.orderCard}>
 										<div className={styles.orderCardTop}>
 											<div className={styles.orderIdentity}>
-												<span className={styles.orderIcon}>🧪</span>
+												<span className={styles.orderIcon}><FlaskConical size={16} strokeWidth={1.75} /></span>
 												<div>
 													<p className={styles.orderNo}>{getOrderSummary(order.items)}</p>
 													<p className={styles.orderRef}>Order #{String(order.orderIds?.[0] || '').slice(0, 8)}</p>

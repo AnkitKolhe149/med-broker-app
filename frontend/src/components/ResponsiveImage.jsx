@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ImageOff } from 'lucide-react';
 
 /**
  * ResponsiveImage Component
@@ -105,7 +106,7 @@ function ResponsiveImage({
 					role="img"
 					aria-label={`Failed to load: ${alt}`}
 				>
-					🖼️
+					<ImageOff size={36} strokeWidth={1.75} />
 				</div>
 			)}
 

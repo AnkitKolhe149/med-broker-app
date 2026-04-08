@@ -49,7 +49,7 @@ function VendorCommunication() {
 		{
 			id: 3,
 			sender: 'vendor',
-			text: '📎 Paracetamol_Bulk_Pricing_Jan2024.pdf',
+			text: 'Paracetamol_Bulk_Pricing_Jan2024.pdf',
 			timestamp: '10:36 AM',
 			date: '2024-01-15',
 			file: true

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4005/api';
 
 // Setup axios interceptor for error handling
 axios.interceptors.response.use(

@@ -1,14 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Check, ClipboardList, CreditCard, UserRound } from 'lucide-react';
 import Avatar from './Avatar';
 import styles from './CustomerAccountSidebar.module.css';
 
 const MENU_ITEMS = [
-  { key: 'my-profile', label: 'My Profile', icon: '👤', route: '/customer/profile' },
-  { key: 'my-list', label: 'My List', icon: '📋', route: '/customer/favorites' },
-  { key: 'my-orders', label: 'My Orders', icon: '✓', route: '/customer/orders' },
-  { key: 'payments', label: 'Payments', icon: '💳', route: '/customer/orders?tab=previous' },
-  { key: 'referrals', label: 'Referrals', icon: '➤', route: '/customer/dashboard' }
+  { key: 'my-profile', label: 'My Profile', icon: <UserRound size={16} strokeWidth={1.75} />, route: '/customer/profile' },
+  { key: 'my-list', label: 'My List', icon: <ClipboardList size={16} strokeWidth={1.75} />, route: '/customer/favorites' },
+  { key: 'my-orders', label: 'My Orders', icon: <Check size={16} strokeWidth={1.75} />, route: '/customer/orders' },
+  { key: 'payments', label: 'Payments', icon: <CreditCard size={16} strokeWidth={1.75} />, route: '/customer/orders?tab=previous' },
+  { key: 'referrals', label: 'Referrals', icon: <ArrowRight size={16} strokeWidth={1.75} />, route: '/customer/dashboard' }
 ];
 
 function CustomerAccountSidebar({ user, activeItem, hiddenItemKeys = [] }) {

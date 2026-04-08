@@ -4,7 +4,7 @@ import authService from '../../services/auth.service';
 import {
   BarChart2, Package, PackageSearch, Pill,
   Truck, TrendingUp, Wallet, ClipboardList,
-  MessageSquare, Settings, LogOut
+	MessageSquare, Settings, LogOut, Menu, X, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import './VendorLayout.css';
 
@@ -87,7 +87,7 @@ function VendorLayout({ children }) {
 				onClick={() => setIsMobileMenuOpen(true)}
 				aria-label="Open vendor navigation"
 			>
-				☰
+				<Menu size={20} strokeWidth={1.75} />
 			</button>
 
 			<div
@@ -111,7 +111,7 @@ function VendorLayout({ children }) {
 						className="vendor-sidebar-toggle"
 						aria-label={isMobileView ? 'Close vendor navigation' : 'Toggle vendor sidebar'}
 					>
-						{isMobileView ? '✕' : isCollapsed ? '›' : '‹'}
+						{isMobileView ? <X size={16} strokeWidth={1.75} /> : isCollapsed ? <ChevronRight size={16} strokeWidth={1.75} /> : <ChevronLeft size={16} strokeWidth={1.75} />}
 					</button>
 				</div>
 

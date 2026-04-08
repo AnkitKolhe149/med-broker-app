@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { Search, Star } from 'lucide-react';
 import { formatCurrency as formatCurrencyValue, getCurrencySymbol as getCurrencySymbolByCode } from '../../utils/currency';
 import medicineService from '../../services/medicine.service';
 import styles from './Catalog.module.css';
@@ -571,7 +572,7 @@ function Catalog() {
 									<article key={medicine.id} className={styles.medicineCard}>
 										<div className={styles.cardImageWrap}>
 											<div className={styles.cardOverlayRow}>
-												<span className={styles.ratingBadge}>★ {Math.min(5, Math.max(3.8, (medicine.popularity / 20)).toFixed(1))}</span>
+												<span className={styles.ratingBadge}><Star size={14} strokeWidth={1.75} fill="currentColor" /> {Math.min(5, Math.max(3.8, (medicine.popularity / 20)).toFixed(1))}</span>
 												<span className={`${styles.stockPill} ${styles[`stockTone-${getStockStatusTone(medicine)}`]}`}>{getStockStatus(medicine)}</span>
 											</div>
 											{medicine.imageUrl ? (
@@ -671,7 +672,7 @@ function Catalog() {
 						) : (
 							/* EMPTY STATE */
 							<div className="emptyState">
-							<div className="emptyStateIcon">🔍</div>
+							<div className="emptyStateIcon"><Search size={30} strokeWidth={1.75} /></div>
 								<h3>No medicines found</h3>
 								<p>
 									{searchQuery
