@@ -14,6 +14,16 @@ const initiatePayment = async (orderId, userId, paymentData) => {
     throw new ValidationError('Invalid payment provider');
   }
 
+  const gatewayConfigured = {
+    razorpay: PAYMENT_CONFIG.razorpay.enabled && PAYMENT_CONFIG.razorpay.keyId && PAYMENT_CONFIG.razorpay.keySecret,
+    stripe: PAYMENT_CONFIG.stripe.enabled && PAYMENT_CONFIG.stripe.publishableKey && PAYMENT_CONFIG.stripe.secretKey,
+    paypal: PAYMENT_CONFIG.paypal.enabled && PAYMENT_CONFIG.paypal.clientId && PAYMENT_CONFIG.paypal.clientSecret
+  };
+
+  const effectiveProvider = (gatewayConfigured[selectedProvider] || selectedProvider === 'mock')
+    ? selectedProvider
+    : 'mock';
+
   // Check if order exists and belongs to user
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -50,18 +60,18 @@ const initiatePayment = async (orderId, userId, paymentData) => {
   }
 
   // For demo/testing purposes, use mock payment
-  if (selectedProvider === 'mock' || process.env.NODE_ENV === 'development') {
+  if (effectiveProvider === 'mock' || process.env.NODE_ENV === 'development') {
     // Create or update payment record
     const payment = await prisma.payment.upsert({
       where: { orderId: orderId },
       create: {
         orderId,
-        provider: selectedProvider,
+        provider: effectiveProvider,
         status: 'INITIATED',
         amountCents: order.totalCents
       },
       update: {
-        provider: selectedProvider,
+        provider: effectiveProvider,
         status: 'INITIATED',
         amountCents: order.totalCents
       }
@@ -73,7 +83,7 @@ const initiatePayment = async (orderId, userId, paymentData) => {
       orderId: order.id,
       amount: order.totalCents,
       currency: PAYMENT_CONFIG.currency,
-      provider: selectedProvider,
+      provider: effectiveProvider,
       status: 'INITIATED',
       // Mock payment link/form data
       paymentUrl: `${returnUrl || '/payment/success'}?orderId=${orderId}&paymentId=${payment.id}`,
@@ -87,7 +97,7 @@ const initiatePayment = async (orderId, userId, paymentData) => {
   // For Stripe: Create payment intent
   // For PayPal: Create order
 
-  throw new ValidationError('Payment gateway integration not yet implemented. Use provider=mock for testing.');
+  throw new ValidationError('Payment gateway integration is not yet implemented in production mode. Use provider=mock for testing.');
 };
 
 /**

@@ -2,9 +2,12 @@ const { randomUUID } = require('node:crypto');
 const knowledgeBase = require('./knowledge.base.json');
 const { prisma } = require('../../database/prisma');
 const { Pinecone } = require('@pinecone-database/pinecone');
+const { loadSessions, persistSessions } = require('./session.store');
 
 const chatSessions = new Map();
 const MAX_SESSION_MESSAGES = 20;
+let hasLoadedPersistedSessions = false;
+let loadSessionsPromise = null;
 
 const RED_FLAG_KEYWORDS = [
   'chest pain',
@@ -102,7 +105,43 @@ const extractSymptoms = (text) => {
   return SYMPTOM_KEYWORDS.filter((symptom) => normalized.includes(symptom));
 };
 
-const getSessionState = (sessionId) => {
+const ensureSessionsLoaded = async () => {
+  if (hasLoadedPersistedSessions) {
+    return;
+  }
+
+  if (!loadSessionsPromise) {
+    loadSessionsPromise = loadSessions()
+      .then((persistedSessions) => {
+        for (const [sessionId, state] of persistedSessions.entries()) {
+          chatSessions.set(sessionId, state);
+        }
+
+        hasLoadedPersistedSessions = true;
+      })
+      .catch(() => {
+        hasLoadedPersistedSessions = true;
+      });
+  }
+
+  await loadSessionsPromise;
+};
+
+const saveSessionsSafely = async () => {
+  try {
+    const pruned = await persistSessions(chatSessions);
+    chatSessions.clear();
+    for (const [sessionId, state] of pruned.entries()) {
+      chatSessions.set(sessionId, state);
+    }
+  } catch (_error) {
+    // Keep serving requests even if persistence fails.
+  }
+};
+
+const getSessionState = async (sessionId) => {
+  await ensureSessionsLoaded();
+
   const existing = chatSessions.get(sessionId);
   if (existing) return existing;
 
@@ -114,11 +153,13 @@ const getSessionState = (sessionId) => {
   return created;
 };
 
-const rememberMessage = (state, role, text) => {
+const rememberMessage = async (state, role, text) => {
   state.messages.push({ role, text, createdAt: Date.now() });
   if (state.messages.length > MAX_SESSION_MESSAGES) {
     state.messages.shift();
   }
+
+  await saveSessionsSafely();
 };
 
 const getEmbedder = async () => {
@@ -415,7 +456,19 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL' }) 
     take: 5
   });
 
-  return inventoryItems.map((item) => {
+  const uniqueInventoryItems = [];
+  const seenMedicineIds = new Set();
+
+  for (const item of inventoryItems) {
+    if (seenMedicineIds.has(item.medicine.id)) {
+      continue;
+    }
+
+    seenMedicineIds.add(item.medicine.id);
+    uniqueInventoryItems.push(item);
+  }
+
+  return uniqueInventoryItems.map((item) => {
     const retailPrice = Number(((item.medicine.priceCents || 0) / 100).toFixed(2));
     const wholesalePrice = Number((((item.medicine.wholesalePriceCents ?? item.medicine.priceCents) || 0) / 100).toFixed(2));
     const bulkPrice = Number((((item.medicine.bulkPriceCents ?? item.medicine.wholesalePriceCents ?? item.medicine.priceCents) || 0) / 100).toFixed(2));
@@ -455,16 +508,17 @@ const buildFollowUpQuestion = (retrievedDocs) => {
 
 const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
   const activeSessionId = sessionId || randomUUID();
-  const session = getSessionState(activeSessionId);
+  const session = await getSessionState(activeSessionId);
 
-  rememberMessage(session, 'user', message);
+  await rememberMessage(session, 'user', message);
 
   const extractedSymptoms = extractSymptoms(message);
   extractedSymptoms.forEach((symptom) => session.symptoms.add(symptom));
+  await saveSessionsSafely();
 
   if (hasRedFlags(message)) {
     const reply = 'Your symptoms may indicate a medical emergency. Please seek urgent in-person medical care or call emergency services immediately.';
-    rememberMessage(session, 'assistant', reply);
+    await rememberMessage(session, 'assistant', reply);
 
     return {
       sessionId: activeSessionId,
@@ -496,7 +550,7 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
     ? `${llmReply}\n\n${followUpQuestion}`
     : llmReply;
 
-  rememberMessage(session, 'assistant', finalReply);
+  await rememberMessage(session, 'assistant', finalReply);
 
   return {
     sessionId: activeSessionId,

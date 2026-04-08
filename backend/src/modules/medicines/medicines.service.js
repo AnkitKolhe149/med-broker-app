@@ -149,20 +149,13 @@ module.exports = {
         select: {
           id: true,
           quantity: true,
-          bulkMinQty: true,
-          bulkDiscountPercent: true,
           imageUrl: true,
-          imageUrls: true,
           medicine: {
             select: {
               id: true,
               name: true,
               description: true,
               priceCents: true,
-              wholesalePriceCents: true,
-              bulkMinQty: true,
-              bulkPriceCents: true,
-              requiresPrescription: true,
               createdAt: true
             }
           },
@@ -200,20 +193,13 @@ module.exports = {
       select: {
         id: true,
         quantity: true,
-        bulkMinQty: true,
-        bulkDiscountPercent: true,
         imageUrl: true,
-        imageUrls: true,
         medicine: {
           select: {
             id: true,
             name: true,
             description: true,
             priceCents: true,
-            wholesalePriceCents: true,
-            bulkMinQty: true,
-            bulkPriceCents: true,
-            requiresPrescription: true,
             createdAt: true
           }
         },

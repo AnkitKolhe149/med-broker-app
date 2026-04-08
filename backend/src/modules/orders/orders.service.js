@@ -80,36 +80,42 @@ const createOrder = async (userId, orderData) => {
     });
   }
 
-  const inventoryIds = [...new Set(items.map((item) => item.medicineId))];
+  const inventoryKeys = [...new Set(items.map((item) => `${item.medicineId}:${item.vendorId || ''}`))];
   const inventoryRecords = await prisma.inventory.findMany({
-    where: { id: { in: inventoryIds } },
+    where: {
+      OR: [
+        ...items.map((item) => ({
+          medicineId: item.medicineId,
+          ...(item.vendorId ? { vendorId: item.vendorId } : {})
+        }))
+      ]
+    },
     select: {
       id: true,
       medicineId: true,
+      vendorId: true,
       quantity: true,
-      bulkMinQty: true,
       medicine: {
         select: {
-          priceCents: true,
-          wholesalePriceCents: true,
-          bulkMinQty: true,
-          bulkPriceCents: true
+          priceCents: true
         }
       }
     }
   });
 
-  if (inventoryRecords.length !== inventoryIds.length) {
-    throw new NotFoundError('One or more inventory items not found');
+  if (inventoryRecords.length !== items.length) {
+    throw new NotFoundError('One or more medicines not found');
   }
 
-  const inventoryMap = new Map(inventoryRecords.map((record) => [record.id, record]));
+  const inventoryMap = new Map(
+    inventoryRecords.map((record) => [`${record.medicineId}:${record.vendorId || ''}`, record])
+  );
 
   let totalCents = 0;
   const orderItems = items.map((item) => {
-    const inventory = inventoryMap.get(item.medicineId);
+    const inventory = inventoryMap.get(`${item.medicineId}:${item.vendorId || ''}`) || inventoryRecords.find((record) => record.medicineId === item.medicineId);
     if (!inventory) {
-      throw new NotFoundError(`Inventory item not found: ${item.medicineId}`);
+      throw new NotFoundError(`Medicine not found: ${item.medicineId}`);
     }
 
     if (inventory.quantity < item.quantity) {
@@ -119,10 +125,7 @@ const createOrder = async (userId, orderData) => {
     const packageType = normalizePackageType(item.selectedSize || item.packageType);
     const unitPriceCents = resolveOrderItemUnitPriceCents({
       medicine: {
-        priceCents: inventory.medicine.priceCents,
-        wholesalePriceCents: inventory.medicine.wholesalePriceCents,
-        bulkPriceCents: inventory.medicine.bulkPriceCents,
-        bulkMinQty: inventory.medicine.bulkMinQty ?? inventory.bulkMinQty
+        priceCents: inventory.medicine.priceCents
       },
       buyerType: customer?.buyerType,
       quantity: item.quantity,
@@ -159,7 +162,7 @@ const createOrder = async (userId, orderData) => {
 
     await Promise.all(
       items.map((item) => tx.inventory.update({
-        where: { id: item.medicineId },
+        where: { id: inventoryMap.get(`${item.medicineId}:${item.vendorId || ''}`)?.id || inventoryRecords.find((record) => record.medicineId === item.medicineId)?.id },
         data: { quantity: { decrement: item.quantity } }
       }))
     );

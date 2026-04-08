@@ -3,9 +3,31 @@
  * Supports multiple payment providers (Stripe, Razorpay, PayPal, etc.)
  */
 
+const isEnabled = (value) => String(value).toLowerCase() === 'true';
+
+const hasRazorpayConfig = isEnabled(process.env.RAZORPAY_ENABLED)
+  && Boolean(process.env.RAZORPAY_KEY_ID)
+  && Boolean(process.env.RAZORPAY_KEY_SECRET);
+
+const hasStripeConfig = isEnabled(process.env.STRIPE_ENABLED)
+  && Boolean(process.env.STRIPE_SECRET_KEY)
+  && Boolean(process.env.STRIPE_PUBLISHABLE_KEY);
+
+const hasPaypalConfig = isEnabled(process.env.PAYPAL_ENABLED)
+  && Boolean(process.env.PAYPAL_CLIENT_ID)
+  && Boolean(process.env.PAYPAL_CLIENT_SECRET);
+
+const firstConfiguredProvider = hasRazorpayConfig
+  ? 'razorpay'
+  : hasStripeConfig
+    ? 'stripe'
+    : hasPaypalConfig
+      ? 'paypal'
+      : 'mock';
+
 const PAYMENT_CONFIG = {
   // Default provider
-  defaultProvider: process.env.PAYMENT_PROVIDER || 'razorpay',
+  defaultProvider: process.env.PAYMENT_PROVIDER || firstConfiguredProvider,
 
   // Razorpay configuration (popular in India for medicine marketplace)
   razorpay: {
