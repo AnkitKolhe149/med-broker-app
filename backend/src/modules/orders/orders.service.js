@@ -80,8 +80,32 @@ const createOrder = async (userId, orderData) => {
     });
   }
 
-  const inventoryKeys = [...new Set(items.map((item) => `${item.medicineId}:${item.vendorId || ''}`))];
-  const inventoryRecords = await prisma.inventory.findMany({
+  const inventoryIdCandidates = [...new Set(
+    items
+      .map((item) => item.inventoryId || item.medicineId)
+      .filter(Boolean)
+  )];
+
+  const [inventoryByIdRecords, inventoryByMedicineRecords] = await Promise.all([
+    inventoryIdCandidates.length
+      ? prisma.inventory.findMany({
+        where: {
+          id: { in: inventoryIdCandidates }
+        },
+        select: {
+          id: true,
+          medicineId: true,
+          vendorId: true,
+          quantity: true,
+          medicine: {
+            select: {
+              priceCents: true
+            }
+          }
+        }
+      })
+      : Promise.resolve([]),
+    prisma.inventory.findMany({
     where: {
       OR: [
         ...items.map((item) => ({
@@ -101,19 +125,54 @@ const createOrder = async (userId, orderData) => {
         }
       }
     }
-  });
+  })
+  ]);
 
-  if (inventoryRecords.length !== items.length) {
-    throw new NotFoundError('One or more medicines not found');
-  }
+  const inventoryRecordMap = new Map();
+  [...inventoryByIdRecords, ...inventoryByMedicineRecords].forEach((record) => {
+    inventoryRecordMap.set(record.id, record);
+  });
+  const inventoryRecords = [...inventoryRecordMap.values()];
 
   const inventoryMap = new Map(
     inventoryRecords.map((record) => [`${record.medicineId}:${record.vendorId || ''}`, record])
   );
+  const inventoryById = new Map(inventoryRecords.map((record) => [record.id, record]));
+
+  const inventoryByMedicine = new Map();
+  for (const record of inventoryRecords) {
+    const existing = inventoryByMedicine.get(record.medicineId) || [];
+    existing.push(record);
+    inventoryByMedicine.set(record.medicineId, existing);
+  }
+
+  const resolveInventoryForItem = (item) => {
+    const directInventoryId = item.inventoryId || item.medicineId;
+    const byInventoryId = directInventoryId ? inventoryById.get(directInventoryId) : null;
+    if (byInventoryId && (!item.vendorId || byInventoryId.vendorId === item.vendorId)) {
+      return byInventoryId;
+    }
+
+    const exactKey = `${item.medicineId}:${item.vendorId || ''}`;
+    const exact = inventoryMap.get(exactKey);
+    if (exact) {
+      return exact;
+    }
+
+    const candidates = inventoryByMedicine.get(item.medicineId) || [];
+    if (!candidates.length) {
+      return null;
+    }
+
+    // Choose the best available stock when vendor is unspecified in cart payload.
+    return [...candidates].sort((a, b) => b.quantity - a.quantity)[0];
+  };
 
   let totalCents = 0;
-  const orderItems = items.map((item) => {
-    const inventory = inventoryMap.get(`${item.medicineId}:${item.vendorId || ''}`) || inventoryRecords.find((record) => record.medicineId === item.medicineId);
+  const resolvedInventoryForItems = [];
+
+  const orderItems = items.map((item, index) => {
+    const inventory = resolveInventoryForItem(item);
     if (!inventory) {
       throw new NotFoundError(`Medicine not found: ${item.medicineId}`);
     }
@@ -133,6 +192,7 @@ const createOrder = async (userId, orderData) => {
     });
     const itemTotal = unitPriceCents * item.quantity;
     totalCents += itemTotal;
+    resolvedInventoryForItems[index] = inventory;
 
     return {
       medicineId: inventory.medicineId,
@@ -161,8 +221,8 @@ const createOrder = async (userId, orderData) => {
     });
 
     await Promise.all(
-      items.map((item) => tx.inventory.update({
-        where: { id: inventoryMap.get(`${item.medicineId}:${item.vendorId || ''}`)?.id || inventoryRecords.find((record) => record.medicineId === item.medicineId)?.id },
+      items.map((item, index) => tx.inventory.update({
+        where: { id: resolvedInventoryForItems[index].id },
         data: { quantity: { decrement: item.quantity } }
       }))
     );

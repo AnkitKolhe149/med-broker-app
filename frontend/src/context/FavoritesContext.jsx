@@ -39,6 +39,17 @@ export const FavoritesProvider = ({ children }) => {
 	}, []);
 
 	useEffect(() => {
+		const handleAuthChanged = (event) => {
+			if (event?.detail?.accountChanged) {
+				setFavorites([]);
+			}
+		};
+
+		window.addEventListener('mediq:auth-changed', handleAuthChanged);
+		return () => window.removeEventListener('mediq:auth-changed', handleAuthChanged);
+	}, []);
+
+	useEffect(() => {
 		try {
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
 		} catch (error) {

@@ -31,6 +31,18 @@ export const UserProvider = ({ children }) => {
 		loadUser();
 	}, []);
 
+	useEffect(() => {
+		const handleAuthChanged = (event) => {
+			const nextUser = event?.detail?.user ?? null;
+			setUser(nextUser);
+			setError(null);
+			setLoading(false);
+		};
+
+		window.addEventListener('mediq:auth-changed', handleAuthChanged);
+		return () => window.removeEventListener('mediq:auth-changed', handleAuthChanged);
+	}, []);
+
 	const value = {
 		user,
 		loading,

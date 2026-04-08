@@ -213,7 +213,8 @@ function Checkout() {
 			navigate('/customer/payment');
 		} catch (error) {
 			console.error('Failed to place order:', error);
-			showError('Failed to place order. Please try again.');
+			const apiMessage = error?.response?.data?.message || error?.message;
+			showError(apiMessage || 'Failed to place order. Please try again.');
 		} finally {
 			setIsSubmitting(false);
 		}

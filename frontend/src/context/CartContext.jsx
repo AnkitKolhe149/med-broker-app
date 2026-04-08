@@ -67,6 +67,17 @@ export const CartProvider = ({ children }) => {
 		}
 	}, []);
 
+	useEffect(() => {
+		const handleAuthChanged = (event) => {
+			if (event?.detail?.accountChanged) {
+				setCartItems([]);
+			}
+		};
+
+		window.addEventListener('mediq:auth-changed', handleAuthChanged);
+		return () => window.removeEventListener('mediq:auth-changed', handleAuthChanged);
+	}, []);
+
 	// Save cart to localStorage whenever it changes
 	useEffect(() => {
 		try {
@@ -106,10 +117,16 @@ export const CartProvider = ({ children }) => {
 		});
 
 		setCartItems(prevItems => {
-			const existingItem = prevItems.find(item => item.medicineId === medicine.id);
+				const normalizedInventoryId = medicine.id;
+				const normalizedMedicineId = medicine.medicineId || medicine.id;
+				const existingItem = prevItems.find((item) => {
+					const itemInventoryId = item.inventoryId || item.medicineId;
+					return itemInventoryId === normalizedInventoryId;
+				});
 			if (existingItem) {
 				return prevItems.map(item => {
-					if (item.medicineId !== medicine.id) {
+						const itemInventoryId = item.inventoryId || item.medicineId;
+						if (itemInventoryId !== normalizedInventoryId) {
 						return item;
 					}
 
@@ -140,7 +157,8 @@ export const CartProvider = ({ children }) => {
 			return [
 				...prevItems,
 				{
-					medicineId: medicine.id,
+					inventoryId: normalizedInventoryId,
+					medicineId: normalizedMedicineId,
 					name: medicine.name,
 					category: medicine.category,
 					imageUrl: medicine.imageUrl,
