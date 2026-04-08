@@ -156,6 +156,7 @@ module.exports = {
               name: true,
               description: true,
               priceCents: true,
+              bulkMinQty: true,
               createdAt: true
             }
           },
@@ -200,6 +201,7 @@ module.exports = {
             name: true,
             description: true,
             priceCents: true,
+            bulkMinQty: true,
             createdAt: true
           }
         },

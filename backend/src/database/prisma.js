@@ -25,7 +25,8 @@ const isTransientDbTerminationError = (error) => {
     message.includes('57p01') ||
     message.includes('administrator command') ||
     message.includes('terminating connection due to administrator command') ||
-    message.includes('server closed the connection unexpectedly')
+    message.includes('server closed the connection unexpectedly') ||
+    message.includes('closed, cause: none')
   );
 };
 

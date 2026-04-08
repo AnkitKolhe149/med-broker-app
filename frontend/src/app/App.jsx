@@ -12,6 +12,7 @@ import { CurrencyProvider } from '../context/CurrencyContext';
 // Layout components
 import AppShell from '../components/layout/AppShell';
 import VendorLayout from '../components/layout/VendorLayout';
+import AdminLayout from '../components/layout/AdminLayout';
 import AnimatedBackground from '../components/layout/AnimatedBackground';
 import ChatbotFloatingButton from '../components/layout/ChatbotFloatingButton';
 import ChatbotPanel from '../components/layout/ChatbotPanel';
@@ -59,7 +60,8 @@ import VendorSettings from '../pages/vendor/Settings';
 
 // Admin pages
 import AdminDashboard from '../pages/admin/Dashboard';
-
+import AdminVendors from '../pages/admin/Vendors';
+import AdminPayouts from '../pages/admin/Payouts';
 function App() {
     const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -196,9 +198,24 @@ function App() {
                     } />
                     
                     {/* Admin routes (require authentication and admin role) */}
+                    <Route path="/admin" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminDashboard /></AdminLayout>
+                        </AuthGuard>
+                    } />
                     <Route path="/admin/dashboard" element={
                         <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
-                            <AdminDashboard />
+                            <AdminLayout><AdminDashboard /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/vendors" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminVendors /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/payouts" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminPayouts /></AdminLayout>
                         </AuthGuard>
                     } />
                     

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4005/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 const AUTH_CHANGED_EVENT = 'mediq:auth-changed';
 const ACCOUNT_SCOPED_KEYS = [
   'mediq_cart',

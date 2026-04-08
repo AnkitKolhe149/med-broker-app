@@ -301,7 +301,7 @@
 
 .auth-care-role-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.55rem;
   background: rgba(243, 249, 245, 0.86);
   border: 1px solid rgba(21, 115, 71, 0.22);
