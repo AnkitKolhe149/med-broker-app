@@ -62,6 +62,20 @@ import VendorSettings from '../pages/vendor/Settings';
 import AdminDashboard from '../pages/admin/Dashboard';
 import AdminVendors from '../pages/admin/Vendors';
 import AdminPayouts from '../pages/admin/Payouts';
+import AdminUsers from '../pages/admin/Users';
+import AdminOrders from '../pages/admin/Orders';
+import AdminReports from '../pages/admin/Reports';
+import AdminPricingRules from '../pages/admin/PricingRules';
+import AdminCatalog from '../pages/admin/Catalog';
+import AdminInventory from '../pages/admin/Inventory';
+import AdminPrescriptions from '../pages/admin/Prescriptions';
+import AdminReturnsRefunds from '../pages/admin/ReturnsRefunds';
+import AdminSupportTickets from '../pages/admin/SupportTickets';
+import AdminDisputes from '../pages/admin/Disputes';
+import AdminCompliance from '../pages/admin/Compliance';
+import AdminNotifications from '../pages/admin/Notifications';
+import AdminIntegrations from '../pages/admin/Integrations';
+import AdminSettings from '../pages/admin/Settings';
 function App() {
     const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -213,9 +227,79 @@ function App() {
                             <AdminLayout><AdminVendors /></AdminLayout>
                         </AuthGuard>
                     } />
+                    <Route path="/admin/users" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminUsers /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/orders" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminOrders /></AdminLayout>
+                        </AuthGuard>
+                    } />
                     <Route path="/admin/payouts" element={
                         <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
                             <AdminLayout><AdminPayouts /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/reports" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminReports /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/pricing-rules" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminPricingRules /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/catalog" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminCatalog /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/inventory" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminInventory /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/prescriptions" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminPrescriptions /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/returns-refunds" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminReturnsRefunds /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/support-tickets" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminSupportTickets /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/disputes" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminDisputes /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/compliance" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminCompliance /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/notifications" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminNotifications /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/integrations" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminIntegrations /></AdminLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/admin/settings" element={
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                            <AdminLayout><AdminSettings /></AdminLayout>
                         </AuthGuard>
                     } />
                     

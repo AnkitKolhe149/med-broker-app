@@ -35,6 +35,48 @@ const adminService = {
   processPayout: async (vendorId, amountCents) => {
     const response = await axios.post(`${API_URL}/admin/payouts/${vendorId}/process`, { amountCents }, getAuthHeaders());
     return response.data;
+  },
+
+  getAdminOrders: async (params = {}) => {
+    const response = await axios.get(`${API_URL}/admin/orders`, {
+      ...getAuthHeaders(),
+      params
+    });
+    return response.data;
+  },
+
+  getPrescriptionQueue: async (params = {}) => {
+    const response = await axios.get(`${API_URL}/admin/prescriptions`, {
+      ...getAuthHeaders(),
+      params
+    });
+    return response.data;
+  },
+
+  getRefundCenter: async (params = {}) => {
+    const response = await axios.get(`${API_URL}/admin/refunds`, {
+      ...getAuthHeaders(),
+      params
+    });
+    return response.data;
+  },
+
+  processRefund: async ({ orderId, reason, amount }) => {
+    const response = await axios.post(`${API_URL}/admin/refunds/process`, { orderId, reason, amount }, getAuthHeaders());
+    return response.data;
+  },
+
+  getDisputes: async (params = {}) => {
+    const response = await axios.get(`${API_URL}/admin/disputes`, {
+      ...getAuthHeaders(),
+      params
+    });
+    return response.data;
+  },
+
+  updateOrderStatus: async (orderId, status) => {
+    const response = await axios.patch(`${API_URL}/orders/${orderId}/status`, { status }, getAuthHeaders());
+    return response.data;
   }
 };
 
