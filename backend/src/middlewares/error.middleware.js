@@ -27,6 +27,14 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Handle Prisma database connectivity errors
+  if (err.code === 'P1001' || err.code === 'P1017') {
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection is temporarily unavailable. Please retry in a moment.'
+    });
+  }
+
   // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({

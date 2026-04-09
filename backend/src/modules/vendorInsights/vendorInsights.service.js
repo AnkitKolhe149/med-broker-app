@@ -67,37 +67,27 @@ const getVendorAndInventory = async (userId) => {
   };
 };
 
-const buildOrderWhereForVendor = (vendorId, fromDate = null) => {
-  const where = {
-    items: {
-      some: {
-        medicine: {
-          inventory: {
-            some: {
-              vendorId
-            }
-          }
-        }
-      }
-    }
-  };
+const getVendorMedicineIds = (inventory = []) => new Set(
+  inventory.map((item) => item.medicineId).filter(Boolean)
+);
 
-  if (fromDate) {
-    where.createdAt = { gte: fromDate };
+const isVendorOrderItem = (item, vendorId, vendorMedicineIds) => {
+  if (item.vendorId) {
+    return item.vendorId === vendorId;
   }
 
-  return where;
+  return vendorMedicineIds.has(item.medicineId);
 };
 
-const calculateVendorOrderRevenue = (order, vendorMedicineIds) => {
+const calculateVendorOrderRevenue = (order, vendorId, vendorMedicineIds) => {
   return order.items
-    .filter((item) => vendorMedicineIds.has(item.medicineId))
+    .filter((item) => isVendorOrderItem(item, vendorId, vendorMedicineIds))
     .reduce((sum, item) => sum + (item.unitPriceCents * item.quantity), 0);
 };
 
-const formatVendorOrder = (order, vendorMedicineIds) => {
-  const vendorItems = order.items.filter((item) => vendorMedicineIds.has(item.medicineId));
-  const totalCents = calculateVendorOrderRevenue(order, vendorMedicineIds);
+const formatVendorOrder = (order, vendorId, vendorMedicineIds) => {
+  const vendorItems = order.items.filter((item) => isVendorOrderItem(item, vendorId, vendorMedicineIds));
+  const totalCents = calculateVendorOrderRevenue(order, vendorId, vendorMedicineIds);
 
   return {
     id: order.id,
@@ -123,13 +113,17 @@ const getDashboard = async (userId) => {
   }
 
   const { vendor, inventory } = context;
-  const vendorMedicineIds = new Set(inventory.map((item) => item.medicineId));
+  const vendorMedicineIds = getVendorMedicineIds(inventory);
   const today = toDayStart(new Date());
   const weekStart = new Date(Date.now() - (6 * DAY_MS));
 
-  const [todayOrders, pendingOrders, weeklyOrders, recentOrders] = await Promise.all([
+  const orderWhere = {
+    createdAt: { gte: weekStart }
+  };
+
+  const [todayOrders, pendingOrders, weeklyOrders, recentOrders, allRecentOrders] = await Promise.all([
     prisma.order.findMany({
-      where: buildOrderWhereForVendor(vendor.id, today),
+      where: orderWhere,
       include: {
         user: {
           select: {
@@ -145,17 +139,17 @@ const getDashboard = async (userId) => {
     }),
     prisma.order.count({
       where: {
-        ...buildOrderWhereForVendor(vendor.id),
+        createdAt: { gte: weekStart },
         status: 'PENDING'
       }
     }),
     prisma.order.findMany({
-      where: buildOrderWhereForVendor(vendor.id, weekStart),
+      where: orderWhere,
       include: { items: true },
       orderBy: { createdAt: 'asc' }
     }),
     prisma.order.findMany({
-      where: buildOrderWhereForVendor(vendor.id),
+      where: orderWhere,
       include: {
         items: true,
         user: {
@@ -169,20 +163,46 @@ const getDashboard = async (userId) => {
       },
       orderBy: { createdAt: 'desc' },
       take: 5
+    }),
+    prisma.order.findMany({
+      where: orderWhere,
+      include: {
+        items: true,
+        user: {
+          select: {
+            name: true,
+            customer: {
+              select: { fullName: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     })
   ]);
 
-  const todaySales = todayOrders.reduce((sum, order) => sum + calculateVendorOrderRevenue(order, vendorMedicineIds), 0);
+  const vendorOrders = allRecentOrders.filter((order) =>
+    order.items.some((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
+  );
+
+  const todayOrdersForVendor = todayOrders.filter((order) =>
+    order.items.some((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
+  );
+  const weeklyOrdersForVendor = weeklyOrders.filter((order) =>
+    order.items.some((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
+  );
+
+  const todaySales = todayOrdersForVendor.reduce((sum, order) => sum + calculateVendorOrderRevenue(order, vendor.id, vendorMedicineIds), 0);
 
   const weeklyTrend = Array.from({ length: 7 }, (_, index) => {
     const dayStart = toDayStart(new Date(Date.now() - ((6 - index) * DAY_MS)));
     const dayEnd = new Date(dayStart.getTime() + DAY_MS);
-    const dayOrders = weeklyOrders.filter((order) => order.createdAt >= dayStart && order.createdAt < dayEnd);
+    const dayOrders = weeklyOrdersForVendor.filter((order) => order.createdAt >= dayStart && order.createdAt < dayEnd);
 
     return {
       day: dayStart.toLocaleDateString('en-US', { weekday: 'short' }),
       orders: dayOrders.length,
-      salesCents: dayOrders.reduce((sum, order) => sum + calculateVendorOrderRevenue(order, vendorMedicineIds), 0)
+      salesCents: dayOrders.reduce((sum, order) => sum + calculateVendorOrderRevenue(order, vendor.id, vendorMedicineIds), 0)
     };
   });
 
@@ -209,13 +229,13 @@ const getDashboard = async (userId) => {
     },
     metrics: {
       todaySalesCents: todaySales,
-      todayOrders: todayOrders.length,
-      pendingOrders,
+      todayOrders: todayOrdersForVendor.length,
+      pendingOrders: vendorOrders.filter((order) => order.status === 'PENDING').length,
       totalProducts: inventory.length,
       totalInventoryValueCents
     },
     weeklyTrend,
-    recentOrders: recentOrders.map((order) => formatVendorOrder(order, vendorMedicineIds)),
+    recentOrders: vendorOrders.slice(0, 5).map((order) => formatVendorOrder(order, vendor.id, vendorMedicineIds)),
     lowStockProducts
   };
 };
@@ -227,7 +247,7 @@ const getVendorOrders = async (userId, options = {}) => {
   }
 
   const { vendor, inventory } = context;
-  const vendorMedicineIds = new Set(inventory.map((item) => item.medicineId));
+  const vendorMedicineIds = getVendorMedicineIds(inventory);
   const page = Math.max(Number.parseInt(options.page, 10) || 1, 1);
   const limit = Math.min(Math.max(Number.parseInt(options.limit, 10) || 10, 1), 100);
   const skip = (page - 1) * limit;
@@ -235,14 +255,11 @@ const getVendorOrders = async (userId, options = {}) => {
     ? options.status.trim().toUpperCase()
     : null;
 
-  const where = buildOrderWhereForVendor(vendor.id);
-  if (status) {
-    where.status = status;
-  }
-
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
-      where,
+      where: {
+        ...(status ? { status } : {}),
+      },
       include: {
         user: {
           select: {
@@ -268,20 +285,28 @@ const getVendorOrders = async (userId, options = {}) => {
       skip,
       take: limit
     }),
-    prisma.order.count({ where })
+    prisma.order.count({
+      where: {
+        ...(status ? { status } : {})
+      }
+    })
   ]);
+
+  const vendorOrders = orders.filter((order) =>
+    order.items.some((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
+  );
 
   return {
     vendor: {
       id: vendor.id,
       companyName: vendor.companyName
     },
-    orders: orders.map((order) => formatVendorOrder(order, vendorMedicineIds)),
+    orders: vendorOrders.map((order) => formatVendorOrder(order, vendor.id, vendorMedicineIds)),
     pagination: {
       page,
       limit,
-      total,
-      totalPages: Math.ceil(total / limit)
+      total: vendorOrders.length,
+      totalPages: Math.ceil(vendorOrders.length / limit)
     }
   };
 };
@@ -293,11 +318,13 @@ const getAnalytics = async (userId, timeRange = 'month') => {
   }
 
   const { vendor, inventory } = context;
-  const vendorMedicineIds = new Set(inventory.map((item) => item.medicineId));
+  const vendorMedicineIds = getVendorMedicineIds(inventory);
   const rangeStart = getRangeStart(timeRange);
 
   const orders = await prisma.order.findMany({
-    where: buildOrderWhereForVendor(vendor.id, rangeStart),
+    where: {
+      createdAt: { gte: rangeStart }
+    },
     include: {
       items: {
         include: {
@@ -322,11 +349,13 @@ const getAnalytics = async (userId, timeRange = 'month') => {
     orderBy: { createdAt: 'asc' }
   });
 
-  const filteredOrders = orders.filter((order) => order.status !== 'CANCELLED');
+  const filteredOrders = orders.filter((order) =>
+    order.status !== 'CANCELLED' && order.items.some((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
+  );
   const orderSummaries = filteredOrders.map((order) => {
-    const revenueCents = calculateVendorOrderRevenue(order, vendorMedicineIds);
+    const revenueCents = calculateVendorOrderRevenue(order, vendor.id, vendorMedicineIds);
     const units = order.items
-      .filter((item) => vendorMedicineIds.has(item.medicineId))
+      .filter((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
       .reduce((sum, item) => sum + item.quantity, 0);
 
     return {
@@ -334,7 +363,7 @@ const getAnalytics = async (userId, timeRange = 'month') => {
       createdAt: order.createdAt,
       revenueCents,
       units,
-      items: order.items.filter((item) => vendorMedicineIds.has(item.medicineId)),
+      items: order.items.filter((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds)),
       country: order.user?.customer?.country || 'Unknown'
     };
   }).filter((summary) => summary.revenueCents > 0);

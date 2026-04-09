@@ -61,6 +61,31 @@ const validateMobile = (mobile) => {
   }
 };
 
+const validatePasswordChange = async (userId, currentPassword, newPassword) => {
+  if (!currentPassword || !newPassword) {
+    throw new ConflictError('Current password and new password are required');
+  }
+
+  validatePassword(newPassword);
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      passwordHash: true
+    }
+  });
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isCurrentPasswordValid) {
+    throw new AuthenticationError('Current password is incorrect');
+  }
+};
+
 // Public API
 module.exports = {
   register: async (data) => {
@@ -188,6 +213,23 @@ module.exports = {
       role: user.role,
       hasVendorProfile: !!user.vendor,
       hasCustomerProfile: !!user.customer
+    };
+  },
+
+  changePassword: async (userContext, data) => {
+    const userId = typeof userContext === 'object' ? userContext?.id : userContext;
+    const { currentPassword, newPassword } = data || {};
+
+    await validatePasswordChange(userId, currentPassword, newPassword);
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash }
+    });
+
+    return {
+      message: 'Password updated successfully'
     };
   },
 

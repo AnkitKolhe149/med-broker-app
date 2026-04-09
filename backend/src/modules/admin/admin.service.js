@@ -123,5 +123,212 @@ module.exports = {
         transactionId: `TXN-${Date.now()}` // Mock transaction ID
       }
     });
+  },
+
+  getOrdersOverview: async (options = {}) => {
+    const page = Math.max(1, Number(options.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(options.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const where = {};
+    if (options.status) {
+      where.status = String(options.status).toUpperCase();
+    }
+
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, email: true, name: true }
+          },
+          payment: true,
+          items: {
+            include: {
+              medicine: {
+                select: { id: true, name: true, requiresPrescription: true }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      prisma.order.count({ where })
+    ]);
+
+    return {
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit))
+      }
+    };
+  },
+
+  getPrescriptionQueue: async (options = {}) => {
+    const page = Math.max(1, Number(options.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(options.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const where = {
+      items: {
+        some: {
+          medicine: {
+            requiresPrescription: true
+          }
+        }
+      }
+    };
+
+    if (options.status) {
+      where.status = String(options.status).toUpperCase();
+    }
+
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, email: true, name: true }
+          },
+          payment: true,
+          items: {
+            include: {
+              medicine: {
+                select: { id: true, name: true, requiresPrescription: true }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      prisma.order.count({ where })
+    ]);
+
+    return {
+      queue: orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit))
+      }
+    };
+  },
+
+  getRefundCenter: async (options = {}) => {
+    const page = Math.max(1, Number(options.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(options.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const where = {};
+    if (options.status) {
+      where.status = String(options.status).toUpperCase();
+    }
+
+    const [payments, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        include: {
+          order: {
+            include: {
+              user: {
+                select: { id: true, email: true, name: true }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      prisma.payment.count({ where })
+    ]);
+
+    const summary = {
+      total,
+      initiated: payments.filter((p) => p.status === 'INITIATED').length,
+      succeeded: payments.filter((p) => p.status === 'SUCCEEDED').length,
+      refunded: payments.filter((p) => p.status === 'REFUNDED').length
+    };
+
+    const items = payments.map((payment) => ({
+      ...payment,
+      canRefund: payment.status === 'SUCCEEDED'
+    }));
+
+    return {
+      summary,
+      refunds: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit))
+      }
+    };
+  },
+
+  getDisputeCases: async (options = {}) => {
+    const page = Math.max(1, Number(options.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(options.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const orders = await prisma.order.findMany({
+      include: {
+        user: {
+          select: { id: true, email: true, name: true }
+        },
+        payment: true,
+        items: {
+          include: {
+            medicine: {
+              select: { name: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit * 2
+    });
+
+    const candidates = orders
+      .filter((order) => order.status === 'CANCELLED' || ['FAILED', 'REFUNDED'].includes(order.payment?.status))
+      .map((order) => {
+        const resolved = order.payment?.status === 'REFUNDED';
+        return {
+          id: `case_${order.id}`,
+          orderId: order.id,
+          user: order.user,
+          amountCents: order.totalCents,
+          category: order.payment?.status === 'FAILED' ? 'PAYMENT' : 'REFUND',
+          status: resolved ? 'RESOLVED' : 'OPEN',
+          reason: resolved ? 'Refund has been completed' : 'Requires admin review',
+          createdAt: order.createdAt,
+          items: order.items
+        };
+      });
+
+    const normalizedStatus = options.status ? String(options.status).toUpperCase() : null;
+    const filtered = normalizedStatus ? candidates.filter((item) => item.status === normalizedStatus) : candidates;
+
+    const paged = filtered.slice(0, limit);
+
+    return {
+      disputes: paged,
+      pagination: {
+        page,
+        limit,
+        total: filtered.length,
+        totalPages: Math.max(1, Math.ceil(filtered.length / limit))
+      }
+    };
   }
 };

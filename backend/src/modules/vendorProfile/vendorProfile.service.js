@@ -24,6 +24,30 @@ const validateGstin = (gstin) => {
   }
 };
 
+const DEFAULT_NOTIFICATION_PREFS = {
+  newOrders: true,
+  orderUpdates: true,
+  messages: true,
+  settlements: true,
+  weeklyReports: false,
+  marketingUpdates: false
+};
+
+const DEFAULT_SECURITY_PREFS = {
+  twoFAEnabled: false
+};
+
+const DEFAULT_COMPLIANCE_DATA = {
+  complianceDocuments: [],
+  complianceAuditLogs: []
+};
+
+const DEFAULT_CHAT_THREADS = {
+  conversations: [],
+  messagesByConversation: {},
+  selectedConversationId: null
+};
+
 const mapVendorProfile = (user, vendor) => {
   const profileMeta = vendor?.bankAccountDetails?.profileMeta || {};
 
@@ -37,7 +61,27 @@ const mapVendorProfile = (user, vendor) => {
     pincode: profileMeta.pincode || '',
     gstNumber: vendor.gstinNumber || '',
     aboutBusiness: profileMeta.aboutBusiness || '',
-    contactPersonName: vendor.contactPersonName || ''
+    contactPersonName: vendor.contactPersonName || '',
+    notificationPrefs: {
+      ...DEFAULT_NOTIFICATION_PREFS,
+      ...(profileMeta.notificationPrefs || {})
+    },
+    securityPrefs: {
+      ...DEFAULT_SECURITY_PREFS,
+      ...(profileMeta.securityPrefs || {})
+    },
+    complianceDocuments: Array.isArray(profileMeta.complianceDocuments)
+      ? profileMeta.complianceDocuments
+      : DEFAULT_COMPLIANCE_DATA.complianceDocuments,
+    complianceAuditLogs: Array.isArray(profileMeta.complianceAuditLogs)
+      ? profileMeta.complianceAuditLogs
+      : DEFAULT_COMPLIANCE_DATA.complianceAuditLogs,
+    chatThreads: profileMeta.chatThreads && typeof profileMeta.chatThreads === 'object'
+      ? {
+        ...DEFAULT_CHAT_THREADS,
+        ...profileMeta.chatThreads
+      }
+      : DEFAULT_CHAT_THREADS
   };
 };
 
@@ -124,28 +168,29 @@ const updateVendorProfile = async (userContext, data) => {
     pincode,
     gstNumber,
     aboutBusiness,
-    contactPersonName
+    contactPersonName,
+    notificationPrefs,
+    securityPrefs,
+    complianceDocuments,
+    complianceAuditLogs,
+    chatThreads
   } = data;
-
-  if (!businessName || !address || !state || !contactPersonName) {
-    throw new ValidationError('Business name, address, state, and contact person are required');
-  }
-
-  validateEmail(email);
-  validateGstin(gstNumber);
-
-  const normalizedPhone = normalizePhone(phone);
-  if (normalizedPhone && normalizedPhone.length !== 10) {
-    throw new ValidationError('Phone number must be exactly 10 digits');
-  }
 
   const existing = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
+      email: true,
+      mobile: true,
       vendor: {
         select: {
           id: true,
+          companyName: true,
+          state: true,
+          gstinNumber: true,
+          businessAddress: true,
+          contactPersonName: true,
+          contactNumber: true,
           bankAccountDetails: true
         }
       }
@@ -160,12 +205,72 @@ const updateVendorProfile = async (userContext, data) => {
     existing.vendor.bankAccountDetails && typeof existing.vendor.bankAccountDetails === 'object'
       ? existing.vendor.bankAccountDetails
       : {};
+  const currentProfileMeta = existingBankDetails.profileMeta && typeof existingBankDetails.profileMeta === 'object'
+    ? existingBankDetails.profileMeta
+    : {};
+
+  const nextBusinessName = typeof businessName === 'string' && businessName.trim()
+    ? businessName.trim()
+    : existing.vendor.companyName;
+  const nextAddress = typeof address === 'string' && address.trim()
+    ? address.trim()
+    : existing.vendor.businessAddress;
+  const nextState = typeof state === 'string' && state.trim()
+    ? state.trim()
+    : existing.vendor.state;
+  const nextContactPersonName = typeof contactPersonName === 'string' && contactPersonName.trim()
+    ? contactPersonName.trim()
+    : existing.vendor.contactPersonName;
+  const nextEmail = typeof email === 'string' && email.trim() ? email.trim() : existing.email;
+  const nextPhone = typeof phone === 'string' && phone.trim() ? normalizePhone(phone) : existing.mobile;
+  const nextGstin = typeof gstNumber === 'string' && gstNumber.trim() ? gstNumber.trim() : existing.vendor.gstinNumber;
+  const nextAboutBusiness = typeof aboutBusiness === 'string' ? aboutBusiness : (currentProfileMeta.aboutBusiness || '');
+  const nextCity = typeof city === 'string' ? city : (currentProfileMeta.city || '');
+  const nextPincode = typeof pincode === 'string' ? pincode : (currentProfileMeta.pincode || '');
+
+  if (!nextBusinessName || !nextAddress || !nextState || !nextContactPersonName) {
+    throw new ValidationError('Business name, address, state, and contact person are required');
+  }
+
+  validateEmail(nextEmail);
+  validateGstin(nextGstin);
+
+  if (nextPhone && nextPhone.length !== 10) {
+    throw new ValidationError('Phone number must be exactly 10 digits');
+  }
 
   const profileMeta = {
-    ...(existingBankDetails.profileMeta || {}),
-    city: city || '',
-    pincode: pincode || '',
-    aboutBusiness: aboutBusiness || ''
+    ...currentProfileMeta,
+    city: nextCity,
+    pincode: nextPincode,
+    aboutBusiness: nextAboutBusiness,
+    notificationPrefs: notificationPrefs
+      ? {
+        ...DEFAULT_NOTIFICATION_PREFS,
+        ...currentProfileMeta.notificationPrefs,
+        ...notificationPrefs
+      }
+      : (currentProfileMeta.notificationPrefs || DEFAULT_NOTIFICATION_PREFS),
+    securityPrefs: securityPrefs
+      ? {
+        ...DEFAULT_SECURITY_PREFS,
+        ...currentProfileMeta.securityPrefs,
+        ...securityPrefs
+      }
+      : (currentProfileMeta.securityPrefs || DEFAULT_SECURITY_PREFS),
+    complianceDocuments: Array.isArray(complianceDocuments)
+      ? complianceDocuments
+      : (Array.isArray(currentProfileMeta.complianceDocuments) ? currentProfileMeta.complianceDocuments : DEFAULT_COMPLIANCE_DATA.complianceDocuments),
+    complianceAuditLogs: Array.isArray(complianceAuditLogs)
+      ? complianceAuditLogs
+      : (Array.isArray(currentProfileMeta.complianceAuditLogs) ? currentProfileMeta.complianceAuditLogs : DEFAULT_COMPLIANCE_DATA.complianceAuditLogs),
+    chatThreads: chatThreads && typeof chatThreads === 'object'
+      ? {
+        ...DEFAULT_CHAT_THREADS,
+        ...currentProfileMeta.chatThreads,
+        ...chatThreads
+      }
+      : (currentProfileMeta.chatThreads || DEFAULT_CHAT_THREADS)
   };
 
   const mergedBankAccountDetails = {
@@ -178,20 +283,20 @@ const updateVendorProfile = async (userContext, data) => {
       await tx.user.update({
         where: { id: userId },
         data: {
-          ...(email ? { email } : {}),
-          ...(normalizedPhone ? { mobile: normalizedPhone } : {})
+          ...(nextEmail ? { email: nextEmail } : {}),
+          ...(nextPhone ? { mobile: nextPhone } : {})
         }
       });
 
       await tx.vendor.update({
         where: { id: existing.vendor.id },
         data: {
-          companyName: businessName,
-          state,
-          gstinNumber: gstNumber || undefined,
-          businessAddress: address,
-          contactPersonName,
-          contactNumber: normalizedPhone || undefined,
+          companyName: nextBusinessName,
+          state: nextState,
+          gstinNumber: nextGstin || undefined,
+          businessAddress: nextAddress,
+          contactPersonName: nextContactPersonName,
+          contactNumber: nextPhone || undefined,
           bankAccountDetails: mergedBankAccountDetails
         }
       });

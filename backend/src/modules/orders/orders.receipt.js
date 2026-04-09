@@ -19,10 +19,28 @@ const buildOrderReceiptPdf = (order) => {
     margin: 50
   });
 
-  const subtotalCents = order.items.reduce((sum, item) => {
-    return sum + item.unitPriceCents * item.quantity;
-  }, 0);
-  const taxCents = Math.round(subtotalCents * 0.05);
+  const checkoutSnapshot = order.checkoutSnapshot && typeof order.checkoutSnapshot === 'object'
+    ? order.checkoutSnapshot
+    : {};
+  const pricingSummary = checkoutSnapshot.pricingSummary && typeof checkoutSnapshot.pricingSummary === 'object'
+    ? checkoutSnapshot.pricingSummary
+    : {};
+
+  const subtotalCents = Number.isFinite(pricingSummary.subtotalCents)
+    ? pricingSummary.subtotalCents
+    : order.items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
+  const discountCents = Number.isFinite(pricingSummary.discountCents)
+    ? pricingSummary.discountCents
+    : Math.round(subtotalCents * ((Number(checkoutSnapshot.discountPercent) || 0) / 100));
+  const deliveryChargeCents = Number.isFinite(pricingSummary.deliveryChargeCents)
+    ? pricingSummary.deliveryChargeCents
+    : (checkoutSnapshot.deliveryType === 'express' ? 900 : 0);
+  const taxCents = Number.isFinite(pricingSummary.taxCents)
+    ? pricingSummary.taxCents
+    : Math.round(Math.max(0, subtotalCents - discountCents + deliveryChargeCents) * 0.05);
+  const totalCents = Number.isFinite(pricingSummary.totalCents)
+    ? pricingSummary.totalCents
+    : subtotalCents - discountCents + deliveryChargeCents + taxCents;
 
   doc.fontSize(20).text('MedIQ Receipt', { align: 'left' });
   doc.moveDown(0.5);
@@ -59,8 +77,12 @@ const buildOrderReceiptPdf = (order) => {
   doc.fontSize(13).text('Summary', { underline: true });
   doc.moveDown(0.4);
   doc.fontSize(11).text(`Subtotal: ${centsToCurrency(subtotalCents)}`);
+  if (discountCents > 0) {
+    doc.text(`Discount: -${centsToCurrency(discountCents)}`);
+  }
+  doc.text(`Shipping: ${deliveryChargeCents === 0 ? 'Free' : centsToCurrency(deliveryChargeCents)}`);
   doc.text(`Tax (5% GST): ${centsToCurrency(taxCents)}`);
-  doc.font('Helvetica-Bold').text(`Total Paid: ${centsToCurrency(order.totalCents)}`);
+  doc.font('Helvetica-Bold').text(`Total Paid: ${centsToCurrency(totalCents)}`);
   doc.font('Helvetica').moveDown(1);
 
   doc.text('This is a system-generated receipt from MedIQ.', { align: 'left' });

@@ -19,4 +19,15 @@ router.patch('/vendors/:id/status', adminController.updateVendorStatus);
 router.get('/payouts/overview', adminController.getPayoutOverview);
 router.post('/payouts/:vendorId/process', adminController.processPayout);
 
+// Operations
+router.get('/orders', adminController.getOrdersOverview);
+router.get('/prescriptions', adminController.getPrescriptionQueue);
+
+// Refunds
+router.get('/refunds', adminController.getRefundCenter);
+router.post('/refunds/process', adminController.processRefund);
+
+// Governance
+router.get('/disputes', adminController.getDisputeCases);
+
 module.exports = router;

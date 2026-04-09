@@ -5,6 +5,28 @@ const { resolveOrderItemUnitPriceCents } = require('./orderPricing.util');
 
 const normalizePackageType = (value) => (String(value || 'standard').toLowerCase() === 'bulk' ? 'bulk' : 'standard');
 
+const normalizeDeliveryType = (value) => (String(value || 'standard').toLowerCase() === 'express' ? 'express' : 'standard');
+
+const buildPricingSummary = ({ subtotalCents, discountPercent = 0, deliveryType = 'standard' }) => {
+  const normalizedDiscountPercent = Math.max(0, Math.min(100, Number(discountPercent) || 0));
+  const normalizedDeliveryType = normalizeDeliveryType(deliveryType);
+  const deliveryChargeCents = normalizedDeliveryType === 'express' ? 900 : 0;
+  const discountCents = Math.round(subtotalCents * (normalizedDiscountPercent / 100));
+  const taxableCents = Math.max(0, subtotalCents - discountCents + deliveryChargeCents);
+  const taxCents = Math.round(taxableCents * 0.05);
+  const totalCents = taxableCents + taxCents;
+
+  return {
+    subtotalCents,
+    discountPercent: normalizedDiscountPercent,
+    discountCents,
+    deliveryType: normalizedDeliveryType,
+    deliveryChargeCents,
+    taxCents,
+    totalCents
+  };
+};
+
 const buildOrderSignature = (items = []) => {
   return items
     .map((item) => ({
@@ -17,11 +39,70 @@ const buildOrderSignature = (items = []) => {
     .join('|');
 };
 
+const getVendorIdForUser = async (userId) => {
+  const vendor = await prisma.vendor.findUnique({
+    where: { userId },
+    select: { id: true }
+  });
+
+  return vendor?.id || null;
+};
+
+const getOrderVendorIds = async (orderId) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      items: {
+        select: {
+          vendorId: true,
+          medicineId: true
+        }
+      }
+    }
+  });
+
+  if (!order) {
+    return null;
+  }
+
+  const vendorIdsFromOrderItems = [...new Set(order.items.map((item) => item.vendorId).filter(Boolean))];
+  if (vendorIdsFromOrderItems.length > 0) {
+    return vendorIdsFromOrderItems;
+  }
+
+  const medicineIds = [...new Set(order.items.map((item) => item.medicineId).filter(Boolean))];
+  if (medicineIds.length === 0) {
+    return [];
+  }
+
+  const inventoryRecords = await prisma.inventory.findMany({
+    where: {
+      medicineId: { in: medicineIds }
+    },
+    select: {
+      vendorId: true
+    }
+  });
+
+  return [...new Set(inventoryRecords.map((record) => record.vendorId).filter(Boolean))];
+};
+
 /**
  * Create a new order from cart items
  */
 const createOrder = async (userId, orderData) => {
-  const { items } = orderData;
+  const {
+    items,
+    deliveryType,
+    deliveryAddress,
+    orderNotes,
+    prescriptionUrl,
+    prescriptionName,
+    discountPercent,
+    appliedCoupon,
+    currencyCode,
+    checkoutSnapshot: providedCheckoutSnapshot = {}
+  } = orderData;
 
   // Validation
   if (!items || !Array.isArray(items) || items.length === 0) {
@@ -99,7 +180,8 @@ const createOrder = async (userId, orderData) => {
           quantity: true,
           medicine: {
             select: {
-              priceCents: true
+              priceCents: true,
+              requiresPrescription: true
             }
           }
         }
@@ -121,7 +203,8 @@ const createOrder = async (userId, orderData) => {
       quantity: true,
       medicine: {
         select: {
-          priceCents: true
+          priceCents: true,
+          requiresPrescription: true
         }
       }
     }
@@ -181,6 +264,10 @@ const createOrder = async (userId, orderData) => {
       throw new ValidationError('Insufficient stock for one or more items');
     }
 
+    if (inventory.medicine.requiresPrescription && !prescriptionUrl) {
+      throw new ValidationError(`Prescription is required for ${inventory.medicineId}`);
+    }
+
     const packageType = normalizePackageType(item.selectedSize || item.packageType);
     const unitPriceCents = resolveOrderItemUnitPriceCents({
       medicine: {
@@ -196,16 +283,39 @@ const createOrder = async (userId, orderData) => {
 
     return {
       medicineId: inventory.medicineId,
+      vendorId: inventory.vendorId,
       quantity: item.quantity,
       unitPriceCents
     };
   });
+
+  const pricingSummary = buildPricingSummary({
+    subtotalCents: totalCents,
+    discountPercent,
+    deliveryType
+  });
+  totalCents = pricingSummary.totalCents;
+
+  const checkoutSnapshot = {
+    ...providedCheckoutSnapshot,
+    items,
+    deliveryType: pricingSummary.deliveryType,
+    deliveryAddress,
+    orderNotes,
+    prescriptionUrl,
+    prescriptionName,
+    discountPercent: pricingSummary.discountPercent,
+    appliedCoupon,
+    currencyCode,
+    pricingSummary
+  };
 
   const order = await prisma.$transaction(async (tx) => {
     const createdOrder = await tx.order.create({
       data: {
         userId,
         totalCents,
+        checkoutSnapshot,
         status: 'PENDING',
         items: {
           create: orderItems
@@ -304,10 +414,22 @@ const getOrderById = async (orderId, userId, userRole) => {
   }
 
   // Authorization: customers can only see their own orders
-  // Vendors can see orders containing their medicines (TODO: implement vendor check)
+  // Vendors can only see orders containing medicines from their inventory
   // Admins can see all orders
   if (userRole === 'CUSTOMER' && order.userId !== userId) {
     throw new ForbiddenError('You can only access your own orders');
+  }
+
+  if (userRole === 'VENDOR') {
+    const vendorId = await getVendorIdForUser(userId);
+    if (!vendorId) {
+      throw new ForbiddenError('Vendor profile not found');
+    }
+
+    const orderVendorIds = await getOrderVendorIds(orderId);
+    if (!orderVendorIds || orderVendorIds.length !== 1 || orderVendorIds[0] !== vendorId) {
+      throw new ForbiddenError('You can only access orders linked to your inventory');
+    }
   }
 
   return order;
@@ -335,6 +457,18 @@ const updateOrderStatus = async (orderId, newStatus, userId, userRole) => {
   // Authorization check
   if (userRole === 'CUSTOMER') {
     throw new ForbiddenError('Only vendors and admins can update order status');
+  }
+
+  if (userRole === 'VENDOR') {
+    const vendorId = await getVendorIdForUser(userId);
+    if (!vendorId) {
+      throw new ForbiddenError('Vendor profile not found');
+    }
+
+    const orderVendorIds = await getOrderVendorIds(orderId);
+    if (!orderVendorIds || orderVendorIds.length !== 1 || orderVendorIds[0] !== vendorId) {
+      throw new ForbiddenError('You can only update orders that belong to your inventory');
+    }
   }
 
   // Prevent invalid status transitions
@@ -413,6 +547,19 @@ const cancelOrder = async (orderId, userId, userRole) => {
 
     await Promise.all(
       order.items.map(async (item) => {
+        if (item.vendorId) {
+          await tx.inventory.update({
+            where: {
+              medicineId_vendorId: {
+                medicineId: item.medicineId,
+                vendorId: item.vendorId
+              }
+            },
+            data: { quantity: { increment: item.quantity } }
+          });
+          return;
+        }
+
         const candidateInventories = await tx.inventory.findMany({
           where: { medicineId: item.medicineId },
           select: { id: true },

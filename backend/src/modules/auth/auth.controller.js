@@ -48,5 +48,18 @@ module.exports = {
     } catch (error) {
       next(error);
     }
+  },
+
+  changePassword: async (req, res, next) => {
+    try {
+      const result = await authService.changePassword(req.user, req.body);
+      res.status(200).json({
+        success: true,
+        message: result.message,
+        data: result
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 };
