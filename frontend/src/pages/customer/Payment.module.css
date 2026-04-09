@@ -1,450 +1,531 @@
-.mainContent {
-	display: grid;
-	grid-template-columns: 2fr 1fr;
-	gap: 2rem;
-	margin-top: 2rem;
+.paymentPage {
+--pay-ink: #16302f;
+--pay-subtle: #5f7473;
+--pay-line: #dce9e8;
+--pay-bg-soft: #f5fbfa;
+--pay-accent: #0f9f8f;
+--pay-accent-dark: #0b7c6f;
+--pay-accent-mint: #d7f2ee;
+--pay-shadow: 0 24px 60px rgba(10, 55, 52, 0.08);
+background:
+radial-gradient(1200px 480px at 0% -10%, rgba(143, 227, 215, 0.2), transparent 60%),
+radial-gradient(900px 420px at 95% -8%, rgba(20, 180, 151, 0.15), transparent 62%),
+linear-gradient(180deg, #f7fcfb 0%, #f0f8f7 100%);
 }
 
-.emptyState {
-	text-align: center;
-	padding: 3rem 1rem;
+.paymentContainer {
+padding-top: 2rem;
+padding-bottom: 3rem;
 }
 
-.paymentSection {
-	display: flex;
-	flex-direction: column;
-	padding: 2rem;
+.breadcrumbRow {
+display: flex;
+align-items: center;
+gap: 0.55rem;
+font-size: 0.86rem;
+color: var(--pay-subtle);
+margin-bottom: 1.25rem;
+}
+
+.breadcrumbLink {
+display: inline-flex;
+align-items: center;
+gap: 0.4rem;
+border: none;
+background: transparent;
+color: var(--pay-subtle);
+font-weight: 600;
+cursor: pointer;
+padding: 0;
+}
+
+.breadcrumbLink:hover {
+color: var(--pay-ink);
+}
+
+.breadcrumbActive {
+color: var(--pay-ink);
+font-weight: 600;
+}
+
+.layoutGrid {
+display: grid;
+grid-template-columns: 1.55fr 1fr;
+gap: 1.25rem;
+align-items: start;
+}
+
+.formPanel,
+.summaryPanel {
+background: rgba(255, 255, 255, 0.9);
+border: 1px solid rgba(220, 233, 232, 0.9);
+border-radius: 22px;
+box-shadow: var(--pay-shadow);
+backdrop-filter: blur(7px);
+}
+
+.formPanel {
+padding: 1.5rem;
+}
+
+.titleWrap {
+margin-bottom: 1.35rem;
+}
+
+.pageTitle {
+margin: 0;
+font-size: clamp(1.5rem, 2.2vw, 2rem);
+line-height: 1.2;
+color: var(--pay-ink);
+font-weight: 700;
+}
+
+.pageSubtitle {
+margin: 0.5rem 0 0;
+font-size: 0.95rem;
+color: var(--pay-subtle);
 }
 
 .formContainer {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
+display: flex;
+flex-direction: column;
+gap: 1rem;
 }
 
-.paymentMethodCard {
-	background-color: white;
-	padding: 1.5rem;
-	border-radius: var(--radius-lg);
-	border: 2px solid var(--border);
-	box-shadow: var(--shadow-sm);
+.methodList {
+display: grid;
+gap: 0.72rem;
 }
 
-.radioLabel {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-	cursor: pointer;
-	margin-bottom: 1rem;
+.methodCard {
+display: grid;
+grid-template-columns: auto auto 1fr auto;
+align-items: center;
+gap: 0.8rem;
+padding: 0.95rem;
+border: 1px solid var(--pay-line);
+border-radius: 15px;
+cursor: pointer;
+background: #ffffff;
+transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.radioInput {
-	width: 20px;
-	height: 20px;
-	cursor: pointer;
-	accent-color: var(--primary);
+.methodCard input {
+accent-color: var(--pay-accent);
+}
+
+.methodCard:hover {
+transform: translateY(-1px);
+border-color: #b9ded8;
+}
+
+.methodCardActive {
+border-color: #7dc9bf;
+background: linear-gradient(180deg, #ffffff 0%, #f4fcfa 100%);
+box-shadow: 0 12px 28px rgba(13, 123, 109, 0.08);
+}
+
+.methodCardDisabled {
+opacity: 0.56;
+cursor: not-allowed;
+}
+
+.methodIcon {
+width: 34px;
+height: 34px;
+display: grid;
+place-items: center;
+border-radius: 10px;
+background: var(--pay-bg-soft);
+color: var(--pay-accent-dark);
+}
+
+.methodTextWrap {
+min-width: 0;
 }
 
 .methodTitle {
-	font-size: 1rem;
-	font-weight: 600;
-	color: var(--text-primary);
+margin: 0;
+font-size: 0.95rem;
+font-weight: 700;
+color: var(--pay-ink);
+}
+
+.methodSubtitle {
+margin: 0.15rem 0 0;
+font-size: 0.81rem;
+color: var(--pay-subtle);
+}
+
+.methodBadge {
+color: var(--pay-accent-dark);
 }
 
 .methodDetails {
-	margin-left: 2.25rem;
-	padding-top: 1rem;
-	border-top: 1px solid var(--border);
+border: 1px solid var(--pay-line);
+border-radius: 16px;
+padding: 1rem;
+background: linear-gradient(180deg, #ffffff 0%, #f8fcfc 100%);
 }
 
-.qrContainer {
-	text-align: center;
-	padding: 1.5rem;
-	background-color: var(--primary-light);
-	border-radius: var(--radius);
-	margin-bottom: 1rem;
+.qrBlock {
+display: grid;
+gap: 0.75rem;
 }
 
 .qrLabel {
-	font-size: 0.9rem;
-	font-weight: 600;
-	color: var(--text-primary);
-	margin: 0;
+margin: 0;
+display: inline-flex;
+align-items: center;
+gap: 0.4rem;
+font-size: 0.82rem;
+font-weight: 700;
+letter-spacing: 0.01em;
+color: var(--pay-subtle);
+}
+
+.qrCanvasWrap {
+padding: 1rem;
+background: #ffffff;
+border: 1px solid var(--pay-line);
+border-radius: 14px;
+display: flex;
+justify-content: center;
 }
 
 .qrHint {
-	font-size: 0.8rem;
-	color: var(--text-secondary);
-	margin: 1rem 0 0 0;
+margin: 0;
+font-size: 0.82rem;
+color: var(--pay-subtle);
 }
 
-.orDivider {
-	text-align: center;
-	color: var(--text-secondary);
-	margin: 1rem 0;
+.upiFields {
+margin-top: 0.9rem;
+display: grid;
+gap: 0.75rem;
 }
 
-.upiInputField {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
+.intentLink {
+font-size: 0.84rem;
+font-weight: 600;
+color: var(--pay-accent-dark);
+text-decoration: none;
 }
 
-.label {
-	font-size: 0.9rem;
-	font-weight: 600;
-	color: var(--text-primary);
-}
-
-.input {
-	padding: 0.75rem;
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	font-size: 0.9rem;
-	font-family: inherit;
-	outline: none;
-	transition: border-color 0.2s;
+.intentLink:hover {
+text-decoration: underline;
 }
 
 .formGroup {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
+display: grid;
+gap: 0.45rem;
+}
+
+.label {
+font-size: 0.8rem;
+font-weight: 700;
+letter-spacing: 0.01em;
+text-transform: uppercase;
+color: var(--pay-subtle);
+}
+
+.input {
+width: 100%;
+height: 44px;
+padding: 0 0.8rem;
+border-radius: 10px;
+border: 1px solid var(--pay-line);
+font-size: 0.95rem;
+color: var(--pay-ink);
+background: #fff;
+outline: none;
+transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input:focus {
+border-color: #7ec8bf;
+box-shadow: 0 0 0 3px rgba(15, 159, 143, 0.14);
 }
 
 .twoColumn {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 1rem;
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 0.7rem;
 }
 
-.walletBalance {
-	text-align: center;
-	padding: 1rem;
-	background-color: #FEF3C7;
-	border-radius: var(--radius);
-	border: 1px solid #F59E0B;
+.walletCard {
+padding: 1rem;
+border: 1px dashed #badfd9;
+border-radius: 12px;
+background: var(--pay-bg-soft);
+display: grid;
+gap: 0.4rem;
 }
 
-.balanceLabel {
-	font-size: 0.85rem;
-	color: var(--text-secondary);
-	margin: 0;
+.walletLabel {
+margin: 0;
+font-size: 0.82rem;
+color: var(--pay-subtle);
 }
 
-.balanceAmount {
-	font-size: 1.75rem;
-	font-weight: 700;
-	color: #92400E;
-	margin: 0.5rem 0;
+.walletAmount {
+margin: 0;
+font-size: 1.35rem;
+font-weight: 700;
+color: var(--pay-ink);
 }
 
-.addFundsButton {
-	background-color: #F59E0B;
-	color: white;
-	border: none;
-	padding: 0.5rem 1rem;
-	border-radius: var(--radius);
-	cursor: pointer;
-	font-weight: 600;
-	margin-top: 0.5rem;
-	width: 100%;
+.walletButton {
+width: fit-content;
+border: 1px solid #9ed4cc;
+background: #fff;
+color: #0f6f64;
+font-weight: 700;
+padding: 0.45rem 0.8rem;
+border-radius: 9px;
+cursor: pointer;
 }
 
 .payButton {
-	width: 100%;
-	padding: 1rem;
-	background-color: var(--primary);
-	color: white;
-	border: none;
-	border-radius: var(--radius-lg);
-	font-weight: 600;
-	font-size: 1rem;
-	cursor: pointer;
-	margin-top: 1rem;
+height: 48px;
+border: none;
+border-radius: 12px;
+background: linear-gradient(135deg, var(--pay-accent) 0%, var(--pay-accent-dark) 100%);
+color: #fff;
+font-size: 0.97rem;
+font-weight: 700;
+letter-spacing: 0.01em;
+cursor: pointer;
+transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.payButton:disabled {
+opacity: 0.65;
+cursor: not-allowed;
+}
+
+.payButton:not(:disabled):hover {
+transform: translateY(-1px);
+filter: brightness(1.03);
 }
 
 .disclaimer {
-	font-size: 0.8rem;
-	color: var(--text-secondary);
-	text-align: center;
-	margin: 1rem 0 0 0;
+margin: 0;
+font-size: 0.8rem;
+color: #728786;
 }
 
-.summarySection {
-	display: flex;
-	flex-direction: column;
-}
-
-.summaryCard {
-	background-color: var(--surface-elevated);
-	padding: 1.5rem;
-	border-radius: var(--radius-lg);
-	border: 1px solid var(--border-light);
-	box-shadow: var(--shadow-sm);
-	position: sticky;
-	top: 100px;
+.summaryPanel {
+padding: 1.2rem;
+position: sticky;
+top: 1rem;
+display: grid;
+gap: 0.95rem;
 }
 
 .summaryTitle {
-	font-size: 1rem;
-	font-weight: 700;
-	color: var(--text-primary);
-	margin: 0 0 1rem 0;
-	padding-bottom: 0.75rem;
-	border-bottom: 2px solid var(--primary);
+margin: 0;
+font-size: 1.2rem;
+font-weight: 700;
+color: var(--pay-ink);
+}
+
+.orderMetaCard {
+display: grid;
+gap: 0.5rem;
+padding: 0.85rem;
+border-radius: 14px;
+background: linear-gradient(135deg, #f4fbfa 0%, #ecf8f6 100%);
+border: 1px solid #d4ece8;
+}
+
+.orderMetaCard p {
+margin: 0;
+display: flex;
+justify-content: space-between;
+gap: 0.65rem;
+font-size: 0.83rem;
+}
+
+.orderMetaCard span {
+color: var(--pay-subtle);
+}
+
+.orderMetaCard strong {
+color: var(--pay-ink);
+font-weight: 700;
+text-align: right;
 }
 
 .section {
-	margin-bottom: 1rem;
+border-top: 1px solid var(--pay-line);
+padding-top: 0.95rem;
 }
 
 .sectionTitle {
-	font-size: 0.9rem;
-	font-weight: 600;
-	color: var(--text-primary);
-	margin: 0 0 0.75rem 0;
+margin: 0 0 0.55rem;
+font-size: 0.85rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.01em;
+color: var(--pay-subtle);
 }
 
 .addressText {
-	font-size: 0.85rem;
-	line-height: 1.6;
-	color: var(--text-secondary);
-	margin: 0;
+margin: 0;
+font-size: 0.88rem;
+line-height: 1.55;
+color: #2f4746;
 }
 
 .itemRow {
-	display: flex;
-	justify-content: space-between;
-	font-size: 0.85rem;
-	color: var(--text-secondary);
-	margin-bottom: 0.5rem;
+display: flex;
+justify-content: space-between;
+gap: 0.6rem;
+padding: 0.42rem 0;
+font-size: 0.86rem;
+color: #38504f;
 }
 
-.divider {
-	border: none;
-	border-top: 1px solid var(--border);
-	margin: 1rem 0;
+.amountRows {
+border-top: 1px solid var(--pay-line);
+padding-top: 0.95rem;
+display: grid;
+gap: 0.55rem;
 }
 
-.pricingRow {
-	display: flex;
-	justify-content: space-between;
-	font-size: 0.85rem;
-	color: var(--text-secondary);
-	margin-bottom: 0.5rem;
+.pricingRow,
+.pricingRowDiscount,
+.totalRow {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 0.55rem;
+font-size: 0.9rem;
+}
+
+.pricingRow span {
+color: #587070;
+}
+
+.pricingRow strong {
+color: #314948;
+}
+
+.pricingRowDiscount span,
+.pricingRowDiscount strong {
+color: #0d8a70;
+font-weight: 700;
+}
+
+.taxLabel {
+display: inline-flex;
+align-items: center;
+gap: 0.3rem;
 }
 
 .totalRow {
-	display: flex;
-	justify-content: space-between;
-	font-size: 1rem;
-	font-weight: 700;
-	color: var(--text-primary);
-	padding-top: 0.75rem;
-	border-top: 2px solid var(--primary);
-	margin-top: 0.5rem;
+margin-top: 0.3rem;
+padding-top: 0.65rem;
+border-top: 1px dashed #c9e3e0;
+font-size: 1.03rem;
+font-weight: 700;
+color: var(--pay-ink);
 }
 
-.securityBadge {
-	display: flex;
-	gap: 0.75rem;
-	padding: 0.75rem;
-	background-color: #DCFCE7;
-	border-radius: var(--radius);
-	border: 1px solid var(--green-200);
-	margin-top: 1rem;
+.securityCard {
+display: grid;
+grid-template-columns: auto 1fr;
+gap: 0.65rem;
+align-items: start;
+padding: 0.82rem;
+border-radius: 12px;
+background: linear-gradient(180deg, #f1fbf8 0%, #e9f8f4 100%);
+border: 1px solid #cdebe5;
+color: #0d6e62;
 }
 
-.badgeIcon {
-	font-size: 1.5rem;
-	flex-shrink: 0;
+.securityTitle {
+margin: 0;
+font-size: 0.85rem;
+font-weight: 700;
 }
 
-.badgeTitle {
-	font-size: 0.85rem;
-	font-weight: 600;
-	color: var(--text-primary);
-	margin: 0;
+.securityText {
+margin: 0.15rem 0 0;
+font-size: 0.78rem;
+color: #2d6760;
 }
 
-.badgeText {
-	font-size: 0.75rem;
-	color: var(--text-secondary);
-	margin: 0.25rem 0 0 0;
+.loadingContainer,
+.errorContainer {
+min-height: 70vh;
+display: grid;
+place-items: center;
+padding: 2rem;
+text-align: center;
+color: var(--text-secondary);
 }
 
-@media (max-width: 992px) {
-	.mainContent {
-		grid-template-columns: 1fr;
-		gap: 1.5rem;
-		margin-top: 1.5rem;
-	}
-
-	.paymentSection {
-		padding: 1.5rem;
-	}
-
-	.summaryCard {
-		position: static;
-	}
+.loadingSpinner {
+width: 44px;
+height: 44px;
+border: 3px solid #dce9e8;
+border-top-color: var(--pay-accent);
+border-radius: 50%;
+animation: spin 0.9s linear infinite;
+margin: 0 auto 0.75rem;
 }
 
-@media (max-width: 768px) {
-	.mainContent {
-		gap: 1rem;
-		margin-top: 1rem;
-	}
-
-	.paymentSection {
-		padding: 1.25rem;
-	}
-
-	.paymentMethodCard {
-		padding: 1.25rem;
-	}
-
-	.methodDetails {
-		margin-left: 1.75rem;
-	}
-
-	.summaryCard {
-		padding: 1.25rem;
-	}
-
-	.twoColumn {
-		grid-template-columns: 1fr;
-	}
-
-	.qrContainer {
-		padding: 1rem;
-	}
+.retryButton {
+margin-top: 0.75rem;
+height: 40px;
+padding: 0 1rem;
+border: none;
+border-radius: 10px;
+background: var(--pay-accent);
+color: #fff;
+font-weight: 700;
+cursor: pointer;
 }
 
-@media (max-width: 480px) {
-	.mainContent {
-		gap: 0.75rem;
-		margin-top: 0.75rem;
-	}
+@keyframes spin {
+to {
+transform: rotate(360deg);
+}
+}
 
-	.paymentSection {
-		padding: 0.75rem;
-	}
+@media (max-width: 1080px) {
+.layoutGrid {
+grid-template-columns: 1fr;
+}
 
-	.paymentMethodCard {
-		padding: 1rem;
-		margin-bottom: 0.5rem;
-	}
+.summaryPanel {
+position: static;
+}
+}
 
-	.radioLabel {
-		gap: 0.75rem;
-		margin-bottom: 0.75rem;
-	}
+@media (max-width: 700px) {
+.paymentContainer {
+padding-top: 1.2rem;
+padding-bottom: 1.8rem;
+}
 
-	.methodDetails {
-		margin-left: 2rem;
-		padding-top: 0.75rem;
-	}
+.formPanel,
+.summaryPanel {
+border-radius: 16px;
+padding: 1rem;
+}
 
-	.summaryCard {
-		padding: 1rem;
-	}
+.methodCard {
+grid-template-columns: auto auto 1fr;
+}
 
-	.summaryTitle {
-		font-size: 0.9rem;
-		margin: 0 0 0.75rem 0;
-	}
+.methodBadge {
+display: none;
+}
 
-	.section {
-		margin-bottom: 0.75rem;
-	}
-
-	.sectionTitle {
-		font-size: 0.85rem;
-		margin: 0 0 0.5rem 0;
-	}
-
-	.addressText {
-		font-size: 0.8rem;
-	}
-
-	.itemRow {
-		font-size: 0.8rem;
-		margin-bottom: 0.35rem;
-	}
-
-	.pricingRow {
-		font-size: 0.8rem;
-		margin-bottom: 0.35rem;
-	}
-
-	.totalRow {
-		font-size: 0.95rem;
-		margin-top: 0.35rem;
-	}
-
-	.divider {
-		margin: 0.75rem 0;
-	}
-
-	.payButton {
-		padding: 0.85rem;
-		font-size: 0.95rem;
-		margin-top: 0.75rem;
-	}
-
-	.disclaimer {
-		font-size: 0.75rem;
-		margin: 0.75rem 0 0 0;
-	}
-
-	.label {
-		font-size: 0.85rem;
-	}
-
-	.input {
-		padding: 0.65rem;
-		font-size: 0.85rem;
-	}
-
-	.qrContainer {
-		padding: 0.75rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.qrLabel {
-		font-size: 0.85rem;
-	}
-
-	.qrHint {
-		font-size: 0.75rem;
-		margin: 0.75rem 0 0 0;
-	}
-
-	.orDivider {
-		margin: 0.75rem 0;
-		font-size: 0.9rem;
-	}
-
-	.methodTitle {
-		font-size: 0.95rem;
-	}
-
-	.securityBadge {
-		gap: 0.5rem;
-		padding: 0.5rem;
-		margin-top: 0.75rem;
-	}
-
-	.badgeIcon {
-		font-size: 1.25rem;
-	}
-
-	.badgeTitle {
-		font-size: 0.8rem;
-	}
-
-	.badgeText {
-		font-size: 0.7rem;
-	}
+.twoColumn {
+grid-template-columns: 1fr;
+}
 }

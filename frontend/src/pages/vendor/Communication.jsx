@@ -1,37 +1,39 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNotification } from '../../context/NotificationContext';
+import vendorService from '../../services/vendor.service';
 import styles from './Communication.module.css';
 import { User2, Building2, Hotel, Paperclip } from 'lucide-react';
 
-function VendorCommunication() {
-	const [conversations, setConversations] = useState([
-		{
-			id: 1,
-			customerName: 'Dr. Rajesh Kumar',
-			lastMessage: 'Can you provide bulk pricing for Paracetamol?',
-			timestamp: '2 hours ago',
-			unread: true,
-			avatarIcon: <User2 size={18} strokeWidth={1.5} />
-		},
-		{
-			id: 2,
-			customerName: 'Health Plus Clinic',
-			lastMessage: 'Order received in good condition. Thanks!',
-			timestamp: '5 hours ago',
-			unread: false,
-			avatarIcon: <Building2 size={18} strokeWidth={1.5} />
-		},
-		{
-			id: 3,
-			customerName: 'Healing Hospital',
-			lastMessage: 'When can you deliver the order?',
-			timestamp: '1 day ago',
-			unread: false,
-			avatarIcon: <Hotel size={18} strokeWidth={1.5} />
-		}
-	]);
 
-	const [selectedConversation, setSelectedConversation] = useState(conversations[0]);
-	const [messages, setMessages] = useState([
+const DEFAULT_CONVERSATIONS = [
+	{
+		id: 1,
+		customerName: 'Dr. Rajesh Kumar',
+		lastMessage: 'Can you provide bulk pricing for Paracetamol?',
+		timestamp: '2 hours ago',
+		unread: true,
+		avatarIcon: <User2 size={18} strokeWidth={1.5} />
+	},
+	{
+		id: 2,
+		customerName: 'Health Plus Clinic',
+		lastMessage: 'Order received in good condition. Thanks!',
+		timestamp: '5 hours ago',
+		unread: false,
+		avatarIcon: <Building2 size={18} strokeWidth={1.5} />
+	},
+	{
+		id: 3,
+		customerName: 'Healing Hospital',
+		lastMessage: 'When can you deliver the order?',
+		timestamp: '1 day ago',
+		unread: false,
+		avatarIcon: <Hotel size={18} strokeWidth={1.5} />
+	}
+];
+
+const DEFAULT_MESSAGES_BY_CONVERSATION = {
+	1: [
 		{
 			id: 1,
 			sender: 'customer',
@@ -61,26 +63,178 @@ function VendorCommunication() {
 			timestamp: '2 hours ago',
 			date: '2024-01-15'
 		}
-	]);
+	],
+	2: [
+		{
+			id: 1,
+			sender: 'customer',
+			text: 'Please confirm the batch numbers for the order we received.',
+			timestamp: '8:15 AM',
+			date: '2024-01-15'
+		}
+	],
+	3: [
+		{
+			id: 1,
+			sender: 'customer',
+			text: 'When can you deliver the order to the emergency wing?',
+			timestamp: 'Yesterday',
+			date: '2024-01-14'
+		}
+	]
+};
 
+const buildConversationIcon = (conversationId) => {
+	switch (conversationId) {
+		case 1:
+			return <User2 size={18} strokeWidth={1.5} />;
+		case 2:
+			return <Building2 size={18} strokeWidth={1.5} />;
+		case 3:
+			return <Hotel size={18} strokeWidth={1.5} />;
+		default:
+			return <User2 size={18} strokeWidth={1.5} />;
+	}
+};
+
+const normalizeConversation = (conversation) => ({
+	...conversation,
+	avatarIcon: buildConversationIcon(conversation.id)
+});
+
+const stripConversationForSave = (conversation) => ({
+	id: conversation.id,
+	customerName: conversation.customerName,
+	lastMessage: conversation.lastMessage,
+	timestamp: conversation.timestamp,
+	unread: conversation.unread
+});
+
+function VendorCommunication() {
+	const { showError, showSuccess } = useNotification();
+	const [loading, setLoading] = useState(true);
+	const [conversations, setConversations] = useState(DEFAULT_CONVERSATIONS.map(normalizeConversation));
+	const [messagesByConversation, setMessagesByConversation] = useState(DEFAULT_MESSAGES_BY_CONVERSATION);
+	const [selectedConversationId, setSelectedConversationId] = useState(1);
 	const [newMessage, setNewMessage] = useState('');
+	const [searchQuery, setSearchQuery] = useState('');
 
-	const sendMessage = () => {
-		if (newMessage.trim()) {
-			const message = {
-				id: messages.length + 1,
-				sender: 'vendor',
-				text: newMessage,
-				timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-				date: new Date().toLocaleDateString()
-			};
-			setMessages([...messages, message]);
+	useEffect(() => {
+		const loadChatState = async () => {
+			try {
+				setLoading(true);
+				const profile = await vendorService.getProfile();
+				const chatThreads = profile.chatThreads || {};
+				const storedConversations = Array.isArray(chatThreads.conversations) && chatThreads.conversations.length
+					? chatThreads.conversations
+					: DEFAULT_CONVERSATIONS;
+				const storedMessages = chatThreads.messagesByConversation && typeof chatThreads.messagesByConversation === 'object'
+					? chatThreads.messagesByConversation
+					: DEFAULT_MESSAGES_BY_CONVERSATION;
+
+				setConversations(storedConversations.map(normalizeConversation));
+				setMessagesByConversation(storedMessages);
+				setSelectedConversationId(chatThreads.selectedConversationId || storedConversations[0]?.id || 1);
+			} catch (error) {
+				console.error('Failed to load chat state:', error);
+				showError(error?.response?.data?.message || error?.message || 'Failed to load conversations');
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadChatState();
+	}, [showError]);
+
+	const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId) || conversations[0];
+	const messages = messagesByConversation[selectedConversation?.id] || [];
+
+	const filteredConversations = conversations.filter((conversation) =>
+		conversation.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+		conversation.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+	);
+
+	const persistChatState = async (nextConversations, nextMessagesByConversation, nextSelectedConversationId) => {
+		await vendorService.updateProfile({
+			chatThreads: {
+				conversations: nextConversations.map(stripConversationForSave),
+				messagesByConversation: nextMessagesByConversation,
+				selectedConversationId: nextSelectedConversationId
+			}
+		});
+	};
+
+	const handleConversationSelect = async (conversationId) => {
+		const nextConversations = conversations.map((conversation) => (
+			conversation.id === conversationId
+				? { ...conversation, unread: false }
+				: conversation
+		));
+
+		setSelectedConversationId(conversationId);
+		setConversations(nextConversations);
+
+		try {
+			await persistChatState(nextConversations, messagesByConversation, conversationId);
+		} catch (error) {
+			showError(error?.response?.data?.message || error?.message || 'Failed to save conversation state');
+		}
+	};
+
+	const sendMessage = async () => {
+		const trimmedMessage = newMessage.trim();
+		if (!trimmedMessage || !selectedConversation) {
+			return;
+		}
+
+		const nextMessage = {
+			id: messages.length + 1,
+			sender: 'vendor',
+			text: trimmedMessage,
+			timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+			date: new Date().toLocaleDateString()
+		};
+
+		const nextMessagesByConversation = {
+			...messagesByConversation,
+			[selectedConversation.id]: [...messages, nextMessage]
+		};
+		const nextConversations = conversations.map((conversation) => (
+			conversation.id === selectedConversation.id
+				? {
+					...conversation,
+					lastMessage: trimmedMessage,
+					timestamp: 'Just now',
+					unread: false
+				}
+				: conversation
+		));
+
+		try {
+			await persistChatState(nextConversations, nextMessagesByConversation, selectedConversation.id);
+			setMessagesByConversation(nextMessagesByConversation);
+			setConversations(nextConversations);
 			setNewMessage('');
+			showSuccess('Message saved');
+		} catch (error) {
+			showError(error?.response?.data?.message || error?.message || 'Failed to save message');
 		}
 	};
 
 	return (
 		<div className={styles.container}>
+			{loading && <p className={styles.loadingText}>Loading conversations...</p>}
+			<div style={{
+				marginBottom: '1rem',
+				padding: '0.9rem 1rem',
+				borderRadius: 'var(--radius-lg)',
+				border: '1px solid var(--border)',
+				backgroundColor: 'var(--primary-light)',
+				color: 'var(--text-primary)',
+				fontSize: '0.92rem'
+			}}>
+				Messages are persisted with your vendor profile.
+			</div>
 			{/* Conversations Sidebar */}
 			<div className={styles.sidebar}>
 				<div className={styles.sidebarHeader}>
@@ -89,14 +243,16 @@ function VendorCommunication() {
 						type="text"
 						placeholder="Search conversations..."
 						className={styles.searchBox}
+						value={searchQuery}
+						onChange={(event) => setSearchQuery(event.target.value)}
 					/>
 				</div>
 				<div className={styles.conversationList}>
-					{conversations.map(conv => (
+					{filteredConversations.map((conv) => (
 						<div
 							key={conv.id}
-							className={selectedConversation.id === conv.id ? styles.conversationItemActive : styles.conversationItem}
-							onClick={() => setSelectedConversation(conv)}
+							className={selectedConversation?.id === conv.id ? styles.conversationItemActive : styles.conversationItem}
+							onClick={() => handleConversationSelect(conv.id)}
 						>
 							<div className={styles.conversationHeader}>
 								<span className={styles.conversationAvatar}>{conv.avatarIcon}</span>
@@ -134,7 +290,7 @@ function VendorCommunication() {
 				</div>
 
 				<div className={styles.chatMessages}>
-					{messages.map(msg => (
+					{messages.map((msg) => (
 						<div key={msg.id} className={styles.messageGroup}>
 							{msg.file ? (
 								<div style={{

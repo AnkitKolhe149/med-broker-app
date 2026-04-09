@@ -13,7 +13,7 @@ function Checkout() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { cartItems, getTotalPrice } = useCart();
-	const { currency, convert } = useCurrency();
+	const { currency } = useCurrency();
 	const { user, loading: userLoading } = useUser();
 	const { showError } = useNotification();
 
@@ -43,7 +43,6 @@ function Checkout() {
 	const appliedCoupon = location.state?.appliedCoupon || '';
 	const currencyCode = location.state?.currencyCode || cartItems[0]?.currencyCode || currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
-	const toDisplayAmount = (value) => convert(value, 'INR');
 
 	const indianStates = useMemo(() => [
 		'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -189,10 +188,39 @@ function Checkout() {
 					vendorId: item.vendorId,
 					quantity: item.quantity,
 					selectedSize: item.selectedSize || 'standard'
-				}))
+				})),
+				deliveryType,
+				deliveryAddress,
+				orderNotes,
+				prescriptionUrl,
+				prescriptionName,
+				discountPercent,
+				appliedCoupon,
+				currencyCode,
+				checkoutSnapshot: {
+					cartItems,
+					deliveryAddress,
+					deliveryType,
+					orderNotes,
+					prescriptionUrl,
+					prescriptionName,
+					discountPercent,
+					appliedCoupon,
+					currencyCode,
+					subtotal,
+					discount,
+					deliveryCharge,
+					tax,
+					total,
+					pricingSummary: {
+						subtotalCents: Math.round(subtotal * 100),
+						discountCents: Math.round(discount * 100),
+						deliveryChargeCents: Math.round(deliveryCharge * 100),
+						taxCents: Math.round(tax * 100),
+						totalCents: Math.round(total * 100)
+					}
+				}
 			});
-
-			const createdSubtotal = createdOrder.totalCents ? createdOrder.totalCents / 100 : getTotalPrice();
 			const orderData = {
 				orderId: createdOrder.id,
 				cartItems,
@@ -203,14 +231,22 @@ function Checkout() {
 				prescriptionName,
 				discountPercent,
 				appliedCoupon,
-				subtotalBase: createdSubtotal,
-				subtotal: toDisplayAmount(createdSubtotal),
+				subtotalBase: subtotal,
+				subtotal,
+				discountBase: discount,
+				discount,
+				deliveryBase: deliveryCharge,
+				deliveryCharge,
+				taxBase: tax,
+				tax,
+				totalBase: total,
+				total,
 				currencyCode,
 				timestamp: new Date().toISOString()
 			};
 
 			sessionStorage.setItem('pending_order', JSON.stringify(orderData));
-			navigate('/customer/payment');
+			navigate(`/customer/payment?orderId=${createdOrder.id}`);
 		} catch (error) {
 			console.error('Failed to place order:', error);
 			const apiMessage = error?.response?.data?.message || error?.message;
@@ -246,8 +282,8 @@ function Checkout() {
 	const subtotal = getTotalPrice();
 	const discount = (subtotal * discountPercent) / 100;
 	const deliveryCharge = deliveryType === 'express' ? 9 : 0;
-	const tax = (subtotal - discount + deliveryCharge) * 0.05;
-	const total = subtotal - discount + deliveryCharge + tax;
+	const tax = Number(((subtotal - discount + deliveryCharge) * 0.05).toFixed(2));
+	const total = Number((subtotal - discount + deliveryCharge + tax).toFixed(2));
 
 	return (
 		<main className={`page ${styles.checkoutPage}`}>

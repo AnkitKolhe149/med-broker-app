@@ -132,6 +132,24 @@ export default {
     return response.data.data;
   },
 
+  changePassword: async ({ currentPassword, newPassword }) => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await axios.post(`${API_URL}/auth/change-password`, {
+      currentPassword,
+      newPassword
+    }, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to change password');
+    }
+
+    return response.data.data;
+  },
+
   completeVendorOnboarding: async (data) => {
     const token = getToken();
     if (!token) throw new Error('Not authenticated');

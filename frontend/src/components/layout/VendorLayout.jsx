@@ -100,12 +100,23 @@ function VendorLayout({ children }) {
 			<aside className={`vendor-sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'open' : ''}`}>
 				{/* Sidebar Header */}
 				<div className="vendor-sidebar-header">
-					{!isCollapsed && (
-						<div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-							<div className="vendor-menu-item-icon"><Pill size={18} strokeWidth={1.5} /></div>
-							<h2>medIQ</h2>
-						</div>
-					)}
+					<button
+						type="button"
+						className="vendor-brand"
+						onClick={() => navigate('/vendor/dashboard')}
+						aria-label="Go to vendor dashboard"
+					>
+						<span className="vendor-brand-mark" aria-hidden="true">✚</span>
+						{!isCollapsed && (
+							<div className="vendor-brand-text">
+								<span className="vendor-brand-name">
+									<span className="vendor-brand-med">Med</span>
+									<span className="vendor-brand-iq">IQ</span>
+								</span>
+								<span className="vendor-brand-tag">Vendor Console</span>
+							</div>
+						)}
+					</button>
 					<button
 						onClick={handleToggleSidebar}
 						className="vendor-sidebar-toggle"

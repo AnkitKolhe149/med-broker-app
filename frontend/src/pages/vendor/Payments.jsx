@@ -1,89 +1,82 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useNotification } from '../../context/NotificationContext';
+import orderService from '../../services/order.service';
 import { formatCurrency } from '../../utils/currency';
 import styles from './Payments.module.css';
 import { Banknote, Undo2, Check, Clock } from 'lucide-react';
 
 function VendorPayments() {
 	const { currency, convert } = useCurrency();
+	const { showError, showSuccess } = useNotification();
 	const [paymentData, setPaymentData] = useState({
-		totalEarnings: 245750,
-		pendingAmount: 12450,
-		currentBalance: 233300,
-		totalSettlements: 18,
-		transactions: [
-			{
-				id: 1,
-				type: 'order',
-				description: 'Order ORD-001234 (Paracetamol 500mg x 2)',
-				amount: 1250,
-				status: 'settled',
-				date: '2024-01-15'
-			},
-			{
-				id: 2,
-				type: 'order',
-				description: 'Order ORD-001235 (Amoxicillin 250mg x 5)',
-				amount: 2100,
-				status: 'settled',
-				date: '2024-01-14'
-			},
-			{
-				id: 3,
-				type: 'order',
-				description: 'Order ORD-001236 (Cetirizine 10mg x 3)',
-				amount: 890,
-				status: 'pending',
-				date: '2024-01-13'
-			},
-			{
-				id: 4,
-				type: 'refund',
-				description: 'Refund for ORD-001230',
-				amount: -450,
-				status: 'settled',
-				date: '2024-01-12'
-			}
-		],
-		settlements: [
-			{
-				id: 1,
-				settlementId: 'SET-2024-001',
-				amount: 45600,
-				date: '2024-01-10',
-				status: 'completed',
-				method: 'Bank Transfer'
-			},
-			{
-				id: 2,
-				settlementId: 'SET-2024-002',
-				amount: 38900,
-				date: '2024-01-05',
-				status: 'completed',
-				method: 'Bank Transfer'
-			},
-			{
-				id: 3,
-				settlementId: 'SET-2024-003',
-				amount: 52300,
-				date: '2023-12-25',
-				status: 'completed',
-				method: 'Bank Transfer'
-			}
-		]
+		totalEarnings: 0,
+		pendingAmount: 0,
+		currentBalance: 0,
+		totalSettlements: 0,
+		transactions: [],
+		settlements: []
 	});
+	const [loading, setLoading] = useState(true);
 
 	const [showWithdrawal, setShowWithdrawal] = useState(false);
 	const [withdrawAmount, setWithdrawAmount] = useState('');
 	const [activeTab, setActiveTab] = useState('transactions');
 	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 
+	useEffect(() => {
+		const loadVendorPayments = async () => {
+			try {
+				setLoading(true);
+				const result = await orderService.getVendorOrders({ page: 1, limit: 100 });
+				const transactions = (result.orders || []).map((order) => ({
+					id: order.id,
+					type: 'order',
+					description: `${order.customer || 'Customer'} • ${order.items?.length || 0} line item(s)`,
+					amount: Math.round((order.amountCents || 0) / 100),
+					status: order.status === 'paid' || order.status === 'shipped' ? 'settled' : 'pending',
+					date: order.createdAt ? new Date(order.createdAt).toISOString().slice(0, 10) : '-'
+				}));
+
+				const settled = transactions.filter((txn) => txn.status === 'settled');
+				const pending = transactions.filter((txn) => txn.status === 'pending');
+				const totalEarnings = transactions.reduce((sum, txn) => sum + Math.max(0, txn.amount), 0);
+				const pendingAmount = pending.reduce((sum, txn) => sum + Math.max(0, txn.amount), 0);
+
+				setPaymentData({
+					totalEarnings,
+					pendingAmount,
+					currentBalance: Math.max(0, totalEarnings - pendingAmount),
+					totalSettlements: settled.length,
+					transactions,
+					settlements: settled.slice(0, 5).map((txn, index) => ({
+						id: index + 1,
+						settlementId: `SET-${txn.id.slice(0, 8).toUpperCase()}`,
+						amount: txn.amount,
+						date: txn.date,
+						status: 'completed',
+						method: 'Bank Transfer'
+					}))
+				});
+			} catch (error) {
+				console.error('Failed to load vendor payment data:', error);
+				showError(error?.response?.data?.message || 'Failed to load payments');
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadVendorPayments();
+	}, [showError]);
+
 	const handleWithdrawal = () => {
-		alert(`Withdrawal request of ${formatMoney(Number(withdrawAmount) || 0)} initiated. You will receive funds within 1-2 business days.`);
+		showSuccess(`Withdrawal request of ${formatMoney(Number(withdrawAmount) || 0)} initiated. You will receive funds within 1-2 business days.`);
 		setShowWithdrawal(false);
 		setWithdrawAmount('');
 	};
+
+	const displayData = useMemo(() => paymentData, [paymentData]);
 
 	return (
 		<div className={styles.container}>
@@ -140,6 +133,9 @@ function VendorPayments() {
 				</div>
 
 				{activeTab === 'transactions' && (
+					loading ? (
+						<div className={styles.loadingState}>Loading payment history...</div>
+					) : (
 					<table className={styles.table}>
 						<thead>
 							<tr className={styles.tableHeadRow}>
@@ -186,9 +182,13 @@ function VendorPayments() {
 							))}
 						</tbody>
 					</table>
+					)
 				)}
 
 				{activeTab === 'settlements' && (
+					loading ? (
+						<div className={styles.loadingState}>Loading settlements...</div>
+					) : (
 					<table className={styles.table}>
 						<thead>
 							<tr className={styles.tableHeadRow}>
@@ -225,6 +225,7 @@ function VendorPayments() {
 							))}
 						</tbody>
 					</table>
+					)
 				)}
 			</div>
 
@@ -241,16 +242,14 @@ function VendorPayments() {
 						<div className={styles.bankLabel}>
 							ACCOUNT HOLDER NAME
 						</div>
-						<div className={styles.bankValue}>
-							ABC Pharmacy Ltd
-						</div>
+						<div className={styles.bankValue}>{'Connected bank account'}</div>
 					</div>
 					<div>
 						<div className={styles.bankLabel}>
 							ACCOUNT NUMBER
 						</div>
 						<div className={styles.bankValue}>
-							567890123456
+							•••• •••• •••• 3456
 						</div>
 					</div>
 					<div>
@@ -258,7 +257,7 @@ function VendorPayments() {
 							BANK NAME
 						</div>
 						<div className={styles.bankValue}>
-							HDFC Bank
+							Registered payout bank
 						</div>
 					</div>
 					<div>
@@ -266,7 +265,7 @@ function VendorPayments() {
 							IFSC CODE
 						</div>
 						<div className={styles.bankValue}>
-							HDFC0003456
+							•••••••••••
 						</div>
 					</div>
 				</div>
