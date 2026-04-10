@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
 import joblib
 import os
 
@@ -16,7 +17,11 @@ for old in ["prognosis", "disease"]:
 
 drop = [c for c in ["Disease", "medicine"] if c in df.columns]
 X = df.drop(columns=drop).select_dtypes(include=[np.number])
-y = df["Disease"].str.strip()
+y_raw = df["Disease"].str.strip()
+
+# Label Encoding
+le = LabelEncoder()
+y = le.fit_transform(y_raw)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
@@ -31,6 +36,6 @@ clf.fit(X_train, y_train)
 acc = accuracy_score(y_test, clf.predict(X_test))
 print(f"Accuracy: {acc:.4f}")
 
-# Save
-joblib.dump((clf, X.columns.values, acc), os.path.join(base, "model_cache.pkl"))
-print("Saved model_cache.pkl successfully!")
+# Save (Model, Feature Names, Accuracy, Encoder)
+joblib.dump((clf, X.columns.values, acc, le), os.path.join(base, "model_cache.pkl"))
+print("Saved model_cache.pkl (including LabelEncoder) successfully!")
