@@ -67,12 +67,12 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
     <aside className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
       <div className="admin-sidebar-header">
         <Link to="/admin" className="admin-logo">
-          <span className="admin-logo-mark" aria-hidden="true">✚</span>
-          <span className="admin-logo-word">
-            <span className="admin-logo-med">Med</span>
-            <span className="admin-logo-iq">IQ</span>
+          <span className="topnav-logo-mark" aria-hidden="true">✚</span>
+          <span className="topnav-logo-word">
+            <span className="topnav-logo-med">Med</span>
+            <span className="topnav-logo-iq">IQ</span>
           </span>
-          <span className="admin-logo-trust">Admin Console</span>
+          <span className="topnav-logo-trust">Admin Console</span>
         </Link>
         <button
           className="admin-sidebar-toggle admin-mobile-only"

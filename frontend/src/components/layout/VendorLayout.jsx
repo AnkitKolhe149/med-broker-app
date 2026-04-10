@@ -106,14 +106,14 @@ function VendorLayout({ children }) {
 						onClick={() => navigate('/vendor/dashboard')}
 						aria-label="Go to vendor dashboard"
 					>
-						<span className="vendor-brand-mark" aria-hidden="true">✚</span>
+						<span className="topnav-logo-mark" aria-hidden="true">✚</span>
 						{!isCollapsed && (
 							<div className="vendor-brand-text">
-								<span className="vendor-brand-name">
-									<span className="vendor-brand-med">Med</span>
-									<span className="vendor-brand-iq">IQ</span>
+								<span className="topnav-logo-word">
+									<span className="topnav-logo-med">Med</span>
+									<span className="topnav-logo-iq">IQ</span>
 								</span>
-								<span className="vendor-brand-tag">Vendor Console</span>
+								<span className="topnav-logo-trust">Vendor Console</span>
 							</div>
 						)}
 					</button>

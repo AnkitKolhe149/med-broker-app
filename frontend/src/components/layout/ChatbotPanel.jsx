@@ -2,12 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import aiService from '../../services/ai.service';
 import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { formatCurrency } from '../../utils/currency';
 import './ChatbotPanel.css';
 
 function ChatbotPanel({ isOpen, onClose }) {
 	const { addToCart } = useCart();
 	const { user } = useUser();
+	const { currency } = useCurrency();
 	const [messages, setMessages] = useState([
 		{
 			id: 'welcome',
@@ -21,8 +23,12 @@ function ChatbotPanel({ isOpen, onClose }) {
 	const [isLoading, setIsLoading] = useState(false);
 	const messagesEndRef = useRef(null);
 
-	const currencyCode = localStorage.getItem('preferredCurrency') || 'INR';
-	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const currencyCode = currency || localStorage.getItem('preferredCurrency') || 'INR';
+	const formatProductPrice = (product) => {
+		const value = Number(product?.displayPrice ?? product?.retailPrice ?? 0);
+		const code = product?.displayCurrencyCode || currencyCode;
+		return formatCurrency(value, code, true);
+	};
 
 	const quickPrompts = useMemo(() => [
 		'I have fever and headache since yesterday',
@@ -46,7 +52,7 @@ function ChatbotPanel({ isOpen, onClose }) {
 			product.retailPrice,
 			product.wholesalePrice,
 			buyerType,
-			product.currencyCode || currencyCode,
+			product.baseCurrencyCode || product.currencyCode || 'INR',
 			'standard',
 			product.bulkPrice,
 			product.bulkMinQty
@@ -93,7 +99,11 @@ function ChatbotPanel({ isOpen, onClose }) {
 		try {
 			const { reply, products = [] } = await aiService.sendMessage({
 				message: normalized,
-				context: { channel: 'chatbot-widget' }
+				context: {
+					channel: 'chatbot-widget',
+					buyerType: user?.customer?.buyerType || 'RETAIL',
+					preferredCurrency: currencyCode
+				}
 			});
 
 			setMessages((prev) => [
@@ -173,7 +183,7 @@ function ChatbotPanel({ isOpen, onClose }) {
 													<p className="chatbot-product-meta">
 														{product.vendor} • {product.requiresPrescription ? 'Rx Required' : 'OTC'}
 													</p>
-													<p className="chatbot-product-price">{formatPrice(product.displayPrice || product.retailPrice || 0)}</p>
+													<p className="chatbot-product-price">{formatProductPrice(product)}</p>
 												</div>
 												<button
 													type="button"

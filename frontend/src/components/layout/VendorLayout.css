@@ -112,7 +112,7 @@ body {
 	font-family: "Playfair Display", "Times New Roman", serif;
 }
 
-.vendor-brand-mark {
+.vendor-brand .topnav-logo-mark {
 	width: 1.5rem;
 	height: 1.5rem;
 	border-radius: 0.45rem;
@@ -133,7 +133,7 @@ body {
 	min-width: 0;
 }
 
-.vendor-brand-name {
+.vendor-brand .topnav-logo-word {
 	display: inline-flex;
 	align-items: baseline;
 	gap: 0.02em;
@@ -146,7 +146,7 @@ body {
 	white-space: nowrap;
 }
 
-.vendor-brand-name::after {
+.vendor-brand .topnav-logo-word::after {
 	content: "";
 	position: absolute;
 	left: -0.05rem;
@@ -158,13 +158,13 @@ body {
 	animation: mediq-logo-sweep 5s ease-in-out infinite;
 }
 
-.vendor-brand-med {
+.vendor-brand .topnav-logo-med {
 	font-family: "Playfair Display", "Times New Roman", serif;
 	font-weight: 700;
 	color: #eef8f3;
 }
 
-.vendor-brand-iq {
+.vendor-brand .topnav-logo-iq {
 	font-family: "Space Grotesk", "Segoe UI", sans-serif;
 	font-weight: 800;
 	letter-spacing: 0.01em;
@@ -172,7 +172,7 @@ body {
 	margin-left: 0.03em;
 }
 
-.vendor-brand-tag {
+.vendor-brand .topnav-logo-trust {
 	font-family: "Space Grotesk", "Segoe UI", sans-serif;
 	font-size: 0.52rem;
 	font-weight: 700;

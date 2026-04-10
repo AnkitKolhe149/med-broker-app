@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 
 // Context providers
@@ -76,6 +76,31 @@ import AdminCompliance from '../pages/admin/Compliance';
 import AdminNotifications from '../pages/admin/Notifications';
 import AdminIntegrations from '../pages/admin/Integrations';
 import AdminSettings from '../pages/admin/Settings';
+import { useUser } from '../context/UserContext';
+
+function ChatbotAccessGate({ isChatOpen, onToggle, onClose }) {
+    const location = useLocation();
+    const { user } = useUser();
+
+    const isCustomerRoute = location.pathname.startsWith('/customer');
+    const isCustomerUser = user?.role === 'CUSTOMER';
+    const shouldShowChatbot = isCustomerRoute && isCustomerUser;
+
+    if (!shouldShowChatbot) {
+        return null;
+    }
+
+    return (
+        <>
+            <ChatbotPanel isOpen={isChatOpen} onClose={onClose} />
+            <ChatbotFloatingButton
+                isOpen={isChatOpen}
+                onClick={onToggle}
+            />
+        </>
+    );
+}
+
 function App() {
     const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -306,10 +331,10 @@ function App() {
                     {/* Fallback route */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
-                        <ChatbotPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
-                        <ChatbotFloatingButton
-                            isOpen={isChatOpen}
-                            onClick={() => setIsChatOpen((prev) => !prev)}
+                        <ChatbotAccessGate
+                            isChatOpen={isChatOpen}
+                            onClose={() => setIsChatOpen(false)}
+                            onToggle={() => setIsChatOpen((prev) => !prev)}
                         />
                         </div>
                         </Router>

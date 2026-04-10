@@ -108,7 +108,7 @@
   color: var(--admin-primary);
 }
 
-.admin-logo-mark {
+.admin-logo .topnav-logo-mark {
   width: 1.5rem;
   height: 1.5rem;
   background: linear-gradient(145deg, #1a9868 0%, #0f7f56 100%);
@@ -123,7 +123,7 @@
   animation: mediq-logo-float 4.6s ease-in-out infinite;
 }
 
-.admin-logo-word {
+.admin-logo .topnav-logo-word {
   display: inline-flex;
   align-items: baseline;
   gap: 0.02em;
@@ -136,7 +136,7 @@
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
-.admin-logo-word::after {
+.admin-logo .topnav-logo-word::after {
   content: "";
   position: absolute;
   left: -0.05rem;
@@ -148,12 +148,12 @@
   animation: mediq-logo-sweep 5s ease-in-out infinite;
 }
 
-.admin-logo-med {
+.admin-logo .topnav-logo-med {
   font-family: "Playfair Display", "Times New Roman", serif;
   font-weight: 700;
 }
 
-.admin-logo-iq {
+.admin-logo .topnav-logo-iq {
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -194,7 +194,7 @@
   display: none;
 }
 
-.admin-logo-trust {
+.admin-logo .topnav-logo-trust {
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
   font-size: 0.52rem;
   font-weight: 700;
@@ -212,17 +212,17 @@
 }
 
 @media (max-width: 768px) {
-  .admin-logo-word {
+  .admin-logo .topnav-logo-word {
     font-size: 1.05rem;
   }
 
-  .admin-logo-mark {
+  .admin-logo .topnav-logo-mark {
     width: 1.36rem;
     height: 1.36rem;
     font-size: 0.75rem;
   }
 
-  .admin-logo-trust {
+  .admin-logo .topnav-logo-trust {
     display: none;
   }
 }

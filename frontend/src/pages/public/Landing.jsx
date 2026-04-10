@@ -16,15 +16,19 @@ export default function Landing() {
       <header className="landing-header">
         <div className="container">
           <div className="header-content">
-            <div className="logo-section">
-              <div className="logo-icon">
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                  <path d="M20 5L20 35M5 20L35 20" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                  <circle cx="20" cy="20" r="17" stroke="currentColor" strokeWidth="3" fill="none" />
-                </svg>
-              </div>
-              <h1 className="logo-text">MedIQ</h1>
-            </div>
+            <button
+              type="button"
+              className="topnav-logo landing-logo"
+              onClick={() => navigate('/')}
+              aria-label="MedIQ home"
+            >
+              <span className="topnav-logo-mark" aria-hidden="true">✚</span>
+              <span className="topnav-logo-word">
+                <span className="topnav-logo-med">Med</span>
+                <span className="topnav-logo-iq">IQ</span>
+              </span>
+              <span className="topnav-logo-trust" aria-hidden="true">Trusted Care</span>
+            </button>
             <nav className="header-nav">
               <a href="#features" className="nav-link">Features</a>
               <a href="#benefits" className="nav-link">Benefits</a>
