@@ -4,7 +4,7 @@ import authService from '../../services/auth.service';
 import {
   BarChart2, Package, PackageSearch, Pill,
   Truck, TrendingUp, Wallet, ClipboardList,
-	MessageSquare, Settings, LogOut, Menu, X, ChevronLeft, ChevronRight
+	MessageSquare, Settings, LogOut, Menu, X, ChevronLeft, ChevronRight, Brain
 } from 'lucide-react';
 import './VendorLayout.css';
 
@@ -30,6 +30,7 @@ function VendorLayout({ children }) {
 			title: 'Business Intelligence',
 			items: [
 				{ path: '/vendor/analytics', label: 'Analytics', icon: <TrendingUp size={18} strokeWidth={1.5} />, hint: 'Performance insights', description: 'Monitor trends and business KPIs' },
+				{ path: '/vendor/demand-forecasting', label: 'Demand Forecast', icon: <Brain size={18} strokeWidth={1.5} />, hint: 'AI insights', description: 'Predictive inventory and market trends' },
 				{ path: '/vendor/payments', label: 'Payments', icon: <Wallet size={18} strokeWidth={1.5} />, hint: 'Payouts & ledger', description: 'Review transactions and settlement details' },
 				{ path: '/vendor/compliance', label: 'Compliance', icon: <ClipboardList size={18} strokeWidth={1.5} />, hint: 'Document health', description: 'Manage documents, audits and compliance tasks' }
 			]

@@ -1,4 +1,6 @@
 const { prisma } = require('../../database/prisma');
+const axios = require('axios');
+
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -432,8 +434,125 @@ const getAnalytics = async (userId, timeRange = 'month') => {
   };
 };
 
+const getDemandForecast = async (userId) => {
+  const context = await getVendorAndInventory(userId);
+  if (!context) {
+    return null;
+  }
+
+  const { vendor, inventory } = context;
+  const vendorMedicineIds = getVendorMedicineIds(inventory);
+  
+  // Calculate past month sales for each item in inventory
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  
+  // Also fetch 3-month history for seasonality calculation
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  
+  const [recentOrders, historicalOrders] = await Promise.all([
+    prisma.order.findMany({
+      where: {
+        createdAt: { gte: oneMonthAgo },
+        status: { not: 'CANCELLED' }
+      },
+      include: { items: true }
+    }),
+    prisma.order.findMany({
+      where: {
+        createdAt: { gte: threeMonthsAgo, lt: oneMonthAgo },
+        status: { not: 'CANCELLED' }
+      },
+      include: { items: true }
+    })
+  ]);
+
+  // Current month sales per medicine
+  const currentSalesMap = {};
+  recentOrders.forEach(order => {
+    order.items.forEach(item => {
+      if (vendorMedicineIds.has(item.medicineId)) {
+        currentSalesMap[item.medicineId] = (currentSalesMap[item.medicineId] || 0) + item.quantity;
+      }
+    });
+  });
+
+  // Historical average monthly sales (for seasonality calculation)
+  const historicalSalesMap = {};
+  historicalOrders.forEach(order => {
+    order.items.forEach(item => {
+      if (vendorMedicineIds.has(item.medicineId)) {
+        historicalSalesMap[item.medicineId] = (historicalSalesMap[item.medicineId] || 0) + item.quantity;
+      }
+    });
+  });
+
+  // Check for active promotions/coupons
+  let hasActivePromos = false;
+  try {
+    const activeCoupons = await prisma.coupon.count({ where: { isActive: true } });
+    hasActivePromos = activeCoupons > 0;
+  } catch (_) {
+    // Coupon model may not exist
+  }
+
+  const forecastPayload = inventory.map(item => {
+    const currentSales = currentSalesMap[item.medicineId] || 0;
+    const historicalAvg = (historicalSalesMap[item.medicineId] || 0) / 2; // 2 months in window
+    
+    // Calculate real seasonality index: ratio of current month to historical avg
+    let seasonalityIndex = 1.0;
+    if (historicalAvg > 0) {
+      seasonalityIndex = Math.max(0.3, Math.min(2.5, currentSales / historicalAvg));
+    } else if (currentSales > 0) {
+      seasonalityIndex = 1.2; // New product with some traction
+    }
+
+    return {
+      medicine_id: item.medicineId,
+      medicine_name: item.medicine.name,
+      past_month_sales: currentSales,
+      price: item.medicine.priceCents / 100,
+      stock_level: item.quantity,
+      seasonality_index: Math.round(seasonalityIndex * 100) / 100,
+      promotion_active: hasActivePromos ? 1 : 0
+    };
+  });
+
+  try {
+    const response = await axios.post('http://localhost:5002/api/forecast', {
+      items: forecastPayload
+    }, { timeout: 3000 });
+    
+    return {
+      vendor: { id: vendor.id, companyName: vendor.companyName },
+      forecasts: response.data.forecasts || []
+    };
+  } catch (error) {
+    console.warn("Python ML server unavailable, using fallback heuristic forecast.");
+    // Fallback if ML API is not running
+    const fallbackForecasts = forecastPayload.map(item => {
+      const pred = Math.max(10, item.past_month_sales * 1.1 + (100 - item.price) * 0.5);
+      return {
+        medicine_id: item.medicine_id,
+        medicine_name: item.medicine_name,
+        predicted_demand: Math.round(pred),
+        confidence_score: 0.75,
+        trend: pred > item.past_month_sales * 1.2 ? 'up' : (pred < item.past_month_sales * 0.8 ? 'down' : 'stable')
+      };
+    });
+    
+    return {
+      vendor: { id: vendor.id, companyName: vendor.companyName },
+      forecasts: fallbackForecasts
+    };
+  }
+};
+
 module.exports = {
   getDashboard,
   getAnalytics,
-  getVendorOrders
+  getVendorOrders,
+  getDemandForecast
 };
