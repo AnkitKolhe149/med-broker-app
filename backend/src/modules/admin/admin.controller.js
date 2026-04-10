@@ -95,5 +95,95 @@ module.exports = {
     } catch (error) {
       next(error);
     }
+  },
+
+  getUsersOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getUsersOverview(req.query);
+      res.json({ success: true, data: result.users, summary: result.summary, pagination: result.pagination });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getVendorsOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getVendorsOverview(req.query);
+      res.json({ success: true, data: result.vendors, summary: result.summary, pagination: result.pagination });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getCatalogOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getCatalogOverview(req.query);
+      res.json({ success: true, data: result.medicines, summary: result.summary, pagination: result.pagination });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getInventoryOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getInventoryOverview(req.query);
+      res.json({ success: true, data: result.items, summary: result.summary, pagination: result.pagination });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getSupportTicketsOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getSupportTicketsOverview(req.query);
+      res.json({ success: true, data: result.tickets, summary: result.summary, pagination: result.pagination });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getComplianceOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getComplianceOverview();
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getReportsOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getReportsOverview();
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getNotificationsOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getNotificationsOverview(req.query);
+      res.json({ success: true, data: result.notifications, summary: result.summary, pagination: result.pagination });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getIntegrationsOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getIntegrationsOverview();
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getSettingsOverview: async (req, res, next) => {
+    try {
+      const result = await adminService.getSettingsOverview();
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
   }
 };

@@ -27,6 +27,7 @@ async function authenticate(req, res, next) {
         mobile: true,
         name: true,
         role: true,
+        preferredCurrency: true,
         isProfileComplete: true,
         vendor: true,
         customer: true,
@@ -71,6 +72,7 @@ async function authenticateOptional(req, res, next) {
         id: true,
         email: true,
         role: true,
+        preferredCurrency: true,
         vendor: true,
         customer: true
       }

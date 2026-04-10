@@ -30,4 +30,16 @@ router.post('/refunds/process', adminController.processRefund);
 // Governance
 router.get('/disputes', adminController.getDisputeCases);
 
+// Module overviews for connected admin pages
+router.get('/users', adminController.getUsersOverview);
+router.get('/vendors', adminController.getVendorsOverview);
+router.get('/catalog', adminController.getCatalogOverview);
+router.get('/inventory', adminController.getInventoryOverview);
+router.get('/support-tickets', adminController.getSupportTicketsOverview);
+router.get('/compliance', adminController.getComplianceOverview);
+router.get('/reports', adminController.getReportsOverview);
+router.get('/notifications', adminController.getNotificationsOverview);
+router.get('/integrations', adminController.getIntegrationsOverview);
+router.get('/settings', adminController.getSettingsOverview);
+
 module.exports = router;
