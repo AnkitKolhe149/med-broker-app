@@ -1,5 +1,6 @@
 const adminService = require('./admin.service');
 const paymentService = require('../payments/payments.service');
+const trainingDataService = require('./trainingData.service');
 
 module.exports = {
   getDashboardStats: async (req, res, next) => {
@@ -92,6 +93,16 @@ module.exports = {
     try {
       const result = await adminService.getDisputeCases(req.query);
       res.json({ success: true, data: result.disputes, pagination: result.pagination });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  exportDemandTrainingData: async (req, res, next) => {
+    try {
+      const monthsBack = parseInt(req.query.months) || 12;
+      const data = await trainingDataService.exportDemandTrainingData(monthsBack);
+      res.json({ success: true, data });
     } catch (error) {
       next(error);
     }

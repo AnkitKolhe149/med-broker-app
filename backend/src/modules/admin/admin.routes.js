@@ -30,4 +30,7 @@ router.post('/refunds/process', adminController.processRefund);
 // Governance
 router.get('/disputes', adminController.getDisputeCases);
 
+// ML Training Data Export
+router.get('/training-data/demand', adminController.exportDemandTrainingData);
+
 module.exports = router;
