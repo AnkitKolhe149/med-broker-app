@@ -3,6 +3,7 @@ const knowledgeBase = require('./knowledge.base.json');
 const { prisma } = require('../../database/prisma');
 const { Pinecone } = require('@pinecone-database/pinecone');
 const { loadSessions, persistSessions } = require('./session.store');
+const { getLatestRates, convertFromBase } = require('../exchangeRate/exchangeRate.service');
 
 const chatSessions = new Map();
 const MAX_SESSION_MESSAGES = 20;
@@ -28,10 +29,18 @@ const SYMPTOM_KEYWORDS = [
   'fever',
   'headache',
   'body pain',
+  'body ache',
+  'joint pain',
+  'muscle pain',
   'cough',
   'cold',
   'sore throat',
   'runny nose',
+  'running nose',
+  'nasal congestion',
+  'blocked nose',
+  'irritation',
+  'eye irritation',
   'acidity',
   'heartburn',
   'indigestion',
@@ -40,6 +49,22 @@ const SYMPTOM_KEYWORDS = [
   'rash',
   'vomiting',
   'diarrhea'
+];
+
+const SYMPTOM_ALIASES = {
+  'running nose': 'runny nose',
+  'body ache': 'body pain',
+  'muscle pain': 'body pain'
+};
+
+const GREETING_PATTERNS = [
+  'hello',
+  'hi',
+  'hey',
+  'good morning',
+  'good evening',
+  'thanks',
+  'thank you'
 ];
 
 let embedderPipeline = null;
@@ -102,7 +127,33 @@ const hasRedFlags = (text) => {
 
 const extractSymptoms = (text) => {
   const normalized = String(text || '').toLowerCase();
-  return SYMPTOM_KEYWORDS.filter((symptom) => normalized.includes(symptom));
+  const found = new Set();
+
+  SYMPTOM_KEYWORDS.forEach((symptom) => {
+    if (normalized.includes(symptom)) {
+      found.add(symptom);
+    }
+  });
+
+  // Also detect KB-defined symptoms to reduce misses when new symptom terms are added to knowledge base.
+  for (const doc of knowledgeBase) {
+    for (const symptom of doc.metadata?.symptoms || []) {
+      const normalizedSymptom = String(symptom || '').toLowerCase().trim();
+      if (!normalizedSymptom) continue;
+      if (normalized.includes(normalizedSymptom)) {
+        found.add(normalizedSymptom);
+      }
+    }
+  }
+
+  return [...found].map((symptom) => SYMPTOM_ALIASES[symptom] || symptom);
+};
+
+const isGreetingOrSmallTalk = (text) => {
+  const normalized = String(text || '').toLowerCase().trim();
+  if (!normalized) return false;
+
+  return GREETING_PATTERNS.some((token) => normalized === token || normalized.startsWith(`${token} `));
 };
 
 const ensureSessionsLoaded = async () => {
@@ -386,6 +437,28 @@ const formatFallbackReply = ({ retrievedDocs, symptoms, products, isIntake }) =>
   return `${guidance}${productText} This is not a diagnosis; consult a doctor if symptoms persist or worsen.`;
 };
 
+const buildGroundedRecommendationReply = ({ symptoms, products }) => {
+  const symptomText = symptoms.length ? symptoms.join(', ') : 'your symptoms';
+
+  if (!products.length) {
+    return `I could not find a close in-stock match on MedIQ for ${symptomText} right now. Please avoid self-medication for persistent symptoms and consult a doctor for a tailored prescription.`;
+  }
+
+  return `Based on ${symptomText}, I found ${products.length} in-stock MedIQ options in the recommendation cards below. I am only suggesting items currently available on the platform. Please check dosage instructions, prescription requirement, and consult a doctor if symptoms persist or worsen.`;
+};
+
+const getMedicineFamilyKey = (name) =>
+  String(name || '')
+    .toLowerCase()
+    .replace(/\b\d+(mg|ml|g)?\b/g, ' ')
+    .replace(/\b(tablet|tab|capsule|cap|syrup|suspension|injection|drops|gel|cream|ointment)\b/g, ' ')
+    .replace(/[^a-z\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(' ')
+    .trim();
+
 const createLLMReply = async ({ userMessage, retrievedDocs, symptoms, products }) => {
   const client = await getGroqClient();
 
@@ -404,7 +477,7 @@ const createLLMReply = async ({ userMessage, retrievedDocs, symptoms, products }
       messages: [
         {
           role: 'system',
-          content: 'You are MedIQ symptom assistant. Never diagnose. First ensure safety. Use only context. Recommend platform products only if relevant and in stock. Keep response concise and clear.'
+          content: 'You are MedIQ symptom assistant. Never diagnose. First ensure safety. Use only provided context. Do not mention or invent any medicine/brand name unless it is present in the Available platform products list. If no products are available, do not suggest any medicine names. Keep response concise and clear.'
         },
         {
           role: 'user',
@@ -419,7 +492,7 @@ const createLLMReply = async ({ userMessage, retrievedDocs, symptoms, products }
   }
 };
 
-const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL' }) => {
+const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', preferredCurrency = 'INR' }) => {
   const keywordSet = new Set();
   retrievedDocs.forEach((doc) => {
     (doc.metadata?.productKeywords || []).forEach((keyword) => keywordSet.add(String(keyword).toLowerCase()));
@@ -429,11 +502,19 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL' }) 
 
   const keywords = [...keywordSet].slice(0, 8);
 
+  const queryTerms = toSet([
+    ...keywords,
+    ...symptoms,
+    ...tokenize(retrievedDocs.map((doc) => doc.content).join(' '))
+  ]);
+
   const whereOr = keywords.map((keyword) => ({
     medicine: {
       OR: [
         { name: { contains: keyword, mode: 'insensitive' } },
-        { description: { contains: keyword, mode: 'insensitive' } }
+        { description: { contains: keyword, mode: 'insensitive' } },
+        { category: { contains: keyword, mode: 'insensitive' } },
+        { brand: { contains: keyword, mode: 'insensitive' } }
       ]
     }
   }));
@@ -441,6 +522,11 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL' }) 
   const inventoryItems = await prisma.inventory.findMany({
     where: {
       quantity: { gt: 0 },
+      isActive: true,
+      medicine: {
+        isActive: true,
+        status: 'PUBLISHED'
+      },
       ...(whereOr.length ? { OR: whereOr } : {})
     },
     include: {
@@ -452,20 +538,109 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL' }) 
         }
       }
     },
-    orderBy: { quantity: 'desc' },
-    take: 5
+    orderBy: [
+      { updatedAt: 'desc' }
+    ],
+    take: 80
   });
+
+  const rankedItems = inventoryItems
+    .map((item) => {
+      const searchable = `${item.medicine?.name || ''} ${item.medicine?.description || ''} ${item.medicine?.category || ''} ${item.medicine?.brand || ''}`;
+      const medicineTokens = toSet(tokenize(searchable));
+
+      let relevance = 0;
+      queryTerms.forEach((term) => {
+        if (medicineTokens.has(term)) {
+          relevance += 1;
+        }
+      });
+
+      if (keywords.some((kw) => (item.medicine?.name || '').toLowerCase().includes(kw))) {
+        relevance += 3;
+      }
+
+      if (symptoms.some((symptom) => (item.medicine?.description || '').toLowerCase().includes(symptom))) {
+        relevance += 2;
+      }
+
+      // Keep stock as a weak tiebreaker, not a primary ranking signal.
+      relevance += Math.min(2, Math.floor((item.quantity || 0) / 100));
+
+      return { item, relevance };
+    })
+    .sort((a, b) => {
+      if (b.relevance !== a.relevance) return b.relevance - a.relevance;
+      if ((b.item.medicine?.updatedAt?.getTime?.() || 0) !== (a.item.medicine?.updatedAt?.getTime?.() || 0)) {
+        return (b.item.medicine?.updatedAt?.getTime?.() || 0) - (a.item.medicine?.updatedAt?.getTime?.() || 0);
+      }
+      return (b.item.quantity || 0) - (a.item.quantity || 0);
+    })
+    .map((entry) => entry.item);
 
   const uniqueInventoryItems = [];
   const seenMedicineIds = new Set();
+  const seenMedicineFamilies = new Set();
+  const usedCategories = new Set();
 
-  for (const item of inventoryItems) {
+  // Pass 1: prioritize category diversity so every condition does not return the same few medicines.
+  for (const item of rankedItems) {
+    if (uniqueInventoryItems.length >= 5) break;
+
+    const searchable = `${item.medicine?.name || ''} ${item.medicine?.description || ''} ${item.medicine?.category || ''} ${item.medicine?.brand || ''}`;
+    const medicineTokens = toSet(tokenize(searchable));
+    const hasRelevantMatch = !queryTerms.size || [...queryTerms].some((term) => medicineTokens.has(term));
+    if (!hasRelevantMatch) {
+      continue;
+    }
+
     if (seenMedicineIds.has(item.medicine.id)) {
       continue;
     }
 
+    const familyKey = getMedicineFamilyKey(item.medicine?.name);
+    if (familyKey && seenMedicineFamilies.has(familyKey)) {
+      continue;
+    }
+
+    const category = (item.medicine.category || 'uncategorized').toLowerCase();
+    if (usedCategories.has(category)) {
+      continue;
+    }
+
     seenMedicineIds.add(item.medicine.id);
+    if (familyKey) seenMedicineFamilies.add(familyKey);
+    usedCategories.add(category);
     uniqueInventoryItems.push(item);
+  }
+
+  // Pass 2: fill remaining slots with highest-ranked unique medicines.
+  for (const item of rankedItems) {
+    if (uniqueInventoryItems.length >= 5) break;
+
+    if (seenMedicineIds.has(item.medicine.id)) {
+      continue;
+    }
+
+    const familyKey = getMedicineFamilyKey(item.medicine?.name);
+    if (familyKey && seenMedicineFamilies.has(familyKey)) {
+      continue;
+    }
+
+    seenMedicineIds.add(item.medicine.id);
+    if (familyKey) seenMedicineFamilies.add(familyKey);
+    uniqueInventoryItems.push(item);
+  }
+
+  const normalizedTargetCurrency = String(preferredCurrency || 'INR').toUpperCase();
+  let rateRecord = null;
+
+  if (normalizedTargetCurrency !== 'INR') {
+    try {
+      rateRecord = await getLatestRates('INR');
+    } catch (_error) {
+      rateRecord = null;
+    }
   }
 
   return uniqueInventoryItems.map((item) => {
@@ -475,6 +650,13 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL' }) 
     const bulkMinQty = item.medicine.bulkMinQty || 1;
 
     const defaultPrice = buyerType === 'WHOLESALE' ? wholesalePrice : retailPrice;
+    const convertedDisplayPrice = rateRecord?.rates
+      ? convertFromBase(defaultPrice, normalizedTargetCurrency, rateRecord.rates)
+      : null;
+
+    const hasConvertedDisplay = Number.isFinite(convertedDisplayPrice);
+    const displayCurrencyCode = hasConvertedDisplay ? normalizedTargetCurrency : 'INR';
+    const displayPrice = Number((hasConvertedDisplay ? convertedDisplayPrice : defaultPrice).toFixed(2));
 
     return {
       id: item.id,
@@ -490,7 +672,9 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL' }) 
       wholesalePrice,
       bulkPrice,
       bulkMinQty,
-      displayPrice: defaultPrice,
+      displayPrice,
+      displayCurrencyCode,
+      baseCurrencyCode: 'INR',
       currencyCode: 'INR'
     };
   });
@@ -510,9 +694,25 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
   const activeSessionId = sessionId || randomUUID();
   const session = await getSessionState(activeSessionId);
 
+  const extractedSymptoms = extractSymptoms(message);
+
+  if (isGreetingOrSmallTalk(message) && extractedSymptoms.length === 0) {
+    const reply = 'Hello. Share your symptoms, duration, and severity, and I will suggest available MedIQ options with safety guidance.';
+    await rememberMessage(session, 'user', message);
+    await rememberMessage(session, 'assistant', reply);
+
+    return {
+      sessionId: activeSessionId,
+      type: 'message',
+      symptomSummary: [...session.symptoms],
+      reply,
+      products: [],
+      followUpQuestion: null
+    };
+  }
+
   await rememberMessage(session, 'user', message);
 
-  const extractedSymptoms = extractSymptoms(message);
   extractedSymptoms.forEach((symptom) => session.symptoms.add(symptom));
   await saveSessionsSafely();
 
@@ -534,15 +734,18 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
   const retrievedDocs = await retrieveTopK(query, 4);
 
   const buyerType = user?.customer?.buyerType || context?.buyerType || 'RETAIL';
-  const products = await mapToProducts({ retrievedDocs, symptoms, buyerType });
+  const preferredCurrency = context?.preferredCurrency || user?.preferredCurrency || 'INR';
+  const products = await mapToProducts({ retrievedDocs, symptoms, buyerType, preferredCurrency });
 
   const requiresIntake = symptoms.length < 2;
-  const llmReply = await createLLMReply({
-    userMessage: message,
-    retrievedDocs,
-    symptoms,
-    products
-  });
+  const llmReply = requiresIntake
+    ? await createLLMReply({
+      userMessage: message,
+      retrievedDocs,
+      symptoms,
+      products
+    })
+    : buildGroundedRecommendationReply({ symptoms, products });
 
   const followUpQuestion = buildFollowUpQuestion(retrievedDocs);
 
