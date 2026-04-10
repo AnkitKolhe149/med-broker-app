@@ -57,6 +57,8 @@ import VendorAnalytics from '../pages/vendor/Analytics';
 import VendorCompliance from '../pages/vendor/Compliance';
 import VendorCommunication from '../pages/vendor/Communication';
 import VendorSettings from '../pages/vendor/Settings';
+import VendorDemandForecasting from '../pages/vendor/DemandForecasting';
+
 
 // Admin pages
 import AdminDashboard from '../pages/admin/Dashboard';
@@ -233,6 +235,11 @@ function App() {
                     <Route path="/vendor/settings" element={
                         <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
                             <VendorLayout><VendorSettings /></VendorLayout>
+                        </AuthGuard>
+                    } />
+                    <Route path="/vendor/demand-forecasting" element={
+                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                            <VendorLayout><VendorDemandForecasting /></VendorLayout>
                         </AuthGuard>
                     } />
                     

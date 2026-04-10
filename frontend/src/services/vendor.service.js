@@ -57,6 +57,18 @@ const vendorService = {
 		}
 
 		return response.data.data;
+	},
+
+	getDemandForecast: async () => {
+		const response = await axios.get(`${API_URL}/vendor-insights/forecast`, {
+			headers: getAuthHeaders()
+		});
+
+		if (!response.data?.success) {
+			throw new Error(response.data?.message || 'Failed to load demand forecast');
+		}
+
+		return response.data.data;
 	}
 };
 

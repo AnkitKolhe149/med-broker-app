@@ -42,4 +42,7 @@ router.get('/notifications', adminController.getNotificationsOverview);
 router.get('/integrations', adminController.getIntegrationsOverview);
 router.get('/settings', adminController.getSettingsOverview);
 
+// ML Training Data Export
+router.get('/training-data/demand', adminController.exportDemandTrainingData);
+
 module.exports = router;

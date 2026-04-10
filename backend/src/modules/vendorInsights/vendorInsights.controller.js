@@ -65,5 +65,24 @@ module.exports = {
     } catch (error) {
       return next(error);
     }
+  },
+  getDemandForecast: async (req, res, next) => {
+    try {
+      const data = await vendorInsightsService.getDemandForecast(req.user.id);
+
+      if (!data) {
+        return res.status(404).json({
+          success: false,
+          message: 'Vendor profile not found'
+        });
+      }
+
+      return res.json({
+        success: true,
+        data
+      });
+    } catch (error) {
+      return next(error);
+    }
   }
 };
