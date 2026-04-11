@@ -4,7 +4,7 @@ import { FlaskConical } from 'lucide-react';
 import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { convertPrice, formatCurrency, getCurrencyForCountry } from '../../utils/currency';
+import { convertPrice, formatCurrency } from '../../utils/currency';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
@@ -25,7 +25,7 @@ function OrdersHistory() {
 	});
 	const [cancellingOrderId, setCancellingOrderId] = useState(null);
 	const ordersListRef = useRef(null);
-	const defaultCurrencyCode = getCurrencyForCountry(user?.customer?.country || user?.vendor?.country, currency || 'USD');
+	const defaultCurrencyCode = currency || user?.preferredCurrency || 'INR';
 	const formatPrice = (value, currencyCode = defaultCurrencyCode) => formatCurrency(convertPrice(value, 'INR', currencyCode, exchangeRates), currencyCode, true);
 
 	const toUiStatus = (status = '') => {

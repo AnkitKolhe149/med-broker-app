@@ -447,6 +447,14 @@ const buildGroundedRecommendationReply = ({ symptoms, products }) => {
   return `Based on ${symptomText}, I found ${products.length} in-stock MedIQ options in the recommendation cards below. I am only suggesting items currently available on the platform. Please check dosage instructions, prescription requirement, and consult a doctor if symptoms persist or worsen.`;
 };
 
+const buildIntakeReply = ({ symptoms }) => {
+  if (!symptoms.length) {
+    return 'I can help with safe symptom-based guidance using only medicines currently available on MedIQ. Share your symptoms, duration, severity, and age group.';
+  }
+
+  return `I noted these symptoms: ${symptoms.join(', ')}. Please share duration, severity, and age group so I can shortlist only in-stock MedIQ options.`;
+};
+
 const getMedicineFamilyKey = (name) =>
   String(name || '')
     .toLowerCase()
@@ -738,20 +746,15 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
   const products = await mapToProducts({ retrievedDocs, symptoms, buyerType, preferredCurrency });
 
   const requiresIntake = symptoms.length < 2;
-  const llmReply = requiresIntake
-    ? await createLLMReply({
-      userMessage: message,
-      retrievedDocs,
-      symptoms,
-      products
-    })
+  const groundedReply = requiresIntake
+    ? buildIntakeReply({ symptoms })
     : buildGroundedRecommendationReply({ symptoms, products });
 
   const followUpQuestion = buildFollowUpQuestion(retrievedDocs);
 
   const finalReply = requiresIntake
-    ? `${llmReply}\n\n${followUpQuestion}`
-    : llmReply;
+    ? `${groundedReply}\n\n${followUpQuestion}`
+    : groundedReply;
 
   await rememberMessage(session, 'assistant', finalReply);
 

@@ -15,6 +15,14 @@ const COUNT_CACHE_TTL_MS = 30 * 1000;
 const BASE_CURRENCY = getEnv('EXCHANGE_RATE_BASE', 'INR').toUpperCase();
 const DEFAULT_CURRENCY = getEnv('DEFAULT_CURRENCY', 'USD').toUpperCase();
 const MAX_MEDICINE_IMAGES = 4;
+const DEFAULT_INVENTORY_WHERE = {
+  quantity: { gt: 0 },
+  isActive: true,
+  medicine: {
+    isActive: true,
+    status: 'PUBLISHED'
+  }
+};
 
 let inventoryCountCache = {
   value: null,
@@ -32,7 +40,7 @@ const getInventoryCount = async () => {
     return inventoryCountCache.value;
   }
 
-  const total = await prisma.inventory.count();
+  const total = await prisma.inventory.count({ where: DEFAULT_INVENTORY_WHERE });
   inventoryCountCache = {
     value: total,
     expiresAt: now + COUNT_CACHE_TTL_MS
@@ -138,11 +146,33 @@ module.exports = {
     const skip = (page - 1) * limit;
     const includeTotal = query.includeTotal !== 'false';
     const viewerCurrency = resolveViewerCurrency({ query, viewerContext });
+    const search = String(query.search || '').trim();
+
+    const inventoryWhere = {
+      quantity: { gt: 0 },
+      isActive: true,
+      medicine: {
+        isActive: true,
+        status: 'PUBLISHED'
+      },
+      ...(search
+        ? {
+          OR: [
+            { medicine: { name: { contains: search, mode: 'insensitive' } } },
+            { medicine: { description: { contains: search, mode: 'insensitive' } } },
+            { medicine: { brand: { contains: search, mode: 'insensitive' } } },
+            { medicine: { manufacturer: { contains: search, mode: 'insensitive' } } },
+            { vendor: { companyName: { contains: search, mode: 'insensitive' } } }
+          ]
+        }
+        : {})
+    };
 
     const exchangeRateRecord = await getLatestRates(BASE_CURRENCY);
 
     const [items, total] = await Promise.all([
       prisma.inventory.findMany({
+        where: inventoryWhere,
         skip,
         take: limit,
         orderBy: { updatedAt: 'desc' },
@@ -155,8 +185,15 @@ module.exports = {
               id: true,
               name: true,
               description: true,
+              brand: true,
+              manufacturer: true,
               priceCents: true,
+              wholesalePriceCents: true,
+              bulkPriceCents: true,
               bulkMinQty: true,
+              requiresPrescription: true,
+              status: true,
+              isActive: true,
               createdAt: true
             }
           },
@@ -168,7 +205,9 @@ module.exports = {
           }
         }
       }),
-      includeTotal ? getInventoryCount() : Promise.resolve(null)
+      includeTotal
+        ? (search ? prisma.inventory.count({ where: inventoryWhere }) : getInventoryCount())
+        : Promise.resolve(null)
     ]);
 
     const normalizedTotal = total ?? items.length;

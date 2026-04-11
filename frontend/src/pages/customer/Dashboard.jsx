@@ -5,7 +5,7 @@ import { useUser } from '../../context/UserContext';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
-import { convertPrice, formatCurrency, getCurrencyForCountry } from '../../utils/currency';
+import { convertPrice, formatCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import styles from './Dashboard.module.css';
 import { BarChart2, Package, Pill, Settings, ClipboardList, Heart, TrendingUp, Timer, Sparkles, Gift } from 'lucide-react';
@@ -18,7 +18,7 @@ function CustomerDashboard() {
 	const { showError } = useNotification();
 	const [orders, setOrders] = useState([]);
 	const [loadingOrders, setLoadingOrders] = useState(true);
-	const currencyCode = getCurrencyForCountry(user?.customer?.country || user?.vendor?.country, currency || 'USD');
+	const currencyCode = currency || user?.preferredCurrency || 'INR';
 	const formatPrice = (value) => formatCurrency(convertPrice(value, 'INR', currencyCode, exchangeRates), currencyCode, true);
 	const savedAddress = user?.customer
 		? `${user.customer.address || ''}, ${user.customer.city || ''}, ${user.customer.state || ''} ${user.customer.zipCode || ''}`

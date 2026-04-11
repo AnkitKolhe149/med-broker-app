@@ -6,6 +6,7 @@ import {
 	convertPrice,
 	formatCurrency,
 	getCurrencySymbol,
+	detectUserCurrency,
 	CURRENCIES,
 } from '../utils/currency';
 
@@ -24,6 +25,26 @@ export const CurrencyProvider = ({ children }) => {
 	const [exchangeRates, setExchangeRates] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+
+	useEffect(() => {
+		const handleAuthChanged = (event) => {
+			const nextUser = event?.detail?.user || null;
+			if (nextUser?.preferredCurrency) {
+				setCurrencyState(String(nextUser.preferredCurrency).toUpperCase());
+				return;
+			}
+
+			if (nextUser?.customer?.country || nextUser?.vendor?.country) {
+				setCurrencyState(getCurrencyForCountry(nextUser.customer?.country || nextUser.vendor?.country, detectUserCurrency()));
+				return;
+			}
+
+			setCurrencyState(getUserCurrencyPreference());
+		};
+
+		window.addEventListener('mediq:auth-changed', handleAuthChanged);
+		return () => window.removeEventListener('mediq:auth-changed', handleAuthChanged);
+	}, []);
 
 	// Fetch exchange rates on mount and daily
 	useEffect(() => {
@@ -72,8 +93,9 @@ export const CurrencyProvider = ({ children }) => {
 
 	// Update currency preference
 	const setCurrency = (newCurrency) => {
-		setCurrencyState(newCurrency);
-		setUserCurrencyPreference(newCurrency);
+		const normalizedCurrency = String(newCurrency || 'INR').toUpperCase();
+		setCurrencyState(normalizedCurrency);
+		setUserCurrencyPreference(normalizedCurrency);
 	};
 
 	// Helper function to convert and format price

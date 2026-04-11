@@ -6,6 +6,7 @@ const buildCacheKey = (params = {}, userContext = {}, preferredCurrency = '') =>
 	return JSON.stringify({
 		page: Number(params.page || 1),
 		limit: Number(params.limit || 12),
+		search: String(params.search || '').trim(),
 		country: userContext.country || '',
 		currency: preferredCurrency || ''
 	});
@@ -60,6 +61,7 @@ const medicineService = {
 			const queryString = new URLSearchParams({
 				page: params.page || 1,
 				limit: params.limit || 12,
+				...(params.search ? { search: String(params.search).trim() } : {}),
 				...(userContext.country ? { country: userContext.country } : {}),
 				...(preferredCurrency ? { currency: preferredCurrency } : {})
 			}).toString();

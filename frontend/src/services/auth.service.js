@@ -7,7 +7,8 @@ const ACCOUNT_SCOPED_KEYS = [
   'mediq_favorites',
   'pending_order',
   'completed_order',
-  'mediq_chat_session_id'
+  'mediq_chat_session_id',
+  'preferredCurrency'
 ];
 
 // Helper functions

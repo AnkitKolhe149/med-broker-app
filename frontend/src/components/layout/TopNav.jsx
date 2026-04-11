@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
@@ -9,7 +9,6 @@ import { Home, Settings, Pill, ShoppingCart, Package, CheckCircle, CreditCard, S
 function TopNav() {
 	const navigate = useNavigate();
 	const location = useLocation();
-	const [urlSearchParams, setUrlSearchParams] = useSearchParams();
 	const { getTotalItems } = useCart();
 	const { user } = useUser();
 	const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +18,7 @@ function TopNav() {
 	const profileButtonRef = useRef(null);
 	const profileMenuRef = useRef(null);
 	const categoryHideTimerRef = useRef(null);
+	const activeSearchParam = useMemo(() => new URLSearchParams(location.search).get('search') || '', [location.search]);
 
 	const focusProfileMenuItem = (index) => {
 		const menuButtons = profileMenuRef.current
@@ -62,9 +62,9 @@ function TopNav() {
 
 	useEffect(() => {
 		if (location.pathname === '/customer/catalog') {
-			setSearchQuery(urlSearchParams.get('search') || '');
+			setSearchQuery(activeSearchParam);
 		}
-	}, [location.pathname, urlSearchParams]);
+	}, [location.pathname, activeSearchParam]);
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -85,19 +85,21 @@ function TopNav() {
 
 	const handleSearch = (e) => {
 		e.preventDefault();
-		if (!searchQuery.trim()) return;
+		const trimmed = searchQuery.trim();
 
-		navigate(`/customer/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
+		if (trimmed) {
+			navigate(`/customer/catalog?search=${encodeURIComponent(trimmed)}`);
+		} else {
+			navigate('/customer/catalog');
+		}
 		setShowMobileMenu(false);
 	};
 
 	const handleClearSearch = () => {
 		setSearchQuery('');
 
-		if (location.pathname === '/customer/catalog' && urlSearchParams.get('search')) {
-			const nextParams = new URLSearchParams(urlSearchParams);
-			nextParams.delete('search');
-			setUrlSearchParams(nextParams);
+		if (location.pathname === '/customer/catalog' && activeSearchParam) {
+			navigate('/customer/catalog');
 		}
 	};
 
@@ -204,7 +206,7 @@ function TopNav() {
 
 	const totalItems = getTotalItems();
 	const cartCountLabel = totalItems > 99 ? '99+' : String(totalItems);
-	const hasAppliedSearch = location.pathname === '/customer/catalog' && Boolean(urlSearchParams.get('search')?.trim());
+	const hasAppliedSearch = location.pathname === '/customer/catalog' && Boolean(activeSearchParam.trim());
 	const categoryLinks = [
 		{ label: 'All Medicines', search: '' },
 		{ label: 'Diabetes Care', search: 'diabetes' },

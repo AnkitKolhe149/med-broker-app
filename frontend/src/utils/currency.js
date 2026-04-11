@@ -77,7 +77,8 @@ const getStoredUserContext = () => {
 		const user = JSON.parse(rawUser);
 		return {
 			id: user?.id || null,
-			country: user?.customer?.country || user?.vendor?.country || null
+			country: user?.customer?.country || user?.vendor?.country || null,
+			preferredCurrency: user?.preferredCurrency || null
 		};
 	} catch (_error) {
 		return {};
@@ -272,12 +273,24 @@ export const detectUserCurrency = () => {
 // Get/set user currency preference from localStorage
 export const getUserCurrencyPreference = () => {
 	try {
-		const { id: userId, country } = getStoredUserContext();
+		const { id: userId, country, preferredCurrency: userPreferredCurrency } = getStoredUserContext();
 		const userSpecificKey = getCurrencyPreferenceKey(userId);
-		const saved = localStorage.getItem(userSpecificKey) || localStorage.getItem('preferredCurrency');
+		const saved = localStorage.getItem(userSpecificKey);
 
 		if (saved) {
 			return saved;
+		}
+
+		if (userPreferredCurrency) {
+			return String(userPreferredCurrency).toUpperCase();
+		}
+
+		// Keep the legacy global preference only for anonymous sessions.
+		if (!userId) {
+			const legacySaved = localStorage.getItem('preferredCurrency');
+			if (legacySaved) {
+				return legacySaved;
+			}
 		}
 
 		if (country) {
@@ -293,8 +306,9 @@ export const getUserCurrencyPreference = () => {
 export const setUserCurrencyPreference = (currencyCode) => {
 	try {
 		const { id: userId } = getStoredUserContext();
-		localStorage.setItem(getCurrencyPreferenceKey(userId), currencyCode);
-		localStorage.setItem('preferredCurrency', currencyCode);
+		const normalizedCurrency = String(currencyCode || 'INR').toUpperCase();
+		localStorage.setItem(getCurrencyPreferenceKey(userId), normalizedCurrency);
+		localStorage.setItem('preferredCurrency', normalizedCurrency);
 	} catch (error) {
 		console.error('Could not save currency preference:', error);
 	}

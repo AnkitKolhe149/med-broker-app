@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useReducer } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -22,7 +22,7 @@ import { catalogReducer, initialCatalogState, CATALOG_ACTIONS } from './catalogR
  */
 function Catalog() {
 	const navigate = useNavigate();
-	const [searchParams] = useSearchParams();
+	const location = useLocation();
 	const { addToCart } = useCart();
 	const { user } = useUser();
 	const { showSuccess, showError } = useNotification();
@@ -48,6 +48,7 @@ function Catalog() {
 		loading,
 		searching
 	} = state;
+	const activeSearchParam = useMemo(() => new URLSearchParams(location.search).get('search') || '', [location.search]);
 	
 	const itemsPerPage = 12;
 	const getBrandLabel = (medicine) => medicine.brand || medicine.vendor || 'Unbranded';
@@ -60,7 +61,8 @@ function Catalog() {
 			try {
 				const result = await medicineService.getMedicines({
 					page: currentPage,
-					limit: itemsPerPage
+					limit: itemsPerPage,
+					search: searchQuery || undefined
 				});
 
 				if (result.success) {
@@ -76,7 +78,8 @@ function Catalog() {
 					if ((result.pagination?.totalPages || 1) > currentPage) {
 						medicineService.prefetchMedicines({
 							page: currentPage + 1,
-							limit: itemsPerPage
+							limit: itemsPerPage,
+							search: searchQuery || undefined
 						});
 					}
 				} else {
@@ -93,12 +96,13 @@ function Catalog() {
 		};
 		
 		fetchMedicines();
-	}, [currentPage, itemsPerPage]);
+	}, [currentPage, itemsPerPage, searchQuery]);
 
 	useEffect(() => {
-		const query = searchParams.get('search') || '';
-		dispatch({ type: CATALOG_ACTIONS.SET_SEARCH_QUERY, payload: query });
-	}, [searchParams]);
+		if (activeSearchParam !== searchQuery) {
+			dispatch({ type: CATALOG_ACTIONS.SET_SEARCH_QUERY, payload: activeSearchParam });
+		}
+	}, [activeSearchParam, searchQuery]);
 
 	// Available filter options (derived from data)
 	const categories = useMemo(() => {
@@ -109,19 +113,6 @@ function Catalog() {
 	// Core filtering & sorting logic
 	const filteredMedicines = useMemo(() => {
 		let list = [...medicines];
-
-		// Search across multiple fields for better discoverability
-		if (searchQuery.trim()) {
-			const query = searchQuery.toLowerCase();
-			list = list.filter(medicine => (
-				medicine.name.toLowerCase().includes(query)
-				|| medicine.category.toLowerCase().includes(query)
-				|| medicine.vendor.toLowerCase().includes(query)
-				|| medicine.composition.toLowerCase().includes(query)
-				|| medicine.brand.toLowerCase().includes(query)
-				|| medicine.dosageForm.toLowerCase().includes(query)
-			));
-		}
 
 		// Filter by category
 		if (categoryFilter !== 'all') {
