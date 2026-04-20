@@ -1,0 +1,532 @@
+{
+  "tables": [
+    "Symptom",
+    "ConditionSymptom",
+    "Condition",
+    "ConditionMedicine",
+    "_prisma_migrations",
+    "ExchangeRate",
+    "User",
+    "Vendor",
+    "Customer",
+    "Medicine",
+    "Order",
+    "OrderItem",
+    "Payment",
+    "Invoice",
+    "Inventory"
+  ],
+  "Symptom": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "name",
+        "text"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": [
+      "('59404a31-c7d5-43cb-a8b3-0947395e2bb2', 'Fever', datetime.datetime(2026, 3, 29, 9, 24, 19, 549000))",
+      "('40e0a7e3-f778-40e8-b8b0-54e7ef8022d9', 'Cough', datetime.datetime(2026, 3, 29, 9, 24, 19, 549000))",
+      "('9ed1976a-9931-4d92-8237-39612769835a', 'Headache', datetime.datetime(2026, 3, 29, 9, 24, 19, 549000))"
+    ]
+  },
+  "ConditionSymptom": {
+    "columns": [
+      [
+        "conditionId",
+        "text"
+      ],
+      [
+        "symptomId",
+        "text"
+      ]
+    ],
+    "rows": [
+      "('c2084ab3-7484-494a-b1d7-690602d1bc20', '59404a31-c7d5-43cb-a8b3-0947395e2bb2')",
+      "('c2084ab3-7484-494a-b1d7-690602d1bc20', '9ed1976a-9931-4d92-8237-39612769835a')",
+      "('c2084ab3-7484-494a-b1d7-690602d1bc20', '5f152af4-ecb1-4159-a636-d5db56416baa')"
+    ]
+  },
+  "Condition": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "name",
+        "text"
+      ],
+      [
+        "description",
+        "text"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": [
+      "('c2084ab3-7484-494a-b1d7-690602d1bc20', 'Viral Fever', 'Common viral infection causing high body temperature.', datetime.datetime(2026, 3, 29, 9, 24, 19, 860000))",
+      "('7c687f3b-da7b-4264-a92a-b78e5ae8755e', 'Respiratory Infection', 'Infection of the respiratory tract causing cough and throat pain.', datetime.datetime(2026, 3, 29, 9, 24, 19, 860000))",
+      "('2c3d1415-3bca-4b2b-8619-cc0dca4bb4ec', 'Migraine / Headache', 'Severe throbbing pain or a pulsing sensation.', datetime.datetime(2026, 3, 29, 9, 24, 19, 860000))"
+    ]
+  },
+  "ConditionMedicine": {
+    "columns": [
+      [
+        "conditionId",
+        "text"
+      ],
+      [
+        "medicineId",
+        "text"
+      ]
+    ],
+    "rows": [
+      "('c2084ab3-7484-494a-b1d7-690602d1bc20', '2c68722e-f8a8-4f58-bf5a-eb588ac01284')",
+      "('7c687f3b-da7b-4264-a92a-b78e5ae8755e', '4d054cb9-90d7-4ae7-9b7b-baced56761f1')",
+      "('2c3d1415-3bca-4b2b-8619-cc0dca4bb4ec', 'd92bbcc5-9da6-410f-a63c-39fbc2964849')"
+    ]
+  },
+  "_prisma_migrations": {
+    "columns": [
+      [
+        "id",
+        "character varying"
+      ],
+      [
+        "checksum",
+        "character varying"
+      ],
+      [
+        "finished_at",
+        "timestamp with time zone"
+      ],
+      [
+        "migration_name",
+        "character varying"
+      ],
+      [
+        "logs",
+        "text"
+      ],
+      [
+        "rolled_back_at",
+        "timestamp with time zone"
+      ],
+      [
+        "started_at",
+        "timestamp with time zone"
+      ],
+      [
+        "applied_steps_count",
+        "integer"
+      ]
+    ],
+    "rows": [
+      "('d10f5985-bfd3-4df1-8c38-19c8c094a2c9', '92b03a2d7bb81f30f5037e1e26aa7a49837d48a4db9dc471d205d6dc754e152f', datetime.datetime(2026, 3, 27, 14, 32, 51, 466969, tzinfo=datetime.timezone.utc), '20260212110309_med_db_2', None, None, datetime.datetime(2026, 3, 27, 14, 32, 49, 826794, tzinfo=datetime.timezone.utc), 1)",
+      "('8d20bb0f-dc81-443e-9e4e-ff6c401d2422', 'd5753ef3156a28c53304a802953f9c5d0b33e97c0a4c8225ccd3fee65fbb4f34', datetime.datetime(2026, 3, 27, 14, 32, 53, 993397, tzinfo=datetime.timezone.utc), '20260324172734_perf_indexes', None, None, datetime.datetime(2026, 3, 27, 14, 32, 52, 93427, tzinfo=datetime.timezone.utc), 1)",
+      "('a8b83afa-bea6-495a-a470-5e4b0ff972b1', '213d3831735b07c9345a433cacef17f1e78f44c70a65858852bbfaf9c258aafe', datetime.datetime(2026, 3, 27, 14, 33, 20, 347352, tzinfo=datetime.timezone.utc), '20260327143317_multi_currency_inventory_pipeline', None, None, datetime.datetime(2026, 3, 27, 14, 33, 18, 776628, tzinfo=datetime.timezone.utc), 1)"
+    ]
+  },
+  "ExchangeRate": {
+    "columns": [
+      [
+        "baseCode",
+        "text"
+      ],
+      [
+        "rates",
+        "jsonb"
+      ],
+      [
+        "fetchedAt",
+        "timestamp without time zone"
+      ],
+      [
+        "source",
+        "text"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ],
+      [
+        "updatedAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": [
+      "('INR', {'AED': 0.03897, 'AFN': 0.6711, 'ALL': 0.8837, 'AMD': 4.0142, 'ANG': 0.01899, 'AOA': 9.9917, 'ARS': 15.4096, 'AUD': 0.01536, 'AWG': 0.01899, 'AZN': 0.01808, 'BAM': 0.018, 'BBD': 0.02122, 'BDT': 1.3034, 'BGN': 0.018, 'BHD': 0.00399, 'BIF': 31.6505, 'BMD': 0.01061, 'BND': 0.01364, 'BOB': 0.0737, 'BRL': 0.05562, 'BSD': 0.01061, 'BTN': 1, 'BWP': 0.1472, 'BYN': 0.03185, 'BZD': 0.02122, 'CAD': 0.0147, 'CDF': 24.697, 'CHF': 0.008429, 'CLF': 0.00024671, 'CLP': 9.7516, 'CNH': 0.07341, 'CNY': 0.07354, 'COP': 39.3322, 'CRC': 4.9567, 'CUP': 0.2547, 'CVE': 1.0148, 'CZK': 0.2252, 'DJF': 1.8858, 'DKK': 0.06866, 'DOP': 0.6427, 'DZD': 1.4118, 'EGP': 0.5595, 'ERN': 0.1592, 'ETB': 1.677, 'EUR': 0.009203, 'FJD': 0.02392, 'FKP': 0.007961, 'FOK': 0.06866, 'GBP': 0.007962, 'GEL': 0.02875, 'GGP': 0.007961, 'GHS': 0.117, 'GIP': 0.007961, 'GMD': 0.7884, 'GNF': 93.1614, 'GTQ': 0.08144, 'GYD': 2.2237, 'HKD': 0.08318, 'HNL': 0.2825, 'HRK': 0.06934, 'HTG': 1.3955, 'HUF': 3.5668, 'IDR': 179.2687, 'ILS': 0.03319, 'IMP': 0.007961, 'INR': 1, 'IQD': 13.9316, 'IRR': 8147.0073, 'ISK': 1.3163, 'JEP': 0.007961, 'JMD': 1.6779, 'JOD': 0.007523, 'JPY': 1.6956, 'KES': 1.3801, 'KGS': 0.9301, 'KHR': 42.8947, 'KID': 0.01536, 'KMF': 4.5276, 'KRW': 15.986, 'KWD': 0.003268, 'KYD': 0.008842, 'KZT': 5.136, 'LAK': 231.1223, 'LBP': 949.6694, 'LKR': 3.3421, 'LRD': 1.9562, 'LSL': 0.1813, 'LYD': 0.06777, 'MAD': 0.09926, 'MDL': 0.1862, 'MGA': 44.6575, 'MKD': 0.5645, 'MMK': 22.3385, 'MNT': 38.0461, 'MOP': 0.08567, 'MRU': 0.4243, 'MUR': 0.5013, 'MVR': 0.1644, 'MWK': 18.5252, 'MXN': 0.1893, 'MYR': 0.04239, 'MZN': 0.678, 'NAD': 0.1813, 'NGN': 14.6923, 'NIO': 0.392, 'NOK': 0.1027, 'NPR': 1.6, 'NZD': 0.01837, 'OMR': 0.00408, 'PAB': 0.01061, 'PEN': 0.03681, 'PGK': 0.04602, 'PHP': 0.6392, 'PKR': 2.9683, 'PLN': 0.03932, 'PYG': 69.4526, 'QAR': 0.03862, 'RON': 0.04691, 'RSD': 1.0818, 'RUB': 0.8711, 'RWF': 15.4936, 'SAR': 0.03979, 'SBD': 0.08439, 'SCR': 0.1541, 'SDG': 4.7522, 'SEK': 0.09988, 'SGD': 0.01364, 'SHP': 0.007961, 'SLE': 0.2611, 'SLL': 261.0523, 'SOS': 6.0708, 'SRD': 0.4012, 'SSP': 48.7882, 'STN': 0.2255, 'SYP': 1.1945, 'SZL': 0.1813, 'THB': 0.3494, 'TJS': 0.1012, 'TMT': 0.03724, 'TND': 0.03109, 'TOP': 0.02536, 'TRY': 0.4719, 'TTD': 0.07249, 'TVD': 0.01536, 'TWD': 0.3392, 'TZS': 27.5281, 'UAH': 0.4672, 'UGX': 39.4463, 'USD': 0.01061, 'UYU': 0.4318, 'UZS': 129.9553, 'VES': 4.9728, 'VND': 279.9735, 'VUV': 1.2725, 'WST': 0.02889, 'XAF': 6.0368, 'XCD': 0.02865, 'XCG': 0.01899, 'XDR': 0.007811, 'XOF': 6.0368, 'XPF': 1.0982, 'YER': 2.5379, 'ZAR': 0.1813, 'ZMW': 0.1993, 'ZWG': 0.2692, 'ZWL': 0.2692}, datetime.datetime(2026, 3, 27, 0, 0, 1), 'exchangerate-api', datetime.datetime(2026, 3, 27, 14, 37, 8, 659000), datetime.datetime(2026, 3, 27, 16, 53, 30, 184000))"
+    ]
+  },
+  "User": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "email",
+        "text"
+      ],
+      [
+        "mobile",
+        "text"
+      ],
+      [
+        "passwordHash",
+        "text"
+      ],
+      [
+        "name",
+        "text"
+      ],
+      [
+        "role",
+        "USER-DEFINED"
+      ],
+      [
+        "isProfileComplete",
+        "boolean"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ],
+      [
+        "updatedAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": [
+      "('6131d541-c396-4735-b6d6-7070e85a9665', 'admin@medbroker.com', '+91-9876543210', '$2b$10$NwS8UDr1IUqUCLNu9QPCbext6WZuV9I4ieWEgyWESYBWd2g5BPtDy', 'Admin User', 'ADMIN', True, datetime.datetime(2026, 3, 27, 15, 55, 1, 252000), datetime.datetime(2026, 3, 27, 15, 55, 1, 252000))",
+      "('27d4a96a-bd5d-421b-a368-e08a11261c5a', 'vendor1@medbroker.com', '+91-9880001000', '$2b$10$i3gldwDisHNmn/gB7MLqQ.BxHKVmkINAoV/8QLze/VdYbolDG3QBm', 'PharmaCorp India', 'VENDOR', True, datetime.datetime(2026, 3, 27, 15, 55, 1, 945000), datetime.datetime(2026, 3, 27, 15, 55, 1, 945000))",
+      "('7bf12afe-e91f-4700-a50f-ff62cbd3c675', 'vendor2@medbroker.com', '+1-415-555-0198', '$2b$10$2mrCEC0TnpbkGTIchpbwyOaOWiHWYp47iOjdVk8X/AqdhJwyvv6bK', 'HealthPlus USA', 'VENDOR', True, datetime.datetime(2026, 3, 27, 15, 55, 2, 946000), datetime.datetime(2026, 3, 27, 15, 55, 2, 946000))"
+    ]
+  },
+  "Vendor": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "userId",
+        "text"
+      ],
+      [
+        "companyName",
+        "text"
+      ],
+      [
+        "vendorType",
+        "USER-DEFINED"
+      ],
+      [
+        "country",
+        "text"
+      ],
+      [
+        "state",
+        "text"
+      ],
+      [
+        "gstinNumber",
+        "text"
+      ],
+      [
+        "drugLicenseNumber",
+        "text"
+      ],
+      [
+        "businessAddress",
+        "text"
+      ],
+      [
+        "bankAccountDetails",
+        "jsonb"
+      ],
+      [
+        "contactPersonName",
+        "text"
+      ],
+      [
+        "contactNumber",
+        "text"
+      ],
+      [
+        "verificationStatus",
+        "USER-DEFINED"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ],
+      [
+        "updatedAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": [
+      "('7282495b-4258-487a-8902-00997cafd630', '27d4a96a-bd5d-421b-a368-e08a11261c5a', 'PharmaCorp India', 'MANUFACTURER', 'India', 'Maharashtra', '18AABJU5055R1Z0', 'DL-2024-001', 'Maharashtra, India', None, 'PharmaCorp India', '+91-9880001000', 'VERIFIED', datetime.datetime(2026, 3, 27, 15, 55, 2, 259000), datetime.datetime(2026, 3, 27, 15, 55, 2, 259000))",
+      "('dfbf249c-0f61-4b41-b963-08794830d046', '7bf12afe-e91f-4700-a50f-ff62cbd3c675', 'HealthPlus USA', 'DISTRIBUTOR', 'United States', 'California', 'US-TAX-HP-2048', 'DL-2024-002', 'California, United States', None, 'HealthPlus USA', '+1-415-555-0198', 'VERIFIED', datetime.datetime(2026, 3, 27, 15, 55, 3, 259000), datetime.datetime(2026, 3, 27, 15, 55, 3, 259000))",
+      "('dfc2c787-c6dc-430c-a6d7-b4cc90a2590f', '41a703d2-5a70-4cb0-ab81-2472046e7480', 'MediCare Germany', 'PHARMACY', 'Germany', 'Bavaria', 'DE-TAX-MC-7781', 'DL-2024-003', 'Bavaria, Germany', None, 'MediCare Germany', '+49-89-555-0277', 'VERIFIED', datetime.datetime(2026, 3, 27, 15, 55, 3, 956000), datetime.datetime(2026, 3, 27, 15, 55, 3, 956000))"
+    ]
+  },
+  "Customer": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "userId",
+        "text"
+      ],
+      [
+        "fullName",
+        "text"
+      ],
+      [
+        "buyerType",
+        "USER-DEFINED"
+      ],
+      [
+        "businessName",
+        "text"
+      ],
+      [
+        "gstin",
+        "text"
+      ],
+      [
+        "country",
+        "text"
+      ],
+      [
+        "city",
+        "text"
+      ],
+      [
+        "deliveryAddress",
+        "text"
+      ],
+      [
+        "contactNumber",
+        "text"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ],
+      [
+        "updatedAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": [
+      "('8bb1e263-b755-4aeb-9d0f-ac359ebc4c02', '81502cc8-9568-492b-b7a4-631f469a8cef', 'Rahul Sharma', 'RETAIL', None, None, 'India', 'Mumbai', 'Andheri East, Mumbai, India', '+91-9123456789', datetime.datetime(2026, 3, 27, 15, 56, 28, 988000), datetime.datetime(2026, 3, 27, 15, 56, 28, 988000))",
+      "('c9aac712-acfd-4da9-aae8-5d3395afe229', '98b059cf-8e14-46eb-9756-036b557f8cf7', 'Emily Carter', 'WHOLESALE', 'CityCare Supplies', 'US-TAX-CCS-102', 'United States', 'New York', 'Manhattan, New York, United States', '+1-555-210-7788', datetime.datetime(2026, 3, 27, 15, 56, 29, 988000), datetime.datetime(2026, 3, 27, 15, 56, 29, 988000))",
+      "('bfd2af25-7b8c-4950-9314-5b07f82bfbe9', 'ef3539b3-fd48-40a9-b839-a10aff59027a', 'Lukas Meyer', 'RETAIL', None, None, 'Germany', 'Berlin', 'Mitte, Berlin, Germany', '+49-151-22003344', datetime.datetime(2026, 3, 27, 15, 56, 30, 990000), datetime.datetime(2026, 3, 27, 15, 56, 30, 990000))"
+    ]
+  },
+  "Medicine": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "name",
+        "text"
+      ],
+      [
+        "description",
+        "text"
+      ],
+      [
+        "priceCents",
+        "integer"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ],
+      [
+        "updatedAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": [
+      "('e44dd45a-35a1-4653-8a0c-005fc30a41e2', 'Rifaximin 250mg V2-7', 'Rifaximin 250mg supplied by HealthPlus USA.', 6500, datetime.datetime(2026, 3, 27, 15, 55, 47, 375000), datetime.datetime(2026, 3, 27, 15, 55, 47, 375000))",
+      "('31946abf-9799-47ef-a084-f9a41113da58', 'Loratadine 500mg V2-8', 'Loratadine 500mg supplied by HealthPlus USA.', 7000, datetime.datetime(2026, 3, 27, 15, 55, 48, 2000), datetime.datetime(2026, 3, 27, 15, 55, 48, 2000))",
+      "('14b0ea30-5951-47c0-84a8-884a79d49b2b', 'Escitalopram 5mg V2-9', 'Escitalopram 5mg supplied by HealthPlus USA.', 7500, datetime.datetime(2026, 3, 27, 15, 55, 48, 630000), datetime.datetime(2026, 3, 27, 15, 55, 48, 630000))"
+    ]
+  },
+  "Order": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "userId",
+        "text"
+      ],
+      [
+        "status",
+        "USER-DEFINED"
+      ],
+      [
+        "totalCents",
+        "integer"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ],
+      [
+        "updatedAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": []
+  },
+  "OrderItem": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "orderId",
+        "text"
+      ],
+      [
+        "medicineId",
+        "text"
+      ],
+      [
+        "quantity",
+        "integer"
+      ],
+      [
+        "unitPriceCents",
+        "integer"
+      ]
+    ],
+    "rows": []
+  },
+  "Payment": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "orderId",
+        "text"
+      ],
+      [
+        "provider",
+        "text"
+      ],
+      [
+        "status",
+        "USER-DEFINED"
+      ],
+      [
+        "amountCents",
+        "integer"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": []
+  },
+  "Invoice": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "orderId",
+        "text"
+      ],
+      [
+        "invoiceNumber",
+        "text"
+      ],
+      [
+        "issuedAt",
+        "timestamp without time zone"
+      ]
+    ],
+    "rows": []
+  },
+  "Inventory": {
+    "columns": [
+      [
+        "id",
+        "text"
+      ],
+      [
+        "medicineId",
+        "text"
+      ],
+      [
+        "vendorId",
+        "text"
+      ],
+      [
+        "quantity",
+        "integer"
+      ],
+      [
+        "createdAt",
+        "timestamp without time zone"
+      ],
+      [
+        "updatedAt",
+        "timestamp without time zone"
+      ],
+      [
+        "baseCurrencyCode",
+        "text"
+      ],
+      [
+        "basePriceMinor",
+        "integer"
+      ],
+      [
+        "fxRateToBase",
+        "double precision"
+      ],
+      [
+        "sourceCurrencyCode",
+        "text"
+      ],
+      [
+        "sourcePriceMinor",
+        "integer"
+      ]
+    ],
+    "rows": [
+      "('fc01c38e-f02c-4004-95c8-860bf930ddf1', '76434379-e86e-4a19-a426-193070927773', 'dfbf249c-0f61-4b41-b963-08794830d046', 100, datetime.datetime(2026, 3, 27, 15, 55, 47, 61000), datetime.datetime(2026, 3, 27, 15, 55, 47, 61000), 'USD', 0, 1.0, 'USD', 0)",
+      "('e0dd9330-b0f0-4a29-8f46-8131a1720413', 'e44dd45a-35a1-4653-8a0c-005fc30a41e2', 'dfbf249c-0f61-4b41-b963-08794830d046', 264, datetime.datetime(2026, 3, 27, 15, 55, 47, 688000), datetime.datetime(2026, 3, 27, 15, 55, 47, 688000), 'USD', 0, 1.0, 'USD', 0)",
+      "('e02a0797-3c24-48cf-a84e-c904ff31a591', '31946abf-9799-47ef-a084-f9a41113da58', 'dfbf249c-0f61-4b41-b963-08794830d046', 301, datetime.datetime(2026, 3, 27, 15, 55, 48, 316000), datetime.datetime(2026, 3, 27, 15, 55, 48, 316000), 'USD', 0, 1.0, 'USD', 0)"
+    ]
+  }
+}
