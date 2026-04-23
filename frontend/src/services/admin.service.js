@@ -162,6 +162,11 @@ const adminService = {
     return response.data;
   },
 
+  updateSettings: async (updates) => {
+    const response = await axios.patch(`${API_URL}/admin/settings`, updates, getAuthHeaders());
+    return response.data;
+  },
+
   updateOrderStatus: async (orderId, status) => {
     const response = await axios.patch(`${API_URL}/orders/${orderId}/status`, { status }, getAuthHeaders());
     return response.data;

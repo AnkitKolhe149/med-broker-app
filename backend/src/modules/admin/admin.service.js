@@ -17,7 +17,7 @@ module.exports = {
     }
 
     // 2. High-Performance Aggregations (No .filter or .reduce)
-    const [totalVendors, totalCustomers, revenueAgg, currentMonthAgg, lastMonthAgg] = await Promise.all([
+    const [totalVendors, totalCustomers, revenueAgg, currentMonthAgg, lastMonthAgg, commissionSetting] = await Promise.all([
       prisma.vendor.count(),
       prisma.customer.count(),
 
@@ -39,7 +39,14 @@ module.exports = {
         where: { status: 'PAID', createdAt: { gte: startOfLastMonth, lt: startOfCurrentMonth } },
         _sum: { totalCents: true },
       }),
+
+      // Fetch dynamic commission percent
+      prisma.systemSetting.findUnique({
+        where: { key: 'PLATFORM_COMMISSION_PERCENT' },
+      }).catch(() => null),
     ]);
+
+    const platformCommissionPercent = commissionSetting ? parseFloat(commissionSetting.value) : 5;
 
     // 3. Return structured payload with Real-Time Readiness flag
     return {
@@ -49,6 +56,7 @@ module.exports = {
       totalOrders: revenueAgg._count.id || 0,
       currentMonthRevenueCents: currentMonthAgg._sum.totalCents || 0,
       lastMonthRevenueCents: lastMonthAgg._sum.totalCents || 0,
+      platformCommissionPercent,
       rangeStart,
       rangeEnd,
       lastUpdated: now.toISOString() // New requirement for frontend real-time tracking

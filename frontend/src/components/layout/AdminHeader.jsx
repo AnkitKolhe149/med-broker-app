@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, ChevronDown, LogOut, Settings } from 'lucide-react';
+import { Menu, Bell, ChevronDown, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import authService from '../../services/auth.service';
 import adminService from '../../services/admin.service';
 import { useNavigate } from 'react-router-dom';
@@ -43,7 +43,7 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }) => {
 
             <div className="admin-header-right">
                 <button className="admin-header-icon-btn" aria-label="Settings" onClick={() => navigate('/admin/settings')}>
-                    <Settings size={18} />
+                    <SettingsIcon size={20} strokeWidth={2} color="#4b5563" />
                 </button>
                 <button className="admin-header-icon-btn" aria-label="Notifications" onClick={() => navigate('/admin/notifications')}>
                     <Bell size={20} />

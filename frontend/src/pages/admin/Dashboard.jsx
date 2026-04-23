@@ -62,6 +62,13 @@ const AdminDashboard = () => {
     useEffect(() => {
         fetchStats();
         fetchPayouts();
+
+        const handleSettingsUpdate = () => {
+            fetchStats();
+        };
+
+        window.addEventListener('settingsUpdated', handleSettingsUpdate);
+        return () => window.removeEventListener('settingsUpdated', handleSettingsUpdate);
     }, [startDate, endDate]);
 
     const fetchStats = async () => {
@@ -103,7 +110,8 @@ const AdminDashboard = () => {
     if (!stats) return <div className="admin-error">Failed to load analytics</div>;
 
     const formatCents = (cents) => formatCurrency((cents || 0) / 100);
-    const platformCommission = (stats?.totalRevenueCents || 0) * 0.05;
+    const commissionPercent = stats?.platformCommissionPercent || 5;
+    const platformCommission = (stats?.totalRevenueCents || 0) * (commissionPercent / 100);
     const kycCount = stats?.pendingKycCount || 0;
     const disputeCount = stats?.activeDisputesCount || 0;
     const prescriptionCount = stats?.pendingPrescriptions || 0;
