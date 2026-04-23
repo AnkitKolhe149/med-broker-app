@@ -7,6 +7,648 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                      String                  @id @default(uuid())
+  email                   String                  @unique
+  mobile                  String?
+  passwordHash            String
+  name                    String?
+  role                    UserRole                @default(CUSTOMER)
+  isProfileComplete       Boolean                 @default(false)
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  avatarUrl               String?
+  isActive                Boolean                 @default(true)
+  lastLoginAt             DateTime?
+  preferredCurrency       String?                 @default("INR")
+  timezone                String?
+  addresses               Address[]
+  auditLogs               AuditLog[]
+  couponRedemptions       CouponRedemption[]
+  customer                Customer?
+  disputesAssigned        DisputeCase[]           @relation("DisputeAssignedTo")
+  disputesRaised          DisputeCase[]           @relation("DisputeRaisedBy")
+  disputesResolved        DisputeCase[]           @relation("DisputeResolvedBy")
+  notifications           Notification[]
+  notificationPreference  NotificationPreference?
+  orders                  Order[]
+  reviewedPrescriptions   Prescription[]          @relation("PrescriptionReviewedBy")
+  approvedReturns         ReturnRequest[]         @relation("ReturnApprovedBy")
+  supportTicketsAssigned  SupportTicket[]         @relation("TicketAssignee")
+  supportTicketsRequested SupportTicket[]         @relation("TicketRequester")
+  supportTicketMessages   SupportTicketMessage[]
+  vendor                  Vendor?
+  kycVerifiedDocuments    VendorKycDocument[]     @relation("KycVerifiedBy")
+
+  @@index([createdAt])
+  @@index([role, isActive])
+}
+
+model Vendor {
+  id                 String              @id @default(uuid())
+  userId             String              @unique
+  companyName        String
+  vendorType         VendorType
+  country            String
+  state              String
+  gstinNumber        String              @unique
+  drugLicenseNumber  String              @unique
+  businessAddress    String
+  bankAccountDetails Json?
+  contactPersonName  String
+  contactNumber      String
+  verificationStatus VerificationStatus  @default(PENDING)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  businessMeta       Json?
+  kycStatus          KycStatus           @default(PENDING)
+  onboardingStep     String?
+  rating             Float               @default(0)
+  storeSlug          String?             @unique
+  supportEmail       String?
+  totalRatings       Int                 @default(0)
+  inventory          Inventory[]
+  orderItems         OrderItem[]
+  payouts            Payout[]
+  user               User                @relation(fields: [userId], references: [id])
+  kycDocuments       VendorKycDocument[]
+
+  @@index([verificationStatus])
+  @@index([updatedAt])
+}
+
+model Customer {
+  id              String          @id @default(uuid())
+  userId          String          @unique
+  fullName        String
+  buyerType       BuyerType
+  businessName    String?
+  gstin           String?
+  country         String
+  city            String
+  deliveryAddress String
+  contactNumber   String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  dateOfBirth     DateTime?
+  loyaltyPoints   Int             @default(0)
+  profileImage    String?
+  cartItems       CartItem[]
+  user            User            @relation(fields: [userId], references: [id])
+  prescriptions   Prescription[]
+  returnRequests  ReturnRequest[]
+  reviews         Review[]
+  wishlistItems   WishlistItem[]
+}
+
+model Medicine {
+  id                   String              @id @default(uuid())
+  name                 String
+  description          String?
+  priceCents           Int
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  wholesalePriceCents  Int?
+  bulkMinQty           Int?
+  bulkPriceCents       Int?
+  requiresPrescription Boolean             @default(false)
+  brand                String?
+  category             String?
+  dosageForm           String?
+  hsnCode              String?
+  imageUrls            Json?
+  isActive             Boolean             @default(true)
+  manufacturer         String?
+  meta                 Json?
+  packSize             String?
+  scheduleType         String?
+  sku                  String?             @unique
+  slug                 String?             @unique
+  status               MedicineStatus      @default(PUBLISHED)
+  strength             String?
+  subcategory          String?
+  cartItems            CartItem[]
+  ConditionMedicine    ConditionMedicine[]
+  inventory            Inventory[]
+  orderItems           OrderItem[]
+  reviews              Review[]
+  wishlistItems        WishlistItem[]
+
+  @@index([updatedAt])
+  @@index([status, isActive, updatedAt])
+}
+
+model Inventory {
+  id                  String           @id @default(uuid())
+  medicineId          String
+  vendorId            String
+  quantity            Int              @default(0)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  imageUrl            String?
+  imageUrls           Json?
+  bulkMinQty          Int              @default(100)
+  bulkDiscountPercent Int              @default(10)
+  costPriceCents      Int?
+  isActive            Boolean          @default(true)
+  lastRestockedAt     DateTime?
+  mrpCents            Int?
+  reorderLevel        Int              @default(10)
+  reservedQuantity    Int              @default(0)
+  sellingPriceCents   Int?
+  cartItems           CartItem[]
+  medicine            Medicine         @relation(fields: [medicineId], references: [id])
+  vendor              Vendor           @relation(fields: [vendorId], references: [id])
+  batches             InventoryBatch[]
+
+  @@unique([medicineId, vendorId])
+  @@index([updatedAt])
+  @@index([vendorId, updatedAt])
+}
+
+model Order {
+  id                 String             @id @default(uuid())
+  userId             String
+  status             OrderStatus        @default(PENDING)
+  totalCents         Int
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  adminNote          String?
+  cancellationReason String?
+  cancelledAt        DateTime?
+  checkoutSnapshot   Json?
+  couponCode         String?
+  currencyCode       String             @default("INR")
+  customerNote       String?
+  deliveredAt        DateTime?
+  discountCents      Int                @default(0)
+  orderNumber        String?            @unique
+  paidAt             DateTime?
+  placedAt           DateTime           @default(now())
+  shipmentStatus     ShipmentStatus     @default(PENDING)
+  shippedAt          DateTime?
+  shippingCents      Int                @default(0)
+  subtotalCents      Int                @default(0)
+  taxCents           Int                @default(0)
+  couponRedemptions  CouponRedemption[]
+  disputeCase        DisputeCase?
+  invoice            Invoice?
+  user               User               @relation(fields: [userId], references: [id])
+  items              OrderItem[]
+  payment            Payment?
+  prescription       Prescription?
+  returnRequests     ReturnRequest[]
+  reviews            Review[]
+  shipment           Shipment?
+  supportTickets     SupportTicket[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([shipmentStatus, createdAt])
+}
+
+model OrderItem {
+  id             String          @id @default(uuid())
+  orderId        String
+  medicineId     String
+  quantity       Int             @default(1)
+  unitPriceCents Int
+  vendorId       String
+  batchNumber    String?
+  discountCents  Int             @default(0)
+  lineTotalCents Int             @default(0)
+  selectedPack   String?
+  taxRate        Float?
+  medicine       Medicine        @relation(fields: [medicineId], references: [id])
+  order          Order           @relation(fields: [orderId], references: [id])
+  vendor         Vendor          @relation(fields: [vendorId], references: [id])
+  returnRequests ReturnRequest[]
+
+  @@index([orderId])
+  @@index([medicineId])
+  @@index([vendorId])
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  orderId           String        @unique
+  provider          String
+  status            PaymentStatus @default(INITIATED)
+  amountCents       Int
+  createdAt         DateTime      @default(now())
+  currencyCode      String        @default("INR")
+  failureReason     String?
+  gatewayOrderId    String?
+  gatewayPaymentId  String?
+  gatewaySignature  String?
+  meta              Json?
+  refundAmountCents Int           @default(0)
+  refundedAt        DateTime?
+  transactionRef    String?       @unique
+  updatedAt         DateTime      @updatedAt
+  disputeCase       DisputeCase?
+  order             Order         @relation(fields: [orderId], references: [id])
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([provider, createdAt])
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  orderId       String   @unique
+  invoiceNumber String   @unique
+  issuedAt      DateTime @default(now())
+  amountCents   Int      @default(0)
+  pdfUrl        String?
+  taxCents      Int      @default(0)
+  order         Order    @relation(fields: [orderId], references: [id])
+}
+
+model Payout {
+  id              String       @id @default(uuid())
+  vendorId        String
+  amountCents     Int
+  commissionCents Int          @default(0)
+  status          PayoutStatus @default(PENDING)
+  periodStart     DateTime?
+  periodEnd       DateTime?
+  transactionId   String?      @unique
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  failureReason   String?
+  meta            Json?
+  notes           String?
+  processedAt     DateTime?
+  scheduledAt     DateTime?
+  vendor          Vendor       @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+  @@index([status, createdAt])
+}
+
+model Address {
+  id         String      @id @default(uuid())
+  userId     String
+  type       AddressType @default(HOME)
+  label      String?
+  fullName   String?
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  country    String
+  postalCode String
+  phone      String?
+  isDefault  Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  user       User        @relation(fields: [userId], references: [id])
+
+  @@index([userId, isDefault])
+}
+
+model VendorKycDocument {
+  id             String          @id @default(uuid())
+  vendorId       String
+  type           KycDocumentType
+  documentNumber String?
+  fileUrl        String
+  status         KycStatus       @default(PENDING)
+  verifiedBy     String?
+  verifiedAt     DateTime?
+  rejectedReason String?
+  expiryDate     DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  vendor         Vendor          @relation(fields: [vendorId], references: [id])
+  verifier       User?           @relation("KycVerifiedBy", fields: [verifiedBy], references: [id])
+
+  @@index([vendorId, status])
+}
+
+model InventoryBatch {
+  id                String    @id @default(uuid())
+  inventoryId       String
+  batchNumber       String
+  quantity          Int       @default(0)
+  manufacturedAt    DateTime?
+  expiryDate        DateTime?
+  purchaseCostCents Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  inventory         Inventory @relation(fields: [inventoryId], references: [id])
+
+  @@unique([inventoryId, batchNumber])
+  @@index([expiryDate])
+}
+
+model Prescription {
+  id              String             @id @default(uuid())
+  customerId      String
+  orderId         String?            @unique
+  fileUrl         String
+  status          PrescriptionStatus @default(PENDING)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  expiresAt       DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  customer        Customer           @relation(fields: [customerId], references: [id])
+  order           Order?             @relation(fields: [orderId], references: [id])
+  reviewer        User?              @relation("PrescriptionReviewedBy", fields: [reviewedBy], references: [id])
+
+  @@index([customerId, status, createdAt])
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid())
+  customerId String
+  medicineId String
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  medicine   Medicine @relation(fields: [medicineId], references: [id])
+
+  @@unique([customerId, medicineId])
+  @@index([customerId, createdAt])
+}
+
+model CartItem {
+  id                 String     @id @default(uuid())
+  customerId         String
+  medicineId         String
+  inventoryId        String?
+  quantity           Int        @default(1)
+  selectedSize       String?
+  priceSnapshotCents Int?
+  currencyCode       String     @default("INR")
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  customer           Customer   @relation(fields: [customerId], references: [id])
+  inventory          Inventory? @relation(fields: [inventoryId], references: [id])
+  medicine           Medicine   @relation(fields: [medicineId], references: [id])
+
+  @@index([customerId, updatedAt])
+}
+
+model SupportTicket {
+  id           String                 @id @default(uuid())
+  ticketNumber String                 @unique
+  requesterId  String
+  assignedTo   String?
+  orderId      String?
+  subject      String
+  description  String
+  category     String?
+  status       SupportTicketStatus    @default(OPEN)
+  priority     SupportTicketPriority  @default(MEDIUM)
+  resolvedAt   DateTime?
+  closedAt     DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  assignee     User?                  @relation("TicketAssignee", fields: [assignedTo], references: [id])
+  order        Order?                 @relation(fields: [orderId], references: [id])
+  requester    User                   @relation("TicketRequester", fields: [requesterId], references: [id])
+  messages     SupportTicketMessage[]
+
+  @@index([requesterId, status, createdAt])
+  @@index([assignedTo, status, priority])
+}
+
+model SupportTicketMessage {
+  id          String        @id @default(uuid())
+  ticketId    String
+  senderId    String
+  message     String
+  attachments Json?
+  isInternal  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  sender      User          @relation(fields: [senderId], references: [id])
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id])
+
+  @@index([ticketId, createdAt])
+}
+
+model NotificationPreference {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  emailEnabled     Boolean  @default(true)
+  smsEnabled       Boolean  @default(false)
+  pushEnabled      Boolean  @default(true)
+  orderUpdates     Boolean  @default(true)
+  paymentUpdates   Boolean  @default(true)
+  supportUpdates   Boolean  @default(true)
+  marketingEnabled Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String              @id @default(uuid())
+  userId    String
+  type      NotificationType
+  channel   NotificationChannel @default(IN_APP)
+  title     String
+  body      String
+  payload   Json?
+  isRead    Boolean             @default(false)
+  readAt    DateTime?
+  sentAt    DateTime?
+  createdAt DateTime            @default(now())
+  user      User                @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead, createdAt])
+}
+
+model Shipment {
+  id                  String         @id @default(uuid())
+  orderId             String         @unique
+  courierName         String?
+  trackingNumber      String?        @unique
+  status              ShipmentStatus @default(PENDING)
+  currentLocation     String?
+  estimatedDeliveryAt DateTime?
+  shippedAt           DateTime?
+  deliveredAt         DateTime?
+  meta                Json?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  order               Order          @relation(fields: [orderId], references: [id])
+
+  @@index([status, createdAt])
+}
+
+model DisputeCase {
+  id           String        @id @default(uuid())
+  caseNumber   String        @unique
+  orderId      String        @unique
+  paymentId    String?       @unique
+  status       DisputeStatus @default(OPEN)
+  reason       String
+  details      String?
+  resolution   String?
+  raisedBy     String?
+  assignedTo   String?
+  resolvedBy   String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  resolvedAt   DateTime?
+  assignedUser User?         @relation("DisputeAssignedTo", fields: [assignedTo], references: [id])
+  order        Order         @relation(fields: [orderId], references: [id])
+  payment      Payment?      @relation(fields: [paymentId], references: [id])
+  raisedByUser User?         @relation("DisputeRaisedBy", fields: [raisedBy], references: [id])
+  resolvedUser User?         @relation("DisputeResolvedBy", fields: [resolvedBy], references: [id])
+
+  @@index([status, createdAt])
+}
+
+model ReturnRequest {
+  id             String       @id @default(uuid())
+  orderId        String
+  orderItemId    String?
+  customerId     String
+  status         ReturnStatus @default(REQUESTED)
+  reason         String
+  notes          String?
+  pickupAddress  Json?
+  approvedBy     String?
+  approvedAt     DateTime?
+  refundedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  approvedByUser User?        @relation("ReturnApprovedBy", fields: [approvedBy], references: [id])
+  customer       Customer     @relation(fields: [customerId], references: [id])
+  order          Order        @relation(fields: [orderId], references: [id])
+  orderItem      OrderItem?   @relation(fields: [orderItemId], references: [id])
+
+  @@index([orderId, status, createdAt])
+  @@index([customerId, status])
+}
+
+model Coupon {
+  id               String             @id @default(uuid())
+  code             String             @unique
+  title            String
+  description      String?
+  type             CouponType
+  value            Float
+  minOrderCents    Int?
+  maxDiscountCents Int?
+  usageLimit       Int?
+  perUserLimit     Int?               @default(1)
+  startsAt         DateTime?
+  endsAt           DateTime?
+  isActive         Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  redemptions      CouponRedemption[]
+
+  @@index([isActive, startsAt, endsAt])
+}
+
+model CouponRedemption {
+  id                   String   @id @default(uuid())
+  couponId             String
+  userId               String
+  orderId              String
+  appliedDiscountCents Int      @default(0)
+  createdAt            DateTime @default(now())
+  coupon               Coupon   @relation(fields: [couponId], references: [id])
+  order                Order    @relation(fields: [orderId], references: [id])
+  user                 User     @relation(fields: [userId], references: [id])
+
+  @@unique([couponId, userId, orderId])
+  @@index([couponId, createdAt])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  customerId  String
+  medicineId  String
+  orderId     String
+  rating      Int
+  comment     String?
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customer    Customer @relation(fields: [customerId], references: [id])
+  medicine    Medicine @relation(fields: [medicineId], references: [id])
+  order       Order    @relation(fields: [orderId], references: [id])
+
+  @@index([medicineId, rating, createdAt])
+  @@index([customerId, createdAt])
+}
+
+model AuditLog {
+  id         String           @id @default(uuid())
+  userId     String?
+  action     UserActivityType
+  resource   String
+  resourceId String?
+  ipAddress  String?
+  userAgent  String?
+  meta       Json?
+  createdAt  DateTime         @default(now())
+  user       User?            @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+model ExchangeRate {
+  baseCode  String   @id
+  rates     Json
+  fetchedAt DateTime
+  source    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Condition {
+  id                String              @id
+  name              String              @unique
+  description       String?
+  createdAt         DateTime            @default(now())
+  ConditionMedicine ConditionMedicine[]
+  ConditionSymptom  ConditionSymptom[]
+}
+
+model ConditionMedicine {
+  conditionId String
+  medicineId  String
+  Condition   Condition @relation(fields: [conditionId], references: [id], onDelete: Cascade)
+  Medicine    Medicine  @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+
+  @@id([conditionId, medicineId])
+}
+
+model ConditionSymptom {
+  conditionId String
+  symptomId   String
+  Condition   Condition @relation(fields: [conditionId], references: [id], onDelete: Cascade)
+  Symptom     Symptom   @relation(fields: [symptomId], references: [id], onDelete: Cascade)
+
+  @@id([conditionId, symptomId])
+}
+
+model DiagnosticLog {
+  id                Int       @id @default(autoincrement())
+  symptoms          String[]
+  predicted_disease String?
+  confidence        Float?
+  severity_flag     String?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model Symptom {
+  id               String             @id
+  name             String             @unique
+  createdAt        DateTime           @default(now())
+  ConditionSymptom ConditionSymptom[]
+}
+
 enum UserRole {
   ADMIN
   CUSTOMER
@@ -157,602 +799,4 @@ enum UserActivityType {
   ORDER_ACTION
   PAYMENT_ACTION
   ADMIN_ACTION
-}
-
-model User {
-  id                String    @id @default(uuid())
-  email             String    @unique
-  mobile            String?
-  passwordHash      String
-  name              String?
-  avatarUrl         String?
-  timezone          String?
-  preferredCurrency String?   @default("INR")
-  isActive          Boolean   @default(true)
-  lastLoginAt       DateTime?
-  role              UserRole  @default(CUSTOMER)
-  isProfileComplete Boolean   @default(false)
-  orders            Order[]
-  vendor            Vendor?
-  customer          Customer?
-  addresses         Address[]
-  notifications     Notification[]
-  notificationPreference NotificationPreference?
-  auditLogs         AuditLog[]
-  supportTicketsRequested SupportTicket[] @relation("TicketRequester")
-  supportTicketsAssigned  SupportTicket[] @relation("TicketAssignee")
-  supportTicketMessages   SupportTicketMessage[]
-  disputesRaised    DisputeCase[] @relation("DisputeRaisedBy")
-  disputesAssigned  DisputeCase[] @relation("DisputeAssignedTo")
-  disputesResolved  DisputeCase[] @relation("DisputeResolvedBy")
-  kycVerifiedDocuments VendorKycDocument[] @relation("KycVerifiedBy")
-  reviewedPrescriptions Prescription[] @relation("PrescriptionReviewedBy")
-  approvedReturns   ReturnRequest[] @relation("ReturnApprovedBy")
-  couponRedemptions CouponRedemption[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  @@index([createdAt])
-  @@index([role, isActive])
-}
-
-model Vendor {
-  id                 String             @id @default(uuid())
-  userId             String             @unique
-  companyName        String
-  storeSlug          String?            @unique
-  vendorType         VendorType
-  country            String
-  state              String
-  gstinNumber        String             @unique
-  drugLicenseNumber  String             @unique
-  businessAddress    String
-  supportEmail       String?
-  onboardingStep     String?
-  kycStatus          KycStatus          @default(PENDING)
-  rating             Float              @default(0)
-  totalRatings       Int                @default(0)
-  businessMeta       Json?
-  bankAccountDetails Json?
-  contactPersonName  String
-  contactNumber      String
-  verificationStatus VerificationStatus @default(PENDING)
-  user               User               @relation(fields: [userId], references: [id])
-  inventory          Inventory[]
-  orderItems         OrderItem[]
-  payouts            Payout[]
-  kycDocuments       VendorKycDocument[]
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-
-  @@index([verificationStatus])
-  @@index([updatedAt])
-}
-
-model Customer {
-  id              String    @id @default(uuid())
-  userId          String    @unique
-  fullName        String
-  buyerType       BuyerType
-  businessName    String?
-  gstin           String?
-  profileImage    String?
-  dateOfBirth     DateTime?
-  loyaltyPoints   Int       @default(0)
-  country         String
-  city            String
-  deliveryAddress String
-  contactNumber   String
-  user            User      @relation(fields: [userId], references: [id])
-  prescriptions   Prescription[]
-  wishlistItems   WishlistItem[]
-  cartItems       CartItem[]
-  reviews         Review[]
-  returnRequests  ReturnRequest[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-
-model Medicine {
-  id                   String      @id @default(uuid())
-  name                 String
-  slug                 String?     @unique
-  sku                  String?     @unique
-  category             String?
-  subcategory          String?
-  brand                String?
-  manufacturer         String?
-  dosageForm           String?
-  strength             String?
-  packSize             String?
-  hsnCode              String?
-  scheduleType         String?
-  status               MedicineStatus @default(PUBLISHED)
-  isActive             Boolean     @default(true)
-  imageUrls            Json?
-  meta                 Json?
-  description          String?
-  priceCents           Int
-  wholesalePriceCents  Int?
-  bulkMinQty           Int?
-  bulkPriceCents       Int?
-  requiresPrescription Boolean     @default(false)
-  inventory            Inventory[]
-  orderItems           OrderItem[]
-  wishlistItems        WishlistItem[]
-  cartItems            CartItem[]
-  reviews              Review[]
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
-
-  @@index([updatedAt])
-  @@index([status, isActive, updatedAt])
-}
-
-model Inventory {
-  id         String   @id @default(uuid())
-  medicineId String
-  vendorId   String
-  quantity   Int      @default(0)
-  reservedQuantity Int @default(0)
-  reorderLevel Int    @default(10)
-  costPriceCents Int?
-  sellingPriceCents Int?
-  mrpCents Int?
-  isActive  Boolean   @default(true)
-  lastRestockedAt DateTime?
-  imageUrl   String?
-  imageUrls  Json?
-  bulkMinQty Int      @default(100)
-  bulkDiscountPercent Int @default(10)
-  medicine   Medicine @relation(fields: [medicineId], references: [id])
-  vendor     Vendor   @relation(fields: [vendorId], references: [id])
-  cartItems  CartItem[]
-  batches    InventoryBatch[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@unique([medicineId, vendorId])
-  @@index([updatedAt])
-  @@index([vendorId, updatedAt])
-}
-
-model Order {
-  id         String      @id @default(uuid())
-  orderNumber String?    @unique
-  userId     String
-  status     OrderStatus @default(PENDING)
-  shipmentStatus ShipmentStatus @default(PENDING)
-  currencyCode String    @default("INR")
-  subtotalCents Int      @default(0)
-  discountCents Int      @default(0)
-  shippingCents Int      @default(0)
-  taxCents Int           @default(0)
-  couponCode String?
-  customerNote String?
-  adminNote String?
-  cancellationReason String?
-  placedAt DateTime      @default(now())
-  paidAt DateTime?
-  shippedAt DateTime?
-  deliveredAt DateTime?
-  cancelledAt DateTime?
-  totalCents Int
-  checkoutSnapshot Json?
-  user       User        @relation(fields: [userId], references: [id])
-  items      OrderItem[]
-  payment    Payment?
-  invoice    Invoice?
-  shipment   Shipment?
-  prescription Prescription?
-  supportTickets SupportTicket[]
-  disputeCase DisputeCase?
-  returnRequests ReturnRequest[]
-  couponRedemptions CouponRedemption[]
-  reviews    Review[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-
-  @@index([userId, createdAt])
-  @@index([status, createdAt])
-  @@index([shipmentStatus, createdAt])
-}
-
-model OrderItem {
-  id             String   @id @default(uuid())
-  orderId        String
-  medicineId     String
-  vendorId       String
-  quantity       Int      @default(1)
-  selectedPack   String?
-  batchNumber    String?
-  taxRate        Float?
-  discountCents  Int      @default(0)
-  lineTotalCents Int      @default(0)
-  unitPriceCents Int
-  order          Order    @relation(fields: [orderId], references: [id])
-  medicine       Medicine @relation(fields: [medicineId], references: [id])
-  vendor         Vendor   @relation(fields: [vendorId], references: [id])
-  returnRequests ReturnRequest[]
-
-  @@index([orderId])
-  @@index([medicineId])
-  @@index([vendorId])
-}
-
-model Payment {
-  id          String        @id @default(uuid())
-  orderId     String        @unique
-  provider    String
-  currencyCode String       @default("INR")
-  transactionRef String?    @unique
-  gatewayOrderId String?
-  gatewayPaymentId String?
-  gatewaySignature String?
-  refundAmountCents Int     @default(0)
-  failureReason String?
-  refundedAt DateTime?
-  meta       Json?
-  status      PaymentStatus @default(INITIATED)
-  amountCents Int
-  order       Order         @relation(fields: [orderId], references: [id])
-  disputeCase DisputeCase?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@index([createdAt])
-  @@index([status, createdAt])
-  @@index([provider, createdAt])
-}
-
-model Invoice {
-  id            String   @id @default(uuid())
-  orderId       String   @unique
-  invoiceNumber String   @unique
-  pdfUrl        String?
-  amountCents   Int      @default(0)
-  taxCents      Int      @default(0)
-  issuedAt      DateTime @default(now())
-  order         Order    @relation(fields: [orderId], references: [id])
-}
-
-model Payout {
-  id              String       @id @default(uuid())
-  vendorId        String
-  amountCents     Int
-  commissionCents Int          @default(0)
-  status          PayoutStatus @default(PENDING)
-  periodStart     DateTime?
-  periodEnd       DateTime?
-  transactionId   String?      @unique
-  scheduledAt     DateTime?
-  processedAt     DateTime?
-  failureReason   String?
-  notes           String?
-  meta            Json?
-  vendor          Vendor       @relation(fields: [vendorId], references: [id])
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  @@index([vendorId])
-  @@index([status, createdAt])
-}
-
-model Address {
-  id          String      @id @default(uuid())
-  userId      String
-  type        AddressType @default(HOME)
-  label       String?
-  fullName    String?
-  line1       String
-  line2       String?
-  city        String
-  state       String
-  country     String
-  postalCode  String
-  phone       String?
-  isDefault   Boolean     @default(false)
-  user        User        @relation(fields: [userId], references: [id])
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@index([userId, isDefault])
-}
-
-model VendorKycDocument {
-  id             String          @id @default(uuid())
-  vendorId       String
-  type           KycDocumentType
-  documentNumber String?
-  fileUrl        String
-  status         KycStatus       @default(PENDING)
-  verifiedBy     String?
-  verifiedAt     DateTime?
-  rejectedReason String?
-  expiryDate     DateTime?
-  vendor         Vendor          @relation(fields: [vendorId], references: [id])
-  verifier       User?           @relation("KycVerifiedBy", fields: [verifiedBy], references: [id])
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-
-  @@index([vendorId, status])
-}
-
-model InventoryBatch {
-  id            String   @id @default(uuid())
-  inventoryId   String
-  batchNumber   String
-  quantity      Int      @default(0)
-  manufacturedAt DateTime?
-  expiryDate    DateTime?
-  purchaseCostCents Int?
-  inventory     Inventory @relation(fields: [inventoryId], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@unique([inventoryId, batchNumber])
-  @@index([expiryDate])
-}
-
-model Prescription {
-  id              String             @id @default(uuid())
-  customerId      String
-  orderId         String?            @unique
-  fileUrl         String
-  status          PrescriptionStatus @default(PENDING)
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  rejectionReason String?
-  expiresAt       DateTime?
-  customer        Customer           @relation(fields: [customerId], references: [id])
-  order           Order?             @relation(fields: [orderId], references: [id])
-  reviewer        User?              @relation("PrescriptionReviewedBy", fields: [reviewedBy], references: [id])
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-
-  @@index([customerId, status, createdAt])
-}
-
-model WishlistItem {
-  id         String    @id @default(uuid())
-  customerId String
-  medicineId String
-  customer   Customer  @relation(fields: [customerId], references: [id])
-  medicine   Medicine  @relation(fields: [medicineId], references: [id])
-  createdAt  DateTime  @default(now())
-
-  @@unique([customerId, medicineId])
-  @@index([customerId, createdAt])
-}
-
-model CartItem {
-  id                 String    @id @default(uuid())
-  customerId         String
-  medicineId         String
-  inventoryId        String?
-  quantity           Int       @default(1)
-  selectedSize       String?
-  priceSnapshotCents Int?
-  currencyCode       String    @default("INR")
-  customer           Customer  @relation(fields: [customerId], references: [id])
-  medicine           Medicine  @relation(fields: [medicineId], references: [id])
-  inventory          Inventory? @relation(fields: [inventoryId], references: [id])
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  @@index([customerId, updatedAt])
-}
-
-model SupportTicket {
-  id           String               @id @default(uuid())
-  ticketNumber String               @unique
-  requesterId  String
-  assignedTo   String?
-  orderId      String?
-  subject      String
-  description  String
-  category     String?
-  status       SupportTicketStatus  @default(OPEN)
-  priority     SupportTicketPriority @default(MEDIUM)
-  requester    User                 @relation("TicketRequester", fields: [requesterId], references: [id])
-  assignee     User?                @relation("TicketAssignee", fields: [assignedTo], references: [id])
-  order        Order?               @relation(fields: [orderId], references: [id])
-  messages     SupportTicketMessage[]
-  resolvedAt   DateTime?
-  closedAt     DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-
-  @@index([requesterId, status, createdAt])
-  @@index([assignedTo, status, priority])
-}
-
-model SupportTicketMessage {
-  id          String       @id @default(uuid())
-  ticketId    String
-  senderId    String
-  message     String
-  attachments Json?
-  isInternal  Boolean      @default(false)
-  ticket      SupportTicket @relation(fields: [ticketId], references: [id])
-  sender      User         @relation(fields: [senderId], references: [id])
-  createdAt   DateTime     @default(now())
-
-  @@index([ticketId, createdAt])
-}
-
-model NotificationPreference {
-  id                String   @id @default(uuid())
-  userId            String   @unique
-  emailEnabled      Boolean  @default(true)
-  smsEnabled        Boolean  @default(false)
-  pushEnabled       Boolean  @default(true)
-  orderUpdates      Boolean  @default(true)
-  paymentUpdates    Boolean  @default(true)
-  supportUpdates    Boolean  @default(true)
-  marketingEnabled  Boolean  @default(false)
-  user              User     @relation(fields: [userId], references: [id])
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
-
-model Notification {
-  id         String             @id @default(uuid())
-  userId     String
-  type       NotificationType
-  channel    NotificationChannel @default(IN_APP)
-  title      String
-  body       String
-  payload    Json?
-  isRead     Boolean            @default(false)
-  readAt     DateTime?
-  sentAt     DateTime?
-  user       User               @relation(fields: [userId], references: [id])
-  createdAt  DateTime           @default(now())
-
-  @@index([userId, isRead, createdAt])
-}
-
-model Shipment {
-  id                  String         @id @default(uuid())
-  orderId             String         @unique
-  courierName         String?
-  trackingNumber      String?        @unique
-  status              ShipmentStatus @default(PENDING)
-  currentLocation     String?
-  estimatedDeliveryAt DateTime?
-  shippedAt           DateTime?
-  deliveredAt         DateTime?
-  meta                Json?
-  order               Order          @relation(fields: [orderId], references: [id])
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-
-  @@index([status, createdAt])
-}
-
-model DisputeCase {
-  id           String       @id @default(uuid())
-  caseNumber   String       @unique
-  orderId      String       @unique
-  paymentId    String?      @unique
-  status       DisputeStatus @default(OPEN)
-  reason       String
-  details      String?
-  resolution   String?
-  raisedBy     String?
-  assignedTo   String?
-  resolvedBy   String?
-  order        Order        @relation(fields: [orderId], references: [id])
-  payment      Payment?     @relation(fields: [paymentId], references: [id])
-  raisedByUser User?        @relation("DisputeRaisedBy", fields: [raisedBy], references: [id])
-  assignedUser User?        @relation("DisputeAssignedTo", fields: [assignedTo], references: [id])
-  resolvedUser User?        @relation("DisputeResolvedBy", fields: [resolvedBy], references: [id])
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  resolvedAt   DateTime?
-
-  @@index([status, createdAt])
-}
-
-model ReturnRequest {
-  id            String      @id @default(uuid())
-  orderId       String
-  orderItemId   String?
-  customerId    String
-  status        ReturnStatus @default(REQUESTED)
-  reason        String
-  notes         String?
-  pickupAddress Json?
-  approvedBy    String?
-  approvedAt    DateTime?
-  refundedAt    DateTime?
-  order         Order       @relation(fields: [orderId], references: [id])
-  orderItem     OrderItem?  @relation(fields: [orderItemId], references: [id])
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  approvedByUser User?      @relation("ReturnApprovedBy", fields: [approvedBy], references: [id])
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  @@index([orderId, status, createdAt])
-  @@index([customerId, status])
-}
-
-model Coupon {
-  id              String     @id @default(uuid())
-  code            String     @unique
-  title           String
-  description     String?
-  type            CouponType
-  value           Float
-  minOrderCents   Int?
-  maxDiscountCents Int?
-  usageLimit      Int?
-  perUserLimit    Int?       @default(1)
-  startsAt        DateTime?
-  endsAt          DateTime?
-  isActive        Boolean    @default(true)
-  redemptions     CouponRedemption[]
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-
-  @@index([isActive, startsAt, endsAt])
-}
-
-model CouponRedemption {
-  id                 String   @id @default(uuid())
-  couponId           String
-  userId             String
-  orderId            String
-  appliedDiscountCents Int    @default(0)
-  coupon             Coupon   @relation(fields: [couponId], references: [id])
-  user               User     @relation(fields: [userId], references: [id])
-  order              Order    @relation(fields: [orderId], references: [id])
-  createdAt          DateTime @default(now())
-
-  @@unique([couponId, userId, orderId])
-  @@index([couponId, createdAt])
-}
-
-model Review {
-  id         String   @id @default(uuid())
-  customerId String
-  medicineId String
-  orderId    String
-  rating     Int
-  comment    String?
-  isPublished Boolean @default(true)
-  customer   Customer @relation(fields: [customerId], references: [id])
-  medicine   Medicine @relation(fields: [medicineId], references: [id])
-  order      Order    @relation(fields: [orderId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([medicineId, rating, createdAt])
-  @@index([customerId, createdAt])
-}
-
-model AuditLog {
-  id         String           @id @default(uuid())
-  userId     String?
-  action     UserActivityType
-  resource   String
-  resourceId String?
-  ipAddress  String?
-  userAgent  String?
-  meta       Json?
-  user       User?            @relation(fields: [userId], references: [id])
-  createdAt  DateTime         @default(now())
-
-  @@index([userId, createdAt])
-  @@index([action, createdAt])
-}
-
-model ExchangeRate {
-  baseCode  String   @id
-  rates     Json
-  fetchedAt DateTime
-  source    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
