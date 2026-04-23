@@ -12,7 +12,11 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 const HEALTH_DB_PROBE_TTL_MS = 15 * 1000;
 let cachedDbProbe = {

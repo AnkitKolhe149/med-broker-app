@@ -203,6 +203,8 @@ const createOrder = async (userId, orderData) => {
       quantity: true,
       medicine: {
         select: {
+          id: true,
+          name: true,
           priceCents: true,
           requiresPrescription: true
         }
@@ -264,8 +266,10 @@ const createOrder = async (userId, orderData) => {
       throw new ValidationError('Insufficient stock for one or more items');
     }
 
-    if (inventory.medicine.requiresPrescription && !prescriptionUrl) {
-      throw new ValidationError(`Prescription is required for ${inventory.medicineId}`);
+    const itemPrescriptionUrl = item.prescriptionUrl || prescriptionUrl;
+    if (inventory.medicine.requiresPrescription && !itemPrescriptionUrl) {
+      const medName = inventory.medicine && inventory.medicine.name ? inventory.medicine.name : inventory.medicineId;
+      throw new ValidationError(`Prescription is required for ${medName}`);
     }
 
     const packageType = normalizePackageType(item.selectedSize || item.packageType);

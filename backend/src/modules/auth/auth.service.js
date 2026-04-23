@@ -153,22 +153,23 @@ module.exports = {
   },
 
   login: async (data) => {
-    const { email, password, role } = data;
+      const { email, password, role, mobile } = data;
 
-    // Input validation
-    if (!email || !password) {
-      throw new AuthenticationError('Email and password are required');
-    }
-
-    validateEmail(email);
-
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        vendor: true,
-        customer: true
+      // Input validation - allow login by email OR mobile
+      if ((!email && !mobile) || !password) {
+        throw new AuthenticationError('Email or mobile and password are required');
       }
-    });
+
+      if (email) validateEmail(email);
+
+      const findBy = email ? { email } : { mobile };
+      const user = await prisma.user.findFirst({
+        where: findBy,
+        include: {
+          vendor: true,
+          customer: true
+        }
+      });
 
     if (!user) {
       throw new AuthenticationError('Invalid credentials');

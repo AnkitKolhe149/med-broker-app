@@ -69,6 +69,41 @@ const vendorService = {
 		}
 
 		return response.data.data;
+	},
+
+	requestWithdrawal: async ({ amountCents, note }) => {
+		const response = await axios.post(
+			`${API_URL}/vendor/withdrawals/request`,
+			{ amountCents, note },
+			{
+				headers: {
+					...getAuthHeaders(),
+					'Content-Type': 'application/json'
+				}
+			}
+		);
+
+		if (!response.data?.success) {
+			throw new Error(response.data?.message || 'Failed to request withdrawal');
+		}
+
+		return response.data.data;
+	},
+
+	getWithdrawalHistory: async (params = {}) => {
+		const response = await axios.get(`${API_URL}/vendor/withdrawals`, {
+			headers: getAuthHeaders(),
+			params
+		});
+
+		if (!response.data?.success) {
+			throw new Error(response.data?.message || 'Failed to load withdrawal history');
+		}
+
+		return {
+			requests: response.data.data || [],
+			pagination: response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 }
+		};
 	}
 };
 

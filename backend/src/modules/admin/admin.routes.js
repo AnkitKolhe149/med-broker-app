@@ -17,6 +17,7 @@ router.patch('/vendors/:id/status', adminController.updateVendorStatus);
 
 // Payouts & Finance
 router.get('/payouts/overview', adminController.getPayoutOverview);
+router.get('/payouts/requests', adminController.getPayoutRequests);
 router.post('/payouts/:vendorId/process', adminController.processPayout);
 
 // Operations

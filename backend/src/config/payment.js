@@ -34,7 +34,13 @@ const PAYMENT_CONFIG = {
     enabled: process.env.RAZORPAY_ENABLED === 'true',
     keyId: process.env.RAZORPAY_KEY_ID,
     keySecret: process.env.RAZORPAY_KEY_SECRET,
-    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET,
+    routeEnabled: process.env.RAZORPAY_ROUTE_ENABLED === 'true',
+    routeStrict: process.env.RAZORPAY_ROUTE_STRICT === 'true',
+    // Enable automated payouts by admin approval
+    payoutsEnabled: process.env.RAZORPAY_PAYOUTS_ENABLED === 'true',
+    // Optional default source of payouts (platform fund account / virtual account)
+    payoutsSourceAccount: process.env.RAZORPAY_PAYOUTS_SOURCE_ACCOUNT || null
   },
 
   // Stripe configuration
@@ -63,6 +69,10 @@ const PAYMENT_CONFIG = {
   refund: {
     enabled: process.env.REFUND_ENABLED !== 'false',
     processingDays: parseInt(process.env.REFUND_PROCESSING_DAYS) || 7
+  },
+
+  commission: {
+    percent: Number.parseFloat(process.env.PLATFORM_COMMISSION_PERCENT || '5') || 0
   }
 };
 

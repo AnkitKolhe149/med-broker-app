@@ -26,5 +26,33 @@ module.exports = {
     } catch (error) {
       return next(error);
     }
+  },
+
+  requestWithdrawal: async (req, res, next) => {
+    try {
+      const data = await vendorProfileService.requestWithdrawal(req.user, req.body);
+
+      return res.status(201).json({
+        success: true,
+        message: 'Withdrawal request submitted successfully',
+        data
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  getWithdrawalHistory: async (req, res, next) => {
+    try {
+      const data = await vendorProfileService.getWithdrawalHistory(req.user, req.query);
+
+      return res.json({
+        success: true,
+        data: data.requests,
+        pagination: data.pagination
+      });
+    } catch (error) {
+      return next(error);
+    }
   }
 };

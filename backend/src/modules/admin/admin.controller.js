@@ -41,11 +41,20 @@ module.exports = {
     }
   },
 
+  getPayoutRequests: async (req, res, next) => {
+    try {
+      const result = await adminService.getPayoutRequests(req.query);
+      res.json({ success: true, data: result.requests, pagination: result.pagination });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   processPayout: async (req, res, next) => {
     try {
       const { vendorId } = req.params;
-      const { amountCents } = req.body;
-      const payout = await adminService.processPayout(vendorId, amountCents);
+      const { amountCents, payoutRequestId } = req.body;
+      const payout = await adminService.processPayout(vendorId, amountCents, { payoutRequestId });
       res.json({ success: true, data: payout });
     } catch (error) {
       next(error);

@@ -16,6 +16,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { formatCurrency } from '../../utils/currency';
+import orderService from '../../services/order.service';
 import paymentService from '../../services/payment.service';
 import styles from './Payment.module.css';
 
@@ -73,7 +74,8 @@ function Payment() {
 			tax: snapshot.tax ?? ((pricingSummary.taxCents || 0) / 100),
 			totalBase: snapshot.totalBase ?? snapshot.total ?? ((pricingSummary.totalCents || 0) / 100),
 			total: snapshot.total ?? ((pricingSummary.totalCents || 0) / 100),
-			paymentMethod: snapshot.paymentMethod || 'upi'
+			paymentProvider: snapshot.paymentProvider || 'razorpay',
+			paymentMethod: snapshot.paymentMethod || 'Razorpay Secure Checkout'
 		};
 	};
 
@@ -137,6 +139,19 @@ function Payment() {
 		return upiString;
 	};
 
+	const loadRazorpayScript = () => new Promise((resolve) => {
+		if (window.Razorpay) {
+			resolve(true);
+			return;
+		}
+
+		const script = document.createElement('script');
+		script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+		script.onload = () => resolve(true);
+		script.onerror = () => resolve(false);
+		document.body.appendChild(script);
+	});
+
 	const getSubtotal = () => {
 		if (!orderData) return 0;
 		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
@@ -160,6 +175,11 @@ function Payment() {
 	};
 
 	const paymentMethodMeta = {
+		razorpay: {
+			icon: <ShieldCheck size={18} strokeWidth={1.7} />,
+			title: 'Razorpay Secure Checkout',
+			subtitle: 'Verified gateway for UPI, cards and wallets'
+		},
 		upi: {
 			icon: <QrCode size={18} strokeWidth={1.7} />,
 			title: 'UPI QR / UPI ID',
@@ -182,62 +202,108 @@ function Payment() {
 		}
 	};
 
-const handlePaymentProcess = async (e) => {
-	e.preventDefault();
-	setIsProcessing(true);
+	const handlePaymentProcess = async (e) => {
+		e.preventDefault();
+		setIsProcessing(true);
 
-	try {
-		const totalAmount = calculateTotal();
-		const backendOrderId = orderData?.orderId;
+		try {
+			const totalAmount = calculateTotal();
+			const backendOrderId = orderData?.orderId;
 
-		if (!backendOrderId) {
-			throw new Error('Missing backend order ID. Please retry checkout.');
+			if (!backendOrderId) {
+				throw new Error('Missing backend order ID. Please retry checkout.');
+			}
+
+			const initiatedPayment = await paymentService.initiatePayment({
+				orderId: backendOrderId,
+				provider: 'razorpay',
+				returnUrl: `${window.location.origin}/customer/payment?orderId=${backendOrderId}`
+			});
+
+			if (initiatedPayment?.provider === 'razorpay' && initiatedPayment?.razorpay) {
+				const scriptReady = await loadRazorpayScript();
+				if (!scriptReady) {
+					throw new Error('Unable to load Razorpay checkout');
+				}
+
+				await new Promise((resolve, reject) => {
+					const razorpay = new window.Razorpay({
+						key: initiatedPayment.razorpay.keyId,
+						amount: initiatedPayment.razorpay.amount,
+						currency: initiatedPayment.razorpay.currency,
+						name: initiatedPayment.razorpay.name,
+						description: initiatedPayment.razorpay.description,
+						order_id: initiatedPayment.razorpay.orderId,
+						prefill: initiatedPayment.razorpay.prefill,
+						notes: initiatedPayment.razorpay.notes,
+						theme: initiatedPayment.razorpay.theme,
+						modal: {
+							ondismiss: () => reject(new Error('Payment was closed before completion'))
+						},
+						handler: async (response) => {
+							try {
+								await paymentService.verifyPayment({
+									paymentId: initiatedPayment.paymentId,
+									orderId: backendOrderId,
+									status: 'SUCCEEDED',
+									gatewayOrderId: response.razorpay_order_id,
+									gatewayPaymentId: response.razorpay_payment_id,
+									signature: response.razorpay_signature
+								});
+								resolve();
+							} catch (error) {
+								reject(error);
+							}
+						}
+					});
+
+					razorpay.on('payment.failed', (response) => {
+						reject(new Error(response?.error?.description || 'Razorpay payment failed'));
+					});
+
+					razorpay.open();
+				});
+			} else {
+				if (!initiatedPayment?.paymentId) {
+					throw new Error('No payment id received');
+				}
+
+				// Simulate user confirmation in mock mode
+				await new Promise((resolve) => setTimeout(resolve, 1000));
+
+				await paymentService.verifyPayment({
+					paymentId: initiatedPayment.paymentId,
+					orderId: backendOrderId,
+					status: 'SUCCEEDED'
+				});
+			}
+
+			const orderId = backendOrderId;
+
+			const completedOrder = {
+				...orderData,
+				orderId,
+				paymentMethod,
+				paymentStatus: 'completed',
+				orderStatus: 'confirmed',
+				completedAt: new Date().toISOString(),
+				total: totalAmount,
+				totalBase: totalAmount
+			};
+
+			sessionStorage.setItem('completed_order', JSON.stringify(completedOrder));
+			sessionStorage.removeItem('pending_order');
+			clearCart();
+
+			navigate(`/customer/order-confirmation/${orderId}`);
+
+		} catch (error) {
+			console.error('Payment failed:', error);
+			showError(error?.response?.data?.message || error.message || 'Payment failed');
+		} finally {
+			setIsProcessing(false);
 		}
-
-		const initiatedPayment = await paymentService.initiatePayment({
-			orderId: backendOrderId,
-			provider: 'mock'
-		});
-
-		if (!initiatedPayment?.paymentId) {
-			throw new Error('No payment id received');
-		}
-
-		// Simulate user confirmation in mock mode
-		await new Promise(resolve => setTimeout(resolve, 1000));
-
-		await paymentService.verifyPayment({
-			paymentId: initiatedPayment.paymentId,
-			orderId: backendOrderId,
-			status: 'SUCCEEDED'
-		});
-
-		const orderId = backendOrderId;
-
-		const completedOrder = {
-			...orderData,
-			orderId,
-			paymentMethod,
-			paymentStatus: 'completed',
-			orderStatus: 'confirmed',
-			completedAt: new Date().toISOString(),
-			total: totalAmount,
-			totalBase: totalAmount
-		};
-
-		sessionStorage.setItem('completed_order', JSON.stringify(completedOrder));
-		sessionStorage.removeItem('pending_order');
-		clearCart();
-
-		navigate(`/customer/order-confirmation/${orderId}`);
-
-	} catch (error) {
-		console.error('Payment failed:', error);
-		showError(error?.response?.data?.message || error.message || 'Payment failed');
-	} finally {
-		setIsProcessing(false);
-	}
-};
+	};
 
 	if (loading) {
 		return (
@@ -282,7 +348,15 @@ const handlePaymentProcess = async (e) => {
 					<section className={styles.formPanel}>
 						<div className={styles.titleWrap}>
 							<h1 className={styles.pageTitle}>Complete Payment</h1>
-							<p className={styles.pageSubtitle}>Choose your preferred method and finish the order securely.</p>
+							<p className={styles.pageSubtitle}>Your payment is processed through Razorpay Secure Checkout.</p>
+						</div>
+
+						<div className={styles.securityCard} style={{ marginBottom: '1rem' }}>
+							<ShieldCheck size={16} strokeWidth={1.8} />
+							<div>
+								<p className={styles.securityTitle}>Razorpay Checkout Enabled</p>
+								<p className={styles.securityText}>You can pay with UPI, cards, netbanking, or wallets through Razorpay's hosted checkout.</p>
+							</div>
 						</div>
 
 						<form onSubmit={handlePaymentProcess} className={styles.formContainer}>
@@ -386,7 +460,7 @@ const handlePaymentProcess = async (e) => {
 						<h2 className={styles.summaryTitle}>Order Review</h2>
 						<div className={styles.orderMetaCard}>
 							<p><span>Order ID</span><strong>{orderData.orderId}</strong></p>
-							<p><span>Payment Method</span><strong>{paymentMethodMeta[paymentMethod]?.title || 'UPI'}</strong></p>
+							<p><span>Payment Method</span><strong>{orderData.paymentMethod || paymentMethodMeta[paymentMethod]?.title || 'Razorpay Secure Checkout'}</strong></p>
 							<p><span>Delivery</span><strong>{orderData.deliveryType === 'express' ? 'Express (1-3 days)' : 'Standard (5-7 days)'}</strong></p>
 						</div>
 

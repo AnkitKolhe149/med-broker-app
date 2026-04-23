@@ -10,5 +10,7 @@ router.use(restrictTo(['VENDOR', 'ADMIN']));
 
 router.get('/profile', vendorProfileController.getProfile);
 router.patch('/profile', vendorProfileController.updateProfile);
+router.post('/withdrawals/request', vendorProfileController.requestWithdrawal);
+router.get('/withdrawals', vendorProfileController.getWithdrawalHistory);
 
 module.exports = router;

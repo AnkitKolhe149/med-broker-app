@@ -29,10 +29,10 @@ const paymentService = {
 		return response.data.data;
 	},
 
-	verifyPayment: async ({ paymentId, orderId, status = 'SUCCEEDED' }) => {
+	verifyPayment: async ({ paymentId, orderId, status = 'SUCCEEDED', gatewayOrderId, gatewayPaymentId, signature }) => {
 		const response = await axios.post(
 			`${API_URL}/payments/verify`,
-			{ paymentId, orderId, status },
+			{ paymentId, orderId, status, gatewayOrderId, gatewayPaymentId, signature },
 			{
 				headers: {
 					...getAuthHeaders(),

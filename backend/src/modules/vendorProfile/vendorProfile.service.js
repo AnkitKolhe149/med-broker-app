@@ -50,6 +50,9 @@ const DEFAULT_CHAT_THREADS = {
 
 const mapVendorProfile = (user, vendor) => {
   const profileMeta = vendor?.bankAccountDetails?.profileMeta || {};
+  const razorpayLinkedAccountId = vendor?.bankAccountDetails?.razorpayLinkedAccountId
+    || vendor?.bankAccountDetails?.razorpayRouteAccountId
+    || '';
 
   return {
     businessName: vendor.companyName || '',
@@ -62,6 +65,7 @@ const mapVendorProfile = (user, vendor) => {
     gstNumber: vendor.gstinNumber || '',
     aboutBusiness: profileMeta.aboutBusiness || '',
     contactPersonName: vendor.contactPersonName || '',
+    razorpayLinkedAccountId,
     notificationPrefs: {
       ...DEFAULT_NOTIFICATION_PREFS,
       ...(profileMeta.notificationPrefs || {})
@@ -168,6 +172,7 @@ const updateVendorProfile = async (userContext, data) => {
     pincode,
     gstNumber,
     aboutBusiness,
+    razorpayLinkedAccountId,
     contactPersonName,
     notificationPrefs,
     securityPrefs,
@@ -278,6 +283,15 @@ const updateVendorProfile = async (userContext, data) => {
     profileMeta
   };
 
+  if (typeof razorpayLinkedAccountId === 'string') {
+    const normalizedLinkedAccountId = razorpayLinkedAccountId.trim();
+    if (normalizedLinkedAccountId) {
+      mergedBankAccountDetails.razorpayLinkedAccountId = normalizedLinkedAccountId;
+    } else {
+      delete mergedBankAccountDetails.razorpayLinkedAccountId;
+    }
+  }
+
   try {
     const updated = await prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -332,7 +346,145 @@ const updateVendorProfile = async (userContext, data) => {
   }
 };
 
+const getVendorPendingBalanceCents = async (vendorId) => {
+  const [paidOrderItems, completedPayouts] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: {
+        vendorId,
+        order: {
+          status: 'PAID'
+        }
+      },
+      select: {
+        quantity: true,
+        unitPriceCents: true
+      }
+    }),
+    prisma.payout.findMany({
+      where: {
+        vendorId,
+        status: 'COMPLETED'
+      },
+      select: {
+        amountCents: true
+      }
+    })
+  ]);
+
+  const grossEarnedCents = paidOrderItems.reduce(
+    (sum, item) => sum + (Math.max(1, Number(item.quantity) || 1) * (Number(item.unitPriceCents) || 0)),
+    0
+  );
+
+  const completedPayoutCents = completedPayouts.reduce(
+    (sum, payout) => sum + (Number(payout.amountCents) || 0),
+    0
+  );
+
+  return Math.max(0, grossEarnedCents - completedPayoutCents);
+};
+
+const requestWithdrawal = async (userContext, data = {}) => {
+  const userId = typeof userContext === 'string' ? userContext : userContext?.id;
+  const amountCents = Number(data.amountCents);
+  const note = typeof data.note === 'string' ? data.note.trim() : '';
+
+  if (!Number.isFinite(amountCents) || amountCents <= 0) {
+    throw new ValidationError('Withdrawal amount must be a positive number in cents');
+  }
+
+  const vendor = await prisma.vendor.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      companyName: true
+    }
+  });
+
+  if (!vendor) {
+    throw new NotFoundError('Vendor profile not found');
+  }
+
+  const pendingBalanceCents = await getVendorPendingBalanceCents(vendor.id);
+  if (amountCents > pendingBalanceCents) {
+    throw new ValidationError(`Requested amount exceeds available balance of ${pendingBalanceCents} cents`);
+  }
+
+  const payoutRequest = await prisma.payout.create({
+    data: {
+      vendorId: vendor.id,
+      amountCents,
+      status: 'PENDING',
+      notes: note || 'Vendor withdrawal request',
+      meta: {
+        requestedByUserId: userId,
+        requestedAt: new Date().toISOString(),
+        type: 'WITHDRAWAL_REQUEST'
+      }
+    }
+  });
+
+  return {
+    request: payoutRequest,
+    availableBalanceAfterRequestCents: pendingBalanceCents - amountCents,
+    vendor: {
+      id: vendor.id,
+      companyName: vendor.companyName
+    }
+  };
+};
+
+const getWithdrawalHistory = async (userContext, options = {}) => {
+  const userId = typeof userContext === 'string' ? userContext : userContext?.id;
+  const page = Math.max(1, Number(options.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(options.limit) || 20));
+  const skip = (page - 1) * limit;
+
+  const vendor = await prisma.vendor.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      companyName: true
+    }
+  });
+
+  if (!vendor) {
+    throw new NotFoundError('Vendor profile not found');
+  }
+
+  const where = {
+    vendorId: vendor.id,
+    meta: {
+      path: ['type'],
+      equals: 'WITHDRAWAL_REQUEST'
+    }
+  };
+
+  const [requests, total] = await Promise.all([
+    prisma.payout.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit
+    }),
+    prisma.payout.count({ where })
+  ]);
+
+  return {
+    vendor,
+    requests,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit))
+    }
+  };
+};
+
 module.exports = {
   getVendorProfile,
-  updateVendorProfile
+  updateVendorProfile,
+  requestWithdrawal,
+  getWithdrawalHistory
 };

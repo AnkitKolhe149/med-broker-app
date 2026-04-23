@@ -4,6 +4,13 @@ const paymentController = require('./payments.controller');
 const { authenticate } = require('../../middlewares/auth.middleware');
 const { restrictTo } = require('../../middlewares/role.middleware');
 
+/**
+ * @route   POST /api/payments/webhook/razorpay
+ * @desc    Razorpay webhook endpoint
+ * @access  Public (verified via webhook signature)
+ */
+router.post('/webhook/razorpay', paymentController.handleRazorpayWebhook);
+
 // All routes require authentication
 router.use(authenticate);
 

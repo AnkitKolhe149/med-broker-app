@@ -32,8 +32,25 @@ const adminService = {
     return response.data;
   },
 
+  getPayoutRequests: async (params = {}) => {
+    const response = await axios.get(`${API_URL}/admin/payouts/requests`, {
+      ...getAuthHeaders(),
+      params
+    });
+    return response.data;
+  },
+
   processPayout: async (vendorId, amountCents) => {
     const response = await axios.post(`${API_URL}/admin/payouts/${vendorId}/process`, { amountCents }, getAuthHeaders());
+    return response.data;
+  },
+
+  approvePayoutRequest: async ({ vendorId, payoutRequestId, amountCents }) => {
+    const response = await axios.post(
+      `${API_URL}/admin/payouts/${vendorId}/process`,
+      { payoutRequestId, amountCents },
+      getAuthHeaders()
+    );
     return response.data;
   },
 

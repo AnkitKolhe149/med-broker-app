@@ -39,7 +39,7 @@ module.exports = {
    */
   verifyPayment: async (req, res, next) => {
     try {
-      const { paymentId, signature, orderId, status } = req.body;
+      const { paymentId, signature, orderId, status, gatewayOrderId, gatewayPaymentId } = req.body;
 
       if (!paymentId) {
         return res.status(400).json({
@@ -51,7 +51,9 @@ module.exports = {
       const result = await paymentService.verifyPayment(paymentId, {
         signature,
         orderId,
-        status
+        status,
+        gatewayOrderId,
+        gatewayPaymentId
       });
 
       res.status(200).json({
@@ -61,6 +63,25 @@ module.exports = {
           payment: result.payment,
           order: result.order
         }
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/payments/webhook/razorpay
+   * Razorpay webhook receiver
+   */
+  handleRazorpayWebhook: async (req, res, next) => {
+    try {
+      const signature = req.headers['x-razorpay-signature'];
+      const result = await paymentService.handleRazorpayWebhook(req.rawBody, signature);
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
+        data: result
       });
     } catch (error) {
       next(error);

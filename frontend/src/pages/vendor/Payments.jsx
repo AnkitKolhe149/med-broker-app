@@ -3,6 +3,7 @@ import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
+import vendorService from '../../services/vendor.service';
 import { formatCurrency } from '../../utils/currency';
 import styles from './Payments.module.css';
 import { Banknote, Undo2, Check, Clock } from 'lucide-react';
@@ -22,6 +23,9 @@ function VendorPayments() {
 
 	const [showWithdrawal, setShowWithdrawal] = useState(false);
 	const [withdrawAmount, setWithdrawAmount] = useState('');
+	const [withdrawNote, setWithdrawNote] = useState('');
+	const [submittingWithdrawal, setSubmittingWithdrawal] = useState(false);
+	const [withdrawalHistory, setWithdrawalHistory] = useState([]);
 	const [activeTab, setActiveTab] = useState('transactions');
 	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 
@@ -29,7 +33,10 @@ function VendorPayments() {
 		const loadVendorPayments = async () => {
 			try {
 				setLoading(true);
-				const result = await orderService.getVendorOrders({ page: 1, limit: 100 });
+				const [result, withdrawalResult] = await Promise.all([
+					orderService.getVendorOrders({ page: 1, limit: 100 }),
+					vendorService.getWithdrawalHistory({ page: 1, limit: 20 })
+				]);
 				const transactions = (result.orders || []).map((order) => ({
 					id: order.id,
 					type: 'order',
@@ -59,6 +66,8 @@ function VendorPayments() {
 						method: 'Bank Transfer'
 					}))
 				});
+
+				setWithdrawalHistory(withdrawalResult.requests || []);
 			} catch (error) {
 				console.error('Failed to load vendor payment data:', error);
 				showError(error?.response?.data?.message || 'Failed to load payments');
@@ -70,13 +79,50 @@ function VendorPayments() {
 		loadVendorPayments();
 	}, [showError]);
 
-	const handleWithdrawal = () => {
-		showSuccess(`Withdrawal request of ${formatMoney(Number(withdrawAmount) || 0)} initiated. You will receive funds within 1-2 business days.`);
-		setShowWithdrawal(false);
-		setWithdrawAmount('');
+	const handleWithdrawal = async () => {
+		const requestedAmount = Number(withdrawAmount);
+		if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+			showError('Please enter a valid withdrawal amount.');
+			return;
+		}
+
+		if (requestedAmount > paymentData.currentBalance) {
+			showError('Requested amount exceeds available balance.');
+			return;
+		}
+
+		setSubmittingWithdrawal(true);
+		try {
+			await vendorService.requestWithdrawal({
+				amountCents: Math.round(requestedAmount * 100),
+				note: withdrawNote
+			});
+
+			const historyResult = await vendorService.getWithdrawalHistory({ page: 1, limit: 20 });
+			setWithdrawalHistory(historyResult.requests || []);
+
+			showSuccess(`Withdrawal request of ${formatMoney(requestedAmount)} submitted for admin approval.`);
+			setShowWithdrawal(false);
+			setWithdrawAmount('');
+			setWithdrawNote('');
+		} catch (error) {
+			console.error('Failed to submit withdrawal request:', error);
+			showError(error?.response?.data?.message || error?.message || 'Failed to submit withdrawal request');
+		} finally {
+			setSubmittingWithdrawal(false);
+		}
 	};
 
 	const displayData = useMemo(() => paymentData, [paymentData]);
+
+	const toReadableStatus = (status) => {
+		if (!status) return 'Unknown';
+		const normalized = String(status).toUpperCase();
+		if (normalized === 'PENDING') return 'Pending Approval';
+		if (normalized === 'COMPLETED') return 'Approved & Paid';
+		if (normalized === 'FAILED') return 'Rejected / Failed';
+		return normalized;
+	};
 
 	return (
 		<div className={styles.container}>
@@ -271,6 +317,51 @@ function VendorPayments() {
 				</div>
 			</div>
 
+			<div className={styles.section}>
+				<div className={styles.sectionHeader}>
+					<h2 className={styles.sectionTitle}>Withdrawal Requests History</h2>
+				</div>
+
+				{loading ? (
+					<div className={styles.loadingState}>Loading withdrawal requests...</div>
+				) : withdrawalHistory.length === 0 ? (
+					<div className={styles.loadingState}>No withdrawal requests yet.</div>
+				) : (
+					<table className={styles.table}>
+						<thead>
+							<tr className={styles.tableHeadRow}>
+								<th className={styles.tableHeader}>Requested On</th>
+								<th className={styles.tableHeader}>Amount</th>
+								<th className={styles.tableHeader}>Status</th>
+								<th className={styles.tableHeader}>Note</th>
+								<th className={styles.tableHeader}>Reference</th>
+							</tr>
+						</thead>
+						<tbody>
+							{withdrawalHistory.map((request) => (
+								<tr key={request.id} className={styles.tableRow}>
+									<td className={styles.tableCell}>{request.createdAt ? new Date(request.createdAt).toLocaleString() : '-'}</td>
+									<td className={styles.tableCell}><strong>{formatMoney((request.amountCents || 0) / 100)}</strong></td>
+									<td className={styles.tableCell}>
+										<span
+											className={styles.statusBadge}
+											style={{
+												backgroundColor: request.status === 'COMPLETED' ? 'var(--green-100)' : request.status === 'PENDING' ? 'var(--yellow-100)' : 'var(--red-100)',
+												color: request.status === 'COMPLETED' ? 'var(--success)' : request.status === 'PENDING' ? 'var(--warning)' : 'var(--error)'
+											}}
+										>
+											{toReadableStatus(request.status)}
+										</span>
+									</td>
+									<td className={styles.tableCell}>{request.notes || '-'}</td>
+									<td className={styles.tableCell}>{request.transactionId || '-'}</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				)}
+			</div>
+
 			{/* Withdrawal Modal */}
 			<div className={`${styles.modalOverlay} ${showWithdrawal ? styles.modalActive : ''}`}>
 				<div className={styles.modal}>
@@ -299,6 +390,17 @@ function VendorPayments() {
 						</small>
 					</div>
 
+					<div className={styles.formGroup}>
+						<label className={styles.label}>Note for Admin (optional)</label>
+						<textarea
+							className={styles.input}
+							rows={3}
+							placeholder="Reason or settlement note"
+							value={withdrawNote}
+							onChange={(e) => setWithdrawNote(e.target.value)}
+						/>
+					</div>
+
 					<div style={{ backgroundColor: 'var(--primary-light)', padding: '1rem', borderRadius: 'var(--radius)' }} className={styles.formGroup}>
 						<strong className={styles.settlementDetailsTitle}>Settlement Details</strong>
 						<div className={styles.settlementDetailsText}>
@@ -312,15 +414,16 @@ function VendorPayments() {
 						<button
 							className={`${styles.button} ${styles.secondaryButton}`}
 							onClick={() => setShowWithdrawal(false)}
+							disabled={submittingWithdrawal}
 						>
 							Cancel
 						</button>
 						<button
 							className={`${styles.button} ${styles.primaryButton}`}
 							onClick={handleWithdrawal}
-							disabled={!withdrawAmount || parseInt(withdrawAmount) <= 0}
+							disabled={submittingWithdrawal || !withdrawAmount || Number(withdrawAmount) <= 0}
 						>
-							Confirm Withdrawal
+							{submittingWithdrawal ? 'Submitting...' : 'Confirm Withdrawal'}
 						</button>
 					</div>
 				</div>

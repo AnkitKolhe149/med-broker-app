@@ -114,14 +114,152 @@ module.exports = {
     return overview.filter(item => item.pendingBalanceCents > 0 || item.totalPaidCents > 0);
   },
 
-  processPayout: async (vendorId, amountCents) => {
-    // Create a payout record for the vendor
+  getPayoutRequests: async (options = {}) => {
+    const page = Math.max(1, Number(options.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(options.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const where = {
+      status: 'PENDING'
+    };
+
+    const [requests, total] = await Promise.all([
+      prisma.payout.findMany({
+        where,
+        include: {
+          vendor: {
+            select: {
+              id: true,
+              companyName: true,
+              contactPersonName: true,
+              contactNumber: true,
+              user: {
+                select: {
+                  email: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      prisma.payout.count({ where })
+    ]);
+
+    return {
+      requests,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit))
+      }
+    };
+  },
+
+  processPayout: async (vendorId, amountCents, options = {}) => {
+    const payoutRequestId = options?.payoutRequestId;
+
+    if (payoutRequestId) {
+      const payoutRequest = await prisma.payout.findFirst({
+        where: {
+          id: payoutRequestId,
+          vendorId,
+          status: 'PENDING'
+        }
+      });
+
+      if (!payoutRequest) {
+        throw new NotFoundError('Pending payout request not found for this vendor');
+      }
+
+      // Record admin approval metadata (do not change enum status yet)
+      const updated = await prisma.payout.update({
+        where: { id: payoutRequest.id },
+        data: {
+          meta: {
+            ...(payoutRequest.meta && typeof payoutRequest.meta === 'object' ? payoutRequest.meta : {}),
+            approvedAt: new Date().toISOString(),
+            approvedBy: 'ADMIN'
+          }
+        }
+      });
+
+      // Attempt automated transfer via Razorpay Payouts if enabled
+      try {
+        const paymentsService = require('../payments/payments.service');
+        const vendor = await prisma.vendor.findUnique({ where: { id: payoutRequest.vendorId } });
+        const payoutResult = await paymentsService.createRazorpayPayout({
+          vendor,
+          amountCents: payoutRequest.amountCents,
+          currency: payoutRequest.currencyCode || undefined,
+          notes: { requestId: payoutRequest.id, vendorId: payoutRequest.vendorId }
+        });
+
+        if (payoutResult && payoutResult.payout) {
+          return prisma.payout.update({
+            where: { id: payoutRequest.id },
+            data: {
+              status: 'COMPLETED',
+              transactionId: payoutResult.payout?.id || `TXN-${Date.now()}`,
+              processedAt: new Date(),
+              meta: {
+                ...(payoutRequest.meta && typeof payoutRequest.meta === 'object' ? payoutRequest.meta : {}),
+                approvedAt: new Date().toISOString(),
+                approvedBy: 'ADMIN',
+                payoutProvider: 'razorpay',
+                payoutResponse: payoutResult.payout
+              }
+            }
+          });
+        }
+      } catch (err) {
+        // Log error and fallthrough to mark as FAILED
+        console.error('Automated payout failed', err && err.message ? err.message : err);
+        await prisma.payout.update({
+          where: { id: payoutRequest.id },
+          data: {
+            status: 'FAILED',
+            failureReason: err && err.message ? err.message : 'Automated payout failed',
+            meta: {
+              ...(payoutRequest.meta && typeof payoutRequest.meta === 'object' ? payoutRequest.meta : {}),
+              payoutAttemptedAt: new Date().toISOString(),
+              payoutError: (err && err.message) || String(err)
+            }
+          }
+        });
+
+        throw err;
+      }
+
+      // If payouts not enabled or payoutResult not created, mark as FAILED if necessary
+      return prisma.payout.update({
+        where: { id: payoutRequest.id },
+        data: {
+          status: 'FAILED',
+          failureReason: 'Automated payout not completed',
+          meta: {
+            ...(payoutRequest.meta && typeof payoutRequest.meta === 'object' ? payoutRequest.meta : {}),
+            payoutAttemptedAt: new Date().toISOString()
+          }
+        }
+      });
+    }
+
+    const normalizedAmount = Number(amountCents);
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+      throw new ConflictError('amountCents must be a positive number');
+    }
+
     return prisma.payout.create({
       data: {
         vendorId,
-        amountCents,
+        amountCents: normalizedAmount,
         status: 'COMPLETED',
-        transactionId: `TXN-${Date.now()}` // Mock transaction ID
+        processedAt: new Date(),
+        transactionId: `TXN-${Date.now()}`
       }
     });
   },
