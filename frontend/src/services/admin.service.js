@@ -77,6 +77,14 @@ const adminService = {
   updateOrderStatus: async (orderId, status) => {
     const response = await axios.patch(`${API_URL}/orders/${orderId}/status`, { status }, getAuthHeaders());
     return response.data;
+  },
+
+  exportDemandTrainingData: async (months = 12) => {
+    const response = await axios.get(`${API_URL}/admin/training-data/demand`, {
+      ...getAuthHeaders(),
+      params: { months }
+    });
+    return response.data;
   }
 };
 
