@@ -649,6 +649,33 @@ model Symptom {
   ConditionSymptom ConditionSymptom[]
 }
 
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  category    String   @default("general")
+  label       String?
+  description String?
+  isEditable  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+}
+
+model Integration {
+  id            String    @id @default(uuid())
+  key           String    @unique
+  name          String
+  isEnabled     Boolean   @default(true)
+  status        String    @default("CONNECTED")
+  note          String?
+  lastCheckedAt DateTime?
+  meta          Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
 enum UserRole {
   ADMIN
   CUSTOMER

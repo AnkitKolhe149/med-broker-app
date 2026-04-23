@@ -154,7 +154,7 @@ module.exports = {
 
   getComplianceOverview: async (req, res, next) => {
     try {
-      const result = await adminService.getComplianceOverview();
+      const result = await adminService.getComplianceOverview(req.query);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -163,7 +163,7 @@ module.exports = {
 
   getReportsOverview: async (req, res, next) => {
     try {
-      const result = await adminService.getReportsOverview();
+      const result = await adminService.getReportsOverview(req.query);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -197,6 +197,26 @@ module.exports = {
     }
   },
 
+  updateSettings: async (req, res, next) => {
+    try {
+      const result = await adminService.updateSettings(req.body);
+      res.json({ success: true, message: 'Settings updated successfully', count: result.length });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  toggleIntegration: async (req, res, next) => {
+    try {
+      const { key } = req.params;
+      const { isEnabled } = req.body;
+      const result = await adminService.toggleIntegration(key, isEnabled);
+      res.json({ success: true, message: `Integration ${key} toggled successfully`, data: result });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   exportDemandTrainingData: async (req, res, next) => {
     try {
       const monthsBack = parseInt(req.query.months) || 12;
@@ -205,5 +225,109 @@ module.exports = {
     } catch (error) {
       next(error);
     }
+  },
+
+  // Wave 1
+  updatePrescriptionStatus: async (req, res, next) => {
+    try {
+      const { status, rejectionReason } = req.body;
+      const result = await adminService.updatePrescriptionStatus(req.params.id, status, req.user.id, rejectionReason);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  verifyKycDocument: async (req, res, next) => {
+    try {
+      const { status, rejectedReason } = req.body;
+      const result = await adminService.verifyKycDocument(req.params.id, status, req.user.id, rejectedReason);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  updateDisputeCase: async (req, res, next) => {
+    try {
+      const updateData = { ...req.body };
+      if (req.body.resolutionNotes) {
+         updateData.resolution = req.body.resolutionNotes;
+         delete updateData.resolutionNotes;
+      }
+      const result = await adminService.updateDisputeCase(req.params.id, updateData, req.user.id);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  replyToSupportTicket: async (req, res, next) => {
+    try {
+      const { message, isInternal } = req.body;
+      const result = await adminService.replyToSupportTicket(req.params.id, message, req.user.id, isInternal);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  updateSupportTicketStatus: async (req, res, next) => {
+    try {
+      const result = await adminService.updateSupportTicketStatus(req.params.id, req.body.status);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  // Wave 2
+  updateUserStatus: async (req, res, next) => {
+    try {
+      const result = await adminService.updateUserStatus(req.params.id, req.body.isActive);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  updateCatalogMedicineVisibility: async (req, res, next) => {
+    try {
+      const result = await adminService.updateCatalogMedicineVisibility(req.params.id, req.body.status);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  createCoupon: async (req, res, next) => {
+    try {
+      const result = await adminService.createCoupon(req.body);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  getCoupons: async (req, res, next) => {
+    try {
+      const result = await adminService.getCoupons();
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  deleteCoupon: async (req, res, next) => {
+    try {
+      const result = await adminService.deleteCoupon(req.params.id);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  updateReturnRequestStatus: async (req, res, next) => {
+    try {
+      const result = await adminService.updateReturnRequestStatus(req.params.id, req.body.status, req.user.id, req.body.notes);
+      
+      if (req.body.status === 'APPROVED' && result.orderId) {
+        try {
+          await paymentService.processRefund(result.orderId, req.user.id, req.user.role, { reason: 'Return Request Approved' });
+        } catch (refundError) {
+          console.error("Refund processing failed:", refundError);
+        }
+      }
+      
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  // Wave 3
+  broadcastNotification: async (req, res, next) => {
+    try {
+      const result = await adminService.broadcastNotification(req.body);
+      res.json({ success: true, message: `Broadcast sent to ${result.count} users`, data: result });
+    } catch (error) { next(error); }
   }
 };

@@ -12,8 +12,11 @@ const getAuthHeaders = () => {
 };
 
 const adminService = {
-  getStats: async () => {
-    const response = await axios.get(`${API_URL}/admin/stats`, getAuthHeaders());
+  getStats: async (params = {}) => {
+    const response = await axios.get(`${API_URL}/admin/stats`, {
+      ...getAuthHeaders(),
+      params
+    });
     return response.data;
   },
 

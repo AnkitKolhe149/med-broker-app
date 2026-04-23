@@ -19,6 +19,37 @@
   box-shadow: 0 8px 24px rgba(16, 33, 23, 0.04);
 }
 
+.admin-dash-card.clickable-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-dash-card.clickable-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(16, 33, 23, 0.08);
+}
+
+.admin-date-hover:hover {
+  background-color: #f8fafc;
+}
+
+.admin-quick-chip {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-quick-chip:hover {
+  background: #f3f4f6;
+  color: #111827;
+  border-color: #9ca3af;
+}
+
 .admin-dash-card.soft {
   border-style: dashed;
 }

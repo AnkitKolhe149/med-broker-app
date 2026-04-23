@@ -3,38 +3,55 @@ const { NotFoundError, ConflictError } = require('../../utils/errors');
 const { getEnv } = require('../../config/env');
 
 module.exports = {
-  getDashboardStats: async () => {
-    // Basic stats
-    const totalVendors = await prisma.vendor.count();
-    const totalCustomers = await prisma.customer.count();
-    
-    const paidOrders = await prisma.order.findMany({
-      where: { status: 'PAID' },
-      select: { totalCents: true, createdAt: true }
-    });
-
-    const totalRevenueCents = paidOrders.reduce((sum, order) => sum + order.totalCents, 0);
-
-    // Simple Monthly Growth logic (Current month vs Last month)
+  getDashboardStats: async (options = {}) => {
     const now = new Date();
     const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    const currentMonthRevenue = paidOrders
-      .filter(o => o.createdAt >= startOfCurrentMonth)
-      .reduce((sum, order) => sum + order.totalCents, 0);
+    // 1. Validate incoming req.query to prevent Prisma crashes
+    const rangeStart = options.startDate ? new Date(options.startDate) : startOfCurrentMonth;
+    const rangeEnd = options.endDate ? new Date(options.endDate) : now;
 
-    const lastMonthRevenue = paidOrders
-      .filter(o => o.createdAt >= startOfLastMonth && o.createdAt < startOfCurrentMonth)
-      .reduce((sum, order) => sum + order.totalCents, 0);
+    if (isNaN(rangeStart.getTime()) || isNaN(rangeEnd.getTime())) {
+      throw new ConflictError('Invalid startDate or endDate format. Must be ISO 8601.');
+    }
 
+    // 2. High-Performance Aggregations (No .filter or .reduce)
+    const [totalVendors, totalCustomers, revenueAgg, currentMonthAgg, lastMonthAgg] = await Promise.all([
+      prisma.vendor.count(),
+      prisma.customer.count(),
+
+      // Total revenue & orders across selected range
+      prisma.order.aggregate({
+        where: { status: 'PAID', createdAt: { gte: rangeStart, lte: rangeEnd } },
+        _sum: { totalCents: true },
+        _count: { id: true },
+      }),
+
+      // Current-month revenue (always fetched for MoM comparisons)
+      prisma.order.aggregate({
+        where: { status: 'PAID', createdAt: { gte: startOfCurrentMonth } },
+        _sum: { totalCents: true },
+      }),
+
+      // Last-month revenue
+      prisma.order.aggregate({
+        where: { status: 'PAID', createdAt: { gte: startOfLastMonth, lt: startOfCurrentMonth } },
+        _sum: { totalCents: true },
+      }),
+    ]);
+
+    // 3. Return structured payload with Real-Time Readiness flag
     return {
       totalVendors,
       totalCustomers,
-      totalRevenueCents,
-      totalOrders: paidOrders.length,
-      currentMonthRevenueCents: currentMonthRevenue,
-      lastMonthRevenueCents: lastMonthRevenue,
+      totalRevenueCents: revenueAgg._sum.totalCents || 0,
+      totalOrders: revenueAgg._count.id || 0,
+      currentMonthRevenueCents: currentMonthAgg._sum.totalCents || 0,
+      lastMonthRevenueCents: lastMonthAgg._sum.totalCents || 0,
+      rangeStart,
+      rangeEnd,
+      lastUpdated: now.toISOString() // New requirement for frontend real-time tracking
     };
   },
 
@@ -62,52 +79,43 @@ module.exports = {
   },
 
   getPayoutOverview: async () => {
-    // For each vendor, calculate how much they've earned (from PAID order items)
-    // minus the total of COMPLETED payouts.
-    
-    // Get all vendors
+    // Fetch commission rate from DB; fallback to 5% if not configured yet
+    const commissionSetting = await prisma.systemSetting.findUnique({
+      where: { key: 'PLATFORM_COMMISSION_PERCENT' },
+    }).catch(() => null);
+    const commissionRate = commissionSetting ? parseFloat(commissionSetting.value) / 100 : 0.05;
+
     const vendors = await prisma.vendor.findMany({
-      select: { id: true, companyName: true, contactPersonName: true }
+      select: { id: true, companyName: true, contactPersonName: true },
     });
 
-    // We fetch order items belonging to PAID orders
-    const orderItems = await prisma.orderItem.findMany({
-      where: {
-        order: { status: 'PAID' }
-      },
-      select: {
-        vendorId: true,
-        quantity: true,
-        unitPriceCents: true
-      }
-    });
+    // Use DB aggregation — no in-memory array processing
+    const [earnedByVendor, paidByVendor] = await Promise.all([
+      prisma.orderItem.groupBy({
+        by: ['vendorId'],
+        where: { order: { status: 'PAID' } },
+        _sum: { lineTotalCents: true },
+      }),
+      prisma.payout.groupBy({
+        by: ['vendorId'],
+        where: { status: 'COMPLETED' },
+        _sum: { amountCents: true },
+      }),
+    ]);
 
-    // Payouts
-    const payouts = await prisma.payout.findMany({
-      where: { status: 'COMPLETED' },
-      select: { vendorId: true, amountCents: true }
-    });
+    const earnedMap = Object.fromEntries(earnedByVendor.map(r => [r.vendorId, r._sum.lineTotalCents || 0]));
+    const paidMap = Object.fromEntries(paidByVendor.map(r => [r.vendorId, r._sum.amountCents || 0]));
 
     const overview = vendors.map(v => {
-      const vendorItems = orderItems.filter(item => item.vendorId === v.id);
-      const totalEarnedCents = vendorItems.reduce((sum, item) => sum + (item.quantity * item.unitPriceCents), 0);
-      
-      const vendorPayouts = payouts.filter(p => p.vendorId === v.id);
-      const totalPaidCents = vendorPayouts.reduce((sum, p) => sum + p.amountCents, 0);
-
-      // Assume a 5% platform commission
-      const commissionCents = Math.floor(totalEarnedCents * 0.05);
+      const totalEarnedCents = earnedMap[v.id] || 0;
+      const totalPaidCents = paidMap[v.id] || 0;
+      const commissionCents = Math.floor(totalEarnedCents * commissionRate);
       const netPayableCents = totalEarnedCents - commissionCents;
-      const pendingBalanceCents = netPayableCents - totalPaidCents;
-
+      const pendingBalanceCents = Math.max(0, netPayableCents - totalPaidCents);
       return {
-        vendorId: v.id,
-        companyName: v.companyName,
-        contactPersonName: v.contactPersonName,
-        totalEarnedCents,
-        commissionCents,
-        totalPaidCents,
-        pendingBalanceCents: Math.max(0, pendingBalanceCents)
+        vendorId: v.id, companyName: v.companyName, contactPersonName: v.contactPersonName,
+        totalEarnedCents, commissionCents, commissionRatePercent: commissionRate * 100,
+        totalPaidCents, pendingBalanceCents
       };
     });
 
@@ -419,55 +427,42 @@ module.exports = {
     const limit = Math.min(100, Math.max(1, Number(options.limit) || 10));
     const skip = (page - 1) * limit;
 
-    const orders = await prisma.order.findMany({
-      include: {
-        user: {
-          select: { id: true, email: true, name: true }
+    const where = {};
+    if (options.status) where.status = String(options.status).toUpperCase();
+    if (options.startDate || options.endDate) {
+      where.createdAt = {};
+      if (options.startDate) where.createdAt.gte = new Date(options.startDate);
+      if (options.endDate) where.createdAt.lte = new Date(options.endDate);
+    }
+
+    const [disputes, total, statusCounts] = await Promise.all([
+      prisma.disputeCase.findMany({
+        where,
+        include: {
+          order: { select: { id: true, orderNumber: true, totalCents: true, currencyCode: true } },
+          payment: { select: { id: true, status: true, amountCents: true } },
+          raisedByUser: { select: { id: true, email: true, name: true } },
+          assignedUser: { select: { id: true, email: true, name: true } },
+          resolvedUser: { select: { id: true, email: true, name: true } },
         },
-        payment: true,
-        items: {
-          include: {
-            medicine: {
-              select: { name: true }
-            }
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit * 2
-    });
-
-    const candidates = orders
-      .filter((order) => order.status === 'CANCELLED' || ['FAILED', 'REFUNDED'].includes(order.payment?.status))
-      .map((order) => {
-        const resolved = order.payment?.status === 'REFUNDED';
-        return {
-          id: `case_${order.id}`,
-          orderId: order.id,
-          user: order.user,
-          amountCents: order.totalCents,
-          category: order.payment?.status === 'FAILED' ? 'PAYMENT' : 'REFUND',
-          status: resolved ? 'RESOLVED' : 'OPEN',
-          reason: resolved ? 'Refund has been completed' : 'Requires admin review',
-          createdAt: order.createdAt,
-          items: order.items
-        };
-      });
-
-    const normalizedStatus = options.status ? String(options.status).toUpperCase() : null;
-    const filtered = normalizedStatus ? candidates.filter((item) => item.status === normalizedStatus) : candidates;
-
-    const paged = filtered.slice(0, limit);
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.disputeCase.count({ where }),
+      prisma.disputeCase.groupBy({ by: ['status'], _count: { _all: true } }),
+    ]);
 
     return {
-      disputes: paged,
+      disputes,
+      summary: {
+        total,
+        statusCounts: statusCounts.reduce((acc, r) => ({ ...acc, [r.status]: r._count._all }), {}),
+      },
       pagination: {
-        page,
-        limit,
-        total: filtered.length,
-        totalPages: Math.max(1, Math.ceil(filtered.length / limit))
-      }
+        page, limit, total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
     };
   },
 
@@ -719,104 +714,165 @@ module.exports = {
     };
   },
 
-  getComplianceOverview: async () => {
-    const [kycDocs, prescriptions, returnRequests, disputes, auditLogs] = await Promise.all([
-      prisma.vendorKycDocument.findMany({
-        include: {
-          vendor: { select: { id: true, companyName: true, country: true } }
-        },
-        orderBy: { updatedAt: 'desc' },
-        take: 50
-      }),
-      prisma.prescription.findMany({
-        include: {
-          customer: { select: { id: true, fullName: true, country: true } },
-          order: { select: { id: true, orderNumber: true, status: true } }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50
-      }),
-      prisma.returnRequest.findMany({
-        include: {
-          customer: { select: { id: true, fullName: true } },
-          order: { select: { id: true, orderNumber: true } }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50
-      }),
-      prisma.disputeCase.findMany({
-        include: {
-          order: { select: { id: true, orderNumber: true } }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50
-      }),
-      prisma.auditLog.findMany({
-        include: {
-          user: { select: { id: true, email: true, role: true } }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50
-      })
+  getComplianceOverview: async (options = {}) => {
+    const page = Math.max(1, Number(options.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(options.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const dateFilter = (options.startDate || options.endDate) ? {
+      createdAt: {
+        ...(options.startDate && { gte: new Date(options.startDate) }),
+        ...(options.endDate && { lte: new Date(options.endDate) }),
+      },
+    } : {};
+
+    const [kycDocs, kycTotal, prescriptions, prescTotal, returnRequests, returnTotal,
+      disputes, disputeTotal, auditLogs, auditTotal] = await Promise.all([
+
+        prisma.vendorKycDocument.findMany({
+          where: dateFilter,
+          include: { vendor: { select: { id: true, companyName: true, country: true } } },
+          orderBy: { updatedAt: 'desc' }, skip, take: limit,
+        }),
+        prisma.vendorKycDocument.count({ where: dateFilter }),
+
+        prisma.prescription.findMany({
+          where: dateFilter,
+          include: {
+            customer: { select: { id: true, fullName: true, country: true } },
+            order: { select: { id: true, orderNumber: true, status: true } },
+          },
+          orderBy: { createdAt: 'desc' }, skip, take: limit,
+        }),
+        prisma.prescription.count({ where: dateFilter }),
+
+        prisma.returnRequest.findMany({
+          where: dateFilter,
+          include: {
+            customer: { select: { id: true, fullName: true } },
+            order: { select: { id: true, orderNumber: true } },
+          },
+          orderBy: { createdAt: 'desc' }, skip, take: limit,
+        }),
+        prisma.returnRequest.count({ where: dateFilter }),
+
+        prisma.disputeCase.findMany({
+          where: dateFilter,
+          include: { order: { select: { id: true, orderNumber: true } } },
+          orderBy: { createdAt: 'desc' }, skip, take: limit,
+        }),
+        prisma.disputeCase.count({ where: dateFilter }),
+
+        prisma.auditLog.findMany({
+          where: dateFilter,
+          include: { user: { select: { id: true, email: true, role: true } } },
+          orderBy: { createdAt: 'desc' }, skip, take: limit,
+        }),
+        prisma.auditLog.count({ where: dateFilter }),
+      ]);
+
+    // Summary counts use fast DB aggregations, not in-memory .filter()
+    const [pendingKyc, pendingPrescriptions, openDisputes, openReturns] = await Promise.all([
+      prisma.vendorKycDocument.count({ where: { status: 'PENDING' } }),
+      prisma.prescription.count({ where: { status: 'PENDING' } }),
+      prisma.disputeCase.count({ where: { status: { in: ['OPEN', 'UNDER_REVIEW'] } } }),
+      prisma.returnRequest.count({ where: { status: { in: ['REQUESTED', 'APPROVED'] } } }),
     ]);
 
     return {
-      summary: {
-        pendingKyc: kycDocs.filter((doc) => doc.status === 'PENDING').length,
-        pendingPrescriptions: prescriptions.filter((item) => item.status === 'PENDING').length,
-        openDisputes: disputes.filter((item) => item.status === 'OPEN' || item.status === 'UNDER_REVIEW').length,
-        openReturns: returnRequests.filter((item) => item.status === 'REQUESTED' || item.status === 'APPROVED').length,
-      },
-      kycDocs,
-      prescriptions,
-      returnRequests,
-      disputes,
-      auditLogs
+      summary: { pendingKyc, pendingPrescriptions, openDisputes, openReturns },
+      pagination: { page, limit, totalPages: Math.max(1, Math.ceil(kycTotal / limit)) },
+      kycDocs, kycTotal,
+      prescriptions, prescTotal,
+      returnRequests, returnTotal,
+      disputes, disputeTotal,
+      auditLogs, auditTotal,
     };
   },
+  getReportsOverview: async (options = {}) => {
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const startDate = options.startDate ? new Date(options.startDate) : sixMonthsAgo;
+    const endDate = options.endDate ? new Date(options.endDate) : now;
 
-  getReportsOverview: async () => {
-    const [orders, payments, vendors, customers] = await Promise.all([
-      prisma.order.findMany({ select: { id: true, status: true, totalCents: true, currencyCode: true, createdAt: true } }),
-      prisma.payment.findMany({ select: { id: true, status: true, amountCents: true, currencyCode: true, createdAt: true } }),
-      prisma.vendor.findMany({ select: { id: true, companyName: true, verificationStatus: true, country: true } }),
-      prisma.customer.findMany({ select: { id: true, fullName: true, buyerType: true, country: true } })
-    ]);
+    // All aggregations hit the DB — no full-table scans in memory
+    const [orderAggs, paymentAggs, vendorStatusCounts, customerTypeCounts,
+      orderTrends, vendorCountryAgg, customerCountryAgg] = await Promise.all([
 
-    const sixMonths = Array.from({ length: 6 }).map((_, index) => {
-      const date = new Date();
-      date.setMonth(date.getMonth() - (5 - index));
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleString('en-US', { month: 'short' });
-      return { key, label, revenueCents: 0, orders: 0 };
+        prisma.order.groupBy({
+          by: ['status'],
+          _count: { _all: true },
+          _sum: { totalCents: true },
+        }),
+
+        prisma.payment.groupBy({
+          by: ['status'],
+          _count: { _all: true },
+        }),
+
+        prisma.vendor.groupBy({
+          by: ['verificationStatus'],
+          _count: { _all: true },
+        }),
+
+        prisma.customer.groupBy({
+          by: ['buyerType'],
+          _count: { _all: true },
+        }),
+
+        // Monthly trend data via groupBy on year+month is not directly supported;
+        // fetch only PAID orders in range with minimal projection
+        prisma.order.findMany({
+          where: { status: 'PAID', createdAt: { gte: startDate, lte: endDate } },
+          select: { totalCents: true, createdAt: true },
+          orderBy: { createdAt: 'asc' },
+        }),
+
+        prisma.vendor.groupBy({ by: ['country'], _count: { _all: true } }),
+        prisma.customer.groupBy({ by: ['country'], _count: { _all: true } }),
+      ]);
+
+    // Build 6-month trend buckets
+    const numMonths = Math.min(12, Math.max(1,
+      (endDate.getFullYear() - startDate.getFullYear()) * 12
+      + (endDate.getMonth() - startDate.getMonth()) + 1
+    ));
+    const trends = Array.from({ length: numMonths }).map((_, i) => {
+      const d = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+      return {
+        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        label: d.toLocaleString('en-US', { month: 'short' }),
+        revenueCents: 0, orders: 0,
+      };
+    });
+    orderTrends.forEach(o => {
+      const key = `${o.createdAt.getFullYear()}-${String(o.createdAt.getMonth() + 1).padStart(2, '0')}`;
+      const bucket = trends.find(t => t.key === key);
+      if (bucket) { bucket.revenueCents += o.totalCents; bucket.orders += 1; }
     });
 
-    orders.forEach((order) => {
-      if (order.status !== 'PAID') return;
-      const key = `${order.createdAt.getFullYear()}-${String(order.createdAt.getMonth() + 1).padStart(2, '0')}`;
-      const match = sixMonths.find((item) => item.key === key);
-      if (!match) return;
-      match.revenueCents += order.totalCents;
-      match.orders += 1;
-    });
+    const orderStatusBreakdown = Object.fromEntries(orderAggs.map(r => [r.status, r._count._all]));
+    const paymentStatusBreakdown = Object.fromEntries(paymentAggs.map(r => [r.status, r._count._all]));
 
     return {
       summary: {
-        totalOrders: orders.length,
-        paidOrders: orders.filter((item) => item.status === 'PAID').length,
-        cancelledOrders: orders.filter((item) => item.status === 'CANCELLED').length,
-        totalRevenueCents: orders.filter((item) => item.status === 'PAID').reduce((acc, item) => acc + item.totalCents, 0),
-        refundedPayments: payments.filter((item) => item.status === 'REFUNDED').length,
-        verifiedVendors: vendors.filter((item) => item.verificationStatus === 'VERIFIED').length,
-        wholesaleCustomers: customers.filter((item) => item.buyerType === 'WHOLESALE').length,
+        totalOrders: orderAggs.reduce((s, r) => s + r._count._all, 0),
+        paidOrders: orderStatusBreakdown['PAID'] || 0,
+        cancelledOrders: orderStatusBreakdown['CANCELLED'] || 0,
+        totalRevenueCents: orderAggs.find(r => r.status === 'PAID')?._sum?.totalCents || 0,
+        refundedPayments: paymentStatusBreakdown['REFUNDED'] || 0,
+        verifiedVendors: vendorStatusCounts.find(r => r.verificationStatus === 'VERIFIED')?._count?._all || 0,
+        wholesaleCustomers: customerTypeCounts.find(r => r.buyerType === 'WHOLESALE')?._count?._all || 0,
       },
-      trends: sixMonths,
-      orderStatusBreakdown: orders.reduce((acc, item) => ({ ...acc, [item.status]: (acc[item.status] || 0) + 1 }), {}),
-      paymentStatusBreakdown: payments.reduce((acc, item) => ({ ...acc, [item.status]: (acc[item.status] || 0) + 1 }), {}),
+      trends,
+      orderStatusBreakdown,
+      paymentStatusBreakdown,
       countryBreakdown: {
-        vendors: vendors.reduce((acc, item) => ({ ...acc, [item.country]: (acc[item.country] || 0) + 1 }), {}),
-        customers: customers.reduce((acc, item) => ({ ...acc, [item.country]: (acc[item.country] || 0) + 1 }), {}),
-      }
+        vendors: Object.fromEntries(vendorCountryAgg.map(r => [r.country, r._count._all])),
+        customers: Object.fromEntries(customerCountryAgg.map(r => [r.country, r._count._all])),
+      },
+      rangeStart: startDate,
+      rangeEnd: endDate,
     };
   },
 
@@ -855,101 +911,184 @@ module.exports = {
   },
 
   getIntegrationsOverview: async () => {
-    const exchangeRate = await prisma.exchangeRate.findFirst({ orderBy: { fetchedAt: 'desc' } });
+    // Fetch all integration records from DB — no .env checks
+    const rows = await prisma.integration.findMany({ orderBy: { name: 'asc' } });
 
-    const hasStripe = Boolean(getEnv('STRIPE_SECRET_KEY'));
-    const hasCloudinary = Boolean(getEnv('CLOUDINARY_CLOUD_NAME') && getEnv('CLOUDINARY_API_KEY') && getEnv('CLOUDINARY_API_SECRET'));
-    const hasGroq = Boolean(getEnv('GROQ_API_KEY'));
-    const hasPinecone = Boolean(getEnv('PINECONE_API_KEY') && getEnv('PINECONE_INDEX'));
-
-    const now = new Date();
-    const integrations = [
-      {
-        key: 'stripe',
-        name: 'Stripe Payments',
-        connected: hasStripe,
-        status: hasStripe ? 'CONNECTED' : 'MISSING_CONFIG',
-        note: hasStripe ? 'API keys detected' : 'Missing STRIPE_SECRET_KEY',
-        lastCheckedAt: now
-      },
-      {
-        key: 'cloudinary',
-        name: 'Cloudinary Storage',
-        connected: hasCloudinary,
-        status: hasCloudinary ? 'CONNECTED' : 'MISSING_CONFIG',
-        note: hasCloudinary ? 'Cloud credentials configured' : 'Cloudinary env vars incomplete',
-        lastCheckedAt: now
-      },
-      {
-        key: 'groq',
-        name: 'Groq AI',
-        connected: hasGroq,
-        status: hasGroq ? 'CONNECTED' : 'MISSING_CONFIG',
-        note: hasGroq ? 'AI provider key available' : 'Missing GROQ_API_KEY',
-        lastCheckedAt: now
-      },
-      {
-        key: 'pinecone',
-        name: 'Pinecone Vector DB',
-        connected: hasPinecone,
-        status: hasPinecone ? 'CONNECTED' : 'MISSING_CONFIG',
-        note: hasPinecone ? 'Vector index configured' : 'Missing Pinecone configuration',
-        lastCheckedAt: now
-      },
-      {
-        key: 'exchange-rates',
-        name: 'Exchange Rates Pipeline',
-        connected: Boolean(exchangeRate),
-        status: exchangeRate ? 'CONNECTED' : 'MISSING_CONFIG',
-        note: exchangeRate ? 'Latest rates available' : 'No exchange-rate sync record found',
-        lastCheckedAt: exchangeRate?.fetchedAt || null
-      }
-    ];
+    const integrations = rows.map(r => ({
+      key: r.key,
+      name: r.name,
+      connected: r.isEnabled && r.status === 'CONNECTED',
+      isEnabled: r.isEnabled,
+      status: r.status,
+      note: r.note,
+      lastCheckedAt: r.lastCheckedAt,
+      meta: r.meta,
+    }));
 
     return {
       summary: {
-        connected: integrations.filter((item) => item.connected).length,
-        disconnected: integrations.filter((item) => !item.connected).length,
-        checkedAt: now
+        connected: integrations.filter(i => i.connected).length,
+        disconnected: integrations.filter(i => !i.connected).length,
+        disabled: integrations.filter(i => !i.isEnabled).length,
+        checkedAt: new Date(),
       },
-      integrations
+      integrations,
     };
   },
 
-  getSettingsOverview: async () => {
-    const [users, orders, medicines, exchangeRate] = await Promise.all([
-      prisma.user.findMany({ select: { preferredCurrency: true, timezone: true } }),
-      prisma.order.findMany({ select: { currencyCode: true } }),
-      prisma.medicine.findMany({ select: { requiresPrescription: true, bulkMinQty: true, priceCents: true } }),
-      prisma.exchangeRate.findFirst({ orderBy: { fetchedAt: 'desc' } })
-    ]);
+  toggleIntegration: async (key, isEnabled) => {
+    const existing = await prisma.integration.findUnique({ where: { key } });
+    if (!existing) throw new NotFoundError(`Integration '${key}' not found`);
+    return prisma.integration.update({
+      where: { key },
+      data: { isEnabled: Boolean(isEnabled), updatedAt: new Date() },
+    });
+  },
 
-    return {
-      defaults: {
-        currency: 'INR',
-        locale: 'en-IN',
-        platformCurrency: 'INR',
-        commonUserCurrencies: [...new Set(users.map((user) => user.preferredCurrency).filter(Boolean))],
-        activeOrderCurrencies: [...new Set(orders.map((order) => order.currencyCode).filter(Boolean))],
-        exchangeRateBase: exchangeRate?.baseCode || null,
-        exchangeRateFetchedAt: exchangeRate?.fetchedAt || null,
-      },
-      pricing: {
-        taxPercent: 12,
-        maxDiscountPercent: 20,
-        baseMarkupPercent: 8,
-        autoReprice: true,
-        updateIntervalMinutes: 120
-      },
-      policy: {
-        prescriptionMedicines: medicines.filter((medicine) => medicine.requiresPrescription).length,
-        averageBulkMinQty: medicines.length
-          ? Math.round(medicines.reduce((acc, medicine) => acc + (medicine.bulkMinQty || 0), 0) / medicines.length)
-          : 0,
-        averagePriceCents: medicines.length
-          ? Math.round(medicines.reduce((acc, medicine) => acc + (medicine.priceCents || 0), 0) / medicines.length)
-          : 0,
-      }
-    };
+  getSettingsOverview: async () => {
+    // All settings come from DB — no hardcoded values
+    const settings = await prisma.systemSetting.findMany({ orderBy: [{ category: 'asc' }, { key: 'asc' }] });
+
+    // Group by category for a structured response
+    const grouped = settings.reduce((acc, s) => {
+      if (!acc[s.category]) acc[s.category] = {};
+      acc[s.category][s.key] = {
+        value: s.value,
+        label: s.label,
+        description: s.description,
+        isEditable: s.isEditable,
+      };
+      return acc;
+    }, {});
+
+    return { settings: grouped, raw: settings };
+  },
+
+  updateSettings: async (updates) => {
+    // updates: { KEY: 'newValue', ... }
+    if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+      throw new ConflictError('Request body must be a JSON object of { KEY: value } pairs');
+    }
+
+    const keys = Object.keys(updates);
+    if (keys.length === 0) throw new ConflictError('No settings keys provided');
+
+    // Validate all keys exist in DB before writing anything
+    const existing = await prisma.systemSetting.findMany({
+      where: { key: { in: keys } },
+      select: { key: true, isEditable: true },
+    });
+
+    const existingKeys = new Set(existing.map(s => s.key));
+    const unknownKeys = keys.filter(k => !existingKeys.has(k));
+    if (unknownKeys.length > 0) {
+      throw new ConflictError(`Unknown setting key(s): ${unknownKeys.join(', ')}`);
+    }
+
+    const nonEditable = existing.filter(s => !s.isEditable).map(s => s.key);
+    if (nonEditable.length > 0) {
+      throw new ConflictError(`Setting(s) are read-only and cannot be updated: ${nonEditable.join(', ')}`);
+    }
+
+    // Run all updates in a single transaction
+    const results = await prisma.$transaction(
+      keys.map(key => prisma.systemSetting.update({
+        where: { key },
+        data: { value: String(updates[key]), updatedAt: new Date() },
+      }))
+    );
+
+    return results;
+  },
+
+  // Wave 1
+  updatePrescriptionStatus: async (id, status, adminId, rejectionReason) => {
+    return prisma.prescription.update({
+      where: { id },
+      data: { status, reviewedBy: adminId, reviewedAt: new Date(), rejectionReason }
+    });
+  },
+
+  verifyKycDocument: async (id, status, adminId, rejectedReason) => {
+    return prisma.vendorKycDocument.update({
+      where: { id },
+      data: { status, verifiedBy: adminId, verifiedAt: new Date(), rejectedReason }
+    });
+  },
+
+  updateDisputeCase: async (id, data, adminId) => {
+    const updateData = { ...data };
+    if (data.status === 'RESOLVED') {
+      updateData.resolvedAt = new Date();
+      updateData.resolvedBy = adminId;
+    }
+    return prisma.disputeCase.update({
+      where: { id },
+      data: updateData
+    });
+  },
+
+  replyToSupportTicket: async (id, message, adminId, isInternal = false) => {
+    return prisma.supportTicketMessage.create({
+      data: { ticketId: id, senderId: adminId, message, isInternal }
+    });
+  },
+
+  updateSupportTicketStatus: async (id, status) => {
+    const updateData = { status };
+    if (status === 'RESOLVED' || status === 'CLOSED') updateData.closedAt = new Date();
+    return prisma.supportTicket.update({ where: { id }, data: updateData });
+  },
+
+  // Wave 2
+  updateUserStatus: async (id, isActive) => {
+    return prisma.user.update({ where: { id }, data: { isActive } });
+  },
+
+  updateCatalogMedicineVisibility: async (id, status) => {
+    return prisma.medicine.update({ where: { id }, data: { status } });
+  },
+
+  createCoupon: async (data) => {
+    return prisma.coupon.create({ data });
+  },
+
+  getCoupons: async () => {
+    return prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } });
+  },
+
+  deleteCoupon: async (id) => {
+    return prisma.coupon.delete({ where: { id } });
+  },
+
+  updateReturnRequestStatus: async (id, status, adminId, notes) => {
+    const updateData = { status, notes };
+    if (status === 'APPROVED') {
+      updateData.approvedBy = adminId;
+      updateData.approvedAt = new Date();
+    }
+    return prisma.returnRequest.update({ where: { id }, data: updateData });
+  },
+
+  // Wave 3
+  broadcastNotification: async (data) => {
+    let whereClause = {};
+    if (data.targetRole) {
+       whereClause = { role: data.targetRole };
+    }
+    const users = await prisma.user.findMany({ where: whereClause, select: { id: true } });
+    
+    if (users.length === 0) return { count: 0 };
+
+    const notifications = users.map(u => ({
+      userId: u.id,
+      title: data.title,
+      body: data.message,
+      type: data.type || 'SYSTEM',
+      channel: data.channel || 'IN_APP'
+    }));
+
+    const result = await prisma.notification.createMany({ data: notifications });
+    return { count: result.count };
   }
 };

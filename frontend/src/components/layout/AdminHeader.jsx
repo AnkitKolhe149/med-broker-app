@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
-import { Menu, Bell, ChevronDown, LogOut, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, Bell, ChevronDown, LogOut, Settings } from 'lucide-react';
 import authService from '../../services/auth.service';
+import adminService from '../../services/admin.service';
 import { useNavigate } from 'react-router-dom';
 
 const AdminHeader = ({ sidebarOpen, setSidebarOpen }) => {
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [notificationCount, setNotificationCount] = useState(0);
     const navigate = useNavigate();
     const user = authService.getCurrentUser();
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const tickets = await adminService.getSupportTicketsOverview({ status: 'OPEN' });
+                setNotificationCount(tickets.pagination?.total || 0);
+            } catch (error) {
+                console.error("Failed to fetch notification count", error);
+            }
+        };
+        fetchNotifications();
+    }, []);
 
     const handleLogout = () => {
         authService.logout();
@@ -24,19 +38,16 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }) => {
                     <Menu size={20} />
                 </button>
 
-                <div className="admin-header-context">
-                    <span className="admin-context-pill active">Full Statistics</span>
-                    <span className="admin-context-pill">Results Summary</span>
-                </div>
+
             </div>
 
             <div className="admin-header-right">
-                <button className="admin-header-icon-btn" aria-label="Create">
-                    <Plus size={18} />
+                <button className="admin-header-icon-btn" aria-label="Settings" onClick={() => navigate('/admin/settings')}>
+                    <Settings size={18} />
                 </button>
-                <button className="admin-header-icon-btn" aria-label="Notifications">
+                <button className="admin-header-icon-btn" aria-label="Notifications" onClick={() => navigate('/admin/notifications')}>
                     <Bell size={20} />
-                    <span className="admin-notification-badge">3</span>
+                    {notificationCount > 0 && <span className="admin-notification-badge">{notificationCount}</span>}
                 </button>
 
                 <div className="admin-user-menu">

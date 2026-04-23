@@ -41,9 +41,29 @@ router.get('/compliance', adminController.getComplianceOverview);
 router.get('/reports', adminController.getReportsOverview);
 router.get('/notifications', adminController.getNotificationsOverview);
 router.get('/integrations', adminController.getIntegrationsOverview);
+router.patch('/integrations/:key', adminController.toggleIntegration);
 router.get('/settings', adminController.getSettingsOverview);
+router.patch('/settings', adminController.updateSettings);
 
 // ML Training Data Export
 router.get('/training-data/demand', adminController.exportDemandTrainingData);
+
+// Wave 1: Actionable Mutations
+router.patch('/prescriptions/:id/status', adminController.updatePrescriptionStatus);
+router.patch('/compliance/:id/verify', adminController.verifyKycDocument);
+router.patch('/disputes/:id', adminController.updateDisputeCase);
+router.post('/support-tickets/:id/reply', adminController.replyToSupportTicket);
+router.patch('/support-tickets/:id/status', adminController.updateSupportTicketStatus);
+
+// Wave 2: New Administrative Features
+router.patch('/users/:id/status', adminController.updateUserStatus);
+router.patch('/catalog/:id/block', adminController.updateCatalogMedicineVisibility);
+router.post('/coupons', adminController.createCoupon);
+router.get('/coupons', adminController.getCoupons);
+router.delete('/coupons/:id', adminController.deleteCoupon);
+router.patch('/return-requests/:id/status', adminController.updateReturnRequestStatus);
+
+// Wave 3: Communication
+router.post('/notifications/broadcast', adminController.broadcastNotification);
 
 module.exports = router;
