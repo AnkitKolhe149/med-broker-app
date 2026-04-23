@@ -6,14 +6,33 @@ const { prisma } = require("./database/prisma");
 
 const app = express();
 
-// Enable CORS for frontend
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'];
+// Enable CORS for frontend.
+// Priority: CORS_ORIGIN (comma-separated) -> FRONTEND_URL -> local development defaults.
+const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'];
+const configuredOrigins = String(process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
+  configuredOrigins.push(process.env.FRONTEND_URL.trim());
 }
 
+const allowedOrigins = [...new Set([...(configuredOrigins.length ? configuredOrigins : []), ...defaultOrigins])];
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow server-to-server requests and same-origin requests without Origin header.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
