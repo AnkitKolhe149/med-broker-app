@@ -86,6 +86,11 @@ app.get("/health", async (req, res) => {
   });
 });
 
+// Root probe for platforms that default to '/'
+app.get('/', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.use("/api", routes);
 
 app.use(errorHandler);
