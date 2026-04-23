@@ -588,7 +588,7 @@ const verifyPayment = async (paymentId, verificationData) => {
   // For mock payment (development/testing)
   if (payment.provider === 'mock' || process.env.NODE_ENV === 'development') {
     const newStatus = status || 'SUCCEEDED';
-    
+
     // Update payment status
     const updatedPayment = await prisma.payment.update({
       where: { id: paymentId },

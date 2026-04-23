@@ -117,12 +117,6 @@ const AdminDashboard = () => {
     const prescriptionCount = stats?.pendingPrescriptions || 0;
     const totalTasks = kycCount + disputeCount + prescriptionCount;
 
-    const transactions = [
-        { id: 't1', receiver: 'Emma Ryan Jr.', type: 'Salary', status: 'Pending', date: 'Feb 19th, 2023', amountCents: 389200 },
-        { id: 't2', receiver: 'Adrian Daren', type: 'Bonus', status: 'Done', date: 'Feb 18th, 2023', amountCents: 107300 },
-        { id: 't3', receiver: 'Roxanne Hills', type: 'Salary', status: 'Done', date: 'Apr 16th, 2023', amountCents: 279000 },
-    ];
-
     return (
         <div className="admin-dashboard">
             <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
@@ -230,7 +224,7 @@ const AdminDashboard = () => {
                         {stats?.dailyRevenue && stats.dailyRevenue.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={stats.dailyRevenue}>
-                                    <Line type="monotone" dataKey={(d) => (d.revenueCents || 0) * 0.05} stroke="var(--primary, #157347)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                                    <Line type="monotone" dataKey={(d) => (d.revenueCents || 0) * (commissionPercent / 100)} stroke="var(--primary, #157347)" strokeWidth={2} dot={false} isAnimationActive={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         ) : (
@@ -323,18 +317,24 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {transactions.map((txn) => (
-                                <tr key={txn.id}>
-                                    <td>{txn.receiver}</td>
-                                    <td>{txn.type}</td>
-                                    <td>
-                                        <span className={`status ${txn.status.toLowerCase()}`}>{txn.status}</span>
-                                    </td>
-                                    <td>{txn.date}</td>
-                                    <td>{formatCents(txn.amountCents)}</td>
-                                    <td><button className="admin-detail-btn">Details</button></td>
+                            {payouts.length > 0 ? (
+                                payouts.map((payment) => (
+                                    <tr key={payment.vendorId || payment.id}>
+                                        <td>{payment.vendor?.businessName || payment.companyName || 'Vendor'}</td>
+                                        <td>Payout</td>
+                                        <td>
+                                            <span className="status done">Paid</span>
+                                        </td>
+                                        <td>{payment.createdAt ? new Date(payment.createdAt).toLocaleDateString() : 'N/A'}</td>
+                                        <td>{(((payment.amountCents || payment.totalPaidCents || 0) * 0.95) / 100).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</td>
+                                        <td><button className="admin-detail-btn" onClick={() => navigate('/admin/payouts')}>Details</button></td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>No transactions found.</td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
