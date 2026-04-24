@@ -1,4 +1,9 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+if (!import.meta.env.VITE_API_URL) {
+  console.warn("Frontend is falling back to localhost; check Vercel environment variables.");
+}
+
 const CACHE_TTL_MS = 60 * 1000;
 const medicinesCache = new Map();
 
@@ -6,6 +11,7 @@ const buildCacheKey = (params = {}, userContext = {}, preferredCurrency = '') =>
 	return JSON.stringify({
 		page: Number(params.page || 1),
 		limit: Number(params.limit || 12),
+		search: String(params.search || '').trim(),
 		country: userContext.country || '',
 		currency: preferredCurrency || ''
 	});
@@ -60,6 +66,7 @@ const medicineService = {
 			const queryString = new URLSearchParams({
 				page: params.page || 1,
 				limit: params.limit || 12,
+				...(params.search ? { search: String(params.search).trim() } : {}),
 				...(userContext.country ? { country: userContext.country } : {}),
 				...(preferredCurrency ? { currency: preferredCurrency } : {})
 			}).toString();

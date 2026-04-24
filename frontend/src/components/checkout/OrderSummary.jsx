@@ -1,13 +1,16 @@
 import React from 'react';
+import { Info, ShieldCheck } from 'lucide-react';
+import { useCurrency } from '../../context/CurrencyContext';
 import { formatCurrency } from '../../utils/currency';
 import styles from './Checkout.module.css';
 
-export function OrderSummary({ cartItems, getTotalPrice, discountPercent, appliedCoupon }) {
-  const currencyCode = cartItems[0]?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+export function OrderSummary({ cartItems, getTotalPrice, discountPercent, appliedCoupon, deliveryType = 'standard' }) {
+  const { currency } = useCurrency();
+  const currencyCode = cartItems[0]?.currencyCode || currency || 'USD';
   const formatPrice = (value) => formatCurrency(value, currencyCode, true);
   const subtotal = getTotalPrice();
   const discount = (subtotal * discountPercent) / 100;
-  const deliveryCharge = subtotal > 500 ? 0 : 50;
+  const deliveryCharge = deliveryType === 'express' ? 9 : 0;
   const tax = (subtotal - discount + deliveryCharge) * 0.05;
   const total = subtotal - discount + deliveryCharge + tax;
 
@@ -64,14 +67,14 @@ export function OrderSummary({ cartItems, getTotalPrice, discountPercent, applie
 
         {/* Info Cards */}
         <div className={styles.infoBox}>
-          <span className={styles.infoIcon}>ℹ️</span>
+          <span className={styles.infoIcon}><Info size={16} strokeWidth={1.75} /></span>
           <p className={styles.infoText}>
             Check your phone and email for order confirmation and tracking details.
           </p>
         </div>
 
         <div className={styles.infoBox}>
-          <span className={styles.infoIcon}>🔒</span>
+          <span className={styles.infoIcon}><ShieldCheck size={16} strokeWidth={1.75} /></span>
           <p className={styles.infoText}>
             Your information is secure and protected with SSL encryption.
           </p>

@@ -169,6 +169,60 @@
 	word-break: break-word;
 }
 
+.chatbot-message-text {
+	margin: 0;
+}
+
+.chatbot-products-list {
+	display: grid;
+	gap: 0.45rem;
+	margin-top: 0.6rem;
+}
+
+.chatbot-product-card {
+	padding: 0.56rem;
+	border-radius: 0.7rem;
+	border: 1px solid rgba(21, 115, 71, 0.2);
+	background: rgba(255, 255, 255, 0.9);
+	display: grid;
+	gap: 0.4rem;
+}
+
+.chatbot-product-main {
+	min-width: 0;
+}
+
+.chatbot-product-name {
+	margin: 0;
+	font-size: 0.82rem;
+	font-weight: 700;
+	color: var(--text-primary);
+}
+
+.chatbot-product-meta {
+	margin: 0.15rem 0 0;
+	font-size: 0.73rem;
+	color: var(--text-secondary);
+}
+
+.chatbot-product-price {
+	margin: 0.25rem 0 0;
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: var(--primary-dark);
+}
+
+.chatbot-product-add {
+	height: 2rem;
+	border: none;
+	border-radius: 0.56rem;
+	background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+	color: #fff;
+	font-size: 0.74rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
 .chatbot-message-bubble.user {
 	background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
 	color: white;

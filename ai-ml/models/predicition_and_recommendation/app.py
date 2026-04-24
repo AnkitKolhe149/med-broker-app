@@ -4,6 +4,8 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
+import joblib
 import warnings
 import logging
 import os
@@ -213,6 +215,7 @@ _DF_PAIR    = None
 _MODEL      = None
 _FEAT_NAMES = None
 _ACCURACY   = None
+_ENCODER    = None
 _SYMPTOM_CHOICES = []
 
 
@@ -311,7 +314,7 @@ DISEASE_DRUG_MAP = {
     "Urticaria": "Loratadine",
     "GERD": "Pantoprazole",
     "Gastroesophageal reflux disease": "Omeprazole",
-    "Peptic ulcer diseae": "Omeprazole",
+    "Peptic ulcer disease": "Omeprazole",
     "Chronic cholestasis": "Ursodeoxycholic acid",
     "Jaundice": "Ursodeoxycholic acid",
     "Gastroenteritis": "Ondansetron",
@@ -463,9 +466,9 @@ def get_medicines_for_disease(disease: str, meds_df, df_pair, top_n: int = 8):
 # MODEL TRAINING (cached at module level)
 # ─────────────────────────────────────────────────────────
 def get_model():
-    global _MODEL, _FEAT_NAMES, _ACCURACY
+    global _MODEL, _FEAT_NAMES, _ACCURACY, _ENCODER
     if _MODEL is not None:
-        return _MODEL, _FEAT_NAMES, _ACCURACY
+        return _MODEL, _FEAT_NAMES, _ACCURACY, _ENCODER
 
     data = load_csv_data()
     if data is None:
@@ -530,29 +533,44 @@ def predict(symptoms: list) -> dict:
     if not symptoms:
         return {"error": "Please select at least one symptom."}
 
-    model, feature_names, accuracy = get_model()
+    model, feature_names, accuracy, encoder = get_model()
     if model is None:
         return {"error": "Model could not be loaded. Check that CSV data files are present."}
 
     data = load_csv_data()
     df_pair = load_1mg_data()
 
-    # vectorise
+    # vectorise with robust matching
+    def normalize_sym(name):
+        return re.sub(r'[^a-z0-9]', '', name.lower())
+
+    norm_features = {normalize_sym(f): i for i, f in enumerate(feature_names)}
+    
     input_vector = np.zeros(len(feature_names))
     matched_keys = []
+    
     for s in symptoms:
-        key = s.lower().replace(" ", "_")
-        if key in feature_names:
-            idx = np.where(feature_names == key)[0][0]
+        # Match using normalized form (ignore spaces/underscores/dots)
+        target = normalize_sym(s)
+        if target in norm_features:
+            idx = norm_features[target]
             input_vector[idx] = 1
-            matched_keys.append(key)
+            matched_keys.append(feature_names[idx])
+        else:
+            # Fallback for manual replacement logic
+            key = s.lower().replace(" ", "_")
+            if key in feature_names:
+                idx = np.where(feature_names == key)[0][0]
+                input_vector[idx] = 1
+                matched_keys.append(key)
 
     if np.sum(input_vector) == 0:
         return {"error": "None of the selected symptoms could be matched. Try different symptom names."}
 
     # predict
     try:
-        prediction = model.predict([input_vector])[0].strip()
+        y_encoded  = model.predict([input_vector])[0]
+        prediction = encoder.inverse_transform([y_encoded])[0].strip()
         probs      = model.predict_proba([input_vector])
         confidence = float(np.max(probs) * 100)
     except Exception as e:
@@ -994,7 +1012,7 @@ def get_symptom_choices():
 # INITIALISE ON STARTUP
 # ─────────────────────────────────────────────────────────
 logger.info("Loading data and training model on startup...")
-_init_model, _init_feats, _init_acc = get_model()
+_init_model, _init_feats, _init_acc, _init_le = get_model()
 _init_choices = get_symptom_choices()
 _init_data    = load_csv_data()
 _acc_str = f"{_init_acc:.4f}" if _init_acc else "N/A"

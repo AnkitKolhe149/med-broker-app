@@ -12,5 +12,6 @@ router.post('/login', authLimiter, authController.login);
 // Protected routes
 router.get('/me', authenticate, authController.getCurrentUser);
 router.get('/profile-status', authenticate, authController.getProfileStatus);
+router.post('/change-password', authenticate, authController.changePassword);
 
 module.exports = router;

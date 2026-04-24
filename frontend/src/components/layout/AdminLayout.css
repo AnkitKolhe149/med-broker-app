@@ -1,0 +1,60 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: radial-gradient(130% 110% at 50% 0%, #e7f2eb 0%, #dce9e1 48%, #d2dfd7 100%);
+}
+
+.admin-main {
+  flex: 1;
+  margin-left: 260px; /* Width of the sidebar */
+  padding: 2rem;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-main::before {
+  content: "";
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: 48%;
+  height: 54vh;
+  z-index: 0;
+  background: linear-gradient(115deg, rgba(16, 185, 129, 0.16) 0%, rgba(45, 212, 191, 0.12) 22%, rgba(251, 146, 60, 0.1) 40%, rgba(34, 197, 94, 0.14) 61%);
+  filter: blur(38px) saturate(102%);
+  border-radius: 42% 58% 60% 40% / 56% 40% 60% 44%;
+  transform: rotate(-9deg);
+  pointer-events: none;
+}
+
+.admin-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.admin-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  gap: 1rem;
+  color: #103726;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(34, 197, 94, 0.2);
+  border-top-color: #22c55e;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

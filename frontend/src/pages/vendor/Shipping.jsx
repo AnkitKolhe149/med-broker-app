@@ -1,47 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Shipping.module.css';
 import { Clock, Package, Truck, Check, X, AlertTriangle, MapPin } from 'lucide-react';
+import orderService from '../../services/order.service';
+import { useNotification } from '../../context/NotificationContext';
 
 function VendorShipping() {
-	const [shipments, setShipments] = useState([
-		{
-			id: 1,
-			orderId: 'ORD-001234',
-			customer: 'Dr. Rajesh Kumar',
-			items: 'Paracetamol 500mg x 2',
-			status: 'shipped',
-			trackingId: 'DHL123456789',
-			carrier: 'DHL Express',
-			estimatedDelivery: '2024-01-17',
-			shippedDate: '2024-01-15'
-		},
-		{
-			id: 2,
-			orderId: 'ORD-001235',
-			customer: 'Healing Hospital',
-			items: 'Amoxicillin 250mg x 5',
-			status: 'in-transit',
-			trackingId: 'FDX987654321',
-			carrier: 'FedEx',
-			estimatedDelivery: '2024-01-18',
-			shippedDate: '2024-01-14'
-		},
-		{
-			id: 3,
-			orderId: 'ORD-001236',
-			customer: 'Health Plus Clinic',
-			items: 'Cetirizine 10mg x 3',
-			status: 'delivered',
-			trackingId: 'SPL111222333',
-			carrier: 'Spoton',
-			deliveryDate: '2024-01-14',
-			shippedDate: '2024-01-12'
-		}
-	]);
+	const { showError } = useNotification();
+	const [shipments, setShipments] = useState([]);
+	const [loading, setLoading] = useState(true);
 
 	const [selectedShipment, setSelectedShipment] = useState(null);
 	const [filters, setFilters] = useState('all');
+
+	useEffect(() => {
+		const loadShipments = async () => {
+			try {
+				setLoading(true);
+				const result = await orderService.getVendorOrders({ page: 1, limit: 100 });
+				const mapped = (result.orders || []).map((order, index) => {
+					const shipmentStatus = order.status === 'shipped'
+						? 'shipped'
+						: order.status === 'paid'
+							? 'pending'
+							: order.status === 'cancelled'
+								? 'failed'
+								: 'delivered';
+
+					return {
+						id: index + 1,
+						orderId: order.id,
+						customer: order.customer || 'Customer',
+						items: (order.items || []).map((item) => `${item.name} x ${item.quantity}`).join(', '),
+						status: shipmentStatus,
+						trackingId: order.id.slice(0, 12).toUpperCase(),
+						carrier: 'MedIQ Logistics',
+						estimatedDelivery: order.status === 'shipped' ? 'In progress' : 'Pending dispatch',
+						shippedDate: order.createdAt ? new Date(order.createdAt).toISOString().slice(0, 10) : '-',
+						deliveryDate: order.status === 'shipped' ? null : order.status === 'delivered' ? new Date().toISOString().slice(0, 10) : null
+					};
+				});
+
+				setShipments(mapped);
+			} catch (error) {
+				console.error('Failed to load shipments:', error);
+				showError(error?.response?.data?.message || 'Failed to load shipments');
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadShipments();
+	}, [showError]);
 
 	const getStatusColor = (status) => {
 		switch(status) {
@@ -65,7 +75,9 @@ function VendorShipping() {
 		}
 	};
 
-	const filteredShipments = filters === 'all' ? shipments : shipments.filter(s => s.status === filters);
+	const filteredShipments = useMemo(() => (
+		filters === 'all' ? shipments : shipments.filter((s) => s.status === filters)
+	), [shipments, filters]);
 
 	return (
 		<div className={styles.container}>
@@ -114,6 +126,9 @@ function VendorShipping() {
 			{/* Shipments Table */}
 			<div className={styles.section}>
 				<h2 className={styles.sectionTitle}>Shipments</h2>
+				{loading ? (
+					<div style={{ padding: '1rem', color: 'var(--text-secondary)' }}>Loading shipment data...</div>
+				) : (
 				<table className={styles.table}>
 					<thead>
 						<tr style={{ backgroundColor: 'var(--surface)' }}>
@@ -167,6 +182,7 @@ function VendorShipping() {
 						))}
 					</tbody>
 				</table>
+				)}
 			</div>
 
 			{/* Shipment Details Modal */}

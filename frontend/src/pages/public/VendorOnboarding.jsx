@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Info } from 'lucide-react';
 import authService from '../../services/auth.service';
 
 const VENDOR_TYPES = ['MANUFACTURER', 'DISTRIBUTOR', 'PHARMACY'];
@@ -268,7 +269,7 @@ function VendorOnboarding() {
 							borderRadius: '8px',
 							border: '1px solid #b3d9e8'
 						}}>
-							<strong style={{ color: '#0f7f8a' }}>ℹ️ What happens next?</strong>
+							<strong style={{ color: '#0f7f8a', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><Info size={14} strokeWidth={1.75} /> What happens next?</strong>
 							<p style={{ margin: '0.5rem 0 0 0', color: '#5a6b76', fontSize: '0.9rem' }}>
 								Your vendor profile will be submitted for verification. Our team will review your 
 								GSTIN and drug license details. You'll receive an email notification once approved 

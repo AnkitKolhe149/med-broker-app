@@ -7,8 +7,10 @@ const inventoryRoutes = require("../modules/inventory/inventory.routes");
 const medicinesRoutes = require("../modules/medicines/medicines.routes");
 const orderRoutes = require("../modules/orders/orders.routes");
 const paymentRoutes = require("../modules/payments/payments.routes");
+const aiRoutes = require("../modules/ai/ai.routes");
 const vendorInsightsRoutes = require("../modules/vendorInsights/vendorInsights.routes");
 const vendorProfileRoutes = require("../modules/vendorProfile/vendorProfile.routes");
+const adminRoutes = require("../modules/admin/admin.routes");
 
 const router = express.Router();
 
@@ -33,11 +35,17 @@ router.use("/orders", orderRoutes);
 // Payment routes
 router.use("/payments", paymentRoutes);
 
+// AI chatbot routes
+router.use("/ai", aiRoutes);
+
 // Vendor dashboard/analytics routes
 router.use("/vendor-insights", vendorInsightsRoutes);
 
 // Vendor profile settings routes
 router.use("/vendor", vendorProfileRoutes);
+
+// Admin dashboard and management routes
+router.use("/admin", adminRoutes);
 
 // Legacy user routes (keep for now, can be removed later)
 router.get("/users", async (req, res, next) => {

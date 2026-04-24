@@ -11,5 +11,6 @@ router.use(restrictTo(['VENDOR', 'ADMIN']));
 router.get('/dashboard', vendorInsightsController.getDashboard);
 router.get('/analytics', vendorInsightsController.getAnalytics);
 router.get('/orders', vendorInsightsController.getOrders);
+router.get('/forecast', vendorInsightsController.getDemandForecast);
 
 module.exports = router;

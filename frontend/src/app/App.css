@@ -2890,6 +2890,16 @@ img {
 }
 
 .topnav-logo {
+	background: none;
+	border: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.52rem;
+	color: var(--primary);
+	cursor: pointer;
+	border-radius: var(--radius);
+	padding: 0.32rem 0.24rem;
+	transition: transform 0.2s ease, color 0.2s ease;
 	max-width: 220px;
 	white-space: nowrap;
 	overflow: hidden;
@@ -2904,6 +2914,10 @@ img {
 .topnav-logo:hover {
 	color: var(--primary-dark);
 	transform: translateY(-1px);
+}
+
+.landing-logo {
+	max-width: none;
 }
 
 .topnav-logo-mark {

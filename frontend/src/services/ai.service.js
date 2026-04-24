@@ -1,6 +1,21 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+if (!import.meta.env.VITE_API_URL) {
+  console.warn("Frontend is falling back to localhost; check Vercel environment variables.");
+}
+
+const CHAT_SESSION_KEY = 'mediq_chat_session_id';
+
+const getSessionId = () => {
+	const existing = localStorage.getItem(CHAT_SESSION_KEY);
+	if (existing) return existing;
+
+	const generated = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+	localStorage.setItem(CHAT_SESSION_KEY, generated);
+	return generated;
+};
 
 const localFallbackResponse = (message) => {
 	const text = (message || '').toLowerCase();
@@ -22,10 +37,10 @@ const localFallbackResponse = (message) => {
 	}
 
 	if (text.includes('hello') || text.includes('hi') || text.includes('hey')) {
-		return 'Hello! I am your MedIQ Assistant. I can help with orders, payments, inventory, shipping, and account guidance.';
+		return 'Hello! Tell me your symptoms and I can help shortlist suitable medicines available on MedIQ.';
 	}
 
-	return 'I can help with orders, payments, inventory, shipping, and account settings. Tell me what you want to do, and I will guide you step by step.';
+	return 'Share your symptoms, duration, and severity. I will guide safe next steps and product options from the catalog.';
 };
 
 const aiService = {
@@ -36,15 +51,27 @@ const aiService = {
 		}
 
 		try {
+			const sessionId = getSessionId();
 			const response = await axios.post(`${API_URL}/ai/chat`, {
 				message: trimmedMessage,
+				sessionId,
 				context
 			});
 
-			const reply = response?.data?.data?.reply || response?.data?.reply;
+			const payload = response?.data?.data || {};
+			if (payload.sessionId) {
+				localStorage.setItem(CHAT_SESSION_KEY, payload.sessionId);
+			}
+
+			const reply = payload.reply || response?.data?.reply;
 			if (reply) {
 				return {
 					reply,
+					products: payload.products || [],
+					type: payload.type || 'message',
+					symptomSummary: payload.symptomSummary || [],
+					followUpQuestion: payload.followUpQuestion || null,
+					sessionId: payload.sessionId || sessionId,
 					source: 'api'
 				};
 			}
@@ -54,6 +81,10 @@ const aiService = {
 		await new Promise((resolve) => setTimeout(resolve, 500));
 		return {
 			reply: localFallbackResponse(trimmedMessage),
+			products: [],
+			type: 'fallback',
+			symptomSummary: [],
+			followUpQuestion: null,
 			source: 'fallback'
 		};
 	}

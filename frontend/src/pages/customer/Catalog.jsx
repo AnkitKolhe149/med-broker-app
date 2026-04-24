@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useEffect, useReducer } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { Search, Star } from 'lucide-react';
 import { formatCurrency as formatCurrencyValue, getCurrencySymbol as getCurrencySymbolByCode } from '../../utils/currency';
 import medicineService from '../../services/medicine.service';
 import styles from './Catalog.module.css';
@@ -21,7 +22,7 @@ import { catalogReducer, initialCatalogState, CATALOG_ACTIONS } from './catalogR
  */
 function Catalog() {
 	const navigate = useNavigate();
-	const [searchParams] = useSearchParams();
+	const location = useLocation();
 	const { addToCart } = useCart();
 	const { user } = useUser();
 	const { showSuccess, showError } = useNotification();
@@ -47,6 +48,7 @@ function Catalog() {
 		loading,
 		searching
 	} = state;
+	const activeSearchParam = useMemo(() => new URLSearchParams(location.search).get('search') || '', [location.search]);
 	
 	const itemsPerPage = 12;
 	const getBrandLabel = (medicine) => medicine.brand || medicine.vendor || 'Unbranded';
@@ -59,7 +61,8 @@ function Catalog() {
 			try {
 				const result = await medicineService.getMedicines({
 					page: currentPage,
-					limit: itemsPerPage
+					limit: itemsPerPage,
+					search: searchQuery || undefined
 				});
 
 				if (result.success) {
@@ -75,7 +78,8 @@ function Catalog() {
 					if ((result.pagination?.totalPages || 1) > currentPage) {
 						medicineService.prefetchMedicines({
 							page: currentPage + 1,
-							limit: itemsPerPage
+							limit: itemsPerPage,
+							search: searchQuery || undefined
 						});
 					}
 				} else {
@@ -92,12 +96,13 @@ function Catalog() {
 		};
 		
 		fetchMedicines();
-	}, [currentPage, itemsPerPage]);
+	}, [currentPage, itemsPerPage, searchQuery]);
 
 	useEffect(() => {
-		const query = searchParams.get('search') || '';
-		dispatch({ type: CATALOG_ACTIONS.SET_SEARCH_QUERY, payload: query });
-	}, [searchParams]);
+		if (activeSearchParam !== searchQuery) {
+			dispatch({ type: CATALOG_ACTIONS.SET_SEARCH_QUERY, payload: activeSearchParam });
+		}
+	}, [activeSearchParam, searchQuery]);
 
 	// Available filter options (derived from data)
 	const categories = useMemo(() => {
@@ -108,19 +113,6 @@ function Catalog() {
 	// Core filtering & sorting logic
 	const filteredMedicines = useMemo(() => {
 		let list = [...medicines];
-
-		// Search across multiple fields for better discoverability
-		if (searchQuery.trim()) {
-			const query = searchQuery.toLowerCase();
-			list = list.filter(medicine => (
-				medicine.name.toLowerCase().includes(query)
-				|| medicine.category.toLowerCase().includes(query)
-				|| medicine.vendor.toLowerCase().includes(query)
-				|| medicine.composition.toLowerCase().includes(query)
-				|| medicine.brand.toLowerCase().includes(query)
-				|| medicine.dosageForm.toLowerCase().includes(query)
-			));
-		}
 
 		// Filter by category
 		if (categoryFilter !== 'all') {
@@ -188,7 +180,7 @@ function Catalog() {
 	// Get pricing tier label for transparency
 	const getPricingTier = () => {
 		if (buyerType === 'WHOLESALE') return '(Wholesale)';
-		return '';
+		return '(Retail)';
 	};
 
 	// Get stock status with professional language (no aggressive urgency)
@@ -277,7 +269,7 @@ function Catalog() {
 	}
 
 	return (
-		<main className="page">
+		<main className={`page ${styles.catalogPage}`}>
 			<div className="container">
 				{/* Mobile Filter Toggle Button */}
 				<button 
@@ -571,7 +563,7 @@ function Catalog() {
 									<article key={medicine.id} className={styles.medicineCard}>
 										<div className={styles.cardImageWrap}>
 											<div className={styles.cardOverlayRow}>
-												<span className={styles.ratingBadge}>★ {Math.min(5, Math.max(3.8, (medicine.popularity / 20)).toFixed(1))}</span>
+												<span className={styles.ratingBadge}><Star size={14} strokeWidth={1.75} fill="currentColor" /> {Math.min(5, Math.max(3.8, (medicine.popularity / 20)).toFixed(1))}</span>
 												<span className={`${styles.stockPill} ${styles[`stockTone-${getStockStatusTone(medicine)}`]}`}>{getStockStatus(medicine)}</span>
 											</div>
 											{medicine.imageUrl ? (
@@ -597,10 +589,6 @@ function Catalog() {
 										<div className={styles.pricingSection}>
 											<p className={styles.priceLabel}>Price {getPricingTier()}</p>
 											<p className={styles.priceValue}>{formatDisplayPrice(getDisplayPrice(medicine))}</p>
-											<div className={styles.priceCompareRow}>
-												<span>Retail {formatDisplayPrice(medicine.retailPrice)}</span>
-												<span>Wholesale {formatDisplayPrice(medicine.wholesalePrice)}</span>
-											</div>
 											</div>
 
 											{/* ACTIONS */}
@@ -675,7 +663,7 @@ function Catalog() {
 						) : (
 							/* EMPTY STATE */
 							<div className="emptyState">
-							<div className="emptyStateIcon">🔍</div>
+							<div className="emptyStateIcon"><Search size={30} strokeWidth={1.75} /></div>
 								<h3>No medicines found</h3>
 								<p>
 									{searchQuery

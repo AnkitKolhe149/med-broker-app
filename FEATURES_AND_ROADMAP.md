@@ -222,7 +222,7 @@ Recommended: Paracetamol, Cough syrup, Rest
 ### 💳 **Payment & Billing**
 
 - ✅ Multiple payment methods (Card, UPI, Net Banking, Wallet)
-- ✅ Secure payment gateway integration (Stripe/Razorpay ready)
+- ✅ Secure payment gateway integration (Razorpay ready)
 - ✅ Encrypted payment data
 - ✅ Invoice generation with QR codes
 - ✅ Tax calculation (GST/VAT)
@@ -458,13 +458,6 @@ Recommended: Paracetamol, Cough syrup, Rest
    - Health supplements
    - Wellness products
    - Diagnostic services
-
-#### Innovation Areas
-- Telemedicine integration
-- Genetic medicine personalization
-- IoT-based health monitoring
-- Blockchain for supply chain
-- Quantum computing for predictions
 
 ---
 

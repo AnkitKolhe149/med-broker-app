@@ -21,6 +21,72 @@ export const CURRENCIES = {
 	RUB: { symbol: '₽', name: 'Russian Ruble', country: 'Russia' },
 };
 
+const COUNTRY_TO_CURRENCY = {
+	'UNITED STATES': 'USD',
+	US: 'USD',
+	'UNITED KINGDOM': 'GBP',
+	GB: 'GBP',
+	INDIA: 'INR',
+	IN: 'INR',
+	AUSTRALIA: 'AUD',
+	AU: 'AUD',
+	CANADA: 'CAD',
+	CA: 'CAD',
+	SINGAPORE: 'SGD',
+	SG: 'SGD',
+	UAE: 'AED',
+	'UNITED ARAB EMIRATES': 'AED',
+	AE: 'AED',
+	'SAUDI ARABIA': 'SAR',
+	SA: 'SAR',
+	JAPAN: 'JPY',
+	JP: 'JPY',
+	CHINA: 'CNY',
+	CN: 'CNY',
+	BRAZIL: 'BRL',
+	BR: 'BRL',
+	'SOUTH AFRICA': 'ZAR',
+	ZA: 'ZAR',
+	RUSSIA: 'RUB',
+	RU: 'RUB',
+	GERMANY: 'EUR',
+	DE: 'EUR',
+	FRANCE: 'EUR',
+	FR: 'EUR',
+	ITALY: 'EUR',
+	IT: 'EUR',
+	SPAIN: 'EUR',
+	ES: 'EUR',
+	NETHERLANDS: 'EUR',
+	NL: 'EUR'
+};
+
+export const getCurrencyForCountry = (country, fallback = 'USD') => {
+	if (!country) {
+		return fallback;
+	}
+
+	const normalizedCountry = String(country).trim().toUpperCase();
+	return COUNTRY_TO_CURRENCY[normalizedCountry] || fallback;
+};
+
+const getStoredUserContext = () => {
+	try {
+		const rawUser = localStorage.getItem('user');
+		if (!rawUser) return {};
+		const user = JSON.parse(rawUser);
+		return {
+			id: user?.id || null,
+			country: user?.customer?.country || user?.vendor?.country || null,
+			preferredCurrency: user?.preferredCurrency || null
+		};
+	} catch (_error) {
+		return {};
+	}
+};
+
+const getCurrencyPreferenceKey = (userId) => (userId ? `preferredCurrency:${userId}` : 'preferredCurrency');
+
 // Get currency symbol
 export const getCurrencySymbol = (currencyCode) => {
 	return CURRENCIES[currencyCode]?.symbol || currencyCode;
@@ -112,10 +178,19 @@ export const convertPrice = (amount, fromCurrency, targetCurrency, exchangeRates
 // Fetch latest exchange rates from backend
 export const fetchExchangeRates = async () => {
 	try {
-		const response = await fetch('/api/exchange-rates/latest?base=INR');
+		const apiBaseUrl = import.meta.env.VITE_API_URL;
+		const endpoint = apiBaseUrl
+			? `${apiBaseUrl}/exchange-rates/latest?base=INR`
+			: '/api/exchange-rates/latest?base=INR';
+		const response = await fetch(endpoint);
 		
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.status}`);
+		}
+
+		const contentType = response.headers.get('content-type') || '';
+		if (!contentType.toLowerCase().includes('application/json')) {
+			throw new Error(`Invalid exchange-rate response type: ${contentType || 'unknown'}`);
 		}
 
 		const data = await response.json();
@@ -198,8 +273,31 @@ export const detectUserCurrency = () => {
 // Get/set user currency preference from localStorage
 export const getUserCurrencyPreference = () => {
 	try {
-		const saved = localStorage.getItem('preferredCurrency');
-		return saved || detectUserCurrency();
+		const { id: userId, country, preferredCurrency: userPreferredCurrency } = getStoredUserContext();
+		const userSpecificKey = getCurrencyPreferenceKey(userId);
+		const saved = localStorage.getItem(userSpecificKey);
+
+		if (saved) {
+			return saved;
+		}
+
+		if (userPreferredCurrency) {
+			return String(userPreferredCurrency).toUpperCase();
+		}
+
+		// Keep the legacy global preference only for anonymous sessions.
+		if (!userId) {
+			const legacySaved = localStorage.getItem('preferredCurrency');
+			if (legacySaved) {
+				return legacySaved;
+			}
+		}
+
+		if (country) {
+			return getCurrencyForCountry(country, detectUserCurrency());
+		}
+
+		return detectUserCurrency();
 	} catch (error) {
 		return detectUserCurrency();
 	}
@@ -207,7 +305,10 @@ export const getUserCurrencyPreference = () => {
 
 export const setUserCurrencyPreference = (currencyCode) => {
 	try {
-		localStorage.setItem('preferredCurrency', currencyCode);
+		const { id: userId } = getStoredUserContext();
+		const normalizedCurrency = String(currencyCode || 'INR').toUpperCase();
+		localStorage.setItem(getCurrencyPreferenceKey(userId), normalizedCurrency);
+		localStorage.setItem('preferredCurrency', normalizedCurrency);
 	} catch (error) {
 		console.error('Could not save currency preference:', error);
 	}

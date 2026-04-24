@@ -100,9 +100,14 @@ const isDatabaseConnectivityError = (error) => {
   return (
     error.code === "P1001" ||
     error.code === "P1017" ||
+    error.code === "ECONNRESET" ||
+    error.code === "ETIMEDOUT" ||
+    error.code === "EPIPE" ||
     message.includes("can't reach database server") ||
     message.includes("connection") ||
-    message.includes("timed out")
+    message.includes("timed out") ||
+    message.includes("econnreset") ||
+    message.includes("socket hang up")
   );
 };
 

@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Avatar from '../../components/common/Avatar';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { FlaskConical } from 'lucide-react';
+import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { formatCurrency } from '../../utils/currency';
+import { convertPrice, formatCurrency } from '../../utils/currency';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
@@ -11,15 +13,20 @@ const ORDER_STAGES = ['Confirmed', 'Preparing', 'Picked up', 'Delivered'];
 
 function OrdersHistory() {
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { user } = useUser();
+	const { currency, exchangeRates } = useCurrency();
 	const { showError, showSuccess } = useNotification();
 	const [orders, setOrders] = useState([]);
 	const [loading, setLoading] = useState(true);
-	const [activeTab, setActiveTab] = useState('upcoming');
+	const [activeTab, setActiveTab] = useState(() => {
+		const queryTab = new URLSearchParams(window.location.search).get('tab');
+		return ['upcoming', 'previous', 'scheduled'].includes(queryTab) ? queryTab : 'upcoming';
+	});
 	const [cancellingOrderId, setCancellingOrderId] = useState(null);
 	const ordersListRef = useRef(null);
-	const defaultCurrencyCode = localStorage.getItem('preferredCurrency') || 'USD';
-	const formatPrice = (value, currencyCode = defaultCurrencyCode) => formatCurrency(value, currencyCode, true);
+	const defaultCurrencyCode = currency || user?.preferredCurrency || 'INR';
+	const formatPrice = (value, currencyCode = defaultCurrencyCode) => formatCurrency(convertPrice(value, 'INR', currencyCode, exchangeRates), currencyCode, true);
 
 	const toUiStatus = (status = '') => {
 		const normalized = status.toUpperCase();
@@ -98,17 +105,18 @@ function OrdersHistory() {
 		return { upcoming, previous, scheduled };
 	}, [orders]);
 
-	const visibleOrders = useMemo(() => {
-		if (activeTab === 'previous') return orderBuckets.previous;
-		if (activeTab === 'scheduled') return orderBuckets.scheduled;
-		return orderBuckets.upcoming;
-	}, [activeTab, orderBuckets]);
-
 	useEffect(() => {
 		if (ordersListRef.current) {
 			ordersListRef.current.scrollTop = 0;
 		}
 	}, [activeTab]);
+
+	useEffect(() => {
+		const queryTab = new URLSearchParams(location.search).get('tab');
+		if (['upcoming', 'previous', 'scheduled'].includes(queryTab)) {
+			setActiveTab(queryTab);
+		}
+	}, [location.search]);
 
 	const getStageIndex = (status) => {
 		switch (status) {
@@ -125,6 +133,95 @@ function OrdersHistory() {
 		}
 	};
 
+	const groupOrderItemsByMedicine = (items = []) => {
+		const grouped = new Map();
+		items.forEach((item) => {
+			const medicineName = item?.name;
+			if (!medicineName) return;
+			const quantity = Math.max(1, Number(item?.quantity) || 1);
+			grouped.set(medicineName, (grouped.get(medicineName) || 0) + quantity);
+		});
+		return Array.from(grouped.entries());
+	};
+
+	const getOrderSummary = (items = []) => {
+		const groupedItems = groupOrderItemsByMedicine(items);
+		if (groupedItems.length === 0) {
+			return 'Medicine order';
+		}
+
+		if (groupedItems.length === 1) {
+			const [medicineName, quantity] = groupedItems[0];
+			return `${medicineName} x${quantity}`;
+		}
+
+		if (groupedItems.length === 2) {
+			const [firstMedicineName, firstQuantity] = groupedItems[0];
+			const [secondMedicineName, secondQuantity] = groupedItems[1];
+			return `${firstMedicineName} x${firstQuantity}, ${secondMedicineName} x${secondQuantity}`;
+		}
+
+		const [firstMedicineName, firstQuantity] = groupedItems[0];
+		return `${firstMedicineName} x${firstQuantity} + ${groupedItems.length - 1} more`;
+	};
+
+	const getItemsSignature = (items = []) => {
+		const groupedItems = groupOrderItemsByMedicine(items);
+		return groupedItems
+			.sort((a, b) => a[0].localeCompare(b[0]))
+			.map(([name, qty]) => `${name}:${qty}`)
+			.join('|');
+	};
+
+	const groupOrdersForDisplay = (ordersList = []) => {
+		const groupedMap = new Map();
+
+		ordersList.forEach((order) => {
+			const signature = getItemsSignature(order.items);
+			const groupKey = `${order.status}::${order.paymentMethod}::${signature}`;
+
+			if (!groupedMap.has(groupKey)) {
+				groupedMap.set(groupKey, {
+					orderIds: [],
+					status: order.status,
+					currencyCode: order.currencyCode,
+					total: 0,
+					items: [],
+					paymentMethod: order.paymentMethod,
+					orderedAgo: order.orderedAgo,
+					etaText: order.etaText,
+					orderCount: 0
+				});
+			}
+
+			const group = groupedMap.get(groupKey);
+			group.orderIds.push(order.orderId);
+			group.orderCount += 1;
+			group.total += Number(order.total || 0);
+
+			const mergedItemsMap = new Map(group.items.map((item) => [item.name, item.quantity]));
+			(order.items || []).forEach((item) => {
+				const quantity = Math.max(1, Number(item?.quantity) || 1);
+				mergedItemsMap.set(item.name, (mergedItemsMap.get(item.name) || 0) + quantity);
+			});
+			group.items = Array.from(mergedItemsMap.entries()).map(([name, quantity]) => ({ name, quantity }));
+		});
+
+		return Array.from(groupedMap.values());
+	};
+
+	const groupedOrderBuckets = useMemo(() => ({
+		upcoming: groupOrdersForDisplay(orderBuckets.upcoming),
+		previous: groupOrdersForDisplay(orderBuckets.previous),
+		scheduled: groupOrdersForDisplay(orderBuckets.scheduled)
+	}), [orderBuckets]);
+
+	const visibleOrders = useMemo(() => {
+		if (activeTab === 'previous') return groupedOrderBuckets.previous;
+		if (activeTab === 'scheduled') return groupedOrderBuckets.scheduled;
+		return groupedOrderBuckets.upcoming;
+	}, [activeTab, groupedOrderBuckets]);
+
 	if (loading) {
 		return (
 			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -133,57 +230,18 @@ function OrdersHistory() {
 		);
 	}
 
-	const menuItems = [
-		{ label: 'My Profile', icon: '👤', action: () => navigate('/customer/profile') },
-		{ label: 'My List', icon: '📋' },
-		{ label: 'My Orders', icon: '✓', isActive: true },
-		{ label: 'Payments', icon: '💳', action: () => navigate('/customer/payment'), chip: 'EGP 310' },
-		{ label: 'Address Book', icon: '📍' },
-		{ label: 'Referrals', icon: '➤' },
-		{ label: 'Account Settings', icon: '⚙️' }
-	];
-
 	const tabs = [
-		{ key: 'upcoming', label: `Upcoming Orders (${orderBuckets.upcoming.length})` },
-		{ key: 'previous', label: `Previous Orders (${orderBuckets.previous.length})` },
-		{ key: 'scheduled', label: `Scheduled Orders (${orderBuckets.scheduled.length})` }
+		{ key: 'upcoming', label: `Upcoming Orders (${groupedOrderBuckets.upcoming.length})` },
+		{ key: 'previous', label: `Previous Orders (${groupedOrderBuckets.previous.length})` },
+		{ key: 'scheduled', label: `Scheduled Orders (${groupedOrderBuckets.scheduled.length})` }
 	];
 
 	return (
-		<main className="page">
-			<div className={`container ${styles.ordersPage}`}>
-				<aside className={styles.sidebar}>
-					<div className={styles.profileCard}>
-						<Avatar
-							src={user?.customer?.profileImage}
-							name={user?.customer?.fullName || user?.email || 'Customer'}
-							size={44}
-						/>
-						<div>
-							<p className={styles.profileName}>{user?.customer?.fullName || 'Customer'}</p>
-							<p className={styles.profilePhone}>{user?.customer?.phone || 'No phone added'}</p>
-						</div>
-					</div>
-
-					<nav className={styles.sidebarMenu}>
-						{menuItems.map((item) => (
-							<button
-								key={item.label}
-								type="button"
-								onClick={item.action}
-								className={`${styles.menuItem} ${item.isActive ? styles.menuItemActive : ''}`}
-							>
-								<span className={styles.menuIcon}>{item.icon}</span>
-								<span className={styles.menuLabel}>{item.label}</span>
-								{item.chip && <span className={styles.menuChip}>{item.chip}</span>}
-								<span className={styles.menuArrow}>›</span>
-							</button>
-						))}
-					</nav>
-				</aside>
-
-				<section className={styles.contentPanel}>
-					<h1 className={styles.pageTitle}>My Orders</h1>
+		<CustomerAccountPageLayout
+			user={user}
+			activeItem="my-orders"
+			title="My Orders"
+		>
 
 					<div className={styles.tabsRow}>
 						{tabs.map((tab) => (
@@ -210,15 +268,18 @@ function OrdersHistory() {
 						) : (
 							visibleOrders.map((order) => {
 								const stageIndex = getStageIndex(order.status);
-								const canCancel = ['confirmed', 'processing', 'in_transit'].includes(order.status);
+								const canCancel = order.orderCount === 1 && ['confirmed', 'processing', 'in_transit'].includes(order.status);
+								const groupedItems = groupOrderItemsByMedicine(order.items);
+								const totalUnits = groupedItems.reduce((sum, [, quantity]) => sum + quantity, 0);
 
 								return (
-									<article key={order.orderId} className={styles.orderCard}>
+									<article key={`${order.status}-${order.paymentMethod}-${order.orderIds?.[0] || 'group'}`} className={styles.orderCard}>
 										<div className={styles.orderCardTop}>
 											<div className={styles.orderIdentity}>
-												<span className={styles.orderIcon}>🧪</span>
+												<span className={styles.orderIcon}><FlaskConical size={16} strokeWidth={1.75} /></span>
 												<div>
-													<p className={styles.orderNo}>Order no #{order.orderId}</p>
+													<p className={styles.orderNo}>{getOrderSummary(order.items)}</p>
+													<p className={styles.orderRef}>Order #{String(order.orderIds?.[0] || '').slice(0, 8)}</p>
 													<p className={styles.orderPrice}>{formatPrice(order.total, order.currencyCode)}</p>
 												</div>
 											</div>
@@ -229,10 +290,10 @@ function OrdersHistory() {
 													<button
 														type="button"
 														className={styles.cancelButton}
-														onClick={() => handleCancelOrder(order.orderId)}
-														disabled={cancellingOrderId === order.orderId}
+														onClick={() => handleCancelOrder(order.orderIds[0])}
+														disabled={cancellingOrderId === order.orderIds[0]}
 													>
-														{cancellingOrderId === order.orderId ? 'Cancelling...' : 'Cancel Order'}
+														{cancellingOrderId === order.orderIds[0] ? 'Cancelling...' : 'Cancel Order'}
 													</button>
 												)}
 											</div>
@@ -259,7 +320,9 @@ function OrdersHistory() {
 										</div>
 
 										<p className={styles.orderMeta}>
-											{order.items.length} item{order.items.length > 1 ? 's' : ''}
+											{groupedItems.length} medicine{groupedItems.length > 1 ? 's' : ''}
+											<span>•</span>
+											{totalUnits} unit{totalUnits > 1 ? 's' : ''}
 											<span>•</span>
 											{order.paymentMethod}
 											<span>•</span>
@@ -272,9 +335,7 @@ function OrdersHistory() {
 							})
 						)}
 					</div>
-				</section>
-			</div>
-		</main>
+		</CustomerAccountPageLayout>
 	);
 }
 

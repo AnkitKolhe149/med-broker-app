@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+if (!import.meta.env.VITE_API_URL) {
+  console.warn("Frontend is falling back to localhost; check Vercel environment variables.");
+}
+
 
 const getAuthHeaders = () => {
 	const token = localStorage.getItem('token');
@@ -57,6 +62,53 @@ const vendorService = {
 		}
 
 		return response.data.data;
+	},
+
+	getDemandForecast: async () => {
+		const response = await axios.get(`${API_URL}/vendor-insights/forecast`, {
+			headers: getAuthHeaders()
+		});
+
+		if (!response.data?.success) {
+			throw new Error(response.data?.message || 'Failed to load demand forecast');
+		}
+
+		return response.data.data;
+	},
+
+	requestWithdrawal: async ({ amountCents, note }) => {
+		const response = await axios.post(
+			`${API_URL}/vendor/withdrawals/request`,
+			{ amountCents, note },
+			{
+				headers: {
+					...getAuthHeaders(),
+					'Content-Type': 'application/json'
+				}
+			}
+		);
+
+		if (!response.data?.success) {
+			throw new Error(response.data?.message || 'Failed to request withdrawal');
+		}
+
+		return response.data.data;
+	},
+
+	getWithdrawalHistory: async (params = {}) => {
+		const response = await axios.get(`${API_URL}/vendor/withdrawals`, {
+			headers: getAuthHeaders(),
+			params
+		});
+
+		if (!response.data?.success) {
+			throw new Error(response.data?.message || 'Failed to load withdrawal history');
+		}
+
+		return {
+			requests: response.data.data || [],
+			pagination: response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 }
+		};
 	}
 };
 

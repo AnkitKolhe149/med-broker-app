@@ -4,7 +4,7 @@ import authService from '../../services/auth.service';
 import {
   BarChart2, Package, PackageSearch, Pill,
   Truck, TrendingUp, Wallet, ClipboardList,
-  MessageSquare, Settings, LogOut
+	MessageSquare, Settings, LogOut, Menu, X, ChevronLeft, ChevronRight, Brain
 } from 'lucide-react';
 import './VendorLayout.css';
 
@@ -30,6 +30,7 @@ function VendorLayout({ children }) {
 			title: 'Business Intelligence',
 			items: [
 				{ path: '/vendor/analytics', label: 'Analytics', icon: <TrendingUp size={18} strokeWidth={1.5} />, hint: 'Performance insights', description: 'Monitor trends and business KPIs' },
+				{ path: '/vendor/demand-forecasting', label: 'Demand Forecast', icon: <Brain size={18} strokeWidth={1.5} />, hint: 'AI insights', description: 'Predictive inventory and market trends' },
 				{ path: '/vendor/payments', label: 'Payments', icon: <Wallet size={18} strokeWidth={1.5} />, hint: 'Payouts & ledger', description: 'Review transactions and settlement details' },
 				{ path: '/vendor/compliance', label: 'Compliance', icon: <ClipboardList size={18} strokeWidth={1.5} />, hint: 'Document health', description: 'Manage documents, audits and compliance tasks' }
 			]
@@ -87,7 +88,7 @@ function VendorLayout({ children }) {
 				onClick={() => setIsMobileMenuOpen(true)}
 				aria-label="Open vendor navigation"
 			>
-				☰
+				<Menu size={20} strokeWidth={1.75} />
 			</button>
 
 			<div
@@ -100,18 +101,29 @@ function VendorLayout({ children }) {
 			<aside className={`vendor-sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'open' : ''}`}>
 				{/* Sidebar Header */}
 				<div className="vendor-sidebar-header">
-					{!isCollapsed && (
-						<div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-							<div className="vendor-menu-item-icon"><Pill size={18} strokeWidth={1.5} /></div>
-							<h2>medIQ</h2>
-						</div>
-					)}
+					<button
+						type="button"
+						className="vendor-brand"
+						onClick={() => navigate('/vendor/dashboard')}
+						aria-label="Go to vendor dashboard"
+					>
+						<span className="topnav-logo-mark" aria-hidden="true">✚</span>
+						{!isCollapsed && (
+							<div className="vendor-brand-text">
+								<span className="topnav-logo-word">
+									<span className="topnav-logo-med">Med</span>
+									<span className="topnav-logo-iq">IQ</span>
+								</span>
+								<span className="topnav-logo-trust">Vendor Console</span>
+							</div>
+						)}
+					</button>
 					<button
 						onClick={handleToggleSidebar}
 						className="vendor-sidebar-toggle"
 						aria-label={isMobileView ? 'Close vendor navigation' : 'Toggle vendor sidebar'}
 					>
-						{isMobileView ? '✕' : isCollapsed ? '›' : '‹'}
+						{isMobileView ? <X size={16} strokeWidth={1.75} /> : isCollapsed ? <ChevronRight size={16} strokeWidth={1.75} /> : <ChevronLeft size={16} strokeWidth={1.75} />}
 					</button>
 				</div>
 

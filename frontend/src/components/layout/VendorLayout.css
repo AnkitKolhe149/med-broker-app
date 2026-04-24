@@ -98,11 +98,126 @@ body {
 	min-height: 70px;
 }
 
-.vendor-sidebar-header h2 {
-	font-size: 1.1rem;
-	font-weight: 700;
-	letter-spacing: -0.5px;
+.vendor-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	background: transparent;
+	border: none;
+	padding: 0;
+	color: white;
+	cursor: pointer;
+	text-align: left;
+	min-width: 0;
+	font-family: "Playfair Display", "Times New Roman", serif;
+}
+
+.vendor-brand .topnav-logo-mark {
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 0.45rem;
+	background: linear-gradient(145deg, #1a9868 0%, #0f7f56 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	font-size: 0.84rem;
+	font-weight: 800;
+	box-shadow: 0 8px 16px rgba(14, 110, 74, 0.28);
+	animation: mediq-logo-float 4.6s ease-in-out infinite;
+}
+
+.vendor-brand-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.vendor-brand .topnav-logo-word {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.02em;
+	font-size: 1.2rem;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	line-height: 1;
+	position: relative;
+	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
 	white-space: nowrap;
+}
+
+.vendor-brand .topnav-logo-word::after {
+	content: "";
+	position: absolute;
+	left: -0.05rem;
+	right: -0.05rem;
+	bottom: -0.15rem;
+	height: 0.13rem;
+	background: linear-gradient(90deg, rgba(24, 129, 89, 0) 0%, rgba(24, 129, 89, 0.42) 52%, rgba(24, 129, 89, 0) 100%);
+	border-radius: 999px;
+	animation: mediq-logo-sweep 5s ease-in-out infinite;
+}
+
+.vendor-brand .topnav-logo-med {
+	font-family: "Playfair Display", "Times New Roman", serif;
+	font-weight: 700;
+	color: #eef8f3;
+}
+
+.vendor-brand .topnav-logo-iq {
+	font-family: "Space Grotesk", "Segoe UI", sans-serif;
+	font-weight: 800;
+	letter-spacing: 0.01em;
+	color: #8ce4bf;
+	margin-left: 0.03em;
+}
+
+.vendor-brand .topnav-logo-trust {
+	font-family: "Space Grotesk", "Segoe UI", sans-serif;
+	font-size: 0.52rem;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	padding: 0.18rem 0.34rem;
+	border-radius: 999px;
+	border: 1px solid rgba(175, 230, 205, 0.36);
+	background: linear-gradient(180deg, rgba(20, 95, 66, 0.78) 0%, rgba(14, 77, 54, 0.76) 100%);
+	color: rgba(232, 246, 238, 0.92);
+	box-shadow: 0 4px 10px rgba(8, 39, 28, 0.2);
+	animation: mediq-logo-pulse 3.8s ease-in-out infinite;
+	white-space: nowrap;
+}
+
+@keyframes mediq-logo-float {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-1px);
+	}
+}
+
+@keyframes mediq-logo-pulse {
+	0%,
+	100% {
+		box-shadow: 0 4px 10px rgba(8, 39, 28, 0.2);
+	}
+	50% {
+		box-shadow: 0 6px 14px rgba(8, 39, 28, 0.32);
+	}
+}
+
+@keyframes mediq-logo-sweep {
+	0%,
+	100% {
+		opacity: 0.25;
+		transform: scaleX(0.88);
+	}
+	50% {
+		opacity: 0.68;
+		transform: scaleX(1);
+	}
 }
 
 .vendor-sidebar-toggle {

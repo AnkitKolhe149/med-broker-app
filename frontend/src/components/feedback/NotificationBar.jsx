@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useNotification } from '../../context/NotificationContext';
 
 function NotificationBar() {
@@ -13,7 +14,7 @@ function NotificationBar() {
 			...styles.bar,
 			backgroundColor: isSuccess ? 'var(--success)' : 'var(--error)'
 		}}>
-			<span style={styles.icon}>{isSuccess ? '✓' : '⚠️'}</span>
+			<span style={styles.icon}>{isSuccess ? <CheckCircle2 size={16} strokeWidth={1.75} /> : <AlertTriangle size={16} strokeWidth={1.75} />}</span>
 			<span style={styles.message}>{notification.message}</span>
 		</div>
 	);
@@ -37,7 +38,7 @@ const styles = {
 		pointerEvents: 'none'
 	},
 	icon: {
-		fontWeight: '700'
+		display: 'inline-flex'
 	},
 	message: {
 		fontSize: '0.95rem'

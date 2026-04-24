@@ -1,13 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import aiService from '../../services/ai.service';
+import { useCart } from '../../context/CartContext';
+import { useUser } from '../../context/UserContext';
+import { useCurrency } from '../../context/CurrencyContext';
+import { formatCurrency } from '../../utils/currency';
 import './ChatbotPanel.css';
 
 function ChatbotPanel({ isOpen, onClose }) {
+	const { addToCart } = useCart();
+	const { user } = useUser();
+	const { currency } = useCurrency();
 	const [messages, setMessages] = useState([
 		{
 			id: 'welcome',
 			role: 'assistant',
-			text: 'Hi! I am your MedIQ Assistant. Ask me about orders, payments, medicines, inventory, or shipping.',
+			text: 'Hi! I am your MedIQ Symptom Assistant. Tell me your symptoms and I can guide safe medicine options from our catalog.',
+			products: [],
 			timestamp: new Date().toISOString()
 		}
 	]);
@@ -15,11 +23,41 @@ function ChatbotPanel({ isOpen, onClose }) {
 	const [isLoading, setIsLoading] = useState(false);
 	const messagesEndRef = useRef(null);
 
+	const currencyCode = currency || localStorage.getItem('preferredCurrency') || 'INR';
+	const formatProductPrice = (product) => {
+		const value = Number(product?.displayPrice ?? product?.retailPrice ?? 0);
+		const code = product?.displayCurrencyCode || currencyCode;
+		return formatCurrency(value, code, true);
+	};
+
 	const quickPrompts = useMemo(() => [
-		'How can I track my order?',
-		'How do I manage medicine stock?',
-		'How to resolve payment failures?'
+		'I have fever and headache since yesterday',
+		'I have sore throat and dry cough',
+		'I have acidity after meals'
 	], []);
+
+	const handleAddRecommendedProduct = (product) => {
+		const buyerType = user?.customer?.buyerType || 'RETAIL';
+		addToCart(
+			{
+				id: product.id,
+				medicineId: product.medicineId,
+				name: product.name,
+				category: 'Recommended',
+				imageUrl: product.imageUrl,
+				vendor: product.vendor,
+				vendorId: product.vendorId
+			},
+			1,
+			product.retailPrice,
+			product.wholesalePrice,
+			buyerType,
+			product.baseCurrencyCode || product.currencyCode || 'INR',
+			'standard',
+			product.bulkPrice,
+			product.bulkMinQty
+		);
+	};
 
 	useEffect(() => {
 		if (!isOpen) return;
@@ -59,9 +97,13 @@ function ChatbotPanel({ isOpen, onClose }) {
 		setIsLoading(true);
 
 		try {
-			const { reply } = await aiService.sendMessage({
+			const { reply, products = [] } = await aiService.sendMessage({
 				message: normalized,
-				context: { channel: 'chatbot-widget' }
+				context: {
+					channel: 'chatbot-widget',
+					buyerType: user?.customer?.buyerType || 'RETAIL',
+					preferredCurrency: currencyCode
+				}
 			});
 
 			setMessages((prev) => [
@@ -70,6 +112,7 @@ function ChatbotPanel({ isOpen, onClose }) {
 					id: `assistant-${Date.now()}`,
 					role: 'assistant',
 					text: reply,
+					products,
 					timestamp: new Date().toISOString()
 				}
 			]);
@@ -80,6 +123,7 @@ function ChatbotPanel({ isOpen, onClose }) {
 					id: `assistant-error-${Date.now()}`,
 					role: 'assistant',
 					text: 'I could not process that right now. Please try again in a moment.',
+					products: [],
 					timestamp: new Date().toISOString()
 				}
 			]);
@@ -129,7 +173,29 @@ function ChatbotPanel({ isOpen, onClose }) {
 					{messages.map((msg) => (
 						<div key={msg.id} className={`chatbot-message-row ${msg.role === 'user' ? 'user' : 'assistant'}`}>
 							<div className={`chatbot-message-bubble ${msg.role === 'user' ? 'user' : 'assistant'}`}>
-								{msg.text}
+								<p className="chatbot-message-text">{msg.text}</p>
+								{msg.role === 'assistant' && Array.isArray(msg.products) && msg.products.length > 0 && (
+									<div className="chatbot-products-list">
+										{msg.products.map((product) => (
+											<div key={`${msg.id}-${product.id}`} className="chatbot-product-card">
+												<div className="chatbot-product-main">
+													<p className="chatbot-product-name">{product.name}</p>
+													<p className="chatbot-product-meta">
+														{product.vendor} • {product.requiresPrescription ? 'Rx Required' : 'OTC'}
+													</p>
+													<p className="chatbot-product-price">{formatProductPrice(product)}</p>
+												</div>
+												<button
+													type="button"
+													className="chatbot-product-add"
+													onClick={() => handleAddRecommendedProduct(product)}
+												>
+													Add to Cart
+												</button>
+											</div>
+										))}
+									</div>
+								)}
 							</div>
 						</div>
 					))}

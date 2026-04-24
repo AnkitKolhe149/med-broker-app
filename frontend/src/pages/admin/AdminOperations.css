@@ -1,0 +1,161 @@
+.admin-ops-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-ops-toolbar {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-ops-toolbar select,
+.admin-ops-toolbar input {
+  border: 1px solid #d8e2db;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+  color: #2f4338;
+}
+
+.admin-ops-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-ops-summary-card {
+  background: #fff;
+  border: 1px solid #dde7e1;
+  border-radius: 12px;
+  padding: 0.85rem;
+}
+
+.admin-ops-summary-card h4 {
+  margin: 0 0 0.3rem;
+  color: #5c6f64;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.admin-ops-summary-card p {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #1f352a;
+}
+
+.admin-ops-table-wrap {
+  background: #fff;
+  border: 1px solid #dde7e1;
+  border-radius: 14px;
+  overflow: auto;
+}
+
+.admin-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.28rem 0.58rem;
+}
+
+.admin-pill.open {
+  background: #fff4dd;
+  color: #9f6a10;
+}
+
+.admin-pill.resolved,
+.admin-pill.refunded,
+.admin-pill.succeeded,
+.admin-pill.done,
+.admin-pill.paid,
+.admin-pill.shipped {
+  background: #dff5e8;
+  color: #187a49;
+}
+
+.admin-pill.pending,
+.admin-pill.initiated {
+  background: #edf2ff;
+  color: #35579d;
+}
+
+.admin-pill.cancelled,
+.admin-pill.failed {
+  background: #ffe8e8;
+  color: #b63d3d;
+}
+
+.admin-ops-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.admin-ops-actions .btn {
+  padding: 0.38rem 0.62rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+}
+
+.admin-muted {
+  color: #7f9088;
+  font-size: 0.78rem;
+}
+
+.admin-ops-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.2rem 0;
+}
+
+.admin-ops-pagination-meta {
+  color: #5f7268;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.admin-ops-pagination-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-ops-pagination-actions label {
+  color: #5f7268;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.admin-ops-pagination-actions select {
+  border: 1px solid #d8e2db;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  color: #2f4338;
+}
+
+@media (max-width: 860px) {
+  .admin-ops-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-ops-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-ops-pagination-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}

@@ -6,13 +6,95 @@ const { prisma } = require("./database/prisma");
 
 const app = express();
 
-// Enable CORS for frontend
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
-  credentials: true
-}));
+// Enable CORS for frontend.
+// Priority: CORS_ORIGIN (comma-separated) -> FRONTEND_URL -> built-in deployed frontend -> local development defaults.
+// Supports wildcard entries in CORS_ORIGIN such as https://mediq-*.vercel.app
+const defaultOrigins = [
+  'https://mediq-weld.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:3001'
+];
+const stripWrappingQuotes = (value) => String(value || '').replace(/^['\"]|['\"]$/g, '');
+const normalizeOriginValue = (value) => {
+  const normalized = stripWrappingQuotes(value).trim();
+  if (!normalized) {
+    return '';
+  }
 
-app.use(express.json());
+  try {
+    return new URL(normalized).origin;
+  } catch (_error) {
+    return normalized.replace(/\/$/, '');
+  }
+};
+
+const configuredOrigins = String(process.env.CORS_ORIGIN || '')
+  .split(/[\s,;]+/)
+  .map((origin) => normalizeOriginValue(origin))
+  .filter(Boolean);
+
+if (process.env.FRONTEND_URL) {
+  configuredOrigins.push(normalizeOriginValue(process.env.FRONTEND_URL));
+}
+
+const hasExplicitOrigins = configuredOrigins.length > 0;
+const allowedOrigins = [...new Set([...(configuredOrigins.length ? configuredOrigins : []), ...defaultOrigins])];
+
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const wildcardToRegex = (pattern) => {
+  const normalized = pattern.trim();
+  if (!normalized.includes('*')) {
+    return null;
+  }
+
+  const regexSource = `^${normalized.split('*').map(escapeRegExp).join('.*')}$`;
+  return new RegExp(regexSource);
+};
+
+const allowedOriginRegexes = configuredOrigins
+  .map(wildcardToRegex)
+  .filter(Boolean);
+
+console.info('CORS allowlist initialized:', allowedOrigins);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow server-to-server requests and same-origin requests without Origin header.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // If no explicit origins are configured, allow all origins to avoid hard failures.
+    if (!hasExplicitOrigins) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    if (allowedOriginRegexes.some((regex) => regex.test(origin))) {
+      return callback(null, true);
+    }
+
+    console.warn('CORS blocked origin:', origin, '| allowed:', allowedOrigins.join(', '));
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+app.use(express.json({
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 const HEALTH_DB_PROBE_TTL_MS = 15 * 1000;
 let cachedDbProbe = {
@@ -56,6 +138,11 @@ app.get("/health", async (req, res) => {
     latency: dbProbe.latency,
     timestamp: new Date().toISOString()
   });
+});
+
+// Root probe for platforms that default to '/'
+app.get('/', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
 app.use("/api", routes);

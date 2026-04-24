@@ -1,23 +1,20 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Setup axios interceptor for error handling
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
-    }
-    
-    const message = error.response?.data?.message || error.message || 'An error occurred';
-    return Promise.reject(new Error(message));
-  }
-);
+if (!import.meta.env.VITE_API_URL) {
+  console.warn("Frontend is falling back to localhost; check Vercel environment variables.");
+}
+
+const AUTH_CHANGED_EVENT = 'mediq:auth-changed';
+const ACCOUNT_SCOPED_KEYS = [
+  'mediq_cart',
+  'mediq_favorites',
+  'pending_order',
+  'completed_order',
+  'mediq_chat_session_id',
+  'preferredCurrency'
+];
 
 // Helper functions
 const getToken = () => localStorage.getItem('token');
@@ -27,14 +24,41 @@ const getUser = () => {
   return user ? JSON.parse(user) : null;
 };
 
+const emitAuthChanged = (user, metadata = {}) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT, {
+    detail: {
+      user,
+      ...metadata
+    }
+  }));
+};
+
+const clearAccountScopedData = () => {
+  ACCOUNT_SCOPED_KEYS.forEach((key) => localStorage.removeItem(key));
+};
+
 const setAuthData = (token, user) => {
+  const previousUser = getUser();
+  const accountChanged = Boolean(previousUser?.id && user?.id && previousUser.id !== user.id);
+
+  if (accountChanged) {
+    clearAccountScopedData();
+  }
+
   localStorage.setItem('token', token);
   localStorage.setItem('user', JSON.stringify(user));
+  emitAuthChanged(user, { accountChanged });
 };
 
 const clearAuthData = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  clearAccountScopedData();
+  emitAuthChanged(null, { accountChanged: true });
 };
 
 const getAuthHeaders = () => ({
@@ -55,6 +79,22 @@ const fetchCurrentUser = async () => {
   }
   throw new Error('Failed to fetch user data');
 };
+
+// Setup axios interceptor for error handling
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearAuthData();
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    
+    const message = error.response?.data?.message || error.message || 'An error occurred';
+    return Promise.reject(new Error(message));
+  }
+);
 
 // Public API
 export default {
@@ -95,6 +135,24 @@ export default {
     const response = await axios.get(`${API_URL}/auth/profile-status`, {
       headers: getAuthHeaders()
     });
+    return response.data.data;
+  },
+
+  changePassword: async ({ currentPassword, newPassword }) => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await axios.post(`${API_URL}/auth/change-password`, {
+      currentPassword,
+      newPassword
+    }, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to change password');
+    }
+
     return response.data.data;
   },
 

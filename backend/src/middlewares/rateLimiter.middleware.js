@@ -14,7 +14,7 @@ const apiLimiter = rateLimit({
 
 // Strict rate limiter for authentication routes - 5 login attempts per 15 minutes
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 2000, // 15 minutes
   max: 5,
   message: {
     success: false,

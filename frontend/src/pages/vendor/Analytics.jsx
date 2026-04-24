@@ -1,10 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
+import { useCurrency } from '../../context/CurrencyContext';
 import vendorService from '../../services/vendor.service';
+import { formatCurrency } from '../../utils/currency';
 import styles from './Analytics.module.css';
 import { Lightbulb } from 'lucide-react';
 
+function buildInsightMessage(analyticsData) {
+	if (!analyticsData.topProducts.length && !analyticsData.salesTrend.length) {
+		return 'No analytics data is available yet. Once orders start flowing, this section will summarize product demand and regional performance.';
+	}
+
+	const topProduct = analyticsData.topProducts[0];
+	const topRegion = analyticsData.regionData[0];
+	const trendDirection = analyticsData.salesTrend.length >= 2
+		? analyticsData.salesTrend[analyticsData.salesTrend.length - 1].sales - analyticsData.salesTrend[0].sales
+		: 0;
+
+	const trendLabel = trendDirection > 0 ? 'rising' : trendDirection < 0 ? 'softening' : 'steady';
+	const productLine = topProduct
+		? `Your strongest product is ${topProduct.name} with ${topProduct.sales} units sold and ${formatCurrency(topProduct.revenue, 'INR', true)} revenue.`
+		: 'No top product signal is available yet.';
+	const regionLine = topRegion
+		? `The strongest region is ${topRegion.region} with ${topRegion.orders} orders.`
+		: 'Regional demand has not accumulated enough data yet.';
+
+	return `${productLine} Sales momentum is ${trendLabel} over the selected range. ${regionLine}`;
+}
+
 function VendorAnalytics() {
+	const { currency, convert } = useCurrency();
 	const [timeRange, setTimeRange] = useState('month');
 	const [loading, setLoading] = useState(true);
 	const [analyticsData, setAnalyticsData] = useState({
@@ -55,6 +80,8 @@ function VendorAnalytics() {
 
 	const maxSalesTrend = Math.max(...analyticsData.salesTrend.map((data) => data.sales), 1);
 	const maxRegionOrders = Math.max(...analyticsData.regionData.map((region) => region.orders), 1);
+	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
+	const insightMessage = buildInsightMessage(analyticsData);
 
 	return (
 		<div className={styles.container}>
@@ -81,23 +108,23 @@ function VendorAnalytics() {
 			<div className={styles.metricsGrid}>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Total Sales</div>
-					<div className={styles.metricValue}>₹{analyticsData.totalSales.toLocaleString()}</div>
-					<div className={styles.metricChange}>↑ 12.5% from last month</div>
+					<div className={styles.metricValue}>{formatMoney(analyticsData.totalSales)}</div>
+					<div className={styles.metricChange}>Derived from vendor orders in the selected range</div>
 				</div>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Total Orders</div>
 					<div className={styles.metricValue}>{analyticsData.totalOrders}</div>
-					<div className={styles.metricChange}>↑ 8.3% from last month</div>
+					<div className={styles.metricChange}>Derived from vendor order history</div>
 				</div>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Avg Order Value</div>
-					<div className={styles.metricValue}>₹{analyticsData.avgOrderValue.toFixed(2)}</div>
-					<div className={styles.metricChange}>↑ 2.1% from last month</div>
+					<div className={styles.metricValue}>{formatMoney(analyticsData.avgOrderValue)}</div>
+					<div className={styles.metricChange}>Calculated from completed and pending orders</div>
 				</div>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Conversion Rate</div>
 					<div className={styles.metricValue}>{analyticsData.conversionRate}%</div>
-					<div className={styles.metricChange}>↓ 0.5% from last month</div>
+					<div className={styles.metricChange}>Backend-provided performance metric</div>
 				</div>
 			</div>
 
@@ -126,7 +153,7 @@ function VendorAnalytics() {
 										height: `${(data.sales / maxSalesTrend) * 250}px`
 									}}
 								>
-									₹{(data.sales / 1000).toFixed(0)}K
+										{formatMoney(data.sales)}
 								</div>
 								<span className={styles.monthLabel}>{data.month}</span>
 							</div>
@@ -185,7 +212,7 @@ function VendorAnalytics() {
 									<strong>{product.name}</strong>
 								</td>
 								<td className={styles.tableCell}>{product.sales}</td>
-								<td className={styles.tableCell}>₹{product.revenue.toLocaleString()}</td>
+								<td className={styles.tableCell}>{formatMoney(product.revenue)}</td>
 								<td className={styles.tableCell}>
 									<button className={styles.detailsButton}>
 										View Details
@@ -199,9 +226,7 @@ function VendorAnalytics() {
 
 			{/* AI Insights */}
 			<div className={styles.insightBox}>
-				<strong><Lightbulb size={16} strokeWidth={1.5} /> AI Insights:</strong> Based on current trends, your top-selling product (Paracetamol 500mg) has a rising demand in North India.
-				Consider increasing inventory by 20% to avoid stockouts. Also, your Cetirizine 10mg could benefit from a 5-10% price optimization
-				based on market competition.
+				<strong><Lightbulb size={16} strokeWidth={1.5} /> Insights:</strong> {insightMessage}
 			</div>
 			</VendorPageShell>
 		</div>

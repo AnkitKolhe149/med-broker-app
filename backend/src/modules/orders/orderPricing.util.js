@@ -6,6 +6,11 @@ const resolveOrderItemUnitPriceCents = ({ medicine, buyerType, quantity, package
   const bulkPriceCents = medicine.bulkPriceCents ?? wholesalePriceCents;
   const bulkMinQty = medicine.bulkMinQty || 1;
   const isBulkPackage = String(packageType || '').toLowerCase() === 'bulk';
+  const normalizedBuyerType = String(buyerType || 'RETAIL').toUpperCase();
+
+  if (isBulkPackage && normalizedBuyerType !== 'WHOLESALE') {
+    throw new ValidationError('Bulk package is available only for wholesale buyers');
+  }
 
   if (isBulkPackage && quantity < bulkMinQty) {
     throw new ValidationError(`Bulk package requires minimum quantity of ${bulkMinQty}`);
@@ -15,7 +20,7 @@ const resolveOrderItemUnitPriceCents = ({ medicine, buyerType, quantity, package
     return bulkPriceCents;
   }
 
-  if (buyerType === 'WHOLESALE') {
+  if (normalizedBuyerType === 'WHOLESALE') {
     if (quantity >= bulkMinQty) {
       return bulkPriceCents;
     }

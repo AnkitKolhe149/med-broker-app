@@ -108,6 +108,13 @@ function Register() {
 								>
 									Vendor
 								</button>
+								<button
+									type="button"
+									className={formData.role === 'ADMIN' ? 'auth-care-role-btn active' : 'auth-care-role-btn'}
+									onClick={() => handleRoleSelect('ADMIN')}
+								>
+									Admin
+								</button>
 							</div>
 						</div>
 

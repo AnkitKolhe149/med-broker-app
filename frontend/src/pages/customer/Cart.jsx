@@ -1,21 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
-import { formatCurrency } from '../../utils/currency';
+import { convertPrice, formatCurrency } from '../../utils/currency';
 import styles from './Cart.module.css';
 import { Pill, Trash2, Truck, Check, Lock, ShoppingCart } from 'lucide-react';
 
 function Cart() {
 	const navigate = useNavigate();
-	const { cartItems, removeFromCart, updateQuantity, getTotalPrice } = useCart();
+	const { cartItems, removeFromCart, updateQuantity } = useCart();
+	const { currency, exchangeRates } = useCurrency();
 	const { showError, showSuccess } = useNotification();
 	const [appliedCoupon, setAppliedCoupon] = useState('');
 	const [couponInput, setCouponInput] = useState('');
 	const [orderNotes, setOrderNotes] = useState('');
 	const [discountPercent, setDiscountPercent] = useState(0);
-	const cartCurrency = cartItems[0]?.currencyCode || localStorage.getItem('preferredCurrency') || 'USD';
+	const cartCurrency = currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, cartCurrency, true);
+
+	const getDisplayLineTotal = (item) => {
+		const sourceCurrency = item.currencyCode || 'INR';
+		const sourceValue = Number(item.basePrice || 0) * Number(item.quantity || 0);
+		return convertPrice(sourceValue, sourceCurrency, cartCurrency, exchangeRates);
+	};
+
+	const getDisplayUnitPrice = (item) => {
+		const sourceCurrency = item.currencyCode || 'INR';
+		const sourceValue = Number(item.basePrice || 0);
+		return convertPrice(sourceValue, sourceCurrency, cartCurrency, exchangeRates);
+	};
 
 	// Sample coupons for demo
 	const validCoupons = {
@@ -25,8 +39,8 @@ function Cart() {
 		'BULK25': 25
 	};
 
-	const subtotal = getTotalPrice();
-	const deliveryFee = cartItems.length > 0 ? 10 : 0;
+	const subtotal = cartItems.reduce((sum, item) => sum + getDisplayLineTotal(item), 0);
+	const deliveryFee = cartItems.length > 0 ? convertPrice(10, 'INR', cartCurrency, exchangeRates) : 0;
 	const discount = (subtotal * discountPercent) / 100;
 	const total = subtotal - discount + deliveryFee;
 
@@ -100,7 +114,7 @@ function Cart() {
 										<p className={styles.itemType}>● {item.category || 'Medicine'}</p>
 										<h3 className={styles.itemName}>{item.name}</h3>
 										<p className={styles.itemSubline}>{item.vendor || 'Trusted pharmacy partner'}</p>
-										<p className={styles.itemPrice}>{formatPrice(item.basePrice)}</p>
+										<p className={styles.itemPrice}>{formatPrice(getDisplayUnitPrice(item))}</p>
 									</div>
 
 									<div className={styles.itemActions}>
@@ -123,7 +137,7 @@ function Cart() {
 										</div>
 
 										<div className={styles.itemTotal}>
-											<p className={styles.totalPrice}>{formatPrice(item.basePrice * item.quantity)}</p>
+											<p className={styles.totalPrice}>{formatPrice(getDisplayLineTotal(item))}</p>
 											<button
 												onClick={() => removeFromCart(item.medicineId)}
 												className={styles.removeButton}

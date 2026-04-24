@@ -1,4 +1,4 @@
-const target = process.argv[2] || 'http://localhost:4000/api/medicines?page=1&limit=20';
+const target = process.argv[2] || process.env.API_URL || 'http://127.0.0.1:4000/api/medicines?page=1&limit=20';
 const levels = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 const durationMs = Number(process.argv[3] || 4000);
 const cooldownMs = Number(process.argv[4] || 800);

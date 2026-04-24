@@ -1,0 +1,485 @@
+.checkoutPage {
+	background: linear-gradient(160deg, #f7fbf8 0%, #eef6f1 54%, #f7fbfd 100%);
+}
+
+.checkoutContainer {
+	padding-top: 1.4rem;
+	padding-bottom: 2.4rem;
+}
+
+.breadcrumbRow {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--text-secondary);
+	margin-bottom: 1rem;
+}
+
+.breadcrumbLink {
+	background: none;
+	border: none;
+	padding: 0;
+	font-size: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+.breadcrumbActive {
+	color: var(--primary-dark);
+	font-weight: 600;
+}
+
+.layoutGrid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.65fr) minmax(290px, 0.95fr);
+	gap: 1.5rem;
+	align-items: start;
+}
+
+.formPanel,
+.summaryPanel {
+	background: rgba(255, 255, 255, 0.92);
+	border: 1px solid rgba(21, 115, 71, 0.12);
+	border-radius: 10px;
+	box-shadow: 0 12px 28px rgba(16, 32, 23, 0.06);
+}
+
+.formPanel {
+	padding: 1.35rem;
+}
+
+.summaryPanel {
+	padding: 1rem;
+	position: sticky;
+	top: 92px;
+}
+
+.panelTitle,
+.summaryTitle {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	color: var(--primary-dark);
+}
+
+.summaryTitle {
+	font-size: 1.55rem;
+	margin-bottom: 0.9rem;
+}
+
+.checkoutForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.formGrid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.8rem;
+}
+
+.fullRow {
+	grid-column: 1 / -1;
+}
+
+.fieldGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.fieldLabel {
+	font-size: 0.74rem;
+	font-weight: 700;
+	color: var(--text-secondary);
+	letter-spacing: 0.01em;
+	text-transform: uppercase;
+}
+
+.fieldInput,
+.fieldTextarea,
+.fileInput,
+.noteArea {
+	border: 1px solid rgba(21, 115, 71, 0.18);
+	border-radius: 6px;
+	background: #fff;
+	font: inherit;
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: 0.9rem;
+}
+
+.fieldInput {
+	height: 42px;
+	padding: 0 0.72rem;
+}
+
+.fieldTextarea,
+.noteArea {
+	padding: 0.72rem;
+	font-size: 0.9rem;
+	resize: vertical;
+}
+
+.fieldInput:focus,
+.fieldTextarea:focus,
+.fileInput:focus,
+.noteArea:focus {
+	outline: none;
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(21, 115, 71, 0.12);
+}
+
+.uploadBlock {
+	padding: 0.85rem;
+	border: 1px solid rgba(21, 115, 71, 0.16);
+	border-radius: 8px;
+	background: rgba(21, 115, 71, 0.04);
+}
+
+.fileInput {
+	width: 100%;
+	height: 40px;
+	padding: 0.45rem;
+}
+
+.fileStatus,
+.fileHint {
+	margin: 0.45rem 0 0;
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+}
+
+.shippingBlock {
+	margin-top: 0.15rem;
+}
+
+.shippingTitle {
+	margin: 0 0 0.7rem;
+	font-size: 1.15rem;
+	font-weight: 700;
+	color: var(--primary-dark);
+}
+
+.shippingMethods {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.7rem;
+}
+
+.shippingCard {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.55rem;
+	padding: 0.8rem;
+	border: 1px solid rgba(21, 115, 71, 0.2);
+	border-radius: 8px;
+	cursor: pointer;
+	background: #fff;
+}
+
+.shippingCard input {
+	margin: 0;
+	accent-color: var(--primary);
+}
+
+.shippingCardActive {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 2px rgba(21, 115, 71, 0.22);
+	background: rgba(21, 115, 71, 0.06);
+}
+
+.shippingLabel {
+	margin: 0;
+	font-size: 0.86rem;
+	font-weight: 600;
+	color: var(--text-primary);
+}
+
+.shippingCard strong {
+	font-size: 0.86rem;
+	font-weight: 700;
+	color: var(--primary-dark);
+}
+
+.shippingEta {
+	margin: 0.15rem 0 0;
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+}
+
+.termsRow {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.84rem;
+	color: var(--text-secondary);
+}
+
+.termsRow input {
+	accent-color: var(--primary);
+}
+
+.noteArea {
+	min-height: 74px;
+}
+
+.summaryItems {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+
+.summaryItem {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 0.7rem;
+	align-items: center;
+}
+
+.itemThumbWrap {
+	position: relative;
+	width: 42px;
+	height: 42px;
+	border-radius: 6px;
+	overflow: hidden;
+	background: #efefef;
+}
+
+.itemThumb {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.itemThumbFallback {
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(145deg, #e6e6e6 0%, #f3f3f3 100%);
+}
+
+.qtyDot {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	width: 18px;
+	height: 18px;
+	border-radius: 999px;
+	background: var(--primary-dark);
+	color: #fff;
+	font-size: 0.68rem;
+	font-weight: 700;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.itemInfo {
+	min-width: 0;
+}
+
+.itemName {
+	margin: 0;
+	font-size: 0.98rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.itemMeta {
+	margin: 0.15rem 0 0;
+	font-size: 0.82rem;
+	color: var(--text-secondary);
+}
+
+.itemPrice {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: var(--primary-dark);
+}
+
+.couponRow {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 0.45rem;
+	margin-top: 0.9rem;
+}
+
+.couponInputWrap {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	height: 38px;
+	padding: 0 0.55rem;
+	border: 1px solid rgba(21, 115, 71, 0.2);
+	border-radius: 6px;
+	color: var(--text-secondary);
+}
+
+.couponInputWrap input {
+	width: 100%;
+	height: 100%;
+	border: none;
+	outline: none;
+	background: transparent;
+	font: inherit;
+	font-size: 0.82rem;
+}
+
+.couponButton {
+	height: 38px;
+	padding: 0 0.9rem;
+	border: 1px solid rgba(21, 115, 71, 0.2);
+	border-radius: 6px;
+	background: linear-gradient(135deg, rgba(21, 115, 71, 0.12) 0%, rgba(21, 115, 71, 0.08) 100%);
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: var(--primary-dark);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.couponApplied {
+	margin: 0.35rem 0 0;
+	font-size: 0.78rem;
+	color: var(--success);
+	font-weight: 600;
+}
+
+.amountRows {
+	margin-top: 0.9rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+}
+
+.amountRow,
+.amountRowDiscount,
+.totalRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 0.9rem;
+	color: var(--text-secondary);
+}
+
+.amountRow strong,
+.amountRowDiscount strong {
+	color: var(--text-primary);
+	font-size: 0.86rem;
+}
+
+.amountRowDiscount {
+	color: var(--success);
+}
+
+.taxLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.totalRow {
+	margin-top: 0.3rem;
+	padding-top: 0.65rem;
+	border-top: 1px solid rgba(21, 115, 71, 0.16);
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--text-primary);
+}
+
+.totalRow strong {
+	font-size: 1.25rem;
+	line-height: 1;
+	color: var(--primary-dark);
+}
+
+.payButton {
+	width: 100%;
+	height: 44px;
+	margin-top: 1rem;
+	border: 1px solid var(--primary-dark);
+	border-radius: 9999px;
+	background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+	color: #fff;
+	font-size: 0.84rem;
+	font-weight: 800;
+	cursor: pointer;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	box-shadow: 0 14px 24px rgba(21, 115, 71, 0.22);
+}
+
+.payButton:hover:not(:disabled) {
+	filter: brightness(1.03);
+}
+
+.payButton:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}
+
+.securityNote {
+	margin-top: 0.7rem;
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.72rem;
+	color: var(--text-secondary);
+	flex-wrap: wrap;
+}
+
+.loaderWrap,
+.emptyState {
+	display: flex;
+	min-height: 52vh;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	text-align: center;
+}
+
+.backLink {
+	margin-top: 0.8rem;
+	border: none;
+	background: none;
+	font-size: 0.84rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	color: var(--primary-dark);
+	cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+	.layoutGrid {
+		grid-template-columns: 1fr;
+	}
+
+	.summaryPanel {
+		position: static;
+	}
+}
+
+@media (max-width: 760px) {
+	.formGrid,
+	.shippingMethods {
+		grid-template-columns: 1fr;
+	}
+
+	.panelTitle {
+		font-size: 1.3rem;
+	}
+
+	.summaryTitle {
+		font-size: 1.5rem;
+	}
+}
