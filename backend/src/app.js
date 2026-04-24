@@ -8,7 +8,22 @@ const app = express();
 
 // Enable CORS for frontend.
 // Priority: CORS_ORIGIN (comma-separated) -> FRONTEND_URL -> local development defaults.
+// Supports wildcard entries in CORS_ORIGIN such as https://mediq-*.vercel.app
 const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'];
+const stripWrappingQuotes = (value) => String(value || '').replace(/^['\"]|['\"]$/g, '');
+const normalizeOriginValue = (value) => {
+  const normalized = stripWrappingQuotes(value).trim();
+  if (!normalized) {
+    return '';
+  }
+
+  try {
+    return new URL(normalized).origin;
+  } catch (_error) {
+    return normalized.replace(/\/$/, '');
+  }
+};
+
 const configuredOrigins = String(process.env.CORS_ORIGIN || '')
   .split(',')
   .map((origin) => normalizeOriginValue(origin))
