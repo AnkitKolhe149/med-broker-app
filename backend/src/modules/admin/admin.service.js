@@ -1053,8 +1053,60 @@ module.exports = {
     return prisma.user.update({ where: { id }, data: { isActive } });
   },
 
-  updateCatalogMedicineVisibility: async (id, status) => {
-    return prisma.medicine.update({ where: { id }, data: { status } });
+  updateUserModeration: async (id, isBanned, moderationNote, adminId) => {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundError('User not found');
+    const fullNote = `[Moderated by Admin ${adminId} on ${new Date().toISOString()}] ${moderationNote || ''}`;
+    return prisma.user.update({
+      where: { id },
+      data: { isBanned, moderationNote: fullNote }
+    });
+  },
+
+  updateUserRole: async (id, role, adminId) => {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundError('User not found');
+    const fullNote = `[Role changed by Admin ${adminId} on ${new Date().toISOString()}]`;
+    return prisma.user.update({
+      where: { id },
+      data: { role, moderationNote: fullNote }
+    });
+  },
+
+  getAdminAccounts: async () => {
+    return prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true, email: true, name: true, createdAt: true, isActive: true, isBanned: true }
+    });
+  },
+
+  updateCatalogMedicineVisibility: async (id, status, adminId) => {
+    const medicine = await prisma.medicine.findUnique({ where: { id } });
+    if (!medicine) throw new NotFoundError('Medicine not found');
+    const fullNote = `[Status updated to ${status} by Admin ${adminId} on ${new Date().toISOString()}]`;
+    return prisma.medicine.update({
+      where: { id },
+      data: { status, moderationNote: fullNote }
+    });
+  },
+
+  adminOverrideMedicine: async (id, data, adminId) => {
+    const medicine = await prisma.medicine.findUnique({ where: { id } });
+    if (!medicine) throw new NotFoundError('Medicine not found');
+    const updatePayload = { ...data };
+    updatePayload.moderationNote = `Modified by Admin ${adminId} on ${new Date().toISOString()}`;
+    return prisma.medicine.update({
+      where: { id },
+      data: updatePayload
+    });
+  },
+
+  forceDeleteMedicine: async (id) => {
+    const medicine = await prisma.medicine.findUnique({ where: { id } });
+    if (!medicine) throw new NotFoundError('Medicine not found');
+    return prisma.medicine.delete({
+      where: { id }
+    });
   },
 
   createCoupon: async (data) => {

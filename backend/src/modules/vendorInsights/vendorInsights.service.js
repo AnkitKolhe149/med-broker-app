@@ -521,7 +521,8 @@ const getDemandForecast = async (userId) => {
   });
 
   try {
-    const response = await axios.post('http://localhost:5002/api/forecast', {
+    const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://127.0.0.1:5002';
+    const response = await axios.post(`${aiServiceUrl}/api/forecast`, {
       items: forecastPayload
     }, { timeout: 3000 });
     

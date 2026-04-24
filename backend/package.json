@@ -7,6 +7,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "build": "prisma generate",
+    "postinstall": "prisma generate",
     "ai:sync-kb": "node scripts/sync-ai-kb.js",
     "test:pricing": "node scripts/test-order-pricing.js",
     "prisma:generate": "prisma generate",

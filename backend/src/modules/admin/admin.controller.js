@@ -279,9 +279,53 @@ module.exports = {
     } catch (error) { next(error); }
   },
 
+  updateUserModeration: async (req, res, next) => {
+    try {
+      const { isBanned, moderationNote } = req.body;
+      if (req.user.id === req.params.id) {
+        return res.status(403).json({ success: false, message: 'Admins cannot ban themselves' });
+      }
+      const result = await adminService.updateUserModeration(req.params.id, isBanned, moderationNote, req.user.id);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  updateUserRole: async (req, res, next) => {
+    try {
+      const { role } = req.body;
+      const allowedRoles = ['ADMIN', 'VENDOR', 'CUSTOMER'];
+      if (!allowedRoles.includes(role)) {
+        return res.status(400).json({ success: false, message: 'Invalid role provided' });
+      }
+      const result = await adminService.updateUserRole(req.params.id, role, req.user.id);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  getAdminAccounts: async (req, res, next) => {
+    try {
+      const result = await adminService.getAdminAccounts();
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
   updateCatalogMedicineVisibility: async (req, res, next) => {
     try {
-      const result = await adminService.updateCatalogMedicineVisibility(req.params.id, req.body.status);
+      const result = await adminService.updateCatalogMedicineVisibility(req.params.id, 'BLOCKED', req.user.id);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  adminOverrideMedicine: async (req, res, next) => {
+    try {
+      const result = await adminService.adminOverrideMedicine(req.params.id, req.body, req.user.id);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  forceDeleteMedicine: async (req, res, next) => {
+    try {
+      const result = await adminService.forceDeleteMedicine(req.params.id);
       res.json({ success: true, data: result });
     } catch (error) { next(error); }
   },

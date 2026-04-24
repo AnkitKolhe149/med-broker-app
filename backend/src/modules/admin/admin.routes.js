@@ -57,7 +57,13 @@ router.patch('/support-tickets/:id/status', adminController.updateSupportTicketS
 
 // Wave 2: New Administrative Features
 router.patch('/users/:id/status', adminController.updateUserStatus);
+router.patch('/users/:id/moderation', adminController.updateUserModeration);
+router.patch('/users/:id/role', adminController.updateUserRole);
+router.get('/admin/accounts', adminController.getAdminAccounts);
+
 router.patch('/catalog/:id/block', adminController.updateCatalogMedicineVisibility);
+router.patch('/catalog/:id/admin-override', adminController.adminOverrideMedicine);
+router.delete('/catalog/:id/force', adminController.forceDeleteMedicine);
 router.post('/coupons', adminController.createCoupon);
 router.get('/coupons', adminController.getCoupons);
 router.delete('/coupons/:id', adminController.deleteCoupon);

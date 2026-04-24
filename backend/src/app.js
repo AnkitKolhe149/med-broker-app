@@ -8,7 +8,7 @@ const app = express();
 
 // Enable CORS for frontend.
 // Priority: CORS_ORIGIN (comma-separated) -> FRONTEND_URL -> local development defaults.
-const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'];
+const defaultOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : ['*'];
 const configuredOrigins = String(process.env.CORS_ORIGIN || '')
   .split(',')
   .map((origin) => origin.trim())

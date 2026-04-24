@@ -19,6 +19,8 @@ model User {
   updatedAt               DateTime                @updatedAt
   avatarUrl               String?
   isActive                Boolean                 @default(true)
+  isBanned                Boolean                 @default(false)
+  moderationNote          String?
   lastLoginAt             DateTime?
   preferredCurrency       String?                 @default("INR")
   timezone                String?
@@ -125,6 +127,7 @@ model Medicine {
   sku                  String?             @unique
   slug                 String?             @unique
   status               MedicineStatus      @default(PUBLISHED)
+  moderationNote       String?
   strength             String?
   subcategory          String?
   cartItems            CartItem[]

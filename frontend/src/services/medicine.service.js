@@ -1,4 +1,9 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+if (!import.meta.env.VITE_API_URL) {
+  console.warn("Frontend is falling back to localhost; check Vercel environment variables.");
+}
+
 const CACHE_TTL_MS = 60 * 1000;
 const medicinesCache = new Map();
 
