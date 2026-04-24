@@ -67,7 +67,6 @@ import AdminPayouts from '../pages/admin/Payouts';
 import AdminUsers from '../pages/admin/Users';
 import AdminOrders from '../pages/admin/Orders';
 import AdminReports from '../pages/admin/Reports';
-import AdminPricingRules from '../pages/admin/PricingRules';
 import AdminCatalog from '../pages/admin/Catalog';
 import AdminInventory from '../pages/admin/Inventory';
 import AdminPrescriptions from '../pages/admin/Prescriptions';
@@ -277,11 +276,6 @@ function App() {
                     <Route path="/admin/reports" element={
                         <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
                             <AdminLayout><AdminReports /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/pricing-rules" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
-                            <AdminLayout><AdminPricingRules /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/catalog" element={

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -39,7 +39,6 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { path: '/admin/orders', icon: ClipboardList, label: 'Orders' },
     { path: '/admin/payouts', icon: CreditCard, label: 'Payouts' },
     { path: '/admin/reports', icon: BarChart3, label: 'Reports' },
-    { path: '/admin/pricing-rules', icon: BarChart3, label: 'Pricing Rules' },
   ];
 
   const operationsItems = [
