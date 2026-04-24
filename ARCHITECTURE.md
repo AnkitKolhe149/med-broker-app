@@ -78,8 +78,8 @@ DATA LAYER
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | **Framework** | Flask | Python REST APIs |
-| **NLP Engine** | NLTK + spaCy | Text processing, intent classification |
-| **ML Libraries** | scikit-learn | Machine learning models |
+| **Deep Learning** | PyTorch (LSTM) | Time-series demand forecasting (PMC9540101) |
+| **ML Libraries** | scikit-learn | Classic ML, metrics, and preprocessing |
 | **Data Processing** | pandas + numpy | Data manipulation |
 
 ### Infrastructure
