@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, ChevronDown, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Menu, Bell, Settings, ChevronDown, LogOut } from 'lucide-react';
 import authService from '../../services/auth.service';
 import adminService from '../../services/admin.service';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const AdminHeader = ({ sidebarOpen, setSidebarOpen }) => {
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -42,13 +42,22 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }) => {
             </div>
 
             <div className="admin-header-right">
-                <button className="admin-header-icon-btn" aria-label="Settings" onClick={() => navigate('/admin/settings')}>
-                    <SettingsIcon size={20} strokeWidth={2} color="#4b5563" />
-                </button>
-                <button className="admin-header-icon-btn" aria-label="Notifications" onClick={() => navigate('/admin/notifications')}>
-                    <Bell size={20} />
+                <Link 
+                    to="/admin/notifications" 
+                    className="relative p-2"
+                    aria-label="Notifications"
+                >
+                    <Bell className="w-5 h-5 text-gray-500 hover:text-green-600 cursor-pointer transition-colors" />
                     {notificationCount > 0 && <span className="admin-notification-badge">{notificationCount}</span>}
-                </button>
+                </Link>
+
+                <Link 
+                    to="/admin/settings" 
+                    className="p-2"
+                    aria-label="Settings"
+                >
+                    <Settings className="w-5 h-5 text-gray-500 hover:text-green-600 cursor-pointer transition-colors" />
+                </Link>
 
                 <div className="admin-user-menu">
                     <button
