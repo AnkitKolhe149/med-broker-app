@@ -1134,10 +1134,10 @@ module.exports = {
   broadcastNotification: async (data) => {
     let whereClause = {};
     if (data.targetRole) {
-       whereClause = { role: data.targetRole };
+      whereClause = { role: data.targetRole };
     }
     const users = await prisma.user.findMany({ where: whereClause, select: { id: true } });
-    
+
     if (users.length === 0) return { count: 0 };
 
     const notifications = users.map(u => ({
@@ -1150,5 +1150,33 @@ module.exports = {
 
     const result = await prisma.notification.createMany({ data: notifications });
     return { count: result.count };
+  },
+
+  adjustInventoryStock: async (inventoryId, delta, note = '') => {
+    return prisma.inventory.update({
+      where: { id: inventoryId },
+      data: {
+        quantity: { increment: delta },
+        updatedAt: new Date()
+      }
+    });
+  },
+
+  markNotificationRead: async (id) => {
+    return prisma.notification.update({
+      where: { id },
+      data: { isRead: true }
+    });
+  },
+
+  markAllNotificationsRead: async () => {
+    return prisma.notification.updateMany({
+      where: { isRead: false },
+      data: { isRead: true }
+    });
+  },
+
+  clearAllNotifications: async () => {
+    return prisma.notification.deleteMany({});
   }
 };

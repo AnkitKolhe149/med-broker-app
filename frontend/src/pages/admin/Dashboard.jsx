@@ -171,105 +171,126 @@ const AdminDashboard = () => {
             </header>
 
             <section className="admin-dash-cards">
-                <article 
-                    className="admin-dash-card soft clickable-card" 
-                    onClick={() => navigate('/admin/vendors')} 
-                    style={{ cursor: 'pointer' }}
+                {/* ── Card 1: Action Center (Teal accent) ── */}
+                <article
+                    className="admin-dash-card accent-teal soft clickable-card"
+                    onClick={() => navigate('/admin/vendors')}
                 >
                     <div className="admin-dash-card-head">
-                        <h3>Action Center</h3>
-                        <Bell size={15} />
+                        <div>
+                            <p className="card-label">Action Center</p>
+                        </div>
+                        <Bell size={16} className="card-icon" />
                     </div>
+
                     {totalTasks === 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: '20px 0', gap: '10px', color: 'var(--success, #10b981)' }}>
-                            <CheckCircle size={32} />
-                            <p style={{ margin: 0, fontWeight: 500, textAlign: 'center' }}>No pending tasks – you're all caught up!</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '8px', color: '#00A86B' }}>
+                            <CheckCircle size={28} />
+                            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 500, textAlign: 'center', color: '#6b7280' }}>All caught up — no pending tasks!</p>
                         </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
-                            <div 
-                                style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer', padding: '8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                            <div
+                                style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer', padding: '7px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.02)' }}
                                 onClick={(e) => { e.stopPropagation(); navigate('/admin/vendors'); }}
                             >
-                                <span style={{ color: kycCount === 0 ? 'var(--text-muted, #6b7280)' : 'inherit', fontSize: '0.9rem' }}>🛡️ Vendors awaiting verification</span>
-                                <strong style={{ color: kycCount > 0 ? 'var(--error, #ef4444)' : 'var(--text-muted, #6b7280)' }}>{kycCount}</strong>
+                                <span style={{ color: kycCount === 0 ? '#9ca3af' : '#374151', fontSize: '0.85rem' }}>🛡️ Vendors awaiting KYC</span>
+                                <strong style={{ color: kycCount > 0 ? '#ef4444' : '#9ca3af', fontSize: '0.85rem' }}>{kycCount > 0 ? kycCount : '—'}</strong>
                             </div>
-                            <div 
-                                style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer', padding: '8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}
+                            <div
+                                style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer', padding: '7px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.02)' }}
                                 onClick={(e) => { e.stopPropagation(); navigate('/admin/disputes'); }}
                             >
-                                <span style={{ color: disputeCount === 0 ? 'var(--text-muted, #6b7280)' : 'inherit', fontSize: '0.9rem' }}>⚖️ Unresolved customer disputes</span>
-                                <strong style={{ color: disputeCount > 0 ? 'var(--error, #ef4444)' : 'var(--text-muted, #6b7280)' }}>{disputeCount}</strong>
+                                <span style={{ color: disputeCount === 0 ? '#9ca3af' : '#374151', fontSize: '0.85rem' }}>⚖️ Active disputes</span>
+                                <strong style={{ color: disputeCount > 0 ? '#ef4444' : '#9ca3af', fontSize: '0.85rem' }}>{disputeCount > 0 ? disputeCount : '—'}</strong>
                             </div>
-                            <div 
-                                style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer', padding: '8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}
+                            <div
+                                style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer', padding: '7px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.02)' }}
                                 onClick={(e) => { e.stopPropagation(); navigate('/admin/prescriptions'); }}
                             >
-                                <span style={{ color: prescriptionCount === 0 ? 'var(--text-muted, #6b7280)' : 'inherit', fontSize: '0.9rem' }}>💊 Prescriptions to be verified</span>
-                                <strong style={{ color: prescriptionCount > 0 ? 'var(--error, #ef4444)' : 'var(--text-muted, #6b7280)' }}>{prescriptionCount}</strong>
+                                <span style={{ color: prescriptionCount === 0 ? '#9ca3af' : '#374151', fontSize: '0.85rem' }}>💊 Prescriptions pending</span>
+                                <strong style={{ color: prescriptionCount > 0 ? '#ef4444' : '#9ca3af', fontSize: '0.85rem' }}>{prescriptionCount > 0 ? prescriptionCount : '—'}</strong>
                             </div>
                         </div>
                     )}
                 </article>
 
-                <article 
-                    className="admin-dash-card soft clickable-card" 
-                    onClick={() => navigate('/admin/payouts')} 
-                    style={{ cursor: 'pointer' }}
+                {/* ── Card 2: Platform Revenue (Green accent) ── */}
+                <article
+                    className="admin-dash-card accent-green clickable-card"
+                    onClick={() => navigate('/admin/payouts')}
                 >
                     <div className="admin-dash-card-head">
-                        <h3>Platform Revenue</h3>
+                        <div>
+                            <p className="card-label">Platform Revenue</p>
+                            <p className="card-sub">Commission @ {commissionPercent}%</p>
+                        </div>
+                        <TrendingUp size={16} className="card-icon" />
                     </div>
-                    <div style={{ width: '100%', height: '40px', marginTop: '10px' }}>
+
+                    <p className={`card-value ${platformCommission === 0 ? 'empty' : ''}`}>
+                        {formatCents(platformCommission)}
+                    </p>
+
+                    <div style={{ width: '100%', height: '44px', marginTop: '12px' }}>
                         {stats?.dailyRevenue && stats.dailyRevenue.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={stats.dailyRevenue}>
-                                    <Line type="monotone" dataKey={(d) => (d.revenueCents || 0) * (commissionPercent / 100)} stroke="var(--primary, #157347)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                                    <Line type="monotone" dataKey={(d) => (d.revenueCents || 0) * (commissionPercent / 100)} stroke="#00A86B" strokeWidth={2} dot={false} isAnimationActive={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}>
-                                <small>No data for this period</small>
+                            <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                                <small style={{ color: '#9ca3af', fontSize: '0.75rem' }}>No chart data for this period</small>
                             </div>
                         )}
                     </div>
-                    <p className="admin-card-amount" style={{ marginTop: '10px' }}>{formatCents(platformCommission)}</p>
-                    <div className="admin-inline-action">
-                        {stats?.revenueGrowth && <span className="admin-loss">{stats.revenueGrowth}</span>}
-                    </div>
+                    {stats?.revenueGrowth && <span className="admin-loss" style={{ marginTop: '6px', display: 'block' }}>{stats.revenueGrowth}</span>}
                 </article>
 
-                <article 
-                    className="admin-dash-card clickable-card" 
-                    onClick={() => navigate('/admin/orders')} 
-                    style={{ cursor: 'pointer' }}
+                {/* ── Card 3: Income Statistics (Blue accent) ── */}
+                <article
+                    className="admin-dash-card accent-blue clickable-card"
+                    onClick={() => navigate('/admin/orders')}
                 >
-                    <h3>Income statistics</h3>
-                    <p className="admin-card-amount" style={{ fontSize: '24px', fontWeight: 'bold', margin: '10px 0' }}>
+                    <div className="admin-dash-card-head">
+                        <div>
+                            <p className="card-label">Gross Revenue</p>
+                            <p className="card-sub">Total processed</p>
+                        </div>
+                        <ArrowRight size={16} className="card-icon" />
+                    </div>
+
+                    <p className={`card-value ${(stats?.totalRevenueCents || 0) === 0 ? 'empty' : ''}`}>
                         {formatCents(stats?.totalRevenueCents || 0)}
                     </p>
-                    <p className="admin-dash-muted" style={{ marginBottom: '10px' }}>Total processed revenue</p>
-                    <div style={{ width: '100%', height: '60px' }}>
+
+                    <div style={{ width: '100%', height: '52px', marginTop: '10px' }}>
                         {stats?.dailyRevenue && stats.dailyRevenue.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={stats.dailyRevenue}>
-                                    <Line type="monotone" dataKey="revenueCents" stroke="var(--primary, #157347)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                                    <Line type="monotone" dataKey="revenueCents" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: '4px', color: 'var(--text-muted)' }}>
-                                <small>No data for this period</small>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'rgba(59,130,246,0.04)', borderRadius: '6px' }}>
+                                <small style={{ color: '#9ca3af', fontSize: '0.75rem' }}>₹0.00 — no activity this period</small>
                             </div>
                         )}
                     </div>
                 </article>
 
+                {/* ── Card 4: Prescription Verification (Promo/Violet) ── */}
                 <article className="admin-dash-card promo">
-                    <p className="admin-plan-price" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{stats?.pendingPrescriptions || 0}</p>
-                    <p className="admin-plan-label">Pending Review</p>
-                    <h4>Prescription Verification</h4>
+                    <div className="admin-dash-card-head">
+                        <p className="card-label">Prescription Verification</p>
+                    </div>
+                    <p className="card-value">{stats?.pendingPrescriptions || 0}</p>
+                    <h4>Pending Review</h4>
                     <div className="admin-plan-actions">
-                        <button className="ghost" onClick={() => navigate('/admin/prescriptions')}>Details</button>
+                        <button className="btn-outline-teal" onClick={() => navigate('/admin/prescriptions')}>
+                            View Queue →
+                        </button>
                     </div>
                 </article>
             </section>

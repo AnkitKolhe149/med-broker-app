@@ -248,8 +248,8 @@ module.exports = {
     try {
       const updateData = { ...req.body };
       if (req.body.resolutionNotes) {
-         updateData.resolution = req.body.resolutionNotes;
-         delete updateData.resolutionNotes;
+        updateData.resolution = req.body.resolutionNotes;
+        delete updateData.resolutionNotes;
       }
       const result = await adminService.updateDisputeCase(req.params.id, updateData, req.user.id);
       res.json({ success: true, data: result });
@@ -311,7 +311,9 @@ module.exports = {
 
   updateCatalogMedicineVisibility: async (req, res, next) => {
     try {
-      const result = await adminService.updateCatalogMedicineVisibility(req.params.id, 'BLOCKED', req.user.id);
+      const { isBlocked } = req.body;
+      const status = isBlocked ? 'BLOCKED' : 'PUBLISHED';
+      const result = await adminService.updateCatalogMedicineVisibility(req.params.id, status, req.user.id);
       res.json({ success: true, data: result });
     } catch (error) { next(error); }
   },
@@ -354,7 +356,7 @@ module.exports = {
   updateReturnRequestStatus: async (req, res, next) => {
     try {
       const result = await adminService.updateReturnRequestStatus(req.params.id, req.body.status, req.user.id, req.body.notes);
-      
+
       if (req.body.status === 'APPROVED' && result.orderId) {
         try {
           await paymentService.processRefund(result.orderId, req.user.id, req.user.role, { reason: 'Return Request Approved' });
@@ -362,7 +364,7 @@ module.exports = {
           console.error("Refund processing failed:", refundError);
         }
       }
-      
+
       res.json({ success: true, data: result });
     } catch (error) { next(error); }
   },
@@ -372,6 +374,34 @@ module.exports = {
     try {
       const result = await adminService.broadcastNotification(req.body);
       res.json({ success: true, message: `Broadcast sent to ${result.count} users`, data: result });
+    } catch (error) { next(error); }
+  },
+
+  adjustInventoryStock: async (req, res, next) => {
+    try {
+      const result = await adminService.adjustInventoryStock(req.params.id, req.body.delta, req.body.note);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  markNotificationRead: async (req, res, next) => {
+    try {
+      const result = await adminService.markNotificationRead(req.params.id);
+      res.json({ success: true, data: result });
+    } catch (error) { next(error); }
+  },
+
+  markAllNotificationsRead: async (req, res, next) => {
+    try {
+      const result = await adminService.markAllNotificationsRead();
+      res.json({ success: true, count: result.count });
+    } catch (error) { next(error); }
+  },
+
+  clearAllNotifications: async (req, res, next) => {
+    try {
+      const result = await adminService.clearAllNotifications();
+      res.json({ success: true, count: result.count });
     } catch (error) { next(error); }
   }
 };

@@ -175,7 +175,101 @@ const adminService = {
   updateOrderStatus: async (orderId, status) => {
     const response = await axios.patch(`${API_URL}/orders/${orderId}/status`, { status }, getAuthHeaders());
     return response.data;
-  }
+  },
+
+  updateUserModeration: async (id, isBanned, moderationNote) => {
+    const response = await axios.patch(`${API_URL}/admin/users/${id}/moderation`, { isBanned, moderationNote }, getAuthHeaders());
+    return response.data;
+  },
+
+  updateUserRole: async (id, role) => {
+    const response = await axios.patch(`${API_URL}/admin/users/${id}/role`, { role }, getAuthHeaders());
+    return response.data;
+  },
+
+  // Catalog mutations
+  blockMedicine: async (id, isBlocked) => {
+    const response = await axios.patch(`${API_URL}/admin/catalog/${id}/block`, { isBlocked }, getAuthHeaders());
+    return response.data;
+  },
+
+  adminOverrideMedicine: async (id, updates) => {
+    const response = await axios.patch(`${API_URL}/admin/catalog/${id}/admin-override`, updates, getAuthHeaders());
+    return response.data;
+  },
+
+  // Prescription mutations
+  updatePrescriptionStatus: async (id, status) => {
+    const response = await axios.patch(`${API_URL}/admin/prescriptions/${id}/status`, { status }, getAuthHeaders());
+    return response.data;
+  },
+
+  // Compliance / KYC mutations
+  verifyKycDocument: async (id, status) => {
+    const response = await axios.patch(`${API_URL}/admin/compliance/${id}/verify`, { status }, getAuthHeaders());
+    return response.data;
+  },
+
+  // Support Ticket mutations
+  replyToSupportTicket: async (id, message) => {
+    const response = await axios.post(`${API_URL}/admin/support-tickets/${id}/reply`, { message }, getAuthHeaders());
+    return response.data;
+  },
+
+  updateSupportTicketStatus: async (id, status) => {
+    const response = await axios.patch(`${API_URL}/admin/support-tickets/${id}/status`, { status }, getAuthHeaders());
+    return response.data;
+  },
+
+  // Dispute mutations
+  resolveDispute: async (id, resolution) => {
+    const response = await axios.patch(`${API_URL}/admin/disputes/${id}`, { status: 'RESOLVED', resolution }, getAuthHeaders());
+    return response.data;
+  },
+
+  // Integration toggle
+  toggleIntegration: async (key) => {
+    const response = await axios.patch(`${API_URL}/admin/integrations/${key}`, {}, getAuthHeaders());
+    return response.data;
+  },
+
+  // Return request mutations
+  updateReturnRequestStatus: async (id, status) => {
+    const response = await axios.patch(`${API_URL}/admin/return-requests/${id}/status`, { status }, getAuthHeaders());
+    return response.data;
+  },
+
+  // Broadcast notification
+  broadcastNotification: async (payload) => {
+    const response = await axios.post(`${API_URL}/admin/notifications/broadcast`, payload, getAuthHeaders());
+    return response.data;
+  },
+
+  // Inventory stock adjustment
+  adjustInventoryStock: async (inventoryId, delta, note = '') => {
+    const response = await axios.patch(
+      `${API_URL}/admin/inventory/${inventoryId}/adjust`,
+      { delta, note },
+      getAuthHeaders()
+    );
+    return response.data;
+  },
+
+  // Notification mutations
+  markNotificationRead: async (id) => {
+    const response = await axios.patch(`${API_URL}/admin/notifications/${id}/read`, {}, getAuthHeaders());
+    return response.data;
+  },
+
+  markAllNotificationsRead: async () => {
+    const response = await axios.patch(`${API_URL}/admin/notifications/read-all`, {}, getAuthHeaders());
+    return response.data;
+  },
+
+  clearAllNotifications: async () => {
+    const response = await axios.delete(`${API_URL}/admin/notifications/clear-all`, getAuthHeaders());
+    return response.data;
+  },
 };
 
 export default adminService;

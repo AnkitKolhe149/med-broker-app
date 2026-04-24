@@ -71,5 +71,11 @@ router.patch('/return-requests/:id/status', adminController.updateReturnRequestS
 
 // Wave 3: Communication
 router.post('/notifications/broadcast', adminController.broadcastNotification);
+router.patch('/notifications/read-all', adminController.markAllNotificationsRead);
+router.patch('/notifications/:id/read', adminController.markNotificationRead);
+router.delete('/notifications/clear-all', adminController.clearAllNotifications);
+
+// Inventory Mutations
+router.patch('/inventory/:id/adjust', adminController.adjustInventoryStock);
 
 module.exports = router;

@@ -5,22 +5,43 @@ import './AdminOperations.css';
 const AdminCompliance = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState({});
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const response = await adminService.getComplianceOverview();
-        setData(response?.data || null);
-      } catch (error) {
-        console.error('Failed to load compliance overview', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const load = async () => {
+    try {
+      setLoading(true);
+      const response = await adminService.getComplianceOverview();
+      setData(response?.data || null);
+    } catch (error) {
+      console.error('Failed to load compliance overview', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
+
+  const handleVerifyKyc = async (doc) => {
+    if (!window.confirm(`Verify KYC document "${doc.type}" for ${doc.vendor?.companyName || 'this vendor'}?`)) return;
+    setActionLoading((p) => ({ ...p, [doc.id]: true }));
+    try {
+      await adminService.verifyKycDocument(doc.id, 'VERIFIED');
+      setData((prev) => ({
+        ...prev,
+        kycDocs: prev.kycDocs.map((d) =>
+          d.id === doc.id ? { ...d, status: 'VERIFIED', verifiedAt: new Date().toISOString() } : d
+        ),
+        summary: {
+          ...prev.summary,
+          pendingKyc: Math.max(0, (prev.summary?.pendingKyc || 1) - 1),
+        },
+      }));
+    } catch (e) {
+      alert(e?.response?.data?.message || 'Verification failed.');
+    } finally {
+      setActionLoading((p) => ({ ...p, [doc.id]: false }));
+    }
+  };
 
   if (loading) return <div className="admin-loading"><div className="spinner"></div>Loading compliance data...</div>;
   if (!data) return <div className="admin-error">Failed to load compliance overview.</div>;
@@ -29,7 +50,7 @@ const AdminCompliance = () => {
     <section className="admin-ops-page">
       <header className="page-header">
         <div>
-          <h1>Compliance & Audit</h1>
+          <h1>Compliance &amp; Audit</h1>
           <p>Review KYC, prescription controls, return risk, and audit activity from one console.</p>
         </div>
       </header>
@@ -50,6 +71,7 @@ const AdminCompliance = () => {
               <th>Status</th>
               <th>Verified At</th>
               <th>Expiry</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -60,6 +82,16 @@ const AdminCompliance = () => {
                 <td><span className={`admin-pill ${String(doc.status || '').toLowerCase()}`}>{doc.status}</span></td>
                 <td>{doc.verifiedAt ? new Date(doc.verifiedAt).toLocaleDateString() : '-'}</td>
                 <td>{doc.expiryDate ? new Date(doc.expiryDate).toLocaleDateString() : '-'}</td>
+                <td>
+                  <button
+                    id={`kyc-verify-${doc.id}`}
+                    className="btn btn-success"
+                    disabled={doc.status === 'VERIFIED' || !!actionLoading[doc.id]}
+                    onClick={() => handleVerifyKyc(doc)}
+                  >
+                    {actionLoading[doc.id] ? <span className="btn-spinner" /> : (doc.status === 'VERIFIED' ? 'Verified ✓' : 'Verify KYC')}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

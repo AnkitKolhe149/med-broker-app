@@ -4,6 +4,57 @@ import adminService from '../../services/admin.service';
 import AdminPagination from '../../components/common/AdminPagination';
 import './AdminOperations.css';
 
+// ── Adjust Stock Modal ──────────────────────────────────────────────────────
+const AdjustStockModal = ({ item, onClose, onAdjusted }) => {
+  const [delta, setDelta] = useState('');
+  const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  const handleSubmit = async () => {
+    const qty = parseInt(delta, 10);
+    if (isNaN(qty) || qty === 0) { setErr('Enter a non-zero integer adjustment.'); return; }
+    setSaving(true);
+    setErr('');
+    try {
+      await adminService.adjustInventoryStock(item.id, qty, note);
+      onAdjusted({ ...item, quantity: item.quantity + qty });
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'Adjustment failed.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="admin-modal-backdrop" onClick={onClose}>
+      <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+        <h3>Adjust Stock — {item.medicine?.name || 'Item'}</h3>
+        <p className="admin-muted">Current quantity: <strong>{item.quantity}</strong></p>
+        {err && <p className="admin-error" style={{ marginBottom: '0.5rem' }}>{err}</p>}
+        <label>Adjustment (e.g. +50 or -10)
+          <input
+            type="number"
+            placeholder="e.g. 50 or -10"
+            value={delta}
+            onChange={(e) => setDelta(e.target.value)}
+          />
+        </label>
+        <label>Note (optional)
+          <input placeholder="Reason for adjustment" value={note} onChange={(e) => setNote(e.target.value)} />
+        </label>
+        <div className="admin-modal-actions">
+          <button className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSubmit} disabled={saving}>
+            {saving ? <span className="btn-spinner" /> : null} Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Main Component ──────────────────────────────────────────────────────────
 const AdminInventory = () => {
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState({ total: 0, lowStockCount: 0, inactiveCount: 0 });
@@ -12,32 +63,33 @@ const AdminInventory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, totalPages: 1 });
+  const [adjustTarget, setAdjustTarget] = useState(null);
   const { formatCurrency } = useCurrency();
 
-  useEffect(() => {
-    const loadInventory = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const response = await adminService.getInventoryOverview({
-          page: currentPage,
-          limit: pageSize
-        });
-        setItems(response?.data || []);
-        setSummary(response?.summary || { total: 0, lowStockCount: 0, inactiveCount: 0 });
-        setPagination(response?.pagination || { page: currentPage, limit: pageSize, total: 0, totalPages: 1 });
-      } catch (error) {
-        console.error('Failed to load inventory overview', error);
-        setError('Unable to fetch inventory data right now.');
-        setItems([]);
-        setPagination({ page: currentPage, limit: pageSize, total: 0, totalPages: 1 });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadInventory = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await adminService.getInventoryOverview({ page: currentPage, limit: pageSize });
+      setItems(response?.data || []);
+      setSummary(response?.summary || { total: 0, lowStockCount: 0, inactiveCount: 0 });
+      setPagination(response?.pagination || { page: currentPage, limit: pageSize, total: 0, totalPages: 1 });
+    } catch (error) {
+      console.error('Failed to load inventory overview', error);
+      setError('Unable to fetch inventory data right now.');
+      setItems([]);
+      setPagination({ page: currentPage, limit: pageSize, total: 0, totalPages: 1 });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    loadInventory();
-  }, [currentPage, pageSize]);
+  useEffect(() => { loadInventory(); }, [currentPage, pageSize]);
+
+  const handleAdjusted = (updated) => {
+    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    setAdjustTarget(null);
+  };
 
   if (loading) return <div className="admin-loading"><div className="spinner"></div>Loading inventory...</div>;
   if (error) return <div className="admin-error">{error}</div>;
@@ -69,13 +121,12 @@ const AdminInventory = () => {
               <th>Selling / MRP</th>
               <th>Batches</th>
               <th>State</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="admin-muted">No inventory records found.</td>
-              </tr>
+              <tr><td colSpan="9" className="admin-muted">No inventory records found.</td></tr>
             ) : items.map((item) => {
               const lowStock = item.quantity <= item.reorderLevel;
               return (
@@ -91,6 +142,15 @@ const AdminInventory = () => {
                   <td>{formatCurrency((item.sellingPriceCents || 0) / 100)} / {formatCurrency((item.mrpCents || 0) / 100)}</td>
                   <td>{item._count?.batches || 0}</td>
                   <td><span className={`admin-pill ${item.isActive ? 'succeeded' : 'failed'}`}>{item.isActive ? 'ACTIVE' : 'INACTIVE'}</span></td>
+                  <td>
+                    <button
+                      id={`inv-adjust-${item.id}`}
+                      className="btn btn-secondary"
+                      onClick={() => setAdjustTarget(item)}
+                    >
+                      Adjust Stock
+                    </button>
+                  </td>
                 </tr>
               );
             })}
@@ -103,11 +163,16 @@ const AdminInventory = () => {
         loading={loading}
         itemLabel="inventory records"
         onPageChange={setCurrentPage}
-        onPageSizeChange={(value) => {
-          setPageSize(value);
-          setCurrentPage(1);
-        }}
+        onPageSizeChange={(value) => { setPageSize(value); setCurrentPage(1); }}
       />
+
+      {adjustTarget && (
+        <AdjustStockModal
+          item={adjustTarget}
+          onClose={() => setAdjustTarget(null)}
+          onAdjusted={handleAdjusted}
+        />
+      )}
     </section>
   );
 };
