@@ -7,9 +7,14 @@ const { prisma } = require("./database/prisma");
 const app = express();
 
 // Enable CORS for frontend.
-// Priority: CORS_ORIGIN (comma-separated) -> FRONTEND_URL -> local development defaults.
+// Priority: CORS_ORIGIN (comma-separated) -> FRONTEND_URL -> built-in deployed frontend -> local development defaults.
 // Supports wildcard entries in CORS_ORIGIN such as https://mediq-*.vercel.app
-const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'];
+const defaultOrigins = [
+  'https://mediq-weld.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:3001'
+];
 const stripWrappingQuotes = (value) => String(value || '').replace(/^['\"]|['\"]$/g, '');
 const normalizeOriginValue = (value) => {
   const normalized = stripWrappingQuotes(value).trim();
@@ -25,7 +30,7 @@ const normalizeOriginValue = (value) => {
 };
 
 const configuredOrigins = String(process.env.CORS_ORIGIN || '')
-  .split(',')
+  .split(/[\s,;]+/)
   .map((origin) => normalizeOriginValue(origin))
   .filter(Boolean);
 
@@ -50,6 +55,8 @@ const wildcardToRegex = (pattern) => {
 const allowedOriginRegexes = configuredOrigins
   .map(wildcardToRegex)
   .filter(Boolean);
+
+console.info('CORS allowlist initialized:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {

@@ -1,5 +1,32 @@
 const { AppError } = require('../utils/errors');
 
+const isTransientDatabaseError = (err) => {
+  if (!err) {
+    return false;
+  }
+
+  const code = String(err.code || '').toUpperCase();
+  const message = [
+    err.message,
+    err?.cause?.message,
+    err?.meta?.cause,
+    err?.meta?.message,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  return (
+    code === 'P1001' ||
+    code === 'P1017' ||
+    code === 'ECONNRESET' ||
+    code === 'ETIMEDOUT' ||
+    code === 'EPIPE' ||
+    message.includes("can't reach database server") ||
+    message.includes('connection terminated unexpectedly') ||
+    message.includes('server closed the connection unexpectedly') ||
+    message.includes('socket hang up') ||
+    message.includes('read econnreset')
+  );
+};
+
 const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
 
@@ -27,8 +54,8 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
-  // Handle Prisma database connectivity errors
-  if (err.code === 'P1001' || err.code === 'P1017') {
+  // Handle Prisma/database connectivity errors
+  if (isTransientDatabaseError(err)) {
     return res.status(503).json({
       success: false,
       message: 'Database connection is temporarily unavailable. Please retry in a moment.'

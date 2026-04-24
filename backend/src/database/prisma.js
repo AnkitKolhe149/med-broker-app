@@ -6,10 +6,15 @@ const prismaLogLevel = process.env.PRISMA_LOG_LEVEL || 'warn';
 const prismaLogConfig = prismaLogLevel === 'query'
   ? ['query', 'error', 'warn']
   : ['error', 'warn'];
+const OPERATION_RETRY_ATTEMPTS = Number(process.env.PRISMA_OPERATION_RETRY_ATTEMPTS || 3);
 
 // PrismaPg requires a pg Pool instance.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: Number(process.env.PG_POOL_MAX || 10),
+  connectionTimeoutMillis: Number(process.env.PG_CONNECTION_TIMEOUT_MS || 10000),
+  idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT_MS || 30000),
+  keepAlive: true,
 });
 
 const adapter = new PrismaPg(pool);
@@ -23,7 +28,12 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const isTransientDbTerminationError = (error) => {
   if (!error) return false;
 
-  const message = String(error.message || '').toLowerCase();
+  const message = [
+    error.message,
+    error?.cause?.message,
+    error?.meta?.cause,
+    error?.meta?.message,
+  ].filter(Boolean).join(' ').toLowerCase();
   const code = String(error.code || '').toUpperCase();
   return (
     code === 'ECONNRESET' ||
@@ -39,6 +49,30 @@ const isTransientDbTerminationError = (error) => {
     message.includes('socket hang up') ||
     message.includes('read etimedout')
   );
+};
+
+const executeWithTransientRetry = async (query, args) => {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= OPERATION_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      return await query(args);
+    } catch (error) {
+      lastError = error;
+      if (!isTransientDbTerminationError(error)) {
+        throw error;
+      }
+
+      const recovered = await reconnectWithRetry();
+      if (!recovered || attempt === OPERATION_RETRY_ATTEMPTS) {
+        break;
+      }
+
+      await wait(attempt * 250);
+    }
+  }
+
+  throw lastError;
 };
 
 // Test connection with retry logic
@@ -81,38 +115,15 @@ const prisma = basePrisma.$extends({
   query: {
     $allModels: {
       async $allOperations({ args, query }) {
-        try {
-          return await query(args);
-        } catch (error) {
-          if (!isTransientDbTerminationError(error)) {
-            throw error;
-          }
-
-          const recovered = await reconnectWithRetry();
-          if (!recovered) {
-            throw error;
-          }
-
-          return query(args);
-        }
+        return executeWithTransientRetry(query, args);
       },
     },
     async $queryRaw({ args, query }) {
-      try {
-        return await query(args);
-      } catch (error) {
-        if (!isTransientDbTerminationError(error)) {
-          throw error;
-        }
-
-        const recovered = await reconnectWithRetry();
-        if (!recovered) {
-          throw error;
-        }
-
-        return query(args);
-      }
+      return executeWithTransientRetry(query, args);
     },
+    async $executeRaw({ args, query }) {
+      return executeWithTransientRetry(query, args);
+    }
   },
 });
 

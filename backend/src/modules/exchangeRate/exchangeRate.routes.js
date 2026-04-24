@@ -19,10 +19,15 @@ router.get("/latest", async (req, res, next) => {
     return res.json({
       base: rateRecord.baseCode,
       fetchedAt: rateRecord.fetchedAt,
-      rates: rateRecord.rates
+      rates: rateRecord.rates,
+      source: rateRecord.source || "db"
     });
   } catch (error) {
-    return next(error);
+    console.error("Exchange-rate latest fetch failed:", error.message);
+    return res.status(503).json({
+      error: "Exchange rates temporarily unavailable",
+      base: (req.query.base || getEnv("EXCHANGE_RATE_BASE", "INR")).toUpperCase()
+    });
   }
 });
 
@@ -60,10 +65,14 @@ router.get("/convert", async (req, res, next) => {
       target,
       amount,
       convertedAmount,
-      fetchedAt: rateRecord.fetchedAt
+      fetchedAt: rateRecord.fetchedAt,
+      source: rateRecord.source || "db"
     });
   } catch (error) {
-    return next(error);
+    console.error("Exchange-rate convert failed:", error.message);
+    return res.status(503).json({
+      error: "Exchange-rate conversion temporarily unavailable"
+    });
   }
 });
 
