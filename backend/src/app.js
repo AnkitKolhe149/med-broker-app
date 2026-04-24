@@ -8,22 +8,58 @@ const app = express();
 
 // Enable CORS for frontend.
 // Priority: CORS_ORIGIN (comma-separated) -> FRONTEND_URL -> local development defaults.
+// Supports wildcard entries in CORS_ORIGIN such as https://mediq-*.vercel.app
 const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'];
+const stripWrappingQuotes = (value) => String(value || '').replace(/^['\"]|['\"]$/g, '');
+const normalizeOriginValue = (value) => {
+  const normalized = stripWrappingQuotes(value).trim();
+  if (!normalized) {
+    return '';
+  }
+
+  try {
+    return new URL(normalized).origin;
+  } catch (_error) {
+    return normalized.replace(/\/$/, '');
+  }
+};
+
 const configuredOrigins = String(process.env.CORS_ORIGIN || '')
   .split(',')
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOriginValue(origin))
   .filter(Boolean);
 
 if (process.env.FRONTEND_URL) {
-  configuredOrigins.push(process.env.FRONTEND_URL.trim());
+  configuredOrigins.push(normalizeOriginValue(process.env.FRONTEND_URL));
 }
 
+const hasExplicitOrigins = configuredOrigins.length > 0;
 const allowedOrigins = [...new Set([...(configuredOrigins.length ? configuredOrigins : []), ...defaultOrigins])];
 
-app.use(cors({
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const wildcardToRegex = (pattern) => {
+  const normalized = pattern.trim();
+  if (!normalized.includes('*')) {
+    return null;
+  }
+
+  const regexSource = `^${normalized.split('*').map(escapeRegExp).join('.*')}$`;
+  return new RegExp(regexSource);
+};
+
+const allowedOriginRegexes = configuredOrigins
+  .map(wildcardToRegex)
+  .filter(Boolean);
+
+const corsOptions = {
   origin: (origin, callback) => {
     // Allow server-to-server requests and same-origin requests without Origin header.
     if (!origin) {
+      return callback(null, true);
+    }
+
+    // If no explicit origins are configured, allow all origins to avoid hard failures.
+    if (!hasExplicitOrigins) {
       return callback(null, true);
     }
 
@@ -31,10 +67,21 @@ app.use(cors({
       return callback(null, true);
     }
 
+    if (allowedOriginRegexes.some((regex) => regex.test(origin))) {
+      return callback(null, true);
+    }
+
+    console.warn('CORS blocked origin:', origin, '| allowed:', allowedOrigins.join(', '));
     return callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json({
   verify: (req, _res, buf) => {
