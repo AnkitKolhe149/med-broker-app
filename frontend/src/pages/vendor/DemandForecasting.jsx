@@ -67,7 +67,7 @@ const DemandForecasting = () => {
             <div className={styles.header}>
                 <div className={styles.headerInfo}>
                     <h1>AI Demand Forecast</h1>
-                    <p>Advanced predictive analytics powered by the Antigravity ML engine.</p>
+                    <p>Advanced predictive analytics powered by the MedBroker Deep Learning engine.</p>
                 </div>
                 <div className={styles.headerActions}>
                     <span className={styles.lastUpdated}>
@@ -184,12 +184,12 @@ const DemandForecasting = () => {
                 <h2>Forecasting Methodology</h2>
                 <div className={styles.methodologyGrid}>
                     <div className={styles.methodologyItem}>
-                        <h3><TrendingUp size={18} /> Real Platform Data</h3>
-                        <p>Our ensemble models (XGBoost/RandomForest) are trained on your actual platform order history, combined with high-fidelity pharmaceutical datasets from Kaggle to simulate market-wide trends.</p>
+                        <h3><TrendingUp size={18} /> Deep Neural Networks</h3>
+                        <p>Our forecasting architecture utilizes a PyTorch LSTM (Long Short-Term Memory) neural network, following methodologies validated in medical research for time-series pharmaceutical supply chain data.</p>
                     </div>
                     <div className={styles.methodologyItem}>
-                        <h3><Zap size={18} /> Time-Series Engineering</h3>
-                        <p>We compute complex feature lags (1-6 months), rolling sales averages, and price-to-seasonality ratios to capture the nuanced "pulse" of medicine consumption patterns.</p>
+                        <h3><Zap size={18} /> Sequence Modeling</h3>
+                        <p>Instead of analyzing isolated data points, the LSTM evaluates a 6-month sliding window of historical sequences to capture momentum, long-term dependencies, and subtle market shifts.</p>
                     </div>
                     <div className={styles.methodologyItem}>
                         <h3><RefreshCw size={18} /> Dynamic Seasonality</h3>
@@ -205,7 +205,7 @@ const DemandForecasting = () => {
             <div className={styles.aiNote}>
                 <Brain size={48} />
                 <p>
-                    <strong>Antigravity Intelligence:</strong> Our predictive engine has detected a 
+                    <strong>MedBroker AI Intelligence:</strong> Our predictive engine has detected a 
                     stabilizing trend in your top 5 SKUs. However, based on regional market signals, we expect a 
                     surge in pediatric medications next month. 
                     <em> Consider preemptive stock adjustments for child-safe formulations.</em>
