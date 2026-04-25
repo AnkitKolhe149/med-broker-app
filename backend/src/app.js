@@ -13,7 +13,8 @@ const defaultOrigins = [
   'https://mediq-weld.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
-  'http://localhost:3001'
+  'http://localhost:3001',
+  'http://localhost:8080'
 ];
 const stripWrappingQuotes = (value) => String(value || '').replace(/^['\"]|['\"]$/g, '');
 const normalizeOriginValue = (value) => {
