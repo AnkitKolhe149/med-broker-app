@@ -175,6 +175,14 @@ module.exports = {
       throw new AuthenticationError('Invalid credentials');
     }
 
+    // Block banned users immediately — before bcrypt, before token generation
+    if (user.isBanned) {
+      const suspendedError = new Error('Your account has been suspended. Please contact support.');
+      suspendedError.statusCode = 403;
+      suspendedError.code = 'ACCOUNT_SUSPENDED';
+      throw suspendedError;
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       throw new AuthenticationError('Invalid credentials');

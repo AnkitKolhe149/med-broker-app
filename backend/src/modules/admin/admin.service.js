@@ -123,11 +123,11 @@ module.exports = {
       return {
         vendorId: v.id, companyName: v.companyName, contactPersonName: v.contactPersonName,
         totalEarnedCents, commissionCents, commissionRatePercent: commissionRate * 100,
-        totalPaidCents, pendingBalanceCents
+        totalPaidCents, pendingBalanceCents, total: totalEarnedCents
       };
     });
 
-    return overview.filter(item => item.pendingBalanceCents > 0 || item.totalPaidCents > 0);
+    return { data: overview.filter(item => item.pendingBalanceCents > 0 || item.totalPaidCents > 0), globalRate: commissionRate };
   },
 
   getPayoutRequests: async (options = {}) => {
@@ -269,10 +269,18 @@ module.exports = {
       throw new ConflictError('amountCents must be a positive number');
     }
 
+    const commissionSetting = await prisma.systemSetting.findUnique({
+      where: { key: 'PLATFORM_COMMISSION_PERCENT' },
+    }).catch(() => null);
+    const persistedFeeRate = commissionSetting ? parseFloat(commissionSetting.value) : 5;
+    const persistedFeeAmount = normalizedAmount * (persistedFeeRate / 100);
+
     return prisma.payout.create({
       data: {
         vendorId,
         amountCents: normalizedAmount,
+        persistedFeeRate,
+        persistedFeeAmount,
         status: 'COMPLETED',
         processedAt: new Date(),
         transactionId: `TXN-${Date.now()}`
@@ -502,6 +510,8 @@ module.exports = {
           mobile: true,
           role: true,
           isActive: true,
+          isBanned: true,
+          moderationNote: true,
           preferredCurrency: true,
           isProfileComplete: true,
           lastLoginAt: true,
@@ -1080,7 +1090,7 @@ module.exports = {
     });
   },
 
-  updateCatalogMedicineVisibility: async (id, status, adminId) => {
+  updateMedicineStatus: async (id, status, adminId) => {
     const medicine = await prisma.medicine.findUnique({ where: { id } });
     if (!medicine) throw new NotFoundError('Medicine not found');
     const fullNote = `[Status updated to ${status} by Admin ${adminId} on ${new Date().toISOString()}]`;
@@ -1093,12 +1103,28 @@ module.exports = {
   adminOverrideMedicine: async (id, data, adminId) => {
     const medicine = await prisma.medicine.findUnique({ where: { id } });
     if (!medicine) throw new NotFoundError('Medicine not found');
-    const updatePayload = { ...data };
+
+    const { stock, ...medicineData } = data;
+
+    const updatePayload = { ...medicineData };
     updatePayload.moderationNote = `Modified by Admin ${adminId} on ${new Date().toISOString()}`;
-    return prisma.medicine.update({
+
+    const updatedMedicine = await prisma.medicine.update({
       where: { id },
       data: updatePayload
     });
+
+    if (stock !== undefined && stock !== null) {
+      const inventory = await prisma.inventory.findFirst({ where: { medicineId: id } });
+      if (inventory) {
+        await prisma.inventory.update({
+          where: { id: inventory.id },
+          data: { quantity: parseInt(stock, 10) }
+        });
+      }
+    }
+
+    return updatedMedicine;
   },
 
   forceDeleteMedicine: async (id) => {

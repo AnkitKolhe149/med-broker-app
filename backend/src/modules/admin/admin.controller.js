@@ -35,7 +35,7 @@ module.exports = {
   getPayoutOverview: async (req, res, next) => {
     try {
       const overview = await adminService.getPayoutOverview();
-      res.json({ success: true, data: overview });
+      res.json({ success: true, data: overview.data, globalRate: overview.globalRate });
     } catch (error) {
       next(error);
     }
@@ -309,11 +309,10 @@ module.exports = {
     } catch (error) { next(error); }
   },
 
-  updateCatalogMedicineVisibility: async (req, res, next) => {
+  updateMedicineStatus: async (req, res, next) => {
     try {
-      const { isBlocked } = req.body;
-      const status = isBlocked ? 'BLOCKED' : 'PUBLISHED';
-      const result = await adminService.updateCatalogMedicineVisibility(req.params.id, status, req.user.id);
+      const { status } = req.body;
+      const result = await adminService.updateMedicineStatus(req.params.id, status, req.user.id);
       res.json({ success: true, data: result });
     } catch (error) { next(error); }
   },

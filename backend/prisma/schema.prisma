@@ -194,6 +194,8 @@ model Order {
   shippingCents      Int                @default(0)
   subtotalCents      Int                @default(0)
   taxCents           Int                @default(0)
+  persistedFeeRate   Float?
+  persistedFeeAmount Float?
   couponRedemptions  CouponRedemption[]
   disputeCase        DisputeCase?
   invoice            Invoice?
@@ -274,6 +276,8 @@ model Payout {
   vendorId        String
   amountCents     Int
   commissionCents Int          @default(0)
+  persistedFeeRate Float?
+  persistedFeeAmount Float?
   status          PayoutStatus @default(PENDING)
   periodStart     DateTime?
   periodEnd       DateTime?

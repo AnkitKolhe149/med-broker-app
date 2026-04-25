@@ -11,6 +11,7 @@ function Login() {
 		role: 'CUSTOMER'
 	});
 	const [error, setError] = useState('');
+	const [suspended, setSuspended] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 
@@ -20,6 +21,7 @@ function Login() {
 			[e.target.name]: e.target.value
 		});
 		setError('');
+		setSuspended(false);
 	};
 
 	const handleRoleSelect = (role) => {
@@ -53,7 +55,15 @@ function Login() {
 				navigate('/');
 			}
 		} catch (err) {
-			setError(err.response?.data?.message || err.message || 'Invalid credentials. Please try again.');
+			const status = err.response?.status;
+			const code = err.response?.data?.code;
+			if (status === 403 && code === 'ACCOUNT_SUSPENDED') {
+				setSuspended(true);
+				setError('');
+			} else {
+				setSuspended(false);
+				setError(err.response?.data?.message || err.message || 'Invalid credentials. Please try again.');
+			}
 		} finally {
 			setLoading(false);
 		}
@@ -77,6 +87,11 @@ function Login() {
 							<p className="auth-care-form-subtitle">Sign in to continue your healthcare procurement workflow.</p>
 						</div>
 
+						{suspended && (
+							<div className="auth-care-error auth-care-suspended">
+								⚠️ Your account has been suspended. Please contact support.
+							</div>
+						)}
 						{error && <div className="auth-care-error">{error}</div>}
 
 						<div>

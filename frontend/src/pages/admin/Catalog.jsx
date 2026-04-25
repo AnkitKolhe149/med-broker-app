@@ -4,48 +4,6 @@ import adminService from '../../services/admin.service';
 import AdminPagination from '../../components/common/AdminPagination';
 import './AdminOperations.css';
 
-// ── Force-Edit Modal ────────────────────────────────────────────────────────
-const ForceEditModal = ({ item, onClose, onSaved }) => {
-  const [name, setName] = useState(item.name || '');
-  const [price, setPrice] = useState(((item.priceCents || 0) / 100).toFixed(2));
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState('');
-
-  const handleSave = async () => {
-    setSaving(true);
-    setErr('');
-    try {
-      const priceCents = Math.round(parseFloat(price) * 100);
-      await adminService.adminOverrideMedicine(item.id, { name, priceCents });
-      onSaved({ ...item, name, priceCents });
-    } catch (e) {
-      setErr(e?.response?.data?.message || 'Save failed.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="admin-modal-backdrop" onClick={onClose}>
-      <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-        <h3>Force Edit — {item.name}</h3>
-        {err && <p className="admin-error" style={{ marginBottom: '0.5rem' }}>{err}</p>}
-        <label>Name
-          <input value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
-        <label>Price (₹)
-          <input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
-        </label>
-        <div className="admin-modal-actions">
-          <button className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? <span className="btn-spinner" /> : null} Save Override
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ── Main Component ──────────────────────────────────────────────────────────
 const AdminCatalog = () => {
@@ -59,7 +17,6 @@ const AdminCatalog = () => {
   const [pageSize, setPageSize] = useState(25);
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, totalPages: 1 });
   const [actionLoading, setActionLoading] = useState({});
-  const [editTarget, setEditTarget] = useState(null);
   const { formatCurrency } = useCurrency();
 
   const loadCatalog = async () => {
@@ -94,28 +51,26 @@ const AdminCatalog = () => {
     setCurrentPage(1);
   };
 
-  const handleToggleBlock = async (item) => {
-    const isBlocked = item.status === 'BLOCKED';
+  const handleStatusToggle = async (medicine) => {
+    const isBlocked = medicine.status === 'BLOCKED';
+    const newStatus = isBlocked ? 'PUBLISHED' : 'BLOCKED';
     const verb = isBlocked ? 'unblock' : 'block';
-    if (!window.confirm(`Are you sure you want to ${verb} "${item.name}"?`)) return;
-    setActionLoading((p) => ({ ...p, [`block-${item.id}`]: true }));
+    
+    if (!window.confirm(`Are you sure you want to ${verb} "${medicine.name}"?`)) return;
+    
+    setActionLoading((p) => ({ ...p, [`block-${medicine.id}`]: true }));
     try {
-      await adminService.blockMedicine(item.id, !isBlocked);
+      await adminService.updateMedicineStatus(medicine.id, newStatus);
       setItems((prev) =>
         prev.map((i) =>
-          i.id === item.id ? { ...i, status: isBlocked ? 'PUBLISHED' : 'BLOCKED' } : i
+          i.id === medicine.id ? { ...i, status: newStatus } : i
         )
       );
     } catch (e) {
       alert(e?.response?.data?.message || `Failed to ${verb} item.`);
     } finally {
-      setActionLoading((p) => ({ ...p, [`block-${item.id}`]: false }));
+      setActionLoading((p) => ({ ...p, [`block-${medicine.id}`]: false }));
     }
-  };
-
-  const handleEditSaved = (updated) => {
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-    setEditTarget(null);
   };
 
   if (loading) return <div className="admin-loading"><div className="spinner"></div>Loading catalog...</div>;
@@ -186,17 +141,10 @@ const AdminCatalog = () => {
                       <button
                         id={`catalog-block-${item.id}`}
                         className={`btn ${isBlocked ? 'btn-success' : 'btn-danger'}`}
-                        onClick={() => handleToggleBlock(item)}
+                        onClick={() => handleStatusToggle(item)}
                         disabled={!!actionLoading[blockKey]}
                       >
                         {actionLoading[blockKey] ? <span className="btn-spinner" /> : (isBlocked ? 'Unblock' : 'Block')}
-                      </button>
-                      <button
-                        id={`catalog-edit-${item.id}`}
-                        className="btn btn-secondary"
-                        onClick={() => setEditTarget(item)}
-                      >
-                        Force Edit
                       </button>
                     </div>
                   </td>
@@ -215,13 +163,6 @@ const AdminCatalog = () => {
         onPageSizeChange={(value) => { setPageSize(value); setCurrentPage(1); }}
       />
 
-      {editTarget && (
-        <ForceEditModal
-          item={editTarget}
-          onClose={() => setEditTarget(null)}
-          onSaved={handleEditSaved}
-        />
-      )}
     </section>
   );
 };

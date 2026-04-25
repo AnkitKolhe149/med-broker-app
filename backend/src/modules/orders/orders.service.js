@@ -109,7 +109,7 @@ const createOrder = async (userId, orderData) => {
     throw new ValidationError('Order must contain at least one item');
   }
 
-	const recentDuplicateCutoff = new Date(Date.now() - 10 * 60 * 1000);
+  const recentDuplicateCutoff = new Date(Date.now() - 10 * 60 * 1000);
 
   // Validate each item
   for (const item of items) {
@@ -188,29 +188,29 @@ const createOrder = async (userId, orderData) => {
       })
       : Promise.resolve([]),
     prisma.inventory.findMany({
-    where: {
-      OR: [
-        ...items.map((item) => ({
-          medicineId: item.medicineId,
-          ...(item.vendorId ? { vendorId: item.vendorId } : {})
-        }))
-      ]
-    },
-    select: {
-      id: true,
-      medicineId: true,
-      vendorId: true,
-      quantity: true,
-      medicine: {
-        select: {
-          id: true,
-          name: true,
-          priceCents: true,
-          requiresPrescription: true
+      where: {
+        OR: [
+          ...items.map((item) => ({
+            medicineId: item.medicineId,
+            ...(item.vendorId ? { vendorId: item.vendorId } : {})
+          }))
+        ]
+      },
+      select: {
+        id: true,
+        medicineId: true,
+        vendorId: true,
+        quantity: true,
+        medicine: {
+          select: {
+            id: true,
+            name: true,
+            priceCents: true,
+            requiresPrescription: true
+          }
         }
       }
-    }
-  })
+    })
   ]);
 
   const inventoryRecordMap = new Map();
@@ -314,6 +314,12 @@ const createOrder = async (userId, orderData) => {
     pricingSummary
   };
 
+  const commissionSetting = await prisma.systemSetting.findUnique({
+    where: { key: 'PLATFORM_COMMISSION_PERCENT' },
+  }).catch(() => null);
+  const persistedFeeRate = commissionSetting ? parseFloat(commissionSetting.value) : 5;
+  const persistedFeeAmount = totalCents * (persistedFeeRate / 100);
+
   const order = await prisma.$transaction(async (tx) => {
     const createdOrder = await tx.order.create({
       data: {
@@ -321,6 +327,8 @@ const createOrder = async (userId, orderData) => {
         totalCents,
         checkoutSnapshot,
         status: 'PENDING',
+        persistedFeeRate,
+        persistedFeeAmount,
         items: {
           create: orderItems
         }

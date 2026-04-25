@@ -61,7 +61,7 @@ router.patch('/users/:id/moderation', adminController.updateUserModeration);
 router.patch('/users/:id/role', adminController.updateUserRole);
 router.get('/admin/accounts', adminController.getAdminAccounts);
 
-router.patch('/catalog/:id/block', adminController.updateCatalogMedicineVisibility);
+  router.patch('/catalog/:id/status', adminController.updateMedicineStatus);
 router.patch('/catalog/:id/admin-override', adminController.adminOverrideMedicine);
 router.delete('/catalog/:id/force', adminController.forceDeleteMedicine);
 router.post('/coupons', adminController.createCoupon);

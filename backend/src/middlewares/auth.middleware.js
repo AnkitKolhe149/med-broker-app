@@ -18,7 +18,7 @@ async function authenticate(req, res, next) {
     const token = authHeader.substring(7);
     const decoded = authService.verifyToken(token);
 
-    // Fetch full user details
+    // Fetch full user details — always from DB to catch bans and deactivations
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
       select: {
@@ -27,6 +27,8 @@ async function authenticate(req, res, next) {
         mobile: true,
         name: true,
         role: true,
+        isActive: true,
+        isBanned: true,
         preferredCurrency: true,
         isProfileComplete: true,
         vendor: true,
@@ -40,6 +42,15 @@ async function authenticate(req, res, next) {
       return res.status(401).json({
         success: false,
         message: 'User not found'
+      });
+    }
+
+    // Session revocation: block banned users even with a valid JWT
+    if (user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        code: 'ACCOUNT_SUSPENDED',
+        message: 'Your account has been suspended. Please contact support.'
       });
     }
 

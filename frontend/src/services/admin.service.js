@@ -188,12 +188,17 @@ const adminService = {
   },
 
   // Catalog mutations
-  blockMedicine: async (id, isBlocked) => {
-    const response = await axios.patch(`${API_URL}/admin/catalog/${id}/block`, { isBlocked }, getAuthHeaders());
+  updateMedicineStatus: async (id, status) => {
+    const response = await axios.patch(`${API_URL}/admin/catalog/${id}/status`, { status }, getAuthHeaders());
     return response.data;
   },
 
   adminOverrideMedicine: async (id, updates) => {
+    const response = await axios.patch(`${API_URL}/admin/catalog/${id}/admin-override`, updates, getAuthHeaders());
+    return response.data;
+  },
+
+  forceEditMedicine: async (id, updates) => {
     const response = await axios.patch(`${API_URL}/admin/catalog/${id}/admin-override`, updates, getAuthHeaders());
     return response.data;
   },
