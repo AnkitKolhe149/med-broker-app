@@ -70,6 +70,22 @@ const inventoryService = {
     return response.data.data;
   },
 
+  deleteMedicineImage: async (inventoryId, imageUrl) => {
+    const response = await axios.delete(`${API_URL}/inventory/${inventoryId}/image`, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      data: { imageUrl }
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to delete medicine image');
+    }
+
+    return response.data.data;
+  },
+
   updateInventoryItem: async (inventoryId, payload) => {
     const response = await axios.patch(`${API_URL}/inventory/${inventoryId}`, payload, {
       headers: {

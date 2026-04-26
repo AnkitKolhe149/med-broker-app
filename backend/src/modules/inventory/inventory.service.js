@@ -220,6 +220,52 @@ module.exports = {
   },
 
   /**
+   * Delete a specific image from an inventory item
+   */
+  deleteInventoryMedicineImage: async (userContext, inventoryId, imageUrl) => {
+    if (!imageUrl) {
+      throw new ValidationError('Image URL is required for deletion');
+    }
+
+    const vendor = await resolveVendorContext(userContext);
+
+    const inventoryItem = await prisma.inventory.findUnique({
+      where: { id: inventoryId },
+      select: {
+        id: true,
+        vendorId: true,
+        imageUrl: true,
+        imageUrls: true
+      }
+    });
+
+    if (!inventoryItem) {
+      throw new NotFoundError('Inventory item not found');
+    }
+
+    if (inventoryItem.vendorId !== vendor.id) {
+      throw new ForbiddenError('You can only delete images from your own inventory items');
+    }
+
+    const currentUrls = Array.isArray(inventoryItem.imageUrls) ? inventoryItem.imageUrls : (inventoryItem.imageUrl ? [inventoryItem.imageUrl] : []);
+    const updatedUrls = currentUrls.filter(url => url !== imageUrl);
+
+    const updatedInventory = await prisma.inventory.update({
+      where: { id: inventoryId },
+      data: {
+        imageUrl: updatedUrls[0] || null,
+        imageUrls: updatedUrls
+      }
+    });
+
+    return {
+      inventoryId: updatedInventory.id,
+      imageUrl: updatedInventory.imageUrl,
+      imageUrls: updatedInventory.imageUrls || []
+    };
+  },
+
+  /**
    * Delete inventory item (remove medicine from vendor's inventory)
    */
   deleteInventoryItem: async (userContext, inventoryId) => {
@@ -267,13 +313,16 @@ module.exports = {
 
     const vendor = await resolveVendorContext(userContext);
 
+    // Use specific provided values, or keep existing ones if updating, or default to retail price only if creating new
     const normalizedWholesalePriceCents = Number.isInteger(wholesalePriceCents)
       ? wholesalePriceCents
-      : (Number.isInteger(priceCents) ? priceCents : null);
-    const normalizedBulkMinQty = Number.isInteger(bulkMinQty) && bulkMinQty > 0 ? bulkMinQty : null;
+      : (medicineId ? undefined : (Number.isInteger(priceCents) ? priceCents : null));
+
+    const normalizedBulkMinQty = Number.isInteger(bulkMinQty) && bulkMinQty > 0 ? bulkMinQty : (medicineId ? undefined : null);
+
     const normalizedBulkPriceCents = Number.isInteger(bulkPriceCents)
       ? bulkPriceCents
-      : normalizedWholesalePriceCents;
+      : (medicineId ? undefined : (normalizedWholesalePriceCents || priceCents || null));
 
     if (normalizedWholesalePriceCents !== null && normalizedWholesalePriceCents <= 0) {
       throw new ValidationError('wholesalePriceCents must be a positive integer');

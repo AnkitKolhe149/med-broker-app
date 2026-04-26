@@ -30,6 +30,13 @@ router.post('/medicines', inventoryController.addMedicineToInventory);
 router.post('/:id/image', medicineImageUpload.array('images', 4), inventoryController.uploadInventoryMedicineImage);
 
 /**
+ * @route   DELETE /api/inventory/:id/image
+ * @desc    Delete a specific medicine image
+ * @access  Private (Vendor)
+ */
+router.delete('/:id/image', inventoryController.deleteInventoryMedicineImage);
+
+/**
  * @route   PATCH /api/inventory/:id
  * @desc    Update inventory item quantity
  * @access  Private (Vendor)

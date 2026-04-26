@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -6,9 +7,10 @@ import { convertPrice, formatCurrency, getCurrencySymbol } from '../../utils/cur
 import inventoryService from '../../services/inventory.service';
 import vendorService from '../../services/vendor.service';
 import styles from './MedicineManager.module.css';
-import { Check, X, AlertCircle } from 'lucide-react';
+import { Check, X, AlertCircle, Trash2, ImagePlus } from 'lucide-react';
 
 function VendorMedicineManager() {
+	const location = useLocation();
 	const { currency, exchangeRates, convert } = useCurrency();
 	const { showSuccess, showError } = useNotification();
 	const [medicines, setMedicines] = useState([]);
@@ -76,7 +78,18 @@ function VendorMedicineManager() {
 
 		loadInventory();
 		loadVendorStatus();
-	}, []);
+
+		// Handle deep linking from Analytics
+		if (location.state?.selectedMedicineId && medicines.length > 0) {
+			const medicine = medicines.find(m => m.id === location.state.selectedMedicineId || m.medicineId === location.state.selectedMedicineId);
+			if (medicine) {
+				setSelectedMedicine(medicine);
+				setStockDraft(String(medicine.stock));
+				// Clear location state to prevent re-opening on refresh
+				window.history.replaceState({}, document.title);
+			}
+		}
+	}, [location.state, medicines.length]);
 
 	const handleAddMedicine = async () => {
 		if (!newMedicine.name || !newMedicine.price || !newMedicine.stock) {
@@ -111,6 +124,22 @@ function VendorMedicineManager() {
 			};
 
 			const inventory = await inventoryService.addMedicineToInventory(payload);
+			
+			// If images are selected, upload them now
+			let finalImageUrls = [];
+			let finalImageUrl = null;
+			
+			if (uploadFiles.length > 0) {
+				try {
+					const uploadResult = await inventoryService.uploadMedicineImage(inventory.id, uploadFiles);
+					finalImageUrls = uploadResult.imageUrls || [];
+					finalImageUrl = uploadResult.imageUrl || null;
+				} catch (uploadError) {
+					console.error('Failed to upload initial images', uploadError);
+					showError('Medicine added but image upload failed');
+				}
+			}
+
 			const mapped = {
 				id: inventory.id,
 				medicineId: inventory.medicineId,
@@ -121,12 +150,12 @@ function VendorMedicineManager() {
 				wholesalePrice: Number(convert((((inventory.medicine?.wholesalePriceCents) || payload.wholesalePriceCents) / 100), 'INR').toFixed(2)),
 				bulkMinQty: inventory.medicine?.bulkMinQty || payload.bulkMinQty,
 				bulkPrice: Number(convert((((inventory.medicine?.bulkPriceCents) || payload.bulkPriceCents) / 100), 'INR').toFixed(2)),
-				imageUrl: inventory.imageUrl || inventory.imageUrls?.[0] || null,
-				imageUrls: Array.isArray(inventory.imageUrls)
+				imageUrl: finalImageUrl || inventory.imageUrl || inventory.imageUrls?.[0] || null,
+				imageUrls: finalImageUrls.length > 0 ? finalImageUrls : (Array.isArray(inventory.imageUrls)
 					? inventory.imageUrls
 					: inventory.imageUrl
 						? [inventory.imageUrl]
-						: []
+						: [])
 			};
 
 			setMedicines((prev) => {
@@ -204,6 +233,35 @@ function VendorMedicineManager() {
 		} catch (error) {
 			console.error('Failed to upload image', error);
 			showError(error?.response?.data?.message || 'Failed to upload image');
+		} finally {
+			setUploadingId(null);
+		}
+	};
+
+	const handleDeleteImage = async (imageUrl) => {
+		if (!selectedMedicine) return;
+
+		try {
+			setUploadingId(selectedMedicine.id);
+			const result = await inventoryService.deleteMedicineImage(selectedMedicine.id, imageUrl);
+			setMedicines((prev) => prev.map((m) => (
+				m.id === selectedMedicine.id
+					? {
+						...m,
+						imageUrl: result.imageUrl,
+						imageUrls: Array.isArray(result.imageUrls) ? result.imageUrls : (result.imageUrl ? [result.imageUrl] : [])
+					}
+					: m
+			)));
+			setSelectedMedicine((prev) => (prev ? {
+				...prev,
+				imageUrl: result.imageUrl,
+				imageUrls: Array.isArray(result.imageUrls) ? result.imageUrls : (result.imageUrl ? [result.imageUrl] : [])
+			} : prev));
+			showSuccess('Medicine image deleted');
+		} catch (error) {
+			console.error('Failed to delete image', error);
+			showError(error?.response?.data?.message || 'Failed to delete image');
 		} finally {
 			setUploadingId(null);
 		}
@@ -435,11 +493,40 @@ function VendorMedicineManager() {
 					</div>
 					</div>
 
-						<div className={styles.formGridFull}>
-							<div className={styles.formGroup}>
-						<label className={styles.label}>Description</label>
-						<textarea
-							className={styles.textarea}
+					<div className={styles.formGridFull}>
+						<div className={styles.formGroup}>
+							<label className={styles.label}>Product Images (Optional, up to 4)</label>
+							<div className={styles.imageSelectionArea}>
+								<input
+									type="file"
+									id="new-product-images"
+									accept="image/*"
+									multiple
+									style={{ display: 'none' }}
+									onChange={(e) => {
+										const files = Array.from(e.target.files || []).slice(0, 4);
+										setUploadFiles(files);
+									}}
+								/>
+								<label htmlFor="new-product-images" className={styles.imageUploadLabel}>
+									<ImagePlus size={24} />
+									<span>{uploadFiles.length > 0 ? `${uploadFiles.length} images selected` : 'Click to select product images'}</span>
+								</label>
+								{uploadFiles.length > 0 && (
+									<div className={styles.previewStrip}>
+										{Array.from(uploadFiles).map((file, idx) => (
+											<div key={idx} className={styles.previewContainer}>
+												<img src={URL.createObjectURL(file)} alt="preview" className={styles.previewThumb} />
+											</div>
+										))}
+									</div>
+								)}
+							</div>
+						</div>
+						<div className={styles.formGroup}>
+							<label className={styles.label}>Description</label>
+							<textarea
+								className={styles.textarea}
 								placeholder="Product description..."
 								value={newMedicine.description}
 								onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
@@ -511,7 +598,17 @@ function VendorMedicineManager() {
 								{(selectedMedicine.imageUrls || []).length > 0 ? (
 									<div className={styles.previewStrip}>
 										{(selectedMedicine.imageUrls || []).map((imageUrl, index) => (
-											<img key={`${imageUrl}-${index}`} src={imageUrl} alt={`${selectedMedicine.name} ${index + 1}`} className={styles.previewThumb} />
+											<div key={`${imageUrl}-${index}`} className={styles.previewContainer}>
+												<img src={imageUrl} alt={`${selectedMedicine.name} ${index + 1}`} className={styles.previewThumb} />
+												<button 
+													className={styles.deleteImageIcon}
+													onClick={() => handleDeleteImage(imageUrl)}
+													disabled={uploadingId === selectedMedicine.id}
+													title="Delete image"
+												>
+													<Trash2 size={14} />
+												</button>
+											</div>
 										))}
 									</div>
 								) : (

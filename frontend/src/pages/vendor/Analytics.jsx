@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useCurrency } from '../../context/CurrencyContext';
 import vendorService from '../../services/vendor.service';
@@ -30,6 +31,7 @@ function buildInsightMessage(analyticsData) {
 
 function VendorAnalytics() {
 	const { currency, convert } = useCurrency();
+	const navigate = useNavigate();
 	const [timeRange, setTimeRange] = useState('month');
 	const [loading, setLoading] = useState(true);
 	const [analyticsData, setAnalyticsData] = useState({
@@ -214,7 +216,10 @@ function VendorAnalytics() {
 								<td className={styles.tableCell}>{product.sales}</td>
 								<td className={styles.tableCell}>{formatMoney(product.revenue)}</td>
 								<td className={styles.tableCell}>
-									<button className={styles.detailsButton}>
+									<button 
+										className={styles.detailsButton}
+										onClick={() => navigate('/vendor/products', { state: { selectedMedicineId: product.id } })}
+									>
 										View Details
 									</button>
 								</td>

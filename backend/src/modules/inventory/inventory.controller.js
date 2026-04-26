@@ -71,6 +71,30 @@ module.exports = {
   },
 
   /**
+   * DELETE /api/inventory/:id/image
+   * Delete a specific medicine image
+   */
+  deleteInventoryMedicineImage: async (req, res, next) => {
+    try {
+      const inventoryId = req.params.id;
+      const { imageUrl } = req.body;
+      const result = await inventoryService.deleteInventoryMedicineImage(
+        req.user,
+        inventoryId,
+        imageUrl
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Medicine image deleted successfully',
+        data: result
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * PATCH /api/inventory/:id
    * Update inventory item (quantity)
    */
