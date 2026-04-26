@@ -8,7 +8,7 @@ const { ForbiddenError } = require('../utils/errors');
 const restrictTo = (allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return next(new ForbiddenError('User not authenticated'));
+      return next(new ForbiddenError('User not authenticated !'));
     }
 
     if (!allowedRoles.includes(req.user.role)) {
