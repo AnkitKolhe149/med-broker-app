@@ -4,6 +4,37 @@
 	min-height: 100vh;
 }
 
+.verificationBanner {
+	background-color: #fffbeb;
+	border: 1px solid #fde68a;
+	border-radius: var(--radius);
+	padding: 1rem 1.5rem;
+	margin-bottom: 2rem;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	color: #92400e;
+}
+
+.bannerIcon {
+	color: #f59e0b;
+	flex-shrink: 0;
+}
+
+.bannerText h4 {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	margin-bottom: 0.25rem;
+}
+
+.bannerText p {
+	margin: 0;
+	font-size: 0.875rem;
+	opacity: 0.9;
+}
+
+
 .header {
 	display: flex;
 	justify-content: space-between;

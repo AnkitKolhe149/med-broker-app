@@ -4,8 +4,9 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
 import { convertPrice, formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import inventoryService from '../../services/inventory.service';
+import vendorService from '../../services/vendor.service';
 import styles from './MedicineManager.module.css';
-import { Check, X } from 'lucide-react';
+import { Check, X, AlertCircle } from 'lucide-react';
 
 function VendorMedicineManager() {
 	const { currency, exchangeRates, convert } = useCurrency();
@@ -20,6 +21,7 @@ function VendorMedicineManager() {
 	const [stockDraft, setStockDraft] = useState('');
 	const [filterStatus, setFilterStatus] = useState('all');
 	const [uploadFiles, setUploadFiles] = useState([]);
+	const [vendorStatus, setVendorStatus] = useState('VERIFIED'); // Default to verified to avoid flicker
 	const currencySymbol = getCurrencySymbol(currency);
 	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 	const toBaseAmount = (value) => convertPrice(value, currency, 'INR', exchangeRates);
@@ -63,7 +65,17 @@ function VendorMedicineManager() {
 			}
 		};
 
+		const loadVendorStatus = async () => {
+			try {
+				const profile = await vendorService.getProfile();
+				setVendorStatus(profile.verificationStatus || 'PENDING');
+			} catch (error) {
+				console.error('Failed to load vendor status', error);
+			}
+		};
+
 		loadInventory();
+		loadVendorStatus();
 	}, []);
 
 	const handleAddMedicine = async () => {
@@ -248,6 +260,16 @@ function VendorMedicineManager() {
 					</button>
 				)}
 			>
+			
+			{vendorStatus !== 'VERIFIED' && (
+				<div className={styles.verificationBanner}>
+					<AlertCircle className={styles.bannerIcon} size={24} />
+					<div className={styles.bannerText}>
+						<h4>Profile Verification Pending</h4>
+						<p>Your products will be visible to customers once your profile is verified by our team. You can still manage your inventory in the meantime.</p>
+					</div>
+				</div>
+			)}
 
 			{/* Filters */}
 			<div className={styles.filterBar}>

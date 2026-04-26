@@ -171,6 +171,7 @@ module.exports = {
     const exchangeRateRecord = await getLatestRates(BASE_CURRENCY);
 
     const [items, total] = await Promise.all([
+
       prisma.inventory.findMany({
         where: inventoryWhere,
         skip,

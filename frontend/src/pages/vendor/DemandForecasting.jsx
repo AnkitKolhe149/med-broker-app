@@ -66,7 +66,14 @@ const DemandForecasting = () => {
         <div className={styles.container}>
             <div className={styles.header}>
                 <div className={styles.headerInfo}>
-                    <h1>AI Demand Forecast</h1>
+                    <div className={styles.titleWrapper}>
+                        <h1>AI Demand Forecast</h1>
+                        {data?.source && (
+                            <span className={data.source === 'AI_MODEL' ? styles.aiBadge : styles.heuristicBadge}>
+                                {data.source === 'AI_MODEL' ? 'LSTM Model Active' : 'System Heuristic'}
+                            </span>
+                        )}
+                    </div>
                     <p>Advanced predictive analytics powered by the MedBroker Deep Learning engine.</p>
                 </div>
                 <div className={styles.headerActions}>

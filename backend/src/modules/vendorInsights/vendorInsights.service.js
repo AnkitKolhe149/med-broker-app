@@ -528,7 +528,8 @@ const getDemandForecast = async (userId) => {
     
     return {
       vendor: { id: vendor.id, companyName: vendor.companyName },
-      forecasts: response.data.forecasts || []
+      forecasts: response.data.forecasts || [],
+      source: 'AI_MODEL'
     };
   } catch (error) {
     console.warn("Python ML server unavailable, using fallback heuristic forecast.");
@@ -546,7 +547,8 @@ const getDemandForecast = async (userId) => {
     
     return {
       vendor: { id: vendor.id, companyName: vendor.companyName },
-      forecasts: fallbackForecasts
+      forecasts: fallbackForecasts,
+      source: 'HEURISTIC'
     };
   }
 };

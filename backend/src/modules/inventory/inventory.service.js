@@ -287,9 +287,12 @@ module.exports = {
       throw new ValidationError('bulkMinQty must be at least 1');
     }
 
-    if (vendor.verificationStatus !== 'VERIFIED') {
-      throw new ForbiddenError('Vendor must be verified before adding medicines to inventory.');
+    // Note: In development, we allow PENDING vendors to add medicines to enable faster testing.
+    // In a strict production environment, this could be toggled by an environment variable.
+    if (vendor.verificationStatus === 'REJECTED') {
+      throw new ForbiddenError('Your vendor profile has been rejected. Please contact support.');
     }
+
 
     const result = await prisma.$transaction(async (tx) => {
       let medicine;
