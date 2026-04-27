@@ -107,68 +107,23 @@ module.exports = {
       prisma.payout.groupBy({
         by: ['vendorId'],
         where: { status: 'COMPLETED' },
-        _sum: { amountCents: true, appliedFee: true, persistedFeeAmount: true },
+        _sum: { amountCents: true },
       }),
     ]);
 
     const earnedMap = Object.fromEntries(earnedByVendor.map(r => [r.vendorId, r._sum.lineTotalCents || 0]));
     const paidMap = Object.fromEntries(paidByVendor.map(r => [r.vendorId, r._sum.amountCents || 0]));
-    // Track whether there are any fee snapshots at all for this vendor
-    const feeSnapshotMap = Object.fromEntries(paidByVendor.map(r => [
-      r.vendorId,
-      {
-        hasFeeSnapshot: (r._sum.appliedFee != null || r._sum.persistedFeeAmount != null),
-        totalSnapshotFee: (r._sum.appliedFee || 0) + (r._sum.persistedFeeAmount || 0),
-      }
-    ]));
 
     const overview = vendors.map(v => {
       const totalEarnedCents = earnedMap[v.id] || 0;
       const totalPaidCents = paidMap[v.id] || 0;
-      const { hasFeeSnapshot, totalSnapshotFee } = feeSnapshotMap[v.id] || { hasFeeSnapshot: false, totalSnapshotFee: 0 };
-
-      let commissionCents;
-      let appliedFee;
-      let appliedRate;
-
-      if (hasFeeSnapshot) {
-        // NEW records: fee was explicitly locked at payout time.
-        // Historical fee is immutable. Apply current rate ONLY to any new, unpaid revenue.
-        // grossCovered = what was already disbursed (net) + what was charged as fee historically
-        const grossCoveredByPayouts = totalPaidCents + totalSnapshotFee;
-        const newUnpaidGross = Math.max(0, totalEarnedCents - grossCoveredByPayouts);
-        const pendingFeeOnNew = Math.floor(newUnpaidGross * commissionRate);
-        commissionCents = Math.floor(totalSnapshotFee + pendingFeeOnNew);
-      } else {
-        // LEGACY records: no fee was stored at payout time.
-        // We infer the historical gross from totalPaidCents by reverse-engineering:
-        //   if vendor was fully paid at some historical rate R, then net = gross × (1 - R)
-        //   => gross_covered_historically = totalPaidCents / (1 - R)
-        // Since we don't know R, we use the ACTUAL earned vs paid difference as the implied fee.
-        // The key insight: (totalEarned - totalPaid) is the fee that was implicitly deducted.
-        // This stays immutable — we don't let the current rate change it.
-        const impliedHistoricalFee = totalEarnedCents - totalPaidCents;
-        // Check if this implies a sensible rate (between 0% and 50%)
-        const impliedRate = totalEarnedCents > 0 ? impliedHistoricalFee / totalEarnedCents : 0;
-        if (impliedRate >= 0 && impliedRate <= 0.5 && totalPaidCents > 0) {
-          // Vendor appears fully settled — lock in the historical implied fee, pendingBalance = 0
-          commissionCents = impliedHistoricalFee;
-        } else {
-          // No prior payouts or unusual data — use current global rate
-          commissionCents = Math.floor(totalEarnedCents * commissionRate);
-        }
-      }
-
+      const commissionCents = Math.floor(totalEarnedCents * commissionRate);
       const netPayableCents = totalEarnedCents - commissionCents;
       const pendingBalanceCents = Math.max(0, netPayableCents - totalPaidCents);
-      appliedFee = commissionCents;
-      appliedRate = totalEarnedCents > 0 ? (commissionCents / totalEarnedCents) * 100 : (commissionRate * 100);
-
       return {
         vendorId: v.id, companyName: v.companyName, contactPersonName: v.contactPersonName,
         totalEarnedCents, commissionCents, commissionRatePercent: commissionRate * 100,
-        totalPaidCents, pendingBalanceCents, total: totalEarnedCents,
-        appliedFee, appliedRate
+        totalPaidCents, pendingBalanceCents, total: totalEarnedCents
       };
     });
 
@@ -317,19 +272,15 @@ module.exports = {
     const commissionSetting = await prisma.systemSetting.findUnique({
       where: { key: 'PLATFORM_COMMISSION_PERCENT' },
     }).catch(() => null);
-    
-    const appliedRate = commissionSetting ? parseFloat(commissionSetting.value) : 5;
-    // Normalized amount is the NET pending balance, so gross = net / (1 - rate)
-    const appliedFee = Math.floor(normalizedAmount / (1 - (appliedRate / 100)) * (appliedRate / 100));
+    const persistedFeeRate = commissionSetting ? parseFloat(commissionSetting.value) : 5;
+    const persistedFeeAmount = normalizedAmount * (persistedFeeRate / 100);
 
     return prisma.payout.create({
       data: {
         vendorId,
         amountCents: normalizedAmount,
-        persistedFeeRate: appliedRate,
-        persistedFeeAmount: appliedFee,
-        appliedRate,
-        appliedFee,
+        persistedFeeRate,
+        persistedFeeAmount,
         status: 'COMPLETED',
         processedAt: new Date(),
         transactionId: `TXN-${Date.now()}`
@@ -1070,10 +1021,22 @@ module.exports = {
 
   // Wave 1
   updatePrescriptionStatus: async (id, status, adminId, rejectionReason) => {
-    return prisma.prescription.update({
-      where: { id },
-      data: { status, reviewedBy: adminId, reviewedAt: new Date(), rejectionReason }
-    });
+    // Support calling with either a prescription `id` or an `orderId` (frontend currently sends order.id)
+    // First try direct update by prescription id
+    try {
+      return await prisma.prescription.update({
+        where: { id },
+        data: { status, reviewedBy: adminId, reviewedAt: new Date(), rejectionReason }
+      });
+    } catch (err) {
+      // If no prescription found by id, try finding by orderId and update that record instead
+      const byOrder = await prisma.prescription.findFirst({ where: { orderId: id } });
+      if (!byOrder) throw err;
+      return prisma.prescription.update({
+        where: { id: byOrder.id },
+        data: { status, reviewedBy: adminId, reviewedAt: new Date(), rejectionReason }
+      });
+    }
   },
 
   verifyKycDocument: async (id, status, adminId, rejectedReason) => {

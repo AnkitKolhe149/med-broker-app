@@ -62,4 +62,13 @@ module.exports = {
       next(error);
     }
   }
+ ,
+  updateProfile: async (req, res, next) => {
+    try {
+      const result = await authService.updateProfile(req.user.id, req.body);
+      // return refreshed user data
+      const updated = await authService.getCurrentUser ? undefined : undefined; // noop placeholder
+      res.status(200).json({ success: true, data: result });
+    } catch (error) { next(error); }
+  }
 };

@@ -242,6 +242,44 @@ module.exports = {
     };
   },
 
+  updateProfile: async (userId, data) => {
+    // Allow updating basic user fields and customer profile fields
+    const userUpdates = {};
+    const customerUpdates = {};
+
+    if (data.name) userUpdates.name = String(data.name);
+    if (data.mobile) userUpdates.mobile = String(data.mobile);
+    if (data.avatarUrl) userUpdates.avatarUrl = String(data.avatarUrl);
+    if (data.preferredCurrency) userUpdates.preferredCurrency = String(data.preferredCurrency);
+    if (data.timezone) userUpdates.timezone = String(data.timezone);
+
+    // Customer-specific
+    if (data.fullName) customerUpdates.fullName = String(data.fullName);
+    if (data.contactNumber) customerUpdates.contactNumber = String(data.contactNumber);
+    if (data.deliveryAddress) customerUpdates.deliveryAddress = String(data.deliveryAddress || '');
+    if (data.city) customerUpdates.city = String(data.city);
+    if (data.country) customerUpdates.country = String(data.country);
+    if (data.profileImage) customerUpdates.profileImage = String(data.profileImage);
+
+    // Run updates in transaction
+    const operations = [];
+    if (Object.keys(userUpdates).length) {
+      operations.push(prisma.user.update({ where: { id: userId }, data: userUpdates }));
+    }
+
+    // If customer exists, update; otherwise ignore
+    const customer = await prisma.customer.findFirst({ where: { userId } });
+    if (customer && Object.keys(customerUpdates).length) {
+      operations.push(prisma.customer.update({ where: { id: customer.id }, data: customerUpdates }));
+    }
+
+    const results = operations.length ? await prisma.$transaction(operations) : [];
+
+    // return refreshed user with relations
+    const refreshed = await prisma.user.findUnique({ where: { id: userId }, include: { customer: true, vendor: true } });
+    return refreshed;
+  },
+
   generateToken,
   verifyToken
 };

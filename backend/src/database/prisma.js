@@ -19,10 +19,30 @@ const pool = new Pool({
 
 const adapter = new PrismaPg(pool);
 
-const basePrisma = new PrismaClient({
-  adapter,
-  log: prismaLogConfig,
-});
+const createPrismaClient = () => {
+  try {
+    return new PrismaClient({
+      adapter,
+      log: prismaLogConfig,
+    });
+  } catch (error) {
+    const message = String(error?.message || '').toLowerCase();
+    const adapterNotEnabled = message.includes('adapter') && message.includes('preview feature is enabled');
+
+    if (!adapterNotEnabled) {
+      throw error;
+    }
+
+    console.warn('[prisma] Driver adapters are unavailable in this generated client. Falling back to direct datasource connection.');
+    console.warn('[prisma] Run "npm run prisma:generate" in backend to enable adapter mode.');
+
+    return new PrismaClient({
+      log: prismaLogConfig,
+    });
+  }
+};
+
+const basePrisma = createPrismaClient();
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const isTransientDbTerminationError = (error) => {
