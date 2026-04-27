@@ -15,4 +15,7 @@ router.get('/profile-status', authenticate, authController.getProfileStatus);
 router.post('/change-password', authenticate, authController.changePassword);
 router.patch('/profile', authenticate, authController.updateProfile);
 
+// Revoke all sessions for the current user (logout everywhere)
+router.post('/logout-all', authenticate, authController.logoutAllSessions);
+
 module.exports = router;

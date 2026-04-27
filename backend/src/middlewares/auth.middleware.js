@@ -46,6 +46,14 @@ async function authenticate(req, res, next) {
     }
 
     // Session revocation: block banned users even with a valid JWT
+    // Invalidate tokens issued before user's tokenInvalidBefore (if set)
+    if (user.tokenInvalidBefore) {
+      const tokenIat = decoded && decoded.iat ? Number(decoded.iat) : null;
+      const invalidBefore = Math.floor(new Date(user.tokenInvalidBefore).getTime() / 1000);
+      if (tokenIat && tokenIat < invalidBefore) {
+        return res.status(401).json({ success: false, message: 'Session invalidated. Please login again.' });
+      }
+    }
     if (user.isBanned) {
       return res.status(403).json({
         success: false,

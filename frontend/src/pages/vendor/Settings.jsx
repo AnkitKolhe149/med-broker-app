@@ -515,6 +515,24 @@ function VendorSettings() {
 			{/* Notifications Tab */}
 			{activeTab === 'notifications' && (
 				<div className={styles.section}>
+				<div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
+					<button
+						className={`${styles.button} ${styles.dangerButton}`}
+						onClick={async () => {
+							try {
+								await authService.logoutAllSessions();
+								showSuccess('Signed out from all devices');
+								window.location.href = '/login';
+							} catch (err) {
+								console.error('Logout all failed', err);
+								showError(err?.message || 'Failed to sign out from all devices');
+							}
+						}}
+					>
+						Sign Out From All Devices
+					</button>
+				</div>
+				
 					<h2 className={styles.sectionTitle}>Notification Preferences</h2>
 
 					<div className={styles.notificationItem}>

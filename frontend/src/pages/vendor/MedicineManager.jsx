@@ -32,8 +32,6 @@ function VendorMedicineManager() {
 		stock: '',
 		price: '',
 		wholesalePrice: '',
-		bulkMinQty: '',
-		bulkPrice: '',
 		description: ''
 	});
 
@@ -50,8 +48,6 @@ function VendorMedicineManager() {
 					stock: item.quantity || 0,
 					price: Number(convert((item.medicine?.priceCents || 0) / 100, 'INR').toFixed(2)),
 					wholesalePrice: Number(convert((((item.medicine?.wholesalePriceCents ?? item.medicine?.priceCents) || 0) / 100), 'INR').toFixed(2)),
-					bulkMinQty: item.medicine?.bulkMinQty || null,
-					bulkPrice: Number(convert((((item.medicine?.bulkPriceCents ?? item.medicine?.wholesalePriceCents ?? item.medicine?.priceCents) || 0) / 100), 'INR').toFixed(2)),
 					imageUrl: item.imageUrl || item.imageUrls?.[0] || null,
 					imageUrls: Array.isArray(item.imageUrls)
 						? item.imageUrls
@@ -98,12 +94,7 @@ function VendorMedicineManager() {
 		}
 
 		if (newMedicine.wholesalePrice && Number(newMedicine.wholesalePrice) > Number(newMedicine.price)) {
-			showError('Wholesale price cannot be higher than retail price');
-			return;
-		}
-
-		if (newMedicine.bulkPrice && Number(newMedicine.bulkPrice) > Number(newMedicine.wholesalePrice || newMedicine.price)) {
-			showError('Bulk price should be less than or equal to wholesale price');
+			showError('❌ B2B Standard Price cannot be higher than Retail Price. Wholesale buyers should get a discount.');
 			return;
 		}
 
@@ -111,15 +102,11 @@ function VendorMedicineManager() {
 			setSubmitting(true);
 			const retailPriceCents = Math.round(toBaseAmount(Number(newMedicine.price)) * 100);
 			const wholesalePriceCents = Math.round(toBaseAmount(Number((newMedicine.wholesalePrice || newMedicine.price))) * 100);
-			const bulkPriceCents = Math.round(toBaseAmount(Number((newMedicine.bulkPrice || newMedicine.wholesalePrice || newMedicine.price))) * 100);
-			const normalizedBulkMinQty = newMedicine.bulkMinQty ? Math.max(1, Number.parseInt(newMedicine.bulkMinQty, 10) || 1) : null;
 			const payload = {
 				name: newMedicine.name.trim(),
 				description: newMedicine.description?.trim() || null,
 				priceCents: retailPriceCents,
 				wholesalePriceCents,
-				bulkPriceCents,
-				bulkMinQty: normalizedBulkMinQty,
 				quantity: Number(newMedicine.stock)
 			};
 
@@ -148,14 +135,12 @@ function VendorMedicineManager() {
 				stock: inventory.quantity || payload.quantity,
 				price: Number(convert((((inventory.medicine?.priceCents) || payload.priceCents) / 100), 'INR').toFixed(2)),
 				wholesalePrice: Number(convert((((inventory.medicine?.wholesalePriceCents) || payload.wholesalePriceCents) / 100), 'INR').toFixed(2)),
-				bulkMinQty: inventory.medicine?.bulkMinQty || payload.bulkMinQty,
-											bulkPrice: Number(convert((((inventory.medicine?.bulkPriceCents) || payload.bulkPriceCents) / 100), 'INR').toFixed(2)),
-											imageUrl: finalImageUrl || inventory.imageUrl || inventory.imageUrls?.[0] || null,
-											imageUrls: finalImageUrls.length > 0 ? finalImageUrls : (Array.isArray(inventory.imageUrls)
-												? inventory.imageUrls
-												: inventory.imageUrl
-													? [inventory.imageUrl]
-													: [])
+				imageUrl: finalImageUrl || inventory.imageUrl || inventory.imageUrls?.[0] || null,
+				imageUrls: finalImageUrls.length > 0 ? finalImageUrls : (Array.isArray(inventory.imageUrls)
+					? inventory.imageUrls
+					: inventory.imageUrl
+						? [inventory.imageUrl]
+						: [])
 			};
 
 			setMedicines((prev) => {
@@ -173,8 +158,6 @@ function VendorMedicineManager() {
 				stock: '',
 				price: '',
 				wholesalePrice: '',
-				bulkMinQty: '',
-				bulkPrice: '',
 				description: ''
 			});
 			setShowAddForm(false);
@@ -380,7 +363,7 @@ function VendorMedicineManager() {
 								<td className={styles.tableCell}>
 									<strong>{formatMoney(medicine.price)}</strong>
 									<div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-										Wholesale {formatMoney(medicine.wholesalePrice)} {medicine.bulkMinQty ? `• Bulk ${medicine.bulkMinQty}+ @ ${formatMoney(medicine.bulkPrice)}` : ''}
+										Wholesale: {formatMoney(medicine.wholesalePrice)}
 									</div>
 								</td>
 								<td className={styles.tableCell}>
@@ -449,47 +432,28 @@ function VendorMedicineManager() {
 							/>
 						</div>
 					<div className={styles.formGroup}>
-						<label className={styles.label}>Selling Price ({currencySymbol})</label>
+						<label className={styles.label}>Selling Price ({currencySymbol}) <span style={{ fontSize: '0.85em', color: '#666' }}>Retail</span></label>
 						<input
 							type="number"
 							className={styles.input}
-								placeholder="0.00"
-								step="0.01"
-								value={newMedicine.price}
-								onChange={(e) => setNewMedicine({ ...newMedicine, price: e.target.value })}
-							/>
-						</div>
+							placeholder="0.00"
+							step="0.01"
+							value={newMedicine.price}
+							onChange={(e) => setNewMedicine({ ...newMedicine, price: e.target.value })}
+						/>
+						<small style={{ color: '#888', marginTop: '4px', display: 'block' }}>What retail customers pay</small>
+					</div>
 					<div className={styles.formGroup}>
-						<label className={styles.label}>Wholesale Price ({currencySymbol})</label>
+						<label className={styles.label}>B2B Standard Price ({currencySymbol}) <span style={{ fontSize: '0.85em', color: '#666' }}>Wholesale</span></label>
 						<input
 							type="number"
 							className={styles.input}
-							placeholder="Optional"
+							placeholder="Optional - leave blank to use retail price"
 							step="0.01"
 							value={newMedicine.wholesalePrice}
 							onChange={(e) => setNewMedicine({ ...newMedicine, wholesalePrice: e.target.value })}
 						/>
-					</div>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Bulk Min Qty</label>
-						<input
-							type="number"
-							className={styles.input}
-							placeholder="Optional"
-							value={newMedicine.bulkMinQty}
-							onChange={(e) => setNewMedicine({ ...newMedicine, bulkMinQty: e.target.value })}
-						/>
-					</div>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Bulk Price ({currencySymbol})</label>
-						<input
-							type="number"
-							className={styles.input}
-							placeholder="Optional"
-							step="0.01"
-							value={newMedicine.bulkPrice}
-							onChange={(e) => setNewMedicine({ ...newMedicine, bulkPrice: e.target.value })}
-						/>
+						<small style={{ color: '#888', marginTop: '4px', display: 'block' }}>For B2B buyers (requires GSTIN)</small>
 					</div>
 					</div>
 

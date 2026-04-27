@@ -18,6 +18,7 @@ model User {
   isProfileComplete       Boolean                 @default(false)
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
+  tokenInvalidBefore      DateTime?
   avatarUrl               String?
   isActive                Boolean                 @default(true)
   isBanned                Boolean                 @default(false)
@@ -112,8 +113,6 @@ model Medicine {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   wholesalePriceCents  Int?
-  bulkMinQty           Int?
-  bulkPriceCents       Int?
   requiresPrescription Boolean             @default(false)
   brand                String?
   category             String?
@@ -151,8 +150,6 @@ model Inventory {
   updatedAt           DateTime         @updatedAt
   imageUrl            String?
   imageUrls           Json?
-  bulkMinQty          Int              @default(100)
-  bulkDiscountPercent Int              @default(10)
   costPriceCents      Int?
   isActive            Boolean          @default(true)
   lastRestockedAt     DateTime?

@@ -72,3 +72,12 @@ module.exports = {
     } catch (error) { next(error); }
   }
 };
+
+module.exports.logoutAllSessions = async (req, res, next) => {
+  try {
+    await require('../modules/auth/auth.service').invalidateUserSessions(req.user.id);
+    res.json({ success: true, message: 'All sessions revoked' });
+  } catch (err) {
+    next(err);
+  }
+};

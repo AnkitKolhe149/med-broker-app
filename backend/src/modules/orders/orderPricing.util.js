@@ -1,36 +1,39 @@
 const { ValidationError } = require('../../utils/errors');
 
+/**
+ * PRICING TIER SYSTEM (2-Tier Architecture)
+ * Simple Retail vs Wholesale pricing
+ */
+
 const resolveOrderItemUnitPriceCents = ({ medicine, buyerType, quantity, packageType }) => {
   const retailPriceCents = medicine.priceCents;
   const wholesalePriceCents = medicine.wholesalePriceCents ?? retailPriceCents;
-  const bulkPriceCents = medicine.bulkPriceCents ?? wholesalePriceCents;
-  const bulkMinQty = medicine.bulkMinQty || 1;
-  const isBulkPackage = String(packageType || '').toLowerCase() === 'bulk';
   const normalizedBuyerType = String(buyerType || 'RETAIL').toUpperCase();
 
-  if (isBulkPackage && normalizedBuyerType !== 'WHOLESALE') {
-    throw new ValidationError('Bulk package is available only for wholesale buyers');
+  if (normalizedBuyerType !== 'WHOLESALE') {
+    return retailPriceCents;
   }
 
-  if (isBulkPackage && quantity < bulkMinQty) {
-    throw new ValidationError(`Bulk package requires minimum quantity of ${bulkMinQty}`);
+  return wholesalePriceCents;
+};
+
+const validatePricingLogic = (medicine) => {
+  const errors = [];
+  const retail = medicine.priceCents || 0;
+  const wholesale = medicine.wholesalePriceCents;
+
+  if (wholesale && wholesale > retail) {
+    errors.push(
+      `Wholesale Price (₹${(wholesale / 100).toFixed(2)}) cannot exceed Retail Price (₹${(retail / 100).toFixed(2)}).`
+    );
   }
 
-  if (isBulkPackage) {
-    return bulkPriceCents;
+  if (errors.length > 0) {
+    throw new ValidationError('Pricing validation failed: ' + errors.join(' '));
   }
-
-  if (normalizedBuyerType === 'WHOLESALE') {
-    if (quantity >= bulkMinQty) {
-      return bulkPriceCents;
-    }
-
-    return wholesalePriceCents;
-  }
-
-  return retailPriceCents;
 };
 
 module.exports = {
-  resolveOrderItemUnitPriceCents
+  resolveOrderItemUnitPriceCents,
+  validatePricingLogic
 };

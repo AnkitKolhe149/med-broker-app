@@ -223,4 +223,22 @@ export default {
   isProfileComplete: () => {
     return getUser()?.isProfileComplete || false;
   }
+  ,
+
+  logoutAllSessions: async () => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await axios.post(`${API_URL}/auth/logout-all`, {}, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to revoke sessions');
+    }
+
+    // Clear local session and account-scoped data
+    clearAuthData();
+    return true;
+  }
 };

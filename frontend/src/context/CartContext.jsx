@@ -16,28 +16,37 @@ const DEFAULT_CART_CONTEXT = {
 
 const CartContext = createContext(DEFAULT_CART_CONTEXT);
 
-const mapServerCartItem = (item) => ({
-	id: item.id,
-	customerId: item.customerId,
-	medicineId: item.medicineId || item.medicine?.id || item.id,
-	inventoryId: item.inventoryId || item.id,
-	name: item.name || item.medicine?.name || 'Medicine',
-	category: item.category || item.medicine?.category || 'Medicine',
-	imageUrl: item.imageUrl || item.inventory?.imageUrl || null,
-	vendor: item.vendor || item.inventory?.vendor?.companyName || item.medicine?.brand || 'Trusted vendor',
-	vendorId: item.vendorId || item.inventory?.vendor?.id || null,
-	quantity: Number(item.quantity || 1),
-	retailPrice: Number(item.retailPrice || item.basePrice || item.priceSnapshotCents || 0) / (item.priceSnapshotCents ? 100 : 1),
-	wholesalePrice: Number(item.wholesalePrice || 0),
-	bulkPrice: Number(item.bulkPrice || 0),
-	bulkMinQty: Number(item.bulkMinQty || item.medicine?.bulkMinQty || 1),
-	buyerType: item.buyerType || 'RETAIL',
-	packageType: item.selectedSize || 'standard',
-	selectedSize: item.selectedSize || 'standard',
-	currencyCode: item.currencyCode || 'INR',
-	basePrice: Number(item.basePrice || item.priceSnapshotCents || item.retailPrice || 0) / (item.priceSnapshotCents ? 100 : 1),
-	addedAt: item.addedAt || item.createdAt || new Date().toISOString()
-});
+const mapServerCartItem = (item) => {
+	// CRITICAL: medicineId must be from explicit fields, not derived from item.id
+	const medicineId = item.medicineId || item.medicine?.id;
+	if (!medicineId) {
+		console.error('[CartContext] Cart item missing medicineId:', item);
+		return null;
+	}
+
+	return {
+		id: item.id,
+		customerId: item.customerId,
+		medicineId,
+		inventoryId: item.inventoryId || item.id,
+		name: item.name || item.medicine?.name || 'Medicine',
+		category: item.category || item.medicine?.category || 'Medicine',
+		imageUrl: item.imageUrl || item.inventory?.imageUrl || null,
+		vendor: item.vendor || item.inventory?.vendor?.companyName || item.medicine?.brand || 'Trusted vendor',
+		vendorId: item.vendorId || item.inventory?.vendor?.id || null,
+		quantity: Number(item.quantity || 1),
+		retailPrice: Number(item.retailPrice || item.basePrice || item.priceSnapshotCents || 0) / (item.priceSnapshotCents ? 100 : 1),
+		wholesalePrice: Number(item.wholesalePrice || 0),
+		bulkPrice: Number(item.bulkPrice || 0),
+		bulkMinQty: Number(item.bulkMinQty || item.medicine?.bulkMinQty || 1),
+		buyerType: item.buyerType || 'RETAIL',
+		packageType: item.selectedSize || 'standard',
+		selectedSize: item.selectedSize || 'standard',
+		currencyCode: item.currencyCode || 'INR',
+		basePrice: Number(item.basePrice || item.priceSnapshotCents || item.retailPrice || 0) / (item.priceSnapshotCents ? 100 : 1),
+		addedAt: item.addedAt || item.createdAt || new Date().toISOString()
+	};
+};
 
 const mapLocalCartItem = (item) => ({
 	...item,
@@ -83,7 +92,7 @@ export const CartProvider = ({ children }) => {
 		return {
 			normalizedQuantity,
 			normalizedBuyerType,
-			normalizedCurrencyCode: currencyCode || medicine?.currencyCode || 'USD',
+			normalizedCurrencyCode: currencyCode || medicine?.currencyCode || 'INR',
 			normalizedPackageType,
 			pricing
 		};
@@ -114,7 +123,7 @@ export const CartProvider = ({ children }) => {
 					}
 
 					const res = await cartService.getCart();
-					setCartItems((res.data || []).map(mapServerCartItem));
+					setCartItems((res.data || []).map(mapServerCartItem).filter(item => item !== null));
 				} else {
 					const savedCart = localStorage.getItem('mediq_cart');
 					if (savedCart) setCartItems(JSON.parse(savedCart).map(mapLocalCartItem));

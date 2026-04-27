@@ -46,6 +46,12 @@ router.use("/vendor-insights", vendorInsightsRoutes);
 // Vendor profile settings routes
 router.use("/vendor", vendorProfileRoutes);
 
+router.use('/addresses', require('../modules/address/address.routes'));
+router.use('/shipments', require('../modules/shipments/shipments.routes'));
+router.use('/inventory-batches', require('../modules/inventoryBatch/inventoryBatch.routes'));
+router.use('/notification-preferences', require('../modules/notificationPreference/notificationPreference.routes'));
+router.use('/reviews', require('../modules/reviews/reviews.routes'));
+
 // Customer cart & wishlist
 router.use('/cart', cartRoutes);
 router.use('/favorites', wishlistRoutes);

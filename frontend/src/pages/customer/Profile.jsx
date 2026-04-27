@@ -143,6 +143,17 @@ authService.logout();
 navigate('/login');
 };
 
+	const handleLogoutAll = async () => {
+		try {
+			await authService.logoutAllSessions();
+			showSuccess('Signed out from all devices');
+			navigate('/login');
+		} catch (error) {
+			console.error('Logout all failed', error);
+			showError(error?.message || 'Failed to sign out from all devices');
+		}
+	};
+
 	const handleSavePreferences = async () => {
 		try {
 			await authService.updateProfile({
@@ -367,7 +378,8 @@ Upload
 							<button type="button" className={styles.ghostButton} onClick={handleChangePassword}>Change Password</button>
 							<button type="button" className={styles.ghostButton} onClick={() => showSuccess('Two-factor setup will be available in the next release')}>Set Up Two-Factor Auth</button>
 							<button type="button" className={styles.ghostButton} onClick={() => showSuccess('Session management will be available in the next release')}>View Active Sessions</button>
-<button type="button" className={styles.ghostButton} onClick={handleLogout}>Logout from This Device</button>
+							<button type="button" className={styles.ghostButton} onClick={handleLogout}>Logout from This Device</button>
+							<button type="button" className={styles.ghostButton} onClick={handleLogoutAll}>Sign Out From All Devices</button>
 </div>
 </div>
 )}

@@ -575,6 +575,22 @@ const verifyPayment = async (paymentId, verificationData) => {
         where: { id: payment.orderId },
         data: { status: 'PAID', paidAt: new Date() }
       });
+      // Create invoice record if not exists using upsert to prevent race condition
+      try {
+        const invoiceNumber = `INV-${Date.now()}`;
+        await prisma.invoice.upsert({
+          where: { orderId: payment.orderId },
+          update: { issuedAt: new Date() },
+          create: { 
+            orderId: payment.orderId, 
+            invoiceNumber, 
+            amountCents: payment.amountCents || 0, 
+            taxCents: payment.order?.taxCents || 0 
+          }
+        });
+      } catch (e) {
+        console.warn('Failed to create invoice for order', payment.orderId, e?.message || e);
+      }
     }
 
     return {
@@ -603,6 +619,22 @@ const verifyPayment = async (paymentId, verificationData) => {
         where: { id: payment.orderId },
         data: { status: 'PAID' }
       });
+      // Create invoice record if not exists using upsert to prevent race condition
+      try {
+        const invoiceNumber = `INV-${Date.now()}`;
+        await prisma.invoice.upsert({
+          where: { orderId: payment.orderId },
+          update: { issuedAt: new Date() },
+          create: { 
+            orderId: payment.orderId, 
+            invoiceNumber, 
+            amountCents: payment.amountCents || 0, 
+            taxCents: payment.order?.taxCents || 0 
+          }
+        });
+      } catch (e) {
+        console.warn('Failed to create invoice for order', payment.orderId, e?.message || e);
+      }
     }
 
     return {

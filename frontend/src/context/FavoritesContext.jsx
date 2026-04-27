@@ -30,23 +30,32 @@ const normalizeFavorite = (medicine) => ({
 	vendor: medicine.vendor || medicine.brand || 'Trusted vendor',
 	retailPrice: Number(medicine.retailPrice || 0),
 	wholesalePrice: Number(medicine.wholesalePrice || medicine.retailPrice || 0),
-	currencyCode: medicine.currencyCode || 'USD',
+	currencyCode: medicine.currencyCode || 'INR',
 	addedAt: medicine.addedAt || new Date().toISOString()
 });
 
-const mapServerFavorite = (item) => ({
-	id: item.id,
-	medicineId: item.medicineId || item.medicine?.id || item.id,
-	inventoryId: item.inventoryId || item.id,
-	name: item.name || item.medicine?.name || 'Medicine',
-	category: item.category || item.medicine?.category || 'General',
-	imageUrl: item.imageUrl || item.medicine?.imageUrl || null,
-	vendor: item.vendor || item.medicine?.brand || 'Trusted vendor',
-	retailPrice: Number(item.retailPrice || 0),
-	wholesalePrice: Number(item.wholesalePrice || item.retailPrice || 0),
-	currencyCode: item.currencyCode || 'INR',
-	addedAt: item.addedAt || new Date().toISOString()
-});
+const mapServerFavorite = (item) => {
+	// CRITICAL: medicineId must be from explicit fields, not derived from item.id
+	const medicineId = item.medicineId || item.medicine?.id;
+	if (!medicineId) {
+		console.error('[FavoritesContext] Favorite item missing medicineId:', item);
+		return null;
+	}
+
+	return {
+		id: item.id,
+		medicineId,
+		inventoryId: item.inventoryId || item.id,
+		name: item.name || item.medicine?.name || 'Medicine',
+		category: item.category || item.medicine?.category || 'General',
+		imageUrl: item.imageUrl || item.medicine?.imageUrl || null,
+		vendor: item.vendor || item.medicine?.brand || 'Trusted vendor',
+		retailPrice: Number(item.retailPrice || 0),
+		wholesalePrice: Number(item.wholesalePrice || item.retailPrice || 0),
+		currencyCode: item.currencyCode || 'INR',
+		addedAt: item.addedAt || new Date().toISOString()
+	};
+};
 
 export const FavoritesProvider = ({ children }) => {
 	const [favorites, setFavorites] = useState([]);
@@ -63,7 +72,7 @@ export const FavoritesProvider = ({ children }) => {
 					}
 
 					const res = await favoritesService.getFavorites();
-					setFavorites((res.data || []).map(mapServerFavorite));
+				setFavorites((res.data || []).map(mapServerFavorite).filter(item => item !== null));
 					return;
 				} catch (e) { console.warn('Failed to load favorites from server', e); }
 			}

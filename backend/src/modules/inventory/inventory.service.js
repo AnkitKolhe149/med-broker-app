@@ -5,6 +5,7 @@ const {
   ForbiddenError
 } = require('../../utils/errors');
 const { uploadMedicineImage } = require('../../services/cloudinary.service');
+const { validatePricingLogic } = require('../orders/orderPricing.util');
 
 const MAX_MEDICINE_IMAGES = 4;
 
@@ -302,9 +303,7 @@ module.exports = {
       description,
       priceCents,
       quantity,
-      wholesalePriceCents,
-      bulkPriceCents,
-      bulkMinQty
+      wholesalePriceCents
     } = data;
 
     if (!Number.isInteger(quantity) || quantity <= 0) {
@@ -318,22 +317,20 @@ module.exports = {
       ? wholesalePriceCents
       : (medicineId ? undefined : (Number.isInteger(priceCents) ? priceCents : null));
 
-    const normalizedBulkMinQty = Number.isInteger(bulkMinQty) && bulkMinQty > 0 ? bulkMinQty : (medicineId ? undefined : null);
-
-    const normalizedBulkPriceCents = Number.isInteger(bulkPriceCents)
-      ? bulkPriceCents
-      : (medicineId ? undefined : (normalizedWholesalePriceCents || priceCents || null));
-
     if (normalizedWholesalePriceCents !== null && normalizedWholesalePriceCents <= 0) {
       throw new ValidationError('wholesalePriceCents must be a positive integer');
     }
 
-    if (normalizedBulkPriceCents !== null && normalizedBulkPriceCents <= 0) {
-      throw new ValidationError('bulkPriceCents must be a positive integer');
-    }
-
-    if (normalizedBulkMinQty !== null && normalizedBulkMinQty < 1) {
-      throw new ValidationError('bulkMinQty must be at least 1');
+    // Validate that prices follow the three-tier logic: Retail ≥ B2B Standard ≥ B2B Bulk
+    // This ensures the pricing tier system makes economic sense
+    const medicineToValidate = {
+      priceCents,
+      wholesalePriceCents: normalizedWholesalePriceCents
+    };
+    try {
+      validatePricingLogic(medicineToValidate);
+    } catch (error) {
+      throw new ValidationError('Pricing validation failed. ' + error.message);
     }
 
     // Note: In development, we allow PENDING vendors to add medicines to enable faster testing.
@@ -359,9 +356,7 @@ module.exports = {
         medicine = await tx.medicine.update({
           where: { id: medicine.id },
           data: {
-            wholesalePriceCents: normalizedWholesalePriceCents ?? medicine.wholesalePriceCents,
-            bulkPriceCents: normalizedBulkPriceCents ?? medicine.bulkPriceCents,
-            bulkMinQty: normalizedBulkMinQty ?? medicine.bulkMinQty
+            wholesalePriceCents: normalizedWholesalePriceCents ?? medicine.wholesalePriceCents
           }
         });
       } else {
@@ -378,9 +373,7 @@ module.exports = {
             name: name.trim(),
             description: description || null,
             priceCents,
-            wholesalePriceCents: normalizedWholesalePriceCents,
-            bulkPriceCents: normalizedBulkPriceCents,
-            bulkMinQty: normalizedBulkMinQty
+            wholesalePriceCents: normalizedWholesalePriceCents
           }
         });
 

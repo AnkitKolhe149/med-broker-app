@@ -193,6 +193,13 @@ module.exports = {
     }
 
     const token = generateToken(user);
+    // record last login time
+    try {
+      await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    } catch (e) {
+      // non-fatal
+      console.warn('Failed to update lastLoginAt for user', user.id, e?.message || e);
+    }
     delete user.passwordHash;
 
     return {
@@ -282,4 +289,11 @@ module.exports = {
 
   generateToken,
   verifyToken
+};
+
+module.exports.invalidateUserSessions = async (userId) => {
+  const { prisma } = require('../database/prisma');
+  // set tokenInvalidBefore to now to invalidate older JWTs
+  await prisma.user.update({ where: { id: userId }, data: { tokenInvalidBefore: new Date() } });
+  return true;
 };
