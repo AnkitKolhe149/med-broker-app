@@ -149,13 +149,13 @@ function VendorMedicineManager() {
 				price: Number(convert((((inventory.medicine?.priceCents) || payload.priceCents) / 100), 'INR').toFixed(2)),
 				wholesalePrice: Number(convert((((inventory.medicine?.wholesalePriceCents) || payload.wholesalePriceCents) / 100), 'INR').toFixed(2)),
 				bulkMinQty: inventory.medicine?.bulkMinQty || payload.bulkMinQty,
-				bulkPrice: Number(convert((((inventory.medicine?.bulkPriceCents) || payload.bulkPriceCents) / 100), 'INR').toFixed(2)),
-				imageUrl: finalImageUrl || inventory.imageUrl || inventory.imageUrls?.[0] || null,
-				imageUrls: finalImageUrls.length > 0 ? finalImageUrls : (Array.isArray(inventory.imageUrls)
-					? inventory.imageUrls
-					: inventory.imageUrl
-						? [inventory.imageUrl]
-						: [])
+											bulkPrice: Number(convert((((inventory.medicine?.bulkPriceCents) || payload.bulkPriceCents) / 100), 'INR').toFixed(2)),
+											imageUrl: finalImageUrl || inventory.imageUrl || inventory.imageUrls?.[0] || null,
+											imageUrls: finalImageUrls.length > 0 ? finalImageUrls : (Array.isArray(inventory.imageUrls)
+												? inventory.imageUrls
+												: inventory.imageUrl
+													? [inventory.imageUrl]
+													: [])
 			};
 
 			setMedicines((prev) => {

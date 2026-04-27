@@ -51,7 +51,7 @@ const AdminPayouts = () => {
 
     const totalUnpaidBalance = payouts.reduce((sum, p) => sum + p.pendingBalanceCents, 0);
     const totalPlatformCommission = payouts.reduce((sum, p) => {
-        const displayAmount = p.appliedFee ?? (p.total * globalRate);
+        const displayAmount = p.persistedFeeAmount ?? (p.total * globalRate);
         return sum + displayAmount;
     }, 0);
 
@@ -117,9 +117,9 @@ const AdminPayouts = () => {
                                     <td>{formatCents(payout.totalEarnedCents)}</td>
                                     <td className="commission-text">
                                         {(() => {
-                                            const displayAmount = payout.appliedFee ?? (payout.total * globalRate);
-                                            const displayRate = payout.appliedRate ?? (globalRate * 100);
-                                            return `${formatCents(displayAmount)} (${displayRate.toFixed(2)}%)`;
+                                            const displayAmount = payout.persistedFeeAmount ?? (payout.total * globalRate);
+                                            const displayRate = payout.persistedFeeRate ?? (globalRate * 100);
+                                            return `${formatCents(displayAmount)} (${displayRate}%)`;
                                         })()}
                                     </td>
                                     <td>{formatCents(payout.totalPaidCents)}</td>

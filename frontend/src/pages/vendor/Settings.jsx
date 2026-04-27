@@ -81,29 +81,6 @@ function VendorSettings() {
 		loadProfile();
 	}, [showError]);
 
-	useEffect(() => {
-		const loadProfile = async () => {
-			try {
-				setLoadingProfile(true);
-				const profile = await vendorService.getProfile();
-				const normalizedProfile = {
-					...DEFAULT_PROFILE_SETTINGS,
-					...profile
-				};
-
-				setSettings(normalizedProfile);
-				setTempSettings(normalizedProfile);
-			} catch (error) {
-				console.error('Failed to load vendor profile:', error);
-				showError(error?.response?.data?.message || 'Failed to load profile settings');
-			} finally {
-				setLoadingProfile(false);
-			}
-		};
-
-		loadProfile();
-	}, [showError]);
-
 	const handleSaveProfile = async () => {
 		try {
 			setSavingProfile(true);

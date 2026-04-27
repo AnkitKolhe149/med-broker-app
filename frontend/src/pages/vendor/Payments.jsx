@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -40,7 +40,7 @@ function VendorPayments() {
 				const transactions = (result.orders || []).map((order) => ({
 					id: order.id,
 					type: 'order',
-					description: `${order.customer || 'Customer'} • ${order.items?.length || 0} line item(s)`,
+					description: `${order.customer || 'Customer'} â€¢ ${order.items?.length || 0} line item(s)`,
 					amount: Math.round((order.amountCents || 0) / 100),
 					status: order.status === 'paid' || order.status === 'shipped' ? 'settled' : 'pending',
 					date: order.createdAt ? new Date(order.createdAt).toISOString().slice(0, 10) : '-'
@@ -136,7 +136,7 @@ function VendorPayments() {
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Total Earnings</div>
 					<div className={styles.metricValue}>{formatMoney(paymentData.totalEarnings)}</div>
-					<div className={styles.metricChange}>↑ 23.5% this month</div>
+					<div className={styles.metricChange}>â†‘ 23.5% this month</div>
 				</div>
 				<div className={styles.metricCard}>
 					<div className={styles.metricLabel}>Current Balance</div>
@@ -295,7 +295,7 @@ function VendorPayments() {
 							ACCOUNT NUMBER
 						</div>
 						<div className={styles.bankValue}>
-							•••• •••• •••• 3456
+							â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ 3456
 						</div>
 					</div>
 					<div>
@@ -311,7 +311,7 @@ function VendorPayments() {
 							IFSC CODE
 						</div>
 						<div className={styles.bankValue}>
-							•••••••••••
+							â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢
 						</div>
 					</div>
 				</div>
@@ -404,9 +404,9 @@ function VendorPayments() {
 					<div style={{ backgroundColor: 'var(--primary-light)', padding: '1rem', borderRadius: 'var(--radius)' }} className={styles.formGroup}>
 						<strong className={styles.settlementDetailsTitle}>Settlement Details</strong>
 						<div className={styles.settlementDetailsText}>
-							• Transfer will be made to your registered bank account<br/>
-							• Processing time: 1-2 business days<br/>
-							• No transaction fees applied
+							â€¢ Transfer will be made to your registered bank account<br/>
+							â€¢ Processing time: 1-2 business days<br/>
+							â€¢ No transaction fees applied
 						</div>
 					</div>
 

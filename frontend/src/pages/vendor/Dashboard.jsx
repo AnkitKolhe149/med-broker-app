@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import vendorService from '../../services/vendor.service';
@@ -161,12 +161,12 @@ function VendorDashboard() {
 					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Today's Sales</div>
 						<div className={styles.metricValue}>{formatMoney(dashboardData.todaySales)}</div>
-						<div className={styles.metricChange}>↑ 12.5% from yesterday</div>
+						<div className={styles.metricChange}>â†‘ 12.5% from yesterday</div>
 					</div>
 					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Today's Orders</div>
 						<div className={styles.metricValue}>{dashboardData.todayOrders}</div>
-						<div className={styles.metricChange}>↑ 8.3% from yesterday</div>
+						<div className={styles.metricChange}>â†‘ 8.3% from yesterday</div>
 					</div>
 					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Pending Orders</div>
