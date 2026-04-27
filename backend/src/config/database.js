@@ -6,7 +6,7 @@ const databaseConfig = {
   },
   validate() {
     if (!this.DATABASE_URL) {
-      throw new Error("DATABASE_URL is required for NeonDB !");
+      throw new Error("DATABASE_URL is required for NeonDB!");
     }
   }
 };
