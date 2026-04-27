@@ -6,6 +6,7 @@ import {
 	convertPrice,
 	formatCurrency,
 	getCurrencySymbol,
+	getCurrencyForCountry,
 	detectUserCurrency,
 	CURRENCIES,
 } from '../utils/currency';

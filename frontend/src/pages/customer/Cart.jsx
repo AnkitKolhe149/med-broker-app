@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -111,7 +111,7 @@ function Cart() {
 									</div>
 
 									<div className={styles.itemBody}>
-										<p className={styles.itemType}>● {item.category || 'Medicine'}</p>
+										<p className={styles.itemType}>â— {item.category || 'Medicine'}</p>
 										<h3 className={styles.itemName}>{item.name}</h3>
 										<p className={styles.itemSubline}>{item.vendor || 'Trusted pharmacy partner'}</p>
 										<p className={styles.itemPrice}>{formatPrice(getDisplayUnitPrice(item))}</p>

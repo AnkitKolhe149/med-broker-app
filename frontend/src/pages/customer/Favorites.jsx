@@ -47,7 +47,7 @@ function Favorites() {
 									<p className={styles.vendor}>{item.vendor}</p>
 									<p className={styles.price}>{formatPrice(item.retailPrice)}</p>
 									<div className={styles.actions}>
-										<button className="button" onClick={() => navigate(`/customer/medicine/${item.medicineId}`)}>
+										<button className="button" onClick={() => navigate(`/customer/medicine/${item.inventoryId || item.medicineId}`)}>
 											View details
 										</button>
 										<button className="button-outline" onClick={() => removeFavorite(item.medicineId)}>

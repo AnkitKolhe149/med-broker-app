@@ -38,7 +38,10 @@ const emitAuthChanged = (user, metadata = {}) => {
 };
 
 const clearAccountScopedData = () => {
-  ACCOUNT_SCOPED_KEYS.forEach((key) => localStorage.removeItem(key));
+  ACCOUNT_SCOPED_KEYS.forEach((key) => {
+    try { localStorage.removeItem(key); } catch (e) { }
+    try { sessionStorage.removeItem(key); } catch (e) { }
+  });
 };
 
 const setAuthData = (token, user) => {
@@ -151,6 +154,29 @@ export default {
 
     if (!response.data?.success) {
       throw new Error(response.data?.message || 'Failed to change password');
+    }
+
+    return response.data.data;
+  },
+
+  updateProfile: async (updates = {}) => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await axios.patch(`${API_URL}/auth/profile`, updates, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to update profile');
+    }
+
+    if (response.data?.data) {
+      localStorage.setItem('user', JSON.stringify(response.data.data));
+      emitAuthChanged(response.data.data, { accountChanged: false });
     }
 
     return response.data.data;

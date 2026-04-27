@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -32,6 +32,7 @@ function MedicineDetail() {
 	const formatPrice = (value) => formatCurrency(value, displayCurrencyCode, true);
 	const isWholesaleBuyer = user?.customer?.buyerType === 'WHOLESALE';
 	const canUseBulk = isWholesaleBuyer;
+	const favoriteTargetId = medicine?.medicineId || medicine?.id;
 
 	useEffect(() => {
 		loadMedicineData();
@@ -237,17 +238,17 @@ function MedicineDetail() {
 							<div className={styles.vendorBadge}>{medicine?.vendor ? medicine.vendor.toUpperCase() : 'MEDIQ PARTNER'}</div>
 							<button
 								onClick={() => toggleFavorite(medicine)}
-								className={`${styles.favoriteButton} ${isFavorited(medicine.id) ? styles.favoriteButtonActive : ''}`}
-								aria-label={isFavorited(medicine.id) ? 'Remove from favorites' : 'Add to favorites'}
+								className={`${styles.favoriteButton} ${isFavorited(favoriteTargetId) ? styles.favoriteButtonActive : ''}`}
+								aria-label={isFavorited(favoriteTargetId) ? 'Remove from favorites' : 'Add to favorites'}
 							>
-								<Heart size={16} strokeWidth={1.75} fill={isFavorited(medicine.id) ? 'currentColor' : 'none'} />
+								<Heart size={16} strokeWidth={1.75} fill={isFavorited(favoriteTargetId) ? 'currentColor' : 'none'} />
 							</button>
 						</div>
 
 						<div className={styles.titleBlock}>
 							<h1 className={styles.productTitle}>{medicine?.name}</h1>
 							<p className={styles.subtitle}>
-								{medicine.category || 'General'}{medicine.dosage ? ` • ${medicine.dosage}` : ''}
+								{medicine.category || 'General'}{medicine.dosage ? ` â€¢ ${medicine.dosage}` : ''}
 							</p>
 						</div>
 
@@ -322,7 +323,7 @@ function MedicineDetail() {
 
 						<div className={styles.cartSection}>
 							<div className={styles.quantityControl}>
-								<button onClick={() => setQuantity((value) => Math.max(1, value - 1))} className={styles.quantityBtn} aria-label="Decrease quantity">−</button>
+								<button onClick={() => setQuantity((value) => Math.max(1, value - 1))} className={styles.quantityBtn} aria-label="Decrease quantity">âˆ’</button>
 								<input
 									type="number"
 									min="1"

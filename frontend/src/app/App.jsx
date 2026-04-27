@@ -45,6 +45,7 @@ import Payment from '../pages/customer/Payment';
 import OrderConfirmation from '../pages/customer/OrderConfirmation';
 import OrdersHistory from '../pages/customer/OrdersHistory';
 import CustomerProfile from '../pages/customer/Profile';
+import CustomerPrescriptions from '../pages/customer/Prescriptions';
 
 // Vendor pages
 import VendorDashboard from '../pages/vendor/Dashboard';
@@ -182,6 +183,11 @@ function App() {
                     <Route path="/customer/profile" element={
                         <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
                             <AppShell><CustomerProfile /></AppShell>
+                        </AuthGuard>
+                    } />
+                    <Route path="/customer/prescriptions" element={
+                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                            <AppShell><CustomerPrescriptions /></AppShell>
                         </AuthGuard>
                     } />
                     

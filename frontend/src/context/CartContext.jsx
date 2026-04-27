@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import pricingService from '../services/pricing.service';
+import { useUser } from './UserContext';
+import cartService from '../services/cart.service';
 
 const DEFAULT_CART_CONTEXT = {
 	cartItems: [],
@@ -14,8 +16,40 @@ const DEFAULT_CART_CONTEXT = {
 
 const CartContext = createContext(DEFAULT_CART_CONTEXT);
 
+const mapServerCartItem = (item) => ({
+	id: item.id,
+	customerId: item.customerId,
+	medicineId: item.medicineId || item.medicine?.id || item.id,
+	inventoryId: item.inventoryId || item.id,
+	name: item.name || item.medicine?.name || 'Medicine',
+	category: item.category || item.medicine?.category || 'Medicine',
+	imageUrl: item.imageUrl || item.inventory?.imageUrl || null,
+	vendor: item.vendor || item.inventory?.vendor?.companyName || item.medicine?.brand || 'Trusted vendor',
+	vendorId: item.vendorId || item.inventory?.vendor?.id || null,
+	quantity: Number(item.quantity || 1),
+	retailPrice: Number(item.retailPrice || item.basePrice || item.priceSnapshotCents || 0) / (item.priceSnapshotCents ? 100 : 1),
+	wholesalePrice: Number(item.wholesalePrice || 0),
+	bulkPrice: Number(item.bulkPrice || 0),
+	bulkMinQty: Number(item.bulkMinQty || item.medicine?.bulkMinQty || 1),
+	buyerType: item.buyerType || 'RETAIL',
+	packageType: item.selectedSize || 'standard',
+	selectedSize: item.selectedSize || 'standard',
+	currencyCode: item.currencyCode || 'INR',
+	basePrice: Number(item.basePrice || item.priceSnapshotCents || item.retailPrice || 0) / (item.priceSnapshotCents ? 100 : 1),
+	addedAt: item.addedAt || item.createdAt || new Date().toISOString()
+});
+
+const mapLocalCartItem = (item) => ({
+	...item,
+	id: item.id || item.inventoryId || item.medicineId,
+	inventoryId: item.inventoryId || item.id || item.medicineId,
+	medicineId: item.medicineId || item.id,
+	basePrice: Number(item.basePrice || 0)
+});
+
 export const CartProvider = ({ children }) => {
 	const [cartItems, setCartItems] = useState([]);
+	const { user } = useUser();
 
 	const normalizePackageType = (value) => (String(value || 'standard').toLowerCase() === 'bulk' ? 'bulk' : 'standard');
 
@@ -55,17 +89,42 @@ export const CartProvider = ({ children }) => {
 		};
 	};
 
-	// Load cart from localStorage on mount
+	// Load cart from server when authenticated, otherwise localStorage
 	useEffect(() => {
-		try {
-			const savedCart = localStorage.getItem('mediq_cart');
-			if (savedCart) {
-				setCartItems(JSON.parse(savedCart));
+		const load = async () => {
+			try {
+				if (user && user.id) {
+					const local = JSON.parse(localStorage.getItem('mediq_cart') || '[]');
+					if (local.length) {
+						for (const item of local) {
+							try {
+								await cartService.addToCart({
+									medicineId: item.medicineId || item.id,
+									inventoryId: item.inventoryId || item.id,
+									quantity: item.quantity,
+									selectedSize: item.selectedSize,
+									priceSnapshotCents: Math.round(Number(item.basePrice || 0) * 100),
+									currencyCode: item.currencyCode || 'INR'
+								});
+							} catch (error) {
+								console.warn('Failed to merge local cart item', error);
+							}
+						}
+						localStorage.removeItem('mediq_cart');
+					}
+
+					const res = await cartService.getCart();
+					setCartItems((res.data || []).map(mapServerCartItem));
+				} else {
+					const savedCart = localStorage.getItem('mediq_cart');
+					if (savedCart) setCartItems(JSON.parse(savedCart).map(mapLocalCartItem));
+				}
+			} catch (error) {
+				console.error('Failed to load cart:', error);
 			}
-		} catch (error) {
-			console.error('Failed to load cart from localStorage:', error);
-		}
-	}, []);
+		};
+		load();
+	}, [user?.id]);
 
 	useEffect(() => {
 		const handleAuthChanged = (event) => {
@@ -78,14 +137,10 @@ export const CartProvider = ({ children }) => {
 		return () => window.removeEventListener('mediq:auth-changed', handleAuthChanged);
 	}, []);
 
-	// Save cart to localStorage whenever it changes
 	useEffect(() => {
-		try {
-			localStorage.setItem('mediq_cart', JSON.stringify(cartItems));
-		} catch (error) {
-			console.error('Failed to save cart to localStorage:', error);
-		}
-	}, [cartItems]);
+		if (user && user.id) return;
+		localStorage.setItem('mediq_cart', JSON.stringify(cartItems));
+	}, [cartItems, user?.id]);
 
 	const addToCart = (
 		medicine,
@@ -116,21 +171,28 @@ export const CartProvider = ({ children }) => {
 			bulkMinQty
 		});
 
+		const normalizedInventoryId = medicine.id;
+		const normalizedMedicineId = medicine.medicineId || medicine.id;
+		const unitPrice = pricingService.resolveUnitPrice({
+			buyerType: normalizedBuyerType,
+			quantity: normalizedQuantity,
+			packageType: normalizedPackageType,
+			...pricing
+		});
+
 		setCartItems(prevItems => {
-				const normalizedInventoryId = medicine.id;
-				const normalizedMedicineId = medicine.medicineId || medicine.id;
 				const existingItem = prevItems.find((item) => {
 					const itemInventoryId = item.inventoryId || item.medicineId;
 					return itemInventoryId === normalizedInventoryId;
 				});
 			if (existingItem) {
-				return prevItems.map(item => {
+					return prevItems.map(item => {
 						const itemInventoryId = item.inventoryId || item.medicineId;
 						if (itemInventoryId !== normalizedInventoryId) {
-						return item;
-					}
+							return item;
+						}
 
-					const repriced = pricingService.repriceCartItem({
+						const repriced = pricingService.repriceCartItem({
 						cartItem: item,
 						medicinePricing: pricing,
 						buyerType: normalizedBuyerType,
@@ -146,13 +208,6 @@ export const CartProvider = ({ children }) => {
 					};
 				});
 			}
-
-			const unitPrice = pricingService.resolveUnitPrice({
-				buyerType: normalizedBuyerType,
-				quantity: normalizedQuantity,
-				packageType: normalizedPackageType,
-				...pricing
-			});
 
 			return [
 				...prevItems,
@@ -175,10 +230,35 @@ export const CartProvider = ({ children }) => {
 				}
 			];
 		});
+		// If user is logged in, persist to server
+		if (user && user.id) {
+			(async () => {
+				try {
+					await cartService.addToCart({
+						medicineId: normalizedMedicineId,
+						inventoryId: normalizedInventoryId,
+						quantity: normalizedQuantity,
+						selectedSize: normalizedPackageType,
+						priceSnapshotCents: Math.round(unitPrice * 100),
+						currencyCode: normalizedCurrencyCode
+					});
+				} catch (e) { console.warn('cart sync failed', e); }
+			})();
+		}
 	};
 
 	const removeFromCart = (medicineId) => {
-		setCartItems(prevItems => prevItems.filter(item => item.medicineId !== medicineId));
+		setCartItems(prevItems => prevItems.filter(item => item.medicineId !== medicineId && item.inventoryId !== medicineId));
+		if (user && user.id) {
+			// best-effort: find server id and delete
+			(async () => {
+				try {
+					const res = await cartService.getCart();
+					const serverItem = (res.data || []).find(i => (i.medicineId || i.inventoryId) === medicineId);
+					if (serverItem) await cartService.removeCartItem(serverItem.id);
+				} catch (e) { /* ignore */ }
+			})();
+		}
 	};
 
 	const updateQuantity = (medicineId, quantity) => {
@@ -186,9 +266,22 @@ export const CartProvider = ({ children }) => {
 			removeFromCart(medicineId);
 			return;
 		}
+
+		if (user && user.id) {
+			(async () => {
+				try {
+					const res = await cartService.getCart();
+					const serverItem = (res.data || []).find(i => (i.medicineId || i.inventoryId) === medicineId);
+					if (serverItem) await cartService.updateCartItem(serverItem.id, { quantity });
+				} catch (e) {
+					console.warn('cart quantity sync failed', e);
+				}
+			})();
+		}
+
 		setCartItems(prevItems =>
 			prevItems.map(item => {
-				if (item.medicineId !== medicineId) {
+				if (item.medicineId !== medicineId && item.inventoryId !== medicineId) {
 					return item;
 				}
 
@@ -221,6 +314,8 @@ export const CartProvider = ({ children }) => {
 
 	const clearCart = () => {
 		setCartItems([]);
+		if (user && user.id) cartService.clearCart().catch(() => {});
+		if (!user || !user.id) localStorage.removeItem('mediq_cart');
 	};
 
 	const getTotalItems = () => {

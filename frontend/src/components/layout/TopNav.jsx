@@ -197,6 +197,7 @@ function TopNav() {
 			items: [
 				{ label: 'Browse Medicines', path: '/customer/catalog', icon: <Pill size={16} strokeWidth={1.5} /> },
 				{ label: 'Cart', path: '/customer/cart', icon: <ShoppingCart size={16} strokeWidth={1.5} /> },
+				{ label: 'Favorites', path: '/customer/favorites', icon: <CheckCircle size={16} strokeWidth={1.5} /> },
 				{ label: 'My Orders', path: '/customer/orders', icon: <Package size={16} strokeWidth={1.5} /> },
 				{ label: 'Checkout', path: '/customer/checkout', icon: <CheckCircle size={16} strokeWidth={1.5} /> },
 				{ label: 'Payment', path: '/customer/payment', icon: <CreditCard size={16} strokeWidth={1.5} /> }

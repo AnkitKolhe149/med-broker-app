@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FlaskConical } from 'lucide-react';
 import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { convertPrice, formatCurrency } from '../../utils/currency';
+import { convertPrice, formatCurrency, getCurrencyForCountry } from '../../utils/currency';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
@@ -321,13 +321,13 @@ function OrdersHistory() {
 
 										<p className={styles.orderMeta}>
 											{groupedItems.length} medicine{groupedItems.length > 1 ? 's' : ''}
-											<span>•</span>
+											<span>â€¢</span>
 											{totalUnits} unit{totalUnits > 1 ? 's' : ''}
-											<span>•</span>
+											<span>â€¢</span>
 											{order.paymentMethod}
-											<span>•</span>
+											<span>â€¢</span>
 											Ordered {order.orderedAgo}
-											<span>•</span>
+											<span>â€¢</span>
 											{order.etaText}
 										</p>
 									</article>

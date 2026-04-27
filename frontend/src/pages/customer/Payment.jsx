@@ -25,7 +25,7 @@ function Payment() {
 	const location = useLocation();
 	const { showError } = useNotification();
 	const { clearCart } = useCart();
-	const { currency } = useCurrency();
+	const { currency, convert } = useCurrency();
 	const [orderData, setOrderData] = useState(null);
 	const [paymentMethod, setPaymentMethod] = useState('upi');
 	const [loading, setLoading] = useState(true);
@@ -37,6 +37,7 @@ function Payment() {
 	const [cvv, setCvv] = useState('');
 	const currencyCode = orderData?.currencyCode || currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const toDisplayAmount = (value) => (typeof convert === 'function' ? convert(value, 'INR') : value);
 	const queryOrderId = new URLSearchParams(location.search).get('orderId');
 
 	const normalizeOrderData = (source) => {

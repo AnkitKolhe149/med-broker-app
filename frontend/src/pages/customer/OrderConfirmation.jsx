@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
 	ArrowRight,
@@ -26,13 +26,14 @@ function OrderConfirmation() {
 	const { orderId } = useParams();
 	const navigate = useNavigate();
 	const { user } = useUser();
-	const { currency } = useCurrency();
+	const { currency, convert } = useCurrency();
 	const [orderData, setOrderData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
 	const [invoiceError, setInvoiceError] = useState('');
 	const currencyCode = orderData?.currencyCode || currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const toDisplayAmount = (value) => convert(value, 'INR');
 
 	const normalizeOrderData = (source) => {
 		const snapshot = source?.checkoutSnapshot && typeof source.checkoutSnapshot === 'object' ? source.checkoutSnapshot : {};

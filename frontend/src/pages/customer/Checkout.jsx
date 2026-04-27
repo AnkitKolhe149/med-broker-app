@@ -13,7 +13,7 @@ function Checkout() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { cartItems, getTotalPrice } = useCart();
-	const { currency } = useCurrency();
+	const { currency, convert } = useCurrency();
 	const { user, loading: userLoading } = useUser();
 	const { showError } = useNotification();
 
@@ -43,6 +43,7 @@ function Checkout() {
 	const appliedCoupon = location.state?.appliedCoupon || '';
 	const currencyCode = location.state?.currencyCode || cartItems[0]?.currencyCode || currency || 'USD';
 	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const toDisplayAmount = (value) => convert(value, 'INR');
 
 	const indianStates = useMemo(() => [
 		'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -172,7 +173,6 @@ function Checkout() {
 				return false;
 			}
 		}
-
 		return true;
 	};
 
@@ -182,6 +182,12 @@ function Checkout() {
 
 		setIsSubmitting(true);
 		try {
+			const subtotalValue = getTotalPrice();
+			const discountValue = (subtotalValue * discountPercent) / 100;
+			const deliveryChargeValue = deliveryType === 'express' ? 9 : 0;
+			const taxValue = Number(((subtotalValue - discountValue + deliveryChargeValue) * 0.05).toFixed(2));
+			const totalValue = Number((subtotalValue - discountValue + deliveryChargeValue + taxValue).toFixed(2));
+
 			const createdOrder = await orderService.createCustomerOrder({
 				items: cartItems.map((item) => ({
 					medicineId: item.medicineId,
@@ -209,20 +215,21 @@ function Checkout() {
 					currencyCode,
 					paymentProvider: 'razorpay',
 					paymentMethod: 'Razorpay Secure Checkout',
-					subtotal,
-					discount,
-					deliveryCharge,
-					tax,
-					total,
+					subtotal: subtotalValue,
+					discount: discountValue,
+					deliveryCharge: deliveryChargeValue,
+					tax: taxValue,
+					total: totalValue,
 					pricingSummary: {
-						subtotalCents: Math.round(subtotal * 100),
-						discountCents: Math.round(discount * 100),
-						deliveryChargeCents: Math.round(deliveryCharge * 100),
-						taxCents: Math.round(tax * 100),
-						totalCents: Math.round(total * 100)
+						subtotalCents: Math.round(subtotalValue * 100),
+						discountCents: Math.round(discountValue * 100),
+						deliveryChargeCents: Math.round(deliveryChargeValue * 100),
+						taxCents: Math.round(taxValue * 100),
+						totalCents: Math.round(totalValue * 100)
 					}
 				}
 			});
+
 			const orderData = {
 				orderId: createdOrder.id,
 				cartItems,
@@ -235,16 +242,16 @@ function Checkout() {
 				appliedCoupon,
 				paymentProvider: 'razorpay',
 				paymentMethod: 'Razorpay Secure Checkout',
-				subtotalBase: subtotal,
-				subtotal,
-				discountBase: discount,
-				discount,
-				deliveryBase: deliveryCharge,
-				deliveryCharge,
-				taxBase: tax,
-				tax,
-				totalBase: total,
-				total,
+				subtotalBase: subtotalValue,
+				subtotal: subtotalValue,
+				discountBase: discountValue,
+				discount: discountValue,
+				deliveryBase: deliveryChargeValue,
+				deliveryCharge: deliveryChargeValue,
+				taxBase: taxValue,
+				tax: taxValue,
+				totalBase: totalValue,
+				total: totalValue,
 				currencyCode,
 				timestamp: new Date().toISOString()
 			};
@@ -252,9 +259,8 @@ function Checkout() {
 			sessionStorage.setItem('pending_order', JSON.stringify(orderData));
 			navigate(`/customer/payment?orderId=${createdOrder.id}`);
 		} catch (error) {
-			console.error('Failed to place order:', error);
-			const apiMessage = error?.response?.data?.message || error?.message;
-			showError(apiMessage || 'Failed to place order. Please try again.');
+			console.error('Order creation failed:', error);
+			showError(error?.response?.data?.message || error?.message || 'Failed to create order');
 		} finally {
 			setIsSubmitting(false);
 		}
