@@ -39,8 +39,6 @@ const mapServerCartItem = (item) => {
 		quantity: Number(item.quantity || 1),
 		retailPrice: Number(item.retailPrice || item.basePrice || item.priceSnapshotCents || 0) / (item.priceSnapshotCents ? 100 : 1),
 		wholesalePrice: Number(item.wholesalePrice || 0),
-		bulkPrice: Number(item.bulkPrice || 0),
-		bulkMinQty: Number(item.bulkMinQty || item.medicine?.bulkMinQty || 1),
 		buyerType: item.buyerType || 'RETAIL',
 		packageType: item.selectedSize || 'standard',
 		selectedSize: item.selectedSize || 'standard',
@@ -161,9 +159,7 @@ export const CartProvider = ({ children }) => {
 		wholesalePrice,
 		buyerType,
 		currencyCode = 'USD',
-		packageType = 'standard',
-		bulkPrice,
-		bulkMinQty
+		packageType = 'standard'
 	) => {
 		const {
 			normalizedQuantity,
@@ -178,9 +174,7 @@ export const CartProvider = ({ children }) => {
 			wholesalePrice,
 			buyerType,
 			currencyCode,
-			packageType,
-			bulkPrice,
-			bulkMinQty
+			packageType
 		});
 
 		const normalizedInventoryId = medicine.id;
@@ -212,12 +206,6 @@ export const CartProvider = ({ children }) => {
 						packageType: normalizedPackageType
 					});
 
-					return {
-						...repriced,
-						currencyCode: normalizedCurrencyCode,
-						buyerType: normalizedBuyerType,
-						selectedSize: repriced.packageType
-					};
 				});
 			}
 
@@ -297,23 +285,17 @@ export const CartProvider = ({ children }) => {
 					return item;
 				}
 
-				const normalizedPackageType = item.packageType || item.selectedSize || 'standard';
-				const minAllowedQty = normalizedPackageType === 'bulk'
-					? Math.max(1, Number.parseInt(item.bulkMinQty, 10) || 1)
-					: 1;
-				const safeQuantity = Math.max(minAllowedQty, Number.parseInt(quantity, 10) || minAllowedQty);
+				const safeQuantity = Math.max(1, Number.parseInt(quantity, 10) || 1);
 
 				const repriced = pricingService.repriceCartItem({
 					cartItem: item,
 					medicinePricing: {
 						retailPrice: item.retailPrice,
-						wholesalePrice: item.wholesalePrice,
-						bulkPrice: item.bulkPrice,
-						bulkMinQty: item.bulkMinQty
+						wholesalePrice: item.wholesalePrice
 					},
 					buyerType: item.buyerType,
 					quantity: safeQuantity,
-					packageType: normalizedPackageType
+					packageType: item.packageType || item.selectedSize || 'standard'
 				});
 
 				return {

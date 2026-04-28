@@ -5,8 +5,9 @@ import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
-import { formatConvertedCurrency } from '../../utils/currency';
+import { formatConvertedCurrency, getCurrencyForCountry } from '../../utils/currency';
 import orderService from '../../services/order.service';
+import addressService from '../../services/address.service';
 import styles from './Checkout.module.css';
 
 function Checkout() {
@@ -21,6 +22,9 @@ function Checkout() {
 	const [firstName, setFirstName] = useState('');
 	const [lastName, setLastName] = useState('');
 	const [couponInput, setCouponInput] = useState('');
+	const [savedAddresses, setSavedAddresses] = useState([]);
+	const [selectedAddressId, setSelectedAddressId] = useState(null);
+	const [loadingAddresses, setLoadingAddresses] = useState(true);
 	const [deliveryAddress, setDeliveryAddress] = useState({
 		fullName: '',
 		phone: '',
@@ -29,7 +33,7 @@ function Checkout() {
 		city: '',
 		state: '',
 		zipCode: '',
-		country: 'India'
+		country: ''
 	});
 	const [orderNotes, setOrderNotes] = useState('');
 	const [prescriptionFile, setPrescriptionFile] = useState(null);
@@ -45,37 +49,67 @@ function Checkout() {
 	const formatPrice = (value, fromCurrency = currencyCode) => formatConvertedCurrency(value, fromCurrency, currencyCode, exchangeRates, true);
 	const toDisplayAmount = (value, fromCurrency = 'INR') => convert(value, fromCurrency);
 
-	const indianStates = useMemo(() => [
-		'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-		'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
-		'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
-		'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana',
-		'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
-		'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
-		'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
-	], []);
+	// State/Province lists by country
+	const statesByCountry = useMemo(() => ({
+		'India': ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'],
+		'United States': ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'],
+		'United Kingdom': ['England', 'Scotland', 'Wales', 'Northern Ireland'],
+		'Canada': ['Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador', 'Northwest Territories', 'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island', 'Quebec', 'Saskatchewan', 'Yukon'],
+		'Australia': ['New South Wales', 'Queensland', 'South Australia', 'Tasmania', 'Victoria', 'Western Australia', 'Australian Capital Territory', 'Northern Territory'],
+		'Germany': ['Baden-Württemberg', 'Bavaria', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hesse', 'Lower Saxony', 'Mecklenburg-Vorpommern', 'North Rhine-Westphalia', 'Rhineland-Palatinate', 'Saarland', 'Saxony', 'Saxony-Anhalt', 'Schleswig-Holstein', 'Thuringia'],
+		'France': ['Auvergne-Rhône-Alpes', 'Bourgogne-Franche-Comté', 'Brittany', 'Centre-Val de Loire', 'Corsica', 'Grand Est', 'Hauts-de-France', 'Île-de-France', 'Nouvelle-Aquitaine', 'Occitanie', 'Pays de la Loire', 'Provence-Alpes-Côte d\'Azur'],
+		'UAE': ['Abu Dhabi', 'Ajman', 'Dubai', 'Fujairah', 'Ras Al Khaimah', 'Sharjah', 'Umm Al Quwain'],
+		'Singapore': ['Singapore'],
+		'Japan': ['Aichi', 'Akita', 'Aomori', 'Chiba', 'Ehime', 'Fukui', 'Fukuoka', 'Fukushima', 'Gifu', 'Gunma', 'Hiroshima', 'Hokkaido', 'Hyogo', 'Ibaraki', 'Ishikawa', 'Iwate', 'Kagawa', 'Kagoshima', 'Kanagawa', 'Kochi', 'Kumamoto', 'Kyoto', 'Mie', 'Miyagi', 'Miyazaki', 'Nagano', 'Nagasaki', 'Nara', 'Niigata', 'Okinawa', 'Osaka', 'Saga', 'Saitama', 'Shiga', 'Shimane', 'Shizuoka', 'Tochigi', 'Tokushima', 'Tokyo', 'Tottori', 'Toyama', 'Wakayama', 'Yamagata', 'Yamaguchi', 'Yamanashi']
+	}), []);
 
+	const getStatesForCountry = (country) => statesByCountry[country] || [];
+
+	// Fetch saved addresses and determine user's country
 	useEffect(() => {
-		if (!user?.customer) return;
+		const fetchAddresses = async () => {
+			try {
+				const addresses = await addressService.list();
+				setSavedAddresses(addresses);
+				
+				// Set default address if available
+				const defaultAddress = addresses.find((addr) => addr.isDefault);
+				if (defaultAddress) {
+					setSelectedAddressId(defaultAddress.id);
+					setDeliveryAddress({
+						fullName: defaultAddress.fullName || '',
+						phone: defaultAddress.phone || '',
+						email: user?.email || '',
+						address: `${defaultAddress.line1}${defaultAddress.line2 ? ' ' + defaultAddress.line2 : ''}`,
+						city: defaultAddress.city || '',
+						state: defaultAddress.state || '',
+						zipCode: defaultAddress.postalCode || '',
+						country: defaultAddress.country || user?.customer?.country || 'India'
+					});
+				} else if (user?.customer?.country) {
+					// Use customer country from profile
+					setDeliveryAddress((prev) => ({
+						...prev,
+						country: user.customer.country
+					}));
+				}
+			} catch (error) {
+				console.error('Failed to fetch addresses:', error);
+			} finally {
+				setLoadingAddresses(false);
+			}
+		};
 
-		const fullName = user.customer.fullName || '';
-		const parts = fullName.trim().split(/\s+/).filter(Boolean);
-		const initialFirst = parts[0] || '';
-		const initialLast = parts.slice(1).join(' ');
+		if (user?.customer) {
+			const fullName = user.customer.fullName || '';
+			const parts = fullName.trim().split(/\s+/).filter(Boolean);
+			const initialFirst = parts[0] || '';
+			const initialLast = parts.slice(1).join(' ');
 
-		setFirstName(initialFirst);
-		setLastName(initialLast);
-		setDeliveryAddress((prev) => ({
-			...prev,
-			fullName,
-			phone: user.customer.phoneNumber || '',
-			email: user.email || '',
-			address: user.customer.address || '',
-			city: user.customer.city || '',
-			state: user.customer.state || '',
-			zipCode: user.customer.zipCode || '',
-			country: 'India'
-		}));
+			setFirstName(initialFirst);
+			setLastName(initialLast);
+			fetchAddresses();
+		}
 	}, [user]);
 
 	const handleNameChange = (key, value) => {
@@ -163,15 +197,6 @@ function Checkout() {
 		if (isUploadingPrescription) {
 			showError('Please wait for the prescription upload to finish');
 			return false;
-		}
-
-		for (const item of cartItems) {
-			const packageType = String(item.selectedSize || item.packageType || 'standard').toLowerCase();
-			const bulkMinQty = Math.max(1, Number.parseInt(item.bulkMinQty, 10) || 1);
-			if (packageType === 'bulk' && Number(item.quantity) < bulkMinQty) {
-				showError(`${item.name || 'Bulk item'} requires at least ${bulkMinQty} units`);
-				return false;
-			}
 		}
 		return true;
 	};
@@ -309,7 +334,58 @@ function Checkout() {
 				<div className={styles.layoutGrid}>
 					<section className={styles.formPanel}>
 						<h1 className={styles.panelTitle}>Shipping Address</h1>
-
+					{!loadingAddresses && savedAddresses.length > 0 && (
+						<div className={styles.savedAddressesSection}>
+							<h3 className={styles.savedAddressesTitle}>Select Saved Address</h3>
+							<div className={styles.savedAddressesList}>
+								{savedAddresses.map((addr) => (
+									<div
+										key={addr.id}
+										className={`${styles.savedAddressCard} ${selectedAddressId === addr.id ? styles.selectedAddress : ''}`}
+										onClick={() => {
+											setSelectedAddressId(addr.id);
+											setDeliveryAddress({
+												fullName: addr.fullName || '',
+												phone: addr.phone || '',
+												email: user?.email || '',
+												address: `${addr.line1}${addr.line2 ? ' ' + addr.line2 : ''}`,
+												city: addr.city || '',
+												state: addr.state || '',
+												zipCode: addr.postalCode || '',
+												country: addr.country || 'India'
+											});
+										}}
+									>
+										<div className={styles.addressCardLabel}>{addr.label || 'Saved Address'}</div>
+										<div className={styles.addressCardText}>
+											<p>{addr.fullName}</p>
+											<p>{addr.line1}, {addr.city}, {addr.state}</p>
+											<p>{addr.country} - {addr.postalCode}</p>
+										</div>
+									</div>
+								))}
+							</div>
+							<button
+								type="button"
+								className={styles.addNewAddressButton}
+								onClick={() => {
+									setSelectedAddressId(null);
+									setDeliveryAddress({
+										fullName: '',
+										phone: '',
+										email: user?.email || '',
+										address: '',
+										city: '',
+										state: '',
+										zipCode: '',
+										country: user?.customer?.country || 'India'
+									});
+								}}
+							>
+								+ Add New Address
+							</button>
+						</div>
+					)}
 						<form id="checkout-form" className={styles.checkoutForm} onSubmit={handlePlaceOrder}>
 							<div className={styles.formGrid}>
 								<div className={styles.fieldGroup}>
@@ -335,69 +411,87 @@ function Checkout() {
 									<input name="city" className={styles.fieldInput} value={deliveryAddress.city} onChange={handleAddressChange} placeholder="City" />
 								</div>
 								<div className={styles.fieldGroup}>
-									<label className={styles.fieldLabel}>State*</label>
-									<select name="state" className={styles.fieldInput} value={deliveryAddress.state} onChange={handleAddressChange}>
-										<option value="">Select state</option>
-										{indianStates.map((stateName) => (
-											<option key={stateName} value={stateName}>{stateName}</option>
-										))}
-									</select>
-								</div>
+							<label className={styles.fieldLabel}>State/Province*</label>
+							{getStatesForCountry(deliveryAddress.country).length > 0 ? (
+								<select name="state" className={styles.fieldInput} value={deliveryAddress.state} onChange={handleAddressChange}>
+									<option value="">Select State/Province</option>
+									{getStatesForCountry(deliveryAddress.country).map((stateName) => (
+										<option key={stateName} value={stateName}>{stateName}</option>
+									))}
+								</select>
+							) : (
+								<input name="state" className={styles.fieldInput} value={deliveryAddress.state} onChange={handleAddressChange} placeholder="State/Province" />
+							)}
+						</div>
 
-								<div className={styles.fieldGroup}>
-									<label className={styles.fieldLabel}>Zip Code*</label>
-									<input name="zipCode" className={styles.fieldInput} value={deliveryAddress.zipCode} onChange={handleAddressChange} placeholder="PIN / ZIP" />
-								</div>
-								<div className={styles.fieldGroup}>
-									<label className={styles.fieldLabel}>Country</label>
-									<input name="country" className={styles.fieldInput} value={deliveryAddress.country} onChange={handleAddressChange} disabled />
-								</div>
+						<div className={styles.fieldGroup}>
+							<label className={styles.fieldLabel}>Zip Code*</label>
+							<input name="zipCode" className={styles.fieldInput} value={deliveryAddress.zipCode} onChange={handleAddressChange} placeholder="PIN / ZIP" />
+						</div>
+						<div className={styles.fieldGroup}>
+							<label className={styles.fieldLabel}>Country*</label>
+							<select name="country" className={styles.fieldInput} value={deliveryAddress.country} onChange={(e) => {
+								handleAddressChange(e);
+								setDeliveryAddress((prev) => ({ ...prev, state: '' }));
+							}}>
+								<option value="">Select Country</option>
+								<option value="India">India</option>
+								<option value="United States">United States</option>
+								<option value="United Kingdom">United Kingdom</option>
+								<option value="Canada">Canada</option>
+								<option value="Australia">Australia</option>
+								<option value="Germany">Germany</option>
+								<option value="France">France</option>
+								<option value="UAE">UAE</option>
+								<option value="Singapore">Singapore</option>
+								<option value="Japan">Japan</option>
+							</select>
+						</div>
 
-								<div className={`${styles.fieldGroup} ${styles.fullRow}`}>
-									<label className={styles.fieldLabel}>Description*</label>
-									<textarea name="address" className={styles.fieldTextarea} value={deliveryAddress.address} onChange={handleAddressChange} placeholder="Enter full address" rows={4} />
-								</div>
-							</div>
+						<div className={`${styles.fieldGroup} ${styles.fullRow}`}>
+							<label className={styles.fieldLabel}>Description*</label>
+							<textarea name="address" className={styles.fieldTextarea} value={deliveryAddress.address} onChange={handleAddressChange} placeholder="Enter full address" rows={4} />
+						</div>
+					</div>
 
-							<div className={styles.uploadBlock}>
-								<label className={styles.fieldLabel}>Prescription Upload (Optional)</label>
-								<input type="file" accept="image/*" className={styles.fileInput} onChange={handlePrescriptionChange} />
-								<p className={styles.fileStatus}>
-									{isUploadingPrescription ? 'Uploading prescription...' : prescriptionName ? `Uploaded: ${prescriptionName}` : 'No file selected'}
-								</p>
-								{prescriptionFile && !prescriptionName && !isUploadingPrescription ? (
-									<p className={styles.fileHint}>Selected: {prescriptionFile.name}</p>
-								) : null}
-							</div>
+					<div className={styles.uploadBlock}>
+						<label className={styles.fieldLabel}>Prescription Upload (Optional)</label>
+						<input type="file" accept="image/*" className={styles.fileInput} onChange={handlePrescriptionChange} />
+						<p className={styles.fileStatus}>
+							{isUploadingPrescription ? 'Uploading prescription...' : prescriptionName ? `Uploaded: ${prescriptionName}` : 'No file selected'}
+						</p>
+						{prescriptionFile && !prescriptionName && !isUploadingPrescription ? (
+							<p className={styles.fileHint}>Selected: {prescriptionFile.name}</p>
+						) : null}
+					</div>
 
 							<div className={styles.shippingBlock}>
-								<h2 className={styles.shippingTitle}>Shipping Method</h2>
-								<div className={styles.shippingMethods}>
-									<label className={`${styles.shippingCard} ${deliveryType === 'standard' ? styles.shippingCardActive : ''}`}>
-										<input type="radio" name="deliveryType" value="standard" checked={deliveryType === 'standard'} onChange={(e) => setDeliveryType(e.target.value)} />
-										<div>
-											<p className={styles.shippingLabel}>Free Shipping</p>
-											<p className={styles.shippingEta}>5-7 Days</p>
-										</div>
-										<strong>{formatPrice(0, currencyCode)}</strong>
-									</label>
-									<label className={`${styles.shippingCard} ${deliveryType === 'express' ? styles.shippingCardActive : ''}`}>
-										<input type="radio" name="deliveryType" value="express" checked={deliveryType === 'express'} onChange={(e) => setDeliveryType(e.target.value)} />
-										<div>
-											<p className={styles.shippingLabel}>Express Shipping</p>
-											<p className={styles.shippingEta}>1-3 Days</p>
-										</div>
-										<strong>{formatPrice(convert(9, 'INR'), currencyCode)}</strong>
-									</label>
+						<h2 className={styles.shippingTitle}>Shipping Method</h2>
+						<div className={styles.shippingMethods}>
+							<label className={`${styles.shippingCard} ${deliveryType === 'standard' ? styles.shippingCardActive : ''}`}>
+								<input type="radio" name="deliveryType" value="standard" checked={deliveryType === 'standard'} onChange={(e) => setDeliveryType(e.target.value)} />
+								<div>
+									<p className={styles.shippingLabel}>Free Shipping</p>
+									<p className={styles.shippingEta}>5-7 Days</p>
 								</div>
-							</div>
+								<strong>{formatPrice(0, currencyCode)}</strong>
+							</label>
+							<label className={`${styles.shippingCard} ${deliveryType === 'express' ? styles.shippingCardActive : ''}`}>
+								<input type="radio" name="deliveryType" value="express" checked={deliveryType === 'express'} onChange={(e) => setDeliveryType(e.target.value)} />
+								<div>
+									<p className={styles.shippingLabel}>Express Shipping</p>
+									<p className={styles.shippingEta}>1-3 Days</p>
+								</div>
+								<strong>{formatPrice(convert(9, 'INR'), currencyCode)}</strong>
+							</label>
+						</div>
+					</div>
+					<div className={styles.termsRow}>
+						<input id="checkout-terms" type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
+						<label htmlFor="checkout-terms">I agree to the terms and conditions and privacy policy.</label>
+					</div>
 
-							<div className={styles.termsRow}>
-								<input id="checkout-terms" type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
-								<label htmlFor="checkout-terms">I agree to the terms and conditions and privacy policy.</label>
-							</div>
-
-							<textarea className={styles.noteArea} value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Special delivery note (optional)" rows={3} />
+					<textarea className={styles.noteArea} value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Special delivery note (optional)" rows={3} />
 						</form>
 					</section>
 

@@ -46,8 +46,6 @@ const mapCartItem = (item) => ({
   vendor: item.inventory?.vendor?.companyName || item.medicine?.brand || 'Trusted vendor',
   retailPrice: Number(item.priceSnapshotCents ?? item.medicine?.priceCents ?? 0) / 100,
   wholesalePrice: Number(item.medicine?.wholesalePriceCents ?? item.medicine?.priceCents ?? 0) / 100,
-  bulkPrice: Number(item.medicine?.bulkPriceCents ?? item.medicine?.priceCents ?? 0) / 100,
-  bulkMinQty: item.medicine?.bulkMinQty || 1,
   basePrice: Number(item.priceSnapshotCents ?? item.medicine?.priceCents ?? 0) / 100
 });
 
