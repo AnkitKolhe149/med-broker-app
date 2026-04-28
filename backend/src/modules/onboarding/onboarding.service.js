@@ -8,6 +8,34 @@ const isValidGSTIN = (gstin) => {
   return gstinRegex.test(gstin);
 };
 
+const COUNTRY_TO_CURRENCY = {
+  'UNITED STATES': 'USD',
+  'UNITED KINGDOM': 'GBP',
+  'INDIA': 'INR',
+  'AUSTRALIA': 'AUD',
+  'CANADA': 'CAD',
+  'SINGAPORE': 'SGD',
+  'UAE': 'AED',
+  'SAUDI ARABIA': 'SAR',
+  'JAPAN': 'JPY',
+  'CHINA': 'CNY',
+  'BRAZIL': 'BRL',
+  'SOUTH AFRICA': 'ZAR',
+  'RUSSIA': 'RUB',
+  'GERMANY': 'EUR',
+  'FRANCE': 'EUR',
+  'ITALY': 'EUR',
+  'SPAIN': 'EUR',
+  'NETHERLANDS': 'EUR',
+  'KENYA': 'KES'
+};
+
+const getCurrencyForCountry = (country) => {
+  if (!country) return 'INR';
+  const normalized = String(country).trim().toUpperCase();
+  return COUNTRY_TO_CURRENCY[normalized] || 'INR';
+};
+
 const parseUniqueTarget = (error) => {
   if (!error || error.code !== 'P2002') {
     return [];
@@ -108,7 +136,10 @@ module.exports = {
 
         await tx.user.update({
           where: { id: userId },
-          data: { isProfileComplete: true }
+          data: { 
+            isProfileComplete: true,
+            preferredCurrency: getCurrencyForCountry(country)
+          }
         });
 
         return createdVendor;
@@ -180,7 +211,10 @@ module.exports = {
 
         await tx.user.update({
           where: { id: userId },
-          data: { isProfileComplete: true }
+          data: { 
+            isProfileComplete: true,
+            preferredCurrency: getCurrencyForCountry(country)
+          }
         });
 
         return createdCustomer;

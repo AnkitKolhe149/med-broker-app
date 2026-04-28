@@ -19,6 +19,7 @@ export const CURRENCIES = {
 	BRL: { symbol: 'R$', name: 'Brazilian Real', country: 'Brazil' },
 	ZAR: { symbol: 'R', name: 'South African Rand', country: 'South Africa' },
 	RUB: { symbol: '₽', name: 'Russian Ruble', country: 'Russia' },
+	KES: { symbol: 'KSh', name: 'Kenyan Shilling', country: 'Kenya' },
 };
 
 const COUNTRY_TO_CURRENCY = {
@@ -58,7 +59,9 @@ const COUNTRY_TO_CURRENCY = {
 	SPAIN: 'EUR',
 	ES: 'EUR',
 	NETHERLANDS: 'EUR',
-	NL: 'EUR'
+	NL: 'EUR',
+	KENYA: 'KES',
+	KE: 'KES'
 };
 
 export const getCurrencyForCountry = (country, fallback = 'USD') => {
@@ -96,7 +99,8 @@ const CURRENCY_LOCALE_MAP = {
 	CNY: 'zh-CN',
 	BRL: 'pt-BR',
 	ZAR: 'en-ZA',
-	RUB: 'ru-RU'
+	RUB: 'ru-RU',
+	KES: 'en-KE'
 };
 
 export const getCurrencyLocale = (currencyCode) => {

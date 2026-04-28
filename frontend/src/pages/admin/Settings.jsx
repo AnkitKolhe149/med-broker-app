@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import adminService from '../../services/admin.service';
 import { Save, CheckCircle, AlertCircle } from 'lucide-react';
+import { getCurrencySymbol } from '../../utils/currency';
 import './AdminOperations.css';
 
 const Settings = () => {
@@ -172,8 +173,8 @@ const Settings = () => {
                             </>
                           ) : setting.key === 'PLATFORM_CURRENCY' ? (
                             <>
-                              <option value="INR">INR (₹)</option>
-                              <option value="USD">USD ($)</option>
+                              <option value="INR">INR ({getCurrencySymbol('INR')})</option>
+                              <option value="USD">USD ({getCurrencySymbol('USD')})</option>
                             </>
                           ) : (
                             <option value={value}>{value}</option>

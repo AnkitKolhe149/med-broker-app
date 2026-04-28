@@ -24,7 +24,7 @@ const validatePricingLogic = (medicine) => {
 
   if (wholesale && wholesale > retail) {
     errors.push(
-      `Wholesale Price (₹${(wholesale / 100).toFixed(2)}) cannot exceed Retail Price (₹${(retail / 100).toFixed(2)}).`
+      `Wholesale Price (${(wholesale / 100).toFixed(2)}) cannot exceed Retail Price (${(retail / 100).toFixed(2)}).`
     );
   }
 

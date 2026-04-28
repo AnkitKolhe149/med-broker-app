@@ -274,7 +274,7 @@ const AdminDashboard = () => {
                             </ResponsiveContainer>
                         ) : (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'rgba(59,130,246,0.04)', borderRadius: '6px' }}>
-                                <small style={{ color: '#9ca3af', fontSize: '0.75rem' }}>₹0.00 — no activity this period</small>
+                                <small style={{ color: '#9ca3af', fontSize: '0.75rem' }}>{formatCurrency(0)} — no activity this period</small>
                             </div>
                         )}
                     </div>
@@ -306,7 +306,7 @@ const AdminDashboard = () => {
                                     <strong>{payment.vendor?.businessName || payment.companyName || 'Vendor'}</strong>
                                     <small>{payment.contactPersonName || 'Details'}</small>
                                 </div>
-                                <strong>{(((payment.amountCents || payment.totalPaidCents || 0) * 0.95) / 100).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</strong>
+                                <strong>{formatCurrency(((payment.amountCents || payment.totalPaidCents || 0) * 0.95) / 100)}</strong>
                                 <span className={`status done`}>Paid</span>
                             </article>
                         ))
@@ -347,7 +347,7 @@ const AdminDashboard = () => {
                                             <span className="status done">Paid</span>
                                         </td>
                                         <td>{payment.createdAt ? new Date(payment.createdAt).toLocaleDateString() : 'N/A'}</td>
-                                        <td>{(((payment.amountCents || payment.totalPaidCents || 0) * 0.95) / 100).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</td>
+                                        <td>{formatCurrency(((payment.amountCents || payment.totalPaidCents || 0) * 0.95) / 100)}</td>
                                         <td><button className="admin-detail-btn" onClick={() => navigate('/admin/payouts')}>Details</button></td>
                                     </tr>
                                 ))
