@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -107,32 +107,38 @@ function Cart() {
 							{cartItems.map(item => (
 								<article key={item.medicineId} className={styles.cartItem}>
 									<div className={styles.itemImage}>
-										<Pill size={24} strokeWidth={1.5} />
+										{item.imageUrl ? (
+											<img src={item.imageUrl} alt={item.name} className={styles.itemImageMedia} />
+										) : (
+											<Pill size={32} strokeWidth={1.5} className={styles.fallbackIcon} />
+										)}
 									</div>
 
 									<div className={styles.itemBody}>
-										<p className={styles.itemType}>â— {item.category || 'Medicine'}</p>
+										<div className={styles.itemBadgeRow}>
+											<span className={styles.itemType}>{item.category || 'Medicine'}</span>
+											{item.requiresPrescription && <span className={styles.prescriptionBadge}>Rx Required</span>}
+										</div>
 										<h3 className={styles.itemName}>{item.name}</h3>
-										<p className={styles.itemSubline}>{item.vendor || 'Trusted pharmacy partner'}</p>
-										<p className={styles.itemPrice}>{formatPrice(getDisplayUnitPrice(item), item.currencyCode || 'INR')}</p>
+										<p className={styles.itemSubline}>Vendor: {item.vendor || 'Verified Pharmacy'}</p>
+										<p className={styles.itemPrice}>{formatPrice(getDisplayUnitPrice(item))}</p>
 									</div>
 
 									<div className={styles.itemActions}>
-										<div className={styles.itemQuantity}>
+										<div className={styles.quantityControl}>
 											<button
 												onClick={() => updateQuantity(item.medicineId, item.quantity - 1)}
-												className={styles.quantityBtn}
-												aria-label={`Decrease quantity for ${item.name}`}
+												className={styles.qtyBtn}
+												disabled={item.quantity <= 1}
 											>
-												{'<'}
+												-
 											</button>
-											<span className={styles.quantityValue}>{item.quantity}</span>
+											<span className={styles.qtyValue}>{item.quantity}</span>
 											<button
 												onClick={() => updateQuantity(item.medicineId, item.quantity + 1)}
-												className={styles.quantityBtn}
-												aria-label={`Increase quantity for ${item.name}`}
+												className={styles.qtyBtn}
 											>
-												{'>'}
+												+
 											</button>
 										</div>
 
@@ -140,9 +146,9 @@ function Cart() {
 											<p className={styles.totalPrice}>{formatPrice(getDisplayLineTotal(item))}</p>
 											<button
 												onClick={() => removeFromCart(item.medicineId)}
-												className={styles.removeButton}
+												className={styles.removeBtn}
 											>
-												<Trash2 size={14} strokeWidth={1.5} /> Remove
+												<Trash2 size={14} /> <span>Remove</span>
 											</button>
 										</div>
 									</div>

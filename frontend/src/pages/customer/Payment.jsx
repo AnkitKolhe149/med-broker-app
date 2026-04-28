@@ -44,6 +44,7 @@ function Payment() {
 	const normalizeOrderData = (source) => {
 		const snapshot = source?.checkoutSnapshot && typeof source.checkoutSnapshot === 'object' ? source.checkoutSnapshot : {};
 		const pricingSummary = snapshot.pricingSummary && typeof snapshot.pricingSummary === 'object' ? snapshot.pricingSummary : {};
+		
 		const backendItems = Array.isArray(source?.items)
 			? source.items.map((item) => ({
 				medicineId: item.medicineId,
@@ -54,30 +55,32 @@ function Payment() {
 			}))
 			: [];
 
+		const sourceCartItems = source?.cartItems || [];
+
 		return {
 			...snapshot,
 			orderId: source?.id || source?.orderId || snapshot.orderId || queryOrderId,
-			cartItems: snapshot.cartItems || backendItems,
-			deliveryAddress: snapshot.deliveryAddress || {},
-			deliveryType: snapshot.deliveryType || 'standard',
-			orderNotes: snapshot.orderNotes || '',
-			prescriptionUrl: snapshot.prescriptionUrl || '',
-			prescriptionName: snapshot.prescriptionName || '',
-			discountPercent: snapshot.discountPercent ?? 0,
-			appliedCoupon: snapshot.appliedCoupon || '',
-				currencyCode: snapshot.currencyCode || currentCurrency,
-			subtotalBase: snapshot.subtotalBase ?? snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
-			subtotal: snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
-			discountBase: snapshot.discountBase ?? snapshot.discount ?? ((pricingSummary.discountCents || 0) / 100),
-			discount: snapshot.discount ?? ((pricingSummary.discountCents || 0) / 100),
-			deliveryBase: snapshot.deliveryBase ?? snapshot.deliveryCharge ?? ((pricingSummary.deliveryChargeCents || 0) / 100),
-			deliveryCharge: snapshot.deliveryCharge ?? ((pricingSummary.deliveryChargeCents || 0) / 100),
-			taxBase: snapshot.taxBase ?? snapshot.tax ?? ((pricingSummary.taxCents || 0) / 100),
-			tax: snapshot.tax ?? ((pricingSummary.taxCents || 0) / 100),
-			totalBase: snapshot.totalBase ?? snapshot.total ?? ((pricingSummary.totalCents || 0) / 100),
-			total: snapshot.total ?? ((pricingSummary.totalCents || 0) / 100),
-			paymentProvider: snapshot.paymentProvider || 'razorpay',
-			paymentMethod: snapshot.paymentMethod || 'Razorpay Secure Checkout'
+			cartItems: snapshot.cartItems || (sourceCartItems.length > 0 ? sourceCartItems : backendItems),
+			deliveryAddress: snapshot.deliveryAddress || source?.deliveryAddress || {},
+			deliveryType: snapshot.deliveryType || source?.deliveryType || 'standard',
+			orderNotes: snapshot.orderNotes || source?.orderNotes || '',
+			prescriptionUrl: snapshot.prescriptionUrl || source?.prescriptionUrl || '',
+			prescriptionName: snapshot.prescriptionName || source?.prescriptionName || '',
+			discountPercent: snapshot.discountPercent ?? source?.discountPercent ?? 0,
+			appliedCoupon: snapshot.appliedCoupon || source?.appliedCoupon || '',
+			currencyCode: snapshot.currencyCode || source?.currencyCode || currentCurrency,
+			subtotalBase: snapshot.subtotalBase ?? source?.subtotalBase ?? snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
+			subtotal: snapshot.subtotal ?? source?.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
+			discountBase: snapshot.discountBase ?? source?.discountBase ?? snapshot.discount ?? ((pricingSummary.discountCents || 0) / 100),
+			discount: snapshot.discount ?? source?.discount ?? ((pricingSummary.discountCents || 0) / 100),
+			deliveryBase: snapshot.deliveryBase ?? source?.deliveryBase ?? snapshot.deliveryCharge ?? ((pricingSummary.deliveryChargeCents || 0) / 100),
+			deliveryCharge: snapshot.deliveryCharge ?? source?.deliveryCharge ?? ((pricingSummary.deliveryChargeCents || 0) / 100),
+			taxBase: snapshot.taxBase ?? source?.taxBase ?? snapshot.tax ?? ((pricingSummary.taxCents || 0) / 100),
+			tax: snapshot.tax ?? source?.tax ?? ((pricingSummary.taxCents || 0) / 100),
+			totalBase: snapshot.totalBase ?? source?.totalBase ?? snapshot.total ?? ((pricingSummary.totalCents || 0) / 100),
+			total: snapshot.total ?? source?.total ?? ((pricingSummary.totalCents || 0) / 100),
+			paymentProvider: snapshot.paymentProvider || source?.paymentProvider || 'razorpay',
+			paymentMethod: snapshot.paymentMethod || source?.paymentMethod || 'Razorpay Secure Checkout'
 		};
 	};
 

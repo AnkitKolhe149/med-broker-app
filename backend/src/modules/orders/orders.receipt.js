@@ -58,6 +58,14 @@ const buildOrderReceiptPdf = (order) => {
   const pricingSummary = checkoutSnapshot.pricingSummary && typeof checkoutSnapshot.pricingSummary === 'object'
     ? checkoutSnapshot.pricingSummary
     : {};
+  
+  const currencyCode = checkoutSnapshot.currencyCode || 'INR';
+  const currencySymbol = currencyCode === 'INR' ? 'Rs. ' : (currencyCode === 'USD' ? '$' : currencyCode + ' ');
+
+  const formatCurrency = (amountCents) => {
+    const amount = Number(amountCents || 0) / 100;
+    return `${currencySymbol}${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   const subtotalCents = Number.isFinite(pricingSummary.subtotalCents)
     ? pricingSummary.subtotalCents
@@ -77,112 +85,152 @@ const buildOrderReceiptPdf = (order) => {
 
   // Order info section
   doc.fillColor(COLORS.primary).fontSize(14).font('Helvetica-Bold').text('Order Information', margin, doc.y);
-  doc.moveTo(margin, doc.y + 5).lineTo(margin + 150, doc.y + 5).stroke(COLORS.primary);
-  doc.moveDown(0.8);
-
-  doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica');
-  doc.text(`Order #: ${order.id}`, margin, doc.y);
-  doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()} at ${new Date(order.createdAt).toLocaleTimeString()}`, margin + 200, doc.y - 15);
-
-  doc.moveDown(0.3);
-  const statusColor = order.status === 'DELIVERED' ? COLORS.success : order.status === 'CANCELLED' ? COLORS.danger : COLORS.accent;
-  doc.text(`Order Status: `, margin, doc.y);
-  doc.fillColor(statusColor).font('Helvetica-Bold').text(safeText(order.status), margin + 100, doc.y - 12);
-  doc.fillColor(COLORS.dark).font('Helvetica');
-
-  const paymentStatusColor = order.payment?.status === 'PAID' || order.payment?.status === 'COMPLETED' ? COLORS.success : COLORS.accent;
-  doc.text(`Payment: `, margin + 200, doc.y - 12);
-  doc.fillColor(paymentStatusColor).font('Helvetica-Bold').text(safeText(order.payment?.status), margin + 280, doc.y - 12);
-  doc.fillColor(COLORS.dark).font('Helvetica');
-
+  doc.moveTo(margin, doc.y + 2).lineTo(margin + 150, doc.y + 2).lineWidth(2).stroke(COLORS.primary);
   doc.moveDown(1);
 
-  // Customer Details Section
-  doc.fillColor(COLORS.primary).fontSize(14).font('Helvetica-Bold').text('Customer Details', margin, doc.y);
-  doc.moveTo(margin, doc.y + 5).lineTo(margin + 150, doc.y + 5).stroke(COLORS.primary);
-  doc.moveDown(0.8);
-
+  const startY = doc.y;
   doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica');
-  const customerName = safeText(order.user?.name || order.user?.customer?.fullName || order.user?.customer?.businessName);
-  const customerEmail = safeText(order.user?.email);
-  doc.text(`Name: ${customerName}`, margin);
-  doc.text(`Email: ${customerEmail}`);
-  doc.moveDown(0.8);
+  doc.text(`Order ID:`, margin);
+  doc.font('Helvetica-Bold').text(order.id, margin + 80, startY);
+  
+  doc.font('Helvetica').text(`Order Date:`, margin);
+  doc.font('Helvetica-Bold').text(`${new Date(order.createdAt).toLocaleDateString()} ${new Date(order.createdAt).toLocaleTimeString()}`, margin + 80, startY + 15);
 
-  // Items Section
-  doc.fillColor(COLORS.primary).fontSize(14).font('Helvetica-Bold').text('Order Items', margin, doc.y);
-  doc.moveTo(margin, doc.y + 5).lineTo(margin + 150, doc.y + 5).stroke(COLORS.primary);
-  doc.moveDown(0.8);
+  const statusColor = order.status === 'DELIVERED' ? COLORS.success : order.status === 'CANCELLED' ? COLORS.danger : COLORS.accent;
+  doc.font('Helvetica').text(`Order Status:`, margin);
+  doc.fillColor(statusColor).font('Helvetica-Bold').text(safeText(order.status), margin + 80, startY + 30);
+  
+  const paymentStatusColor = order.payment?.status === 'PAID' || order.payment?.status === 'COMPLETED' || order.payment?.status === 'SUCCEEDED' ? COLORS.success : COLORS.accent;
+  doc.fillColor(COLORS.dark).font('Helvetica').text(`Payment:`, margin);
+  doc.fillColor(paymentStatusColor).font('Helvetica-Bold').text(safeText(order.payment?.status || 'PENDING'), margin + 80, startY + 45);
 
-  // Table header
-  doc.fillColor(COLORS.light).rect(margin, doc.y, contentWidth, 25).fill();
-  doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold');
-  doc.text('Item', margin + 5, doc.y + 7);
-  doc.text('Qty', margin + 280, doc.y + 7);
-  doc.text('Price', margin + 320, doc.y + 7);
-  doc.text('Total', margin + 400, doc.y + 7);
   doc.moveDown(2);
 
+  // Address and Customer details in two columns
+  const detailsY = doc.y;
+  
+  // Left Column: Customer
+  doc.fillColor(COLORS.primary).fontSize(12).font('Helvetica-Bold').text('Billing Details', margin, detailsY);
+  doc.moveTo(margin, detailsY + 15).lineTo(margin + 100, detailsY + 15).lineWidth(1).stroke(COLORS.primary);
+  doc.moveDown(0.8);
+  doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica');
+  const customerName = safeText(order.user?.name || order.user?.customer?.fullName || order.user?.customer?.businessName);
+  doc.text(customerName, margin);
+  doc.text(safeText(order.user?.email), margin);
+  if (order.user?.customer?.phoneNumber) {
+    doc.text(`Phone: ${order.user.customer.phoneNumber}`, margin);
+  }
+
+  // Right Column: Shipping
+  const col2X = margin + 250;
+  doc.fillColor(COLORS.primary).fontSize(12).font('Helvetica-Bold').text('Shipping Address', col2X, detailsY);
+  doc.moveTo(col2X, detailsY + 15).lineTo(col2X + 100, detailsY + 15).lineWidth(1).stroke(COLORS.primary);
+  doc.moveDown(0.8);
+  doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica');
+  
+  const addr = checkoutSnapshot.deliveryAddress || {};
+  if (addr.fullName) {
+    doc.text(addr.fullName, col2X);
+    doc.text(addr.address, col2X);
+    doc.text(`${addr.city}, ${addr.state} ${addr.zipCode}`, col2X);
+    doc.text(addr.country || 'India', col2X);
+    doc.text(`Phone: ${addr.phone}`, col2X);
+  } else {
+    doc.text('Same as billing', col2X);
+  }
+
+  doc.moveDown(2);
+
+  // Items Section
+  doc.fillColor(COLORS.primary).fontSize(14).font('Helvetica-Bold').text('Ordered Medicines', margin);
+  doc.moveTo(margin, doc.y + 2).lineTo(margin + 150, doc.y + 2).lineWidth(2).stroke(COLORS.primary);
+  doc.moveDown(1);
+
+  // Table header
+  const tableTop = doc.y;
+  doc.fillColor(COLORS.light).rect(margin, tableTop, contentWidth, 25).fill();
+  doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold');
+  doc.text('Medicine Name', margin + 10, tableTop + 7);
+  doc.text('Qty', margin + 280, tableTop + 7);
+  doc.text('Unit Price', margin + 330, tableTop + 7);
+  doc.text('Total', margin + 420, tableTop + 7);
+  
+  let currentY = tableTop + 30;
   doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9);
 
-  if (!order.items.length) {
-    doc.text('No items in this order.', margin);
+  if (!order.items || !order.items.length) {
+    doc.text('No items in this order.', margin, currentY);
+    currentY += 20;
   } else {
     order.items.forEach((item) => {
       const lineTotal = item.unitPriceCents * item.quantity;
-      const itemName = safeText(item.medicine?.name);
+      const itemName = safeText(item.medicine?.name || item.name);
 
-      doc.text(itemName.substring(0, 30), margin, doc.y, { width: 250 });
-      doc.text(item.quantity.toString(), margin + 280, doc.y - 12);
-      doc.text(centsToCurrency(item.unitPriceCents), margin + 320, doc.y - 12);
-      doc.text(centsToCurrency(lineTotal), margin + 400, doc.y - 12);
-      doc.moveDown(0.5);
+      doc.text(itemName, margin + 10, currentY, { width: 250 });
+      doc.text(item.quantity.toString(), margin + 280, currentY);
+      doc.text(formatCurrency(item.unitPriceCents), margin + 330, currentY);
+      doc.text(formatCurrency(lineTotal), margin + 420, currentY);
+      
+      currentY += 20;
+      
+      // Handle page break if needed
+      if (currentY > pageHeight - 150) {
+        doc.addPage();
+        currentY = margin;
+      }
     });
   }
 
-  doc.moveDown(0.8);
+  doc.moveDown(1.5);
+  currentY = doc.y;
 
-  // Summary Section with colored box
-  doc.rect(margin, doc.y - 5, contentWidth, 160).fill(COLORS.light);
-  doc.fillColor(COLORS.dark).fontSize(11).font('Helvetica');
-
-  const summaryY = doc.y + 10;
-  doc.text('Subtotal:', margin + 10, summaryY);
-  doc.text(centsToCurrency(subtotalCents), margin + 320, summaryY);
+  // Summary Section
+  const summaryWidth = 200;
+  const summaryX = pageWidth - margin - summaryWidth;
+  
+  doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica');
+  
+  doc.text('Subtotal:', summaryX, currentY);
+  doc.text(formatCurrency(subtotalCents), summaryX + 120, currentY, { align: 'right', width: 70 });
+  currentY += 18;
 
   if (discountCents > 0) {
-    doc.fillColor(COLORS.success).font('Helvetica-Bold');
-    doc.text(`Discount:`, margin + 10, summaryY + 20);
-    doc.text(`-${centsToCurrency(discountCents)}`, margin + 320, summaryY + 20);
-    doc.fillColor(COLORS.dark).font('Helvetica');
+    doc.fillColor(COLORS.success);
+    doc.text(`Discount (${checkoutSnapshot.discountPercent}%):`, summaryX, currentY);
+    doc.text(`-${formatCurrency(discountCents)}`, summaryX + 120, currentY, { align: 'right', width: 70 });
+    currentY += 18;
+    doc.fillColor(COLORS.dark);
   }
 
-  doc.text(`Shipping:`, margin + 10, summaryY + (discountCents > 0 ? 40 : 20));
-  doc.text(deliveryChargeCents === 0 ? 'Free' : centsToCurrency(deliveryChargeCents), margin + 320, summaryY + (discountCents > 0 ? 40 : 20));
+  doc.text(`Shipping Fee:`, summaryX, currentY);
+  doc.text(deliveryChargeCents === 0 ? 'FREE' : formatCurrency(deliveryChargeCents), summaryX + 120, currentY, { align: 'right', width: 70 });
+  currentY += 18;
 
-  doc.text(`Tax (5% GST):`, margin + 10, summaryY + (discountCents > 0 ? 60 : 40));
-  doc.text(centsToCurrency(taxCents), margin + 320, summaryY + (discountCents > 0 ? 60 : 40));
+  doc.text(`Tax (5% GST):`, summaryX, currentY);
+  doc.text(formatCurrency(taxCents), summaryX + 120, currentY, { align: 'right', width: 70 });
+  currentY += 25;
 
-  // Total in green box
-  doc.rect(margin + 10, summaryY + (discountCents > 0 ? 85 : 65), contentWidth - 20, 35).fill(COLORS.success);
-  doc.fillColor('white').fontSize(14).font('Helvetica-Bold');
-  doc.text(`TOTAL PAID: ${centsToCurrency(totalCents)}`, margin + 20, summaryY + (discountCents > 0 ? 95 : 75), { align: 'right', width: contentWidth - 40 });
+  // Total Highlight
+  doc.rect(summaryX - 10, currentY - 5, summaryWidth + 10, 30).fill(COLORS.primary);
+  doc.fillColor('white').fontSize(12).font('Helvetica-Bold');
+  doc.text('TOTAL AMOUNT:', summaryX, currentY + 5);
+  doc.text(formatCurrency(totalCents), summaryX + 100, currentY + 5, { align: 'right', width: 90 });
 
-  doc.moveDown(12);
+  doc.moveDown(4);
 
   // Footer section
+  doc.fillColor(COLORS.primary).fontSize(14).font('Helvetica-Bold').text('Thank You for Choosing MedIQ!', { align: 'center' });
+  doc.moveDown(0.5);
+
+  doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text('Quality healthcare at your doorstep.', { align: 'center' });
+  doc.moveDown(0.5);
+
+  doc.fontSize(9).text('Questions? Contact support@mediq.com | +91 1800-MED-IQ', { align: 'center' });
   doc.moveDown(1);
-  doc.fillColor(COLORS.primary).fontSize(13).font('Helvetica-Bold').text('Thank You for Your Order!', { align: 'center' });
-  doc.moveDown(0.5);
-
-  doc.fillColor(COLORS.secondary).fontSize(11).font('Helvetica-Bold').text('Visit us again soon for better health & wellness', { align: 'center' });
-  doc.moveDown(0.5);
-
-  doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text('Questions? Contact support@mediq.com | www.mediq.com', { align: 'center' });
-  doc.fontSize(8).text('This is a system-generated receipt. Please keep it safe for your records.', { align: 'center', color: COLORS.dark });
+  doc.fontSize(8).fillColor('#9CA3AF').text('This is a computer-generated invoice and does not require a physical signature.', { align: 'center' });
 
   // Bottom decorative line
-  doc.moveTo(margin, pageHeight - 50).lineTo(pageWidth - margin, pageHeight - 50).stroke(COLORS.primary);
+  doc.moveTo(margin, pageHeight - 40).lineTo(pageWidth - margin, pageHeight - 40).lineWidth(1).stroke(COLORS.primary);
 
   return doc;
 };
