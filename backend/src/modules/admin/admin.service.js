@@ -547,7 +547,7 @@ module.exports = {
             select: { buyerType: true, country: true, city: true }
           },
           vendor: {
-            select: { companyName: true, country: true, verificationStatus: true }
+            select: { companyName: true, contactPersonName: true, country: true, verificationStatus: true }
           }
         },
         orderBy: { createdAt: 'desc' },

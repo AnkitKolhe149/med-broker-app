@@ -147,6 +147,13 @@ const AdminUsers = () => {
 								<td colSpan="6" className="admin-muted">No users found for current filters.</td>
 							</tr>
 						) : users.map((user) => {
+							const emailPrefix = user.email ? user.email.split('@')[0] : '';
+							const displayName = user.name
+								|| user.customer?.fullName
+								|| user.vendor?.contactPersonName
+								|| user.vendor?.companyName
+								|| emailPrefix
+								|| 'Unnamed User';
 							const region = user.customer
 								? `${user.customer.city || '-'}, ${user.customer.country || '-'}`
 								: user.vendor
@@ -159,7 +166,7 @@ const AdminUsers = () => {
 							return (
 								<tr key={user.id}>
 									<td>
-										<strong>{user.name || 'Unnamed User'}</strong>
+										<strong>{displayName}</strong>
 										<div className="admin-muted">{user.email}</div>
 									</td>
 									<td>
