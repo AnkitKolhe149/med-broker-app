@@ -5,7 +5,13 @@ module.exports = {
   list: async (userId) => {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!user) return [];
-    return prisma.address.findMany({ where: { userId }, orderBy: { isDefault: 'desc', updatedAt: 'desc' } });
+    return prisma.address.findMany({
+      where: { userId },
+      orderBy: [
+        { isDefault: 'desc' },
+        { updatedAt: 'desc' }
+      ]
+    });
   },
 
   create: async (userId, data) => {
