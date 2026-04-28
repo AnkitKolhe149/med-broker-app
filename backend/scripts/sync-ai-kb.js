@@ -21,6 +21,6 @@ const run = async () => {
 };
 
 run().catch((error) => {
-  console.error('KB sync crashed:', error.message);
+  console.error('KB sync crashed :', error.message);
   process.exitCode = 1;
 });
