@@ -16,6 +16,50 @@ const adminRoutes = require("../modules/admin/admin.routes");
 
 const router = express.Router();
 
+const DEFAULT_PRICING_CONFIG = {
+  standardDeliveryChargeCents: 0,
+  expressDeliveryChargeCents: 900,
+  freeDeliveryThresholdCents: 50000,
+  taxRatePercent: 5
+};
+
+const loadPricingConfig = async () => {
+  const keys = [
+    'STANDARD_DELIVERY_CHARGE_CENTS',
+    'EXPRESS_DELIVERY_CHARGE_CENTS',
+    'FREE_DELIVERY_THRESHOLD_CENTS',
+    'TAX_RATE_PERCENT'
+  ];
+
+  const settings = await prisma.systemSetting.findMany({
+    where: { key: { in: keys } },
+    select: { key: true, value: true }
+  }).catch(() => []);
+
+  const pricingConfig = { ...DEFAULT_PRICING_CONFIG };
+
+  for (const setting of settings) {
+    const value = Number(setting.value);
+    if (!Number.isFinite(value)) continue;
+
+    if (setting.key === 'STANDARD_DELIVERY_CHARGE_CENTS') pricingConfig.standardDeliveryChargeCents = value;
+    if (setting.key === 'EXPRESS_DELIVERY_CHARGE_CENTS') pricingConfig.expressDeliveryChargeCents = value;
+    if (setting.key === 'FREE_DELIVERY_THRESHOLD_CENTS') pricingConfig.freeDeliveryThresholdCents = value;
+    if (setting.key === 'TAX_RATE_PERCENT') pricingConfig.taxRatePercent = value;
+  }
+
+  return pricingConfig;
+};
+
+router.get('/config/pricing', async (_req, res, next) => {
+  try {
+    const pricingConfig = await loadPricingConfig();
+    res.json({ success: true, data: pricingConfig });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Auth routes
 router.use("/auth", authRoutes);
 

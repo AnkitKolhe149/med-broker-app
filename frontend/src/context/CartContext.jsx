@@ -36,6 +36,27 @@ const mapServerCartItem = (item) => {
 		return null;
 	}
 
+	const snapshotCents = Number(item.priceSnapshotCents);
+	const hasSnapshotCents = Number.isFinite(snapshotCents);
+	const decimalBasePrice = item.basePrice !== undefined && item.basePrice !== null
+		? Number(item.basePrice)
+		: null;
+	const decimalRetailPrice = item.retailPrice !== undefined && item.retailPrice !== null
+		? Number(item.retailPrice)
+		: null;
+	const decimalWholesalePrice = item.wholesalePrice !== undefined && item.wholesalePrice !== null
+		? Number(item.wholesalePrice)
+		: null;
+	const resolvedBasePrice = Number.isFinite(decimalBasePrice)
+		? decimalBasePrice
+		: (hasSnapshotCents ? snapshotCents / 100 : Number(item.retailPrice || 0));
+	const resolvedRetailPrice = Number.isFinite(decimalRetailPrice)
+		? decimalRetailPrice
+		: (hasSnapshotCents ? snapshotCents / 100 : resolvedBasePrice);
+	const resolvedWholesalePrice = Number.isFinite(decimalWholesalePrice)
+		? decimalWholesalePrice
+		: resolvedRetailPrice;
+
 	return {
 		id: item.id,
 		customerId: item.customerId,
@@ -47,13 +68,13 @@ const mapServerCartItem = (item) => {
 		vendor: item.vendor || item.inventory?.vendor?.companyName || item.medicine?.brand || 'Trusted vendor',
 		vendorId: item.vendorId || item.inventory?.vendor?.id || null,
 		quantity: Number(item.quantity || 1),
-		retailPrice: Number(item.retailPrice || item.basePrice || item.priceSnapshotCents || 0) / (item.priceSnapshotCents ? 100 : 1),
-		wholesalePrice: Number(item.wholesalePrice || 0),
+		retailPrice: resolvedRetailPrice,
+		wholesalePrice: resolvedWholesalePrice,
 		buyerType: item.buyerType || 'RETAIL',
 		packageType: item.selectedSize || 'standard',
 		selectedSize: item.selectedSize || 'standard',
 		currencyCode: normalizeCurrencyCode(item.currencyCode),
-		basePrice: Number(item.basePrice || item.priceSnapshotCents || item.retailPrice || 0) / (item.priceSnapshotCents ? 100 : 1),
+		basePrice: resolvedBasePrice,
 		addedAt: item.addedAt || item.createdAt || new Date().toISOString()
 	};
 };

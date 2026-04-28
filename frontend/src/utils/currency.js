@@ -149,21 +149,27 @@ export const formatCurrency = (amount, currencyCode = 'INR', showSymbol = true) 
 
 	const normalizedCurrency = normalizeCurrencyCode(currencyCode);
 	const numericAmount = Number(amount);
+	const ambiguousSymbolCurrencies = new Set(['JPY', 'CNY']);
+	const formattedNumber = new Intl.NumberFormat(getCurrencyLocale(normalizedCurrency), {
+		style: 'decimal',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	}).format(numericAmount);
+
+	if (showSymbol && ambiguousSymbolCurrencies.has(normalizedCurrency)) {
+		return `${getCurrencySymbol(normalizedCurrency)} ${formattedNumber} ${normalizedCurrency}`;
+	}
 
 	try {
 		return new Intl.NumberFormat(getCurrencyLocale(normalizedCurrency), {
 			style: showSymbol ? 'currency' : 'decimal',
 			currency: normalizedCurrency,
-			currencyDisplay: 'narrowSymbol',
+			currencyDisplay: 'symbol',
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2
 		}).format(numericAmount);
 	} catch (_error) {
-		const formatted = numericAmount.toLocaleString(undefined, {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		});
-		return showSymbol ? `${getCurrencySymbol(normalizedCurrency)}${formatted}` : formatted;
+		return showSymbol ? `${getCurrencySymbol(normalizedCurrency)}${formattedNumber}` : formattedNumber;
 	}
 };
 

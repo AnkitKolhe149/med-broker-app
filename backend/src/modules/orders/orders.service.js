@@ -7,13 +7,45 @@ const normalizePackageType = (value) => (String(value || 'standard').toLowerCase
 
 const normalizeDeliveryType = (value) => (String(value || 'standard').toLowerCase() === 'express' ? 'express' : 'standard');
 
-const buildPricingSummary = ({ subtotalCents, discountPercent = 0, deliveryType = 'standard' }) => {
+const getPricingSettingMap = async () => {
+  const keys = [
+    'STANDARD_DELIVERY_CHARGE_CENTS',
+    'EXPRESS_DELIVERY_CHARGE_CENTS',
+    'TAX_RATE_PERCENT',
+    'FREE_DELIVERY_THRESHOLD_CENTS'
+  ];
+
+  const settings = await prisma.systemSetting.findMany({
+    where: { key: { in: keys } },
+    select: { key: true, value: true }
+  }).catch(() => []);
+
+  return settings.reduce((acc, setting) => {
+    acc[setting.key] = Number(setting.value);
+    return acc;
+  }, {});
+};
+
+const buildPricingSummary = async ({ subtotalCents, discountPercent = 0, deliveryType = 'standard' }) => {
   const normalizedDiscountPercent = Math.max(0, Math.min(100, Number(discountPercent) || 0));
   const normalizedDeliveryType = normalizeDeliveryType(deliveryType);
-  const deliveryChargeCents = normalizedDeliveryType === 'express' ? 900 : 0;
+  const pricingSettings = await getPricingSettingMap();
+  const standardDeliveryChargeCents = Number.isFinite(pricingSettings.STANDARD_DELIVERY_CHARGE_CENTS)
+    ? pricingSettings.STANDARD_DELIVERY_CHARGE_CENTS
+    : 0;
+  const expressDeliveryChargeCents = Number.isFinite(pricingSettings.EXPRESS_DELIVERY_CHARGE_CENTS)
+    ? pricingSettings.EXPRESS_DELIVERY_CHARGE_CENTS
+    : 900;
+  const taxRatePercent = Number.isFinite(pricingSettings.TAX_RATE_PERCENT)
+    ? pricingSettings.TAX_RATE_PERCENT
+    : 5;
+  const freeDeliveryThresholdCents = Number.isFinite(pricingSettings.FREE_DELIVERY_THRESHOLD_CENTS)
+    ? pricingSettings.FREE_DELIVERY_THRESHOLD_CENTS
+    : 0;
+  const deliveryChargeCents = normalizedDeliveryType === 'express' ? expressDeliveryChargeCents : standardDeliveryChargeCents;
   const discountCents = Math.round(subtotalCents * (normalizedDiscountPercent / 100));
   const taxableCents = Math.max(0, subtotalCents - discountCents + deliveryChargeCents);
-  const taxCents = Math.round(taxableCents * 0.05);
+  const taxCents = Math.round(taxableCents * (taxRatePercent / 100));
   const totalCents = taxableCents + taxCents;
 
   return {
@@ -22,6 +54,10 @@ const buildPricingSummary = ({ subtotalCents, discountPercent = 0, deliveryType 
     discountCents,
     deliveryType: normalizedDeliveryType,
     deliveryChargeCents,
+    standardDeliveryChargeCents,
+    expressDeliveryChargeCents,
+    freeDeliveryThresholdCents,
+    taxRatePercent,
     taxCents,
     totalCents
   };
@@ -293,7 +329,7 @@ const createOrder = async (userId, orderData) => {
     };
   });
 
-  const pricingSummary = buildPricingSummary({
+  const pricingSummary = await buildPricingSummary({
     subtotalCents: totalCents,
     discountPercent,
     deliveryType

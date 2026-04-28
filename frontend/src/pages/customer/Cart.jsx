@@ -40,7 +40,7 @@ function Cart() {
 	};
 
 	const subtotal = cartItems.reduce((sum, item) => sum + getDisplayLineTotal(item), 0);
-	const deliveryFee = cartItems.length > 0 ? convertPrice(10, 'INR', cartCurrency, exchangeRates) : 0;
+	const deliveryFee = 0;
 	const discount = (subtotal * discountPercent) / 100;
 	const total = subtotal - discount + deliveryFee;
 
@@ -213,8 +213,7 @@ function Cart() {
 								<span className={styles.infoIcon}><Truck size={18} strokeWidth={1.5} /></span>
 								<div>
 									<h4 className={styles.infoCardTitle}>Free Delivery</h4>
-									{/* ✅ BUG #7: Convert hardcoded threshold to user's currency */}
-									<p className={styles.infoCardText}>On orders above {formatPrice(500, 'INR')}</p>
+									<p className={styles.infoCardText}>Delivery eligibility is calculated automatically at checkout</p>
 								</div>
 							</div>
 						</div>

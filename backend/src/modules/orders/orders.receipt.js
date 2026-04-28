@@ -11,6 +11,23 @@ const COLORS = {
   success: '#10B981'       // Green
 };
 
+const RECEIPT_CURRENCY_FORMATS = {
+  INR: { symbol: 'Rs.', locale: 'en-IN' },
+  USD: { symbol: '$', locale: 'en-US' },
+  EUR: { symbol: '€', locale: 'de-DE' },
+  GBP: { symbol: '£', locale: 'en-GB' },
+  CAD: { symbol: 'C$', locale: 'en-CA' },
+  AUD: { symbol: 'A$', locale: 'en-AU' },
+  SGD: { symbol: 'S$', locale: 'en-SG' },
+  AED: { symbol: 'د.إ', locale: 'ar-AE' },
+  SAR: { symbol: 'ر.س', locale: 'ar-SA' },
+  JPY: { symbol: '¥ JPY', locale: 'ja-JP' },
+  CNY: { symbol: '¥ CNY', locale: 'zh-CN' },
+  BRL: { symbol: 'R$', locale: 'pt-BR' },
+  ZAR: { symbol: 'R', locale: 'en-ZA' },
+  RUB: { symbol: '₽', locale: 'ru-RU' }
+};
+
 const centsToCurrency = (amountCents) => {
   const amount = Number(amountCents || 0) / 100;
   return `$${amount.toFixed(2)}`;
@@ -59,12 +76,12 @@ const buildOrderReceiptPdf = (order) => {
     ? checkoutSnapshot.pricingSummary
     : {};
   
-  const currencyCode = checkoutSnapshot.currencyCode || 'INR';
-  const currencySymbol = currencyCode === 'INR' ? 'Rs. ' : (currencyCode === 'USD' ? '$' : currencyCode + ' ');
+  const currencyCode = String(checkoutSnapshot.currencyCode || 'INR').toUpperCase();
+  const currencyFormat = RECEIPT_CURRENCY_FORMATS[currencyCode] || { symbol: `${currencyCode} `, locale: 'en-US' };
 
   const formatCurrency = (amountCents) => {
     const amount = Number(amountCents || 0) / 100;
-    return `${currencySymbol}${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `${currencyFormat.symbol} ${amount.toLocaleString(currencyFormat.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`.replace(/\s+/g, ' ').trim();
   };
 
   const subtotalCents = Number.isFinite(pricingSummary.subtotalCents)
