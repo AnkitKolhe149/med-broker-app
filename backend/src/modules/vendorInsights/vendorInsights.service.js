@@ -1,5 +1,6 @@
 const { prisma } = require('../../database/prisma');
 const axios = require('axios');
+const demandForecaster = require('../../utils/demandForecasting');
 
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -521,19 +522,17 @@ const getDemandForecast = async (userId) => {
   });
 
   try {
-    const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://127.0.0.1:5002';
-    const response = await axios.post(`${aiServiceUrl}/api/forecast`, {
-      items: forecastPayload
-    }, { timeout: 3000 });
+    const forecasts = await demandForecaster.predict(forecastPayload);
+    console.log(`✅ [DemandForecast] Successfully generated ${forecasts.length} forecasts using ONNX model.`);
     
     return {
       vendor: { id: vendor.id, companyName: vendor.companyName },
-      forecasts: response.data.forecasts || [],
+      forecasts,
       source: 'AI_MODEL'
     };
   } catch (error) {
-    console.warn("Python ML server unavailable, using fallback heuristic forecast.");
-    // Fallback if ML API is not running
+    console.warn("Local AI model inference failed, using fallback heuristic forecast:", error.message);
+    // Fallback if ONNX fails
     const fallbackForecasts = forecastPayload.map(item => {
       const pred = Math.max(10, item.past_month_sales * 1.1 + (100 - item.price) * 0.5);
       return {
