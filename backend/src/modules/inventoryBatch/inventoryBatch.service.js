@@ -46,7 +46,8 @@ module.exports = {
     return prisma.inventoryBatch.findMany({ where: { inventoryId }, orderBy: { expiryDate: 'asc' } });
   },
 
-  update: async (userId, id, data) => {\n    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+  update: async (userId, id, data) => {
+    const vendor = await prisma.vendor.findUnique({ where: { userId } });
     if (!vendor) throw new ForbiddenError('Vendor profile not found');
     const batch = await prisma.inventoryBatch.findUnique({ where: { id } });
     if (!batch) throw new NotFoundError('Batch not found');
