@@ -6,10 +6,30 @@ class DemandForecaster {
   constructor() {
     this.session = null;
     this.scalerParams = null;
-    // Paths relative to the backend root
-    this.modelPath = path.join(__dirname, '../../../ai-ml/models/demand_forecasting/demand_model.onnx');
-    this.paramsPath = path.join(__dirname, '../../../ai-ml/models/demand_forecasting/scaler_params.json');
     this.isInitialized = false;
+
+    const defaultModelCandidates = [
+      path.resolve(__dirname, '..', '..', '..', 'ai-ml', 'models', 'demand_forecasting', 'demand_model.onnx'),
+      path.resolve(process.cwd(), 'ai-ml', 'models', 'demand_forecasting', 'demand_model.onnx'),
+      path.resolve(process.cwd(), '..', 'ai-ml', 'models', 'demand_forecasting', 'demand_model.onnx'),
+    ];
+    const defaultParamsCandidates = [
+      path.resolve(__dirname, '..', '..', '..', 'ai-ml', 'models', 'demand_forecasting', 'scaler_params.json'),
+      path.resolve(process.cwd(), 'ai-ml', 'models', 'demand_forecasting', 'scaler_params.json'),
+      path.resolve(process.cwd(), '..', 'ai-ml', 'models', 'demand_forecasting', 'scaler_params.json'),
+    ];
+
+    this.modelPath = process.env.DEMAND_MODEL_PATH || this.findExistingPath(defaultModelCandidates);
+    this.paramsPath = process.env.DEMAND_PARAMS_PATH || this.findExistingPath(defaultParamsCandidates);
+  }
+
+  findExistingPath(candidatePaths) {
+    for (const candidate of candidatePaths) {
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+    return candidatePaths[0];
   }
 
   /**
@@ -20,10 +40,18 @@ class DemandForecaster {
 
     try {
       if (!fs.existsSync(this.modelPath)) {
-        throw new Error(`Model file not found at ${this.modelPath}`);
+        const attempted = [
+          this.modelPath,
+          process.env.DEMAND_MODEL_PATH || '<unset>'
+        ].filter(Boolean);
+        throw new Error(`Model file not found at ${this.modelPath}. Tried paths: ${attempted.join(', ')}`);
       }
       if (!fs.existsSync(this.paramsPath)) {
-        throw new Error(`Scaler parameters not found at ${this.paramsPath}`);
+        const attempted = [
+          this.paramsPath,
+          process.env.DEMAND_PARAMS_PATH || '<unset>'
+        ].filter(Boolean);
+        throw new Error(`Scaler parameters not found at ${this.paramsPath}. Tried paths: ${attempted.join(', ')}`);
       }
 
       // Load session
