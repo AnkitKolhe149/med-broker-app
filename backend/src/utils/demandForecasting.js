@@ -19,8 +19,30 @@ class DemandForecaster {
       path.resolve(process.cwd(), '..', 'ai-ml', 'models', 'demand_forecasting', 'scaler_params.json'),
     ];
 
-    this.modelPath = process.env.DEMAND_MODEL_PATH || this.findExistingPath(defaultModelCandidates);
-    this.paramsPath = process.env.DEMAND_PARAMS_PATH || this.findExistingPath(defaultParamsCandidates);
+    const modelEnv = process.env.DEMAND_MODEL_PATH ? process.env.DEMAND_MODEL_PATH.trim() : null;
+    const paramsEnv = process.env.DEMAND_PARAMS_PATH ? process.env.DEMAND_PARAMS_PATH.trim() : null;
+
+    this.modelPath = modelEnv ? this.resolveEnvPath(modelEnv) : this.findExistingPath(defaultModelCandidates);
+    this.paramsPath = paramsEnv ? this.resolveEnvPath(paramsEnv) : this.findExistingPath(defaultParamsCandidates);
+  }
+
+  resolveEnvPath(value) {
+    const normalized = path.normalize(value);
+    const candidate = path.isAbsolute(normalized)
+      ? normalized
+      : path.resolve(process.cwd(), normalized);
+
+    if (path.isAbsolute(normalized) && !fs.existsSync(candidate)) {
+      const relativeCandidate = path.resolve(
+        process.cwd(),
+        normalized.replace(/^[\\/]+/, '')
+      );
+      if (fs.existsSync(relativeCandidate)) {
+        return relativeCandidate;
+      }
+    }
+
+    return candidate;
   }
 
   findExistingPath(candidatePaths) {
