@@ -8,7 +8,14 @@ const AdminDisputes = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [resolveLoading, setResolveLoading] = useState({});
-  const { formatCurrency } = useCurrency();
+    const { formatCurrency, convert } = useCurrency();
+
+    // ✅ BUG #8: Helper to format dispute amounts in admin's currency
+    const formatAdminAmount = (cents) => {
+      const amountInINR = (cents || 0) / 100;
+      const converted = typeof convert === 'function' ? convert(amountInINR, 'INR') : amountInINR;
+      return formatCurrency(converted, true);
+    };
 
   const load = async () => {
     try {
@@ -95,7 +102,7 @@ const AdminDisputes = () => {
                 <td>{dispute.user?.name || dispute.user?.email || 'Customer'}</td>
                 <td>{dispute.category}</td>
                 <td><span className={`admin-pill ${String(dispute.status || '').toLowerCase()}`}>{dispute.status}</span></td>
-                <td>{formatCurrency((dispute.amountCents || 0) / 100)}</td>
+                <td>{formatAdminAmount(dispute.amountCents)}</td>
                 <td>{dispute.reason}</td>
                 <td>
                   <button

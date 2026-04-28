@@ -17,7 +17,15 @@ const AdminCatalog = () => {
   const [pageSize, setPageSize] = useState(25);
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, totalPages: 1 });
   const [actionLoading, setActionLoading] = useState({});
-  const { formatCurrency } = useCurrency();
+  // ✅ BUG #8: Use convert to properly convert prices from INR to admin's currency
+  const { formatCurrency, convert, currency, exchangeRates } = useCurrency();
+
+  // Helper to format prices in admin's currency
+  const formatAdminPrice = (priceCents) => {
+    const priceInINR = (priceCents || 0) / 100;
+    const convertedPrice = typeof convert === 'function' ? convert(priceInINR, 'INR') : priceInINR;
+    return formatCurrency(convertedPrice, true);
+  };
 
   const loadCatalog = async () => {
     try {
@@ -132,7 +140,7 @@ const AdminCatalog = () => {
                   </td>
                   <td>{item.category || 'Uncategorized'}</td>
                   <td><span className={`admin-pill ${String(item.status || '').toLowerCase()}`}>{item.status}</span></td>
-                  <td>{formatCurrency((item.priceCents || 0) / 100)}</td>
+                   <td>{formatAdminPrice(item.priceCents)}</td>
                   <td>{item.requiresPrescription ? 'Required' : 'Not required'}</td>
                   <td>{item._count?.orderItems || 0} orders · {item._count?.reviews || 0} reviews</td>
                   <td>{new Date(item.updatedAt).toLocaleString()}</td>

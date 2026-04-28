@@ -8,7 +8,14 @@ const AdminOrders = () => {
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState('');
 	const [updatingId, setUpdatingId] = useState(null);
-	const { formatCurrency } = useCurrency();
+	const { formatCurrency, convert } = useCurrency();
+
+	// ✅ BUG #8: Helper to format order totals in admin's currency
+	const formatAdminPrice = (cents) => {
+		const priceInINR = (cents || 0) / 100;
+		const converted = typeof convert === 'function' ? convert(priceInINR, 'INR') : priceInINR;
+		return formatCurrency(converted, true);
+	};
 
 	const loadOrders = async () => {
 		try {
@@ -82,7 +89,7 @@ const AdminOrders = () => {
 								</td>
 								<td>{order.user?.name || order.user?.email || 'Customer'}</td>
 								<td>{order.items?.length || 0}</td>
-								<td>{formatCurrency((order.totalCents || 0) / 100)}</td>
+								<td>{formatAdminPrice(order.totalCents)}</td>
 								<td><span className={`admin-pill ${String(order.status || '').toLowerCase()}`}>{order.status}</span></td>
 								<td><span className={`admin-pill ${String(order.payment?.status || 'INITIATED').toLowerCase()}`}>{order.payment?.status || 'INITIATED'}</span></td>
 								<td>

@@ -67,12 +67,19 @@ export const getCurrencyForCountry = (country, fallback = 'USD') => {
 	}
 
 	const normalizedCountry = String(country).trim().toUpperCase();
-	return COUNTRY_TO_CURRENCY[normalizedCountry] || fallback;
+	// ✅ BUG #6: Validate that returned currency exists in CURRENCIES
+	const currency = COUNTRY_TO_CURRENCY[normalizedCountry] || fallback;
+	return normalizeCurrencyCode(currency, fallback);
 };
 
 export const normalizeCurrencyCode = (currencyCode, fallback = 'INR') => {
 	const normalized = String(currencyCode || fallback).trim().toUpperCase();
-	return CURRENCIES[normalized] ? normalized : String(fallback || 'INR').trim().toUpperCase();
+	// ✅ BUG #6: Double-check fallback is also valid
+	if (CURRENCIES[normalized]) {
+		return normalized;
+	}
+	const normalizedFallback = String(fallback || 'INR').trim().toUpperCase();
+	return CURRENCIES[normalizedFallback] ? normalizedFallback : 'INR';
 };
 
 const CURRENCY_LOCALE_MAP = {
@@ -117,7 +124,16 @@ const getCurrencyPreferenceKey = (userId) => (userId ? `preferredCurrency:${user
 // Get currency symbol
 export const getCurrencySymbol = (currencyCode) => {
 	const normalized = normalizeCurrencyCode(currencyCode);
-	return CURRENCIES[normalized]?.symbol || normalized;
+	// ✅ BUG #14: For ambiguous symbols, include currency code to avoid confusion
+	const symbol = CURRENCIES[normalized]?.symbol;
+	if (!symbol) return normalized;
+
+	// JPY and CNY both use ¥, disambiguate
+	if (normalized === 'JPY' || normalized === 'CNY') {
+		return `${symbol}${normalized}`;
+	}
+
+	return symbol;
 };
 
 // Get currency name

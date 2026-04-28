@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
 	ArrowLeft,
@@ -35,11 +36,42 @@ function Payment() {
 	const [cardNumber, setCardNumber] = useState('');
 	const [expiry, setExpiry] = useState('');
 	const [cvv, setCvv] = useState('');
+	const [deliveryAddress, setDeliveryAddress] = useState({});
 	const currentCurrency = currency || 'INR';
-	const sourceCurrencyCode = orderData?.currencyCode || currentCurrency;
-	const formatPrice = (value, fromCurrency = sourceCurrencyCode) => formatConvertedCurrency(value, fromCurrency, currentCurrency, exchangeRates, true);
-	const toDisplayAmount = (value, fromCurrency = sourceCurrencyCode) => (typeof convert === 'function' ? convert(value, fromCurrency) : value);
+	const sourceItemCurrency = 'INR';
+	const formatPrice = (value, fromCurrency = sourceItemCurrency) => formatConvertedCurrency(value, fromCurrency, currentCurrency, exchangeRates, true);
+	const toDisplayAmount = (value, fromCurrency = sourceItemCurrency) => (typeof convert === 'function' ? convert(value, fromCurrency) : value);
+
+	// ✅ BUG #10: Add state/province lists for all countries
+	const statesByCountry = useMemo(() => ({
+		'India': ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'],
+		'United States': ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'],
+		'United Kingdom': ['England', 'Scotland', 'Wales', 'Northern Ireland'],
+		'Canada': ['Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador', 'Northwest Territories', 'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island', 'Quebec', 'Saskatchewan', 'Yukon'],
+		'Australia': ['New South Wales', 'Queensland', 'South Australia', 'Tasmania', 'Victoria', 'Western Australia', 'Australian Capital Territory', 'Northern Territory'],
+		'Germany': ['Baden-Württemberg', 'Bavaria', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hesse', 'Lower Saxony', 'Mecklenburg-Vorpommern', 'North Rhine-Westphalia', 'Rhineland-Palatinate', 'Saarland', 'Saxony', 'Saxony-Anhalt', 'Schleswig-Holstein', 'Thuringia'],
+		'France': ['Auvergne-Rhône-Alpes', 'Bourgogne-Franche-Comté', 'Brittany', 'Centre-Val de Loire', 'Corsica', 'Grand Est', 'Hauts-de-France', 'Île-de-France', 'Nouvelle-Aquitaine', 'Occitanie', 'Pays de la Loire', 'Provence-Alpes-Côte d\'Azur'],
+		'UAE': ['Abu Dhabi', 'Ajman', 'Dubai', 'Fujairah', 'Ras Al Khaimah', 'Sharjah', 'Umm Al Quwain'],
+		'Singapore': ['Singapore'],
+		'Japan': ['Aichi', 'Akita', 'Aomori', 'Chiba', 'Ehime', 'Fukui', 'Fukuoka', 'Fukushima', 'Gifu', 'Gunma', 'Hiroshima', 'Hokkaido', 'Hyogo', 'Ibaraki', 'Ishikawa', 'Iwate', 'Kagawa', 'Kagoshima', 'Kanagawa', 'Kochi', 'Kumamoto', 'Kyoto', 'Mie', 'Miyagi', 'Miyazaki', 'Nagano', 'Nagasaki', 'Nara', 'Niigata', 'Okinawa', 'Osaka', 'Saga', 'Saitama', 'Shiga', 'Shimane', 'Shizuoka', 'Tochigi', 'Tokushima', 'Tokyo', 'Tottori', 'Toyama', 'Wakayama', 'Yamagata', 'Yamaguchi', 'Yamanashi'],
+		'Saudi Arabia': ['Riyadh', 'Mecca', 'Medina', 'Jeddah', 'Dammam', 'Khobar', 'Eastern Province', 'Western Province', 'Central Province'],
+		'Russia': ['Moscow', 'Saint Petersburg', 'Novosibirsk', 'Yekaterinburg', 'Nizhny Novgorod', 'Kazan', 'Chelyabinsk', 'Omsk', 'Samara', 'Rostov-on-Don', 'Ufa', 'Krasnoyarsk'],
+		'Brazil': ['São Paulo', 'Rio de Janeiro', 'Minas Gerais', 'Rio Grande do Sul', 'Bahia', 'Paraná', 'Santa Catarina', 'Pernambuco', 'Ceará', 'Pará', 'Goiás', 'Distrito Federal'],
+		'South Africa': ['Gauteng', 'Western Cape', 'KwaZulu-Natal', 'Eastern Cape', 'Limpopo', 'Mpumalanga', 'Northern Cape', 'North West', 'Free State']
+	}), []);
+
+	const getStatesForCountry = (country) => statesByCountry[country] || [];
 	const queryOrderId = new URLSearchParams(location.search).get('orderId');
+
+	const handleAddressFieldChange = (field, value) => {
+		setDeliveryAddress((current) => {
+			const nextAddress = { ...current, [field]: value };
+			if (field === 'country') {
+				nextAddress.state = '';
+			}
+			return nextAddress;
+		});
+	};
 
 	const normalizeOrderData = (source) => {
 		const snapshot = source?.checkoutSnapshot && typeof source.checkoutSnapshot === 'object' ? source.checkoutSnapshot : {};
@@ -118,12 +150,18 @@ function Payment() {
 		loadOrder();
 	}, [navigate]);
 
+	useEffect(() => {
+		if (orderData?.deliveryAddress) {
+			setDeliveryAddress(orderData.deliveryAddress);
+		}
+	}, [orderData]);
+
 	const calculateTotal = () => {
 		if (!orderData) return 0;
 		if (orderData.totalBase !== undefined && orderData.totalBase !== null) {
-			return toDisplayAmount(Number(orderData.total || orderData.totalBase || 0), sourceCurrencyCode);
+			return toDisplayAmount(Number(orderData.total || orderData.totalBase || 0), sourceItemCurrency);
 		}
-		return toDisplayAmount(Number(orderData.total || 0), sourceCurrencyCode);
+		return toDisplayAmount(Number(orderData.total || 0), sourceItemCurrency);
 	};
 
 	const generateUPILink = () => {
@@ -160,20 +198,20 @@ function Payment() {
 	const getSubtotal = () => {
 		if (!orderData) return 0;
 		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
-			return toDisplayAmount(Number(orderData.subtotal || orderData.subtotalBase || 0), sourceCurrencyCode);
+			return toDisplayAmount(Number(orderData.subtotal || orderData.subtotalBase || 0), sourceItemCurrency);
 		}
-		return toDisplayAmount(Number(orderData.subtotal || 0), sourceCurrencyCode);
+		return toDisplayAmount(Number(orderData.subtotal || 0), sourceItemCurrency);
 	};
 
 	const calculateDelivery = () => {
 		if (!orderData) return 0;
 		const rawDelivery = Number(orderData.deliveryCharge ?? orderData.deliveryBase ?? (orderData.deliveryType === 'express' ? 9 : 0));
-		return toDisplayAmount(rawDelivery, sourceCurrencyCode);
+		return toDisplayAmount(rawDelivery, sourceItemCurrency);
 	};
 
 	const calculateTax = () => {
 		if (orderData?.tax !== undefined && orderData?.tax !== null) {
-			return toDisplayAmount(Number(orderData.tax), sourceCurrencyCode);
+			return toDisplayAmount(Number(orderData.tax), sourceItemCurrency);
 		}
 		const subtotal = getSubtotal();
 		const discount = Number(orderData?.discount || ((subtotal * (orderData?.discountPercent || 0)) / 100));
@@ -288,6 +326,10 @@ function Payment() {
 
 			const completedOrder = {
 				...orderData,
+				deliveryAddress: {
+					...(orderData.deliveryAddress || {}),
+					...(deliveryAddress || {})
+				},
 				orderId,
 				paymentMethod,
 				paymentStatus: 'completed',
@@ -362,6 +404,48 @@ function Payment() {
 							<div>
 								<p className={styles.securityTitle}>Razorpay Checkout Enabled</p>
 								<p className={styles.securityText}>You can pay with UPI, cards, netbanking, or wallets through Razorpay's hosted checkout.</p>
+							</div>
+						</div>
+
+						<div className={styles.section} style={{ marginBottom: '1rem' }}>
+							<h3 className={styles.sectionTitle}>Delivery Address</h3>
+							<div className={styles.twoColumn}>
+								<div className={styles.formGroup}>
+									<label className={styles.label}>Country</label>
+									<select
+										className={styles.input}
+										value={deliveryAddress.country || ''}
+										onChange={(e) => handleAddressFieldChange('country', e.target.value)}
+									>
+										<option value="">Select country</option>
+										{Object.keys(statesByCountry).map((country) => (
+											<option key={country} value={country}>{country}</option>
+										))}
+									</select>
+								</div>
+								<div className={styles.formGroup}>
+									<label className={styles.label}>State / Province</label>
+									{getStatesForCountry(deliveryAddress.country).length > 0 ? (
+										<select
+											className={styles.input}
+											value={deliveryAddress.state || ''}
+											onChange={(e) => handleAddressFieldChange('state', e.target.value)}
+										>
+											<option value="">Select state / province</option>
+											{getStatesForCountry(deliveryAddress.country).map((state) => (
+												<option key={state} value={state}>{state}</option>
+											))}
+										</select>
+									) : (
+										<input
+											type="text"
+											className={styles.input}
+											value={deliveryAddress.state || ''}
+											onChange={(e) => handleAddressFieldChange('state', e.target.value)}
+											placeholder="Enter state or province"
+										/>
+									)}
+								</div>
 							</div>
 						</div>
 
@@ -485,7 +569,7 @@ function Payment() {
 							{orderData.cartItems.map((item, index) => (
 								<div key={`${item.medicineId}-${index}`} className={styles.itemRow}>
 									<span>{item.name} × {item.quantity}</span>
-									<span>{formatPrice(item.basePrice * item.quantity, item.currencyCode || sourceCurrencyCode)}</span>
+									<span>{formatPrice(item.basePrice * item.quantity, sourceItemCurrency)}</span>
 								</div>
 							))}
 						</div>

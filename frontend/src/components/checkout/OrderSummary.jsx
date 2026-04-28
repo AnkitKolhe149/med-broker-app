@@ -1,13 +1,13 @@
 import React from 'react';
 import { Info, ShieldCheck } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
-import { formatCurrency } from '../../utils/currency';
+import { formatConvertedCurrency } from '../../utils/currency';
 import styles from './Checkout.module.css';
 
 export function OrderSummary({ cartItems, getTotalPrice, discountPercent, appliedCoupon, deliveryType = 'standard' }) {
-  const { currency } = useCurrency();
-  const currencyCode = cartItems[0]?.currencyCode || currency || 'USD';
-  const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+  const { currency, exchangeRates } = useCurrency();
+  const currencyCode = currency || 'USD';
+  const formatPrice = (value, sourceCurrency = 'INR') => formatConvertedCurrency(value, sourceCurrency, currencyCode, exchangeRates, true);
   const subtotal = getTotalPrice();
   const discount = (subtotal * discountPercent) / 100;
   const deliveryCharge = deliveryType === 'express' ? 9 : 0;

@@ -5,7 +5,12 @@ import { useCurrency } from './CurrencyContext';
 import cartService from '../services/cart.service';
 import { convertPrice } from '../utils/currency';
 
+// ✅ BUG #2: Valid currencies for cart items
+const VALID_CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'CAD', 'SGD', 'AED', 'SAR', 'JPY', 'CNY', 'BRL', 'ZAR', 'RUB', 'AUD'];
+
 const DEFAULT_CART_CONTEXT = {
+	// ✅ BUG #2: Valid currencies for cart items
+
 	cartItems: [],
 	addToCart: () => {},
 	removeFromCart: () => {},
@@ -14,6 +19,11 @@ const DEFAULT_CART_CONTEXT = {
 	getTotalItems: () => 0,
 	getTotalUnits: () => 0,
 	getTotalPrice: () => 0
+};
+
+const normalizeCurrencyCode = (code) => {
+	const normalized = String(code || 'INR').toUpperCase().trim();
+	return VALID_CURRENCIES.includes(normalized) ? normalized : 'INR';
 };
 
 const CartContext = createContext(DEFAULT_CART_CONTEXT);
@@ -42,7 +52,7 @@ const mapServerCartItem = (item) => {
 		buyerType: item.buyerType || 'RETAIL',
 		packageType: item.selectedSize || 'standard',
 		selectedSize: item.selectedSize || 'standard',
-		currencyCode: item.currencyCode || 'INR',
+		currencyCode: normalizeCurrencyCode(item.currencyCode),
 		basePrice: Number(item.basePrice || item.priceSnapshotCents || item.retailPrice || 0) / (item.priceSnapshotCents ? 100 : 1),
 		addedAt: item.addedAt || item.createdAt || new Date().toISOString()
 	};
@@ -324,7 +334,11 @@ export const CartProvider = ({ children }) => {
 	const getTotalPrice = () => {
 		const targetCurrency = preferredCurrency || 'INR';
 		return cartItems.reduce((total, item) => {
-			const itemCurrency = item.currencyCode || targetCurrency;
+			// ✅ BUG #13: Validate item currency is valid before conversion
+			const itemCurrency = normalizeCurrencyCode(item.currencyCode || item.currency || 'INR');
+			if (!item.currencyCode && !item.currency) {
+				console.warn('[CartContext] Missing item currency, defaulting to INR:', item);
+			}
 			const lineTotal = Number(item.basePrice || 0) * Number(item.quantity || 1);
 			return total + convertPrice(lineTotal, itemCurrency, targetCurrency, exchangeRates);
 		}, 0);

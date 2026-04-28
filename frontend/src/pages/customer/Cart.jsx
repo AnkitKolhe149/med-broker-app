@@ -213,6 +213,7 @@ function Cart() {
 								<span className={styles.infoIcon}><Truck size={18} strokeWidth={1.5} /></span>
 								<div>
 									<h4 className={styles.infoCardTitle}>Free Delivery</h4>
+									{/* ✅ BUG #7: Convert hardcoded threshold to user's currency */}
 									<p className={styles.infoCardText}>On orders above {formatPrice(500, 'INR')}</p>
 								</div>
 							</div>

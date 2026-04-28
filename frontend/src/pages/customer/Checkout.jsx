@@ -42,11 +42,19 @@ function Checkout() {
 	const [isUploadingPrescription, setIsUploadingPrescription] = useState(false);
 	const [agreeTerms, setAgreeTerms] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [checkoutCurrency, setCheckoutCurrency] = useState(currency || 'INR');
 
 	const discountPercent = location.state?.discountPercent || 0;
 	const appliedCoupon = location.state?.appliedCoupon || '';
-	const currencyCode = currency || location.state?.currencyCode || cartItems[0]?.currencyCode || 'INR';
-	const formatPrice = (value, fromCurrency = currencyCode) => formatConvertedCurrency(value, fromCurrency, currencyCode, exchangeRates, true);
+	const currencyCode = checkoutCurrency || currency || location.state?.currencyCode || cartItems[0]?.currencyCode || 'INR';
+
+	// ✅ BUG #12: Initialize checkoutCurrency from location.state if provided from Cart
+	useEffect(() => {
+		if (location.state?.currencyCode) {
+			setCheckoutCurrency(location.state.currencyCode);
+		}
+	}, [location.state?.currencyCode]);
+	const formatPrice = (value, fromCurrency = 'INR') => formatConvertedCurrency(value, fromCurrency, currencyCode, exchangeRates, true);
 	const toDisplayAmount = (value, fromCurrency = 'INR') => convert(value, fromCurrency);
 
 	// State/Province lists by country
@@ -60,7 +68,12 @@ function Checkout() {
 		'France': ['Auvergne-Rhône-Alpes', 'Bourgogne-Franche-Comté', 'Brittany', 'Centre-Val de Loire', 'Corsica', 'Grand Est', 'Hauts-de-France', 'Île-de-France', 'Nouvelle-Aquitaine', 'Occitanie', 'Pays de la Loire', 'Provence-Alpes-Côte d\'Azur'],
 		'UAE': ['Abu Dhabi', 'Ajman', 'Dubai', 'Fujairah', 'Ras Al Khaimah', 'Sharjah', 'Umm Al Quwain'],
 		'Singapore': ['Singapore'],
-		'Japan': ['Aichi', 'Akita', 'Aomori', 'Chiba', 'Ehime', 'Fukui', 'Fukuoka', 'Fukushima', 'Gifu', 'Gunma', 'Hiroshima', 'Hokkaido', 'Hyogo', 'Ibaraki', 'Ishikawa', 'Iwate', 'Kagawa', 'Kagoshima', 'Kanagawa', 'Kochi', 'Kumamoto', 'Kyoto', 'Mie', 'Miyagi', 'Miyazaki', 'Nagano', 'Nagasaki', 'Nara', 'Niigata', 'Okinawa', 'Osaka', 'Saga', 'Saitama', 'Shiga', 'Shimane', 'Shizuoka', 'Tochigi', 'Tokushima', 'Tokyo', 'Tottori', 'Toyama', 'Wakayama', 'Yamagata', 'Yamaguchi', 'Yamanashi']
+		'Japan': ['Aichi', 'Akita', 'Aomori', 'Chiba', 'Ehime', 'Fukui', 'Fukuoka', 'Fukushima', 'Gifu', 'Gunma', 'Hiroshima', 'Hokkaido', 'Hyogo', 'Ibaraki', 'Ishikawa', 'Iwate', 'Kagawa', 'Kagoshima', 'Kanagawa', 'Kochi', 'Kumamoto', 'Kyoto', 'Mie', 'Miyagi', 'Miyazaki', 'Nagano', 'Nagasaki', 'Nara', 'Niigata', 'Okinawa', 'Osaka', 'Saga', 'Saitama', 'Shiga', 'Shimane', 'Shizuoka', 'Tochigi', 'Tokushima', 'Tokyo', 'Tottori', 'Toyama', 'Wakayama', 'Yamagata', 'Yamaguchi', 'Yamanashi'],
+		// ✅ BUG #9: Add missing countries for unmapped currencies
+		'Saudi Arabia': ['Riyadh', 'Mecca', 'Medina', 'Jeddah', 'Dammam', 'Khobar', 'Eastern Province', 'Western Province', 'Central Province'],
+		'Russia': ['Moscow', 'Saint Petersburg', 'Novosibirsk', 'Yekaterinburg', 'Nizhny Novgorod', 'Kazan', 'Chelyabinsk', 'Omsk', 'Samara', 'Rostov-on-Don', 'Ufa', 'Krasnoyarsk'],
+		'Brazil': ['São Paulo', 'Rio de Janeiro', 'Minas Gerais', 'Rio Grande do Sul', 'Bahia', 'Paraná', 'Santa Catarina', 'Pernambuco', 'Ceará', 'Pará', 'Goiás', 'Distrito Federal'],
+		'South Africa': ['Gauteng', 'Western Cape', 'KwaZulu-Natal', 'Eastern Cape', 'Limpopo', 'Mpumalanga', 'Northern Cape', 'North West', 'Free State']
 	}), []);
 
 	const getStatesForCountry = (country) => statesByCountry[country] || [];
@@ -111,6 +124,15 @@ function Checkout() {
 			fetchAddresses();
 		}
 	}, [user]);
+
+	// Update checkout currency when delivery country changes
+	useEffect(() => {
+		if (deliveryAddress.country) {
+			const countryFormatted = String(deliveryAddress.country).trim().toUpperCase();
+			const detectedCurrency = getCurrencyForCountry(countryFormatted, 'USD');
+			setCheckoutCurrency(detectedCurrency);
+		}
+	}, [deliveryAddress.country]);
 
 	const handleNameChange = (key, value) => {
 		if (key === 'first') {
