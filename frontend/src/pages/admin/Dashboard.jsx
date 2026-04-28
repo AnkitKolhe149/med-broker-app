@@ -94,7 +94,7 @@ const AdminDashboard = () => {
             const requestsData = await adminService.getPayoutRequests({ limit: 1 });
             const count = requestsData.pagination?.total || 0;
             const latest = requestsData.data?.[0]?.createdAt;
-            
+
             let dateStr = 'No pending requests';
             if (latest) {
                 const d = new Date(latest);
@@ -131,9 +131,9 @@ const AdminDashboard = () => {
                             <span style={{ fontSize: '0.88rem', color: startDate ? '#1c3124' : '#9ca3af', fontWeight: 600 }}>
                                 {formatDateDisplay(startDate)}
                             </span>
-                            <input 
-                                type="date" 
-                                value={startDate} 
+                            <input
+                                type="date"
+                                value={startDate}
                                 onChange={handleStartDateChange}
                                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
                             />
@@ -144,16 +144,16 @@ const AdminDashboard = () => {
                             <span style={{ fontSize: '0.88rem', color: endDate ? '#1c3124' : '#9ca3af', fontWeight: 600 }}>
                                 {formatDateDisplay(endDate)}
                             </span>
-                            <input 
-                                type="date" 
-                                value={endDate} 
+                            <input
+                                type="date"
+                                value={endDate}
                                 onChange={handleEndDateChange}
                                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
                             />
                         </div>
                         {(startDate || endDate) && (
-                            <button 
-                                onClick={() => handlePreset('month')} 
+                            <button
+                                onClick={() => handlePreset('month')}
                                 style={{ border: 'none', background: '#f3f4f6', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginLeft: '6px' }}
                                 title="Clear to default"
                             >

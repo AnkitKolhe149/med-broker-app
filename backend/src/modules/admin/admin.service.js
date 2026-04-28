@@ -98,7 +98,7 @@ module.exports = {
     });
 
     // Use DB aggregation — no in-memory array processing
-    const [earnedByVendor, paidByVendor] = await Promise.all([
+    const [earnedByVendor, paidByVendor, paidOrderItems] = await Promise.all([
       prisma.orderItem.groupBy({
         by: ['vendorId'],
         where: { order: { status: 'PAID' } },
@@ -109,20 +109,47 @@ module.exports = {
         where: { status: 'COMPLETED' },
         _sum: { amountCents: true },
       }),
+      prisma.orderItem.findMany({
+        where: { order: { status: 'PAID' } },
+        select: {
+          vendorId: true,
+          lineTotalCents: true,
+          order: {
+            select: {
+              persistedFeeRate: true,
+            }
+          }
+        }
+      })
     ]);
 
     const earnedMap = Object.fromEntries(earnedByVendor.map(r => [r.vendorId, r._sum.lineTotalCents || 0]));
     const paidMap = Object.fromEntries(paidByVendor.map(r => [r.vendorId, r._sum.amountCents || 0]));
+    const commissionMap = paidOrderItems.reduce((acc, item) => {
+      const vendorId = item.vendorId;
+      const lineTotalCents = Number(item.lineTotalCents || 0);
+      const persistedRate = Number(item.order?.persistedFeeRate);
+      const feeRatePercent = Number.isFinite(persistedRate) ? persistedRate : (commissionRate * 100);
+      const commissionCents = Math.floor(lineTotalCents * (feeRatePercent / 100));
+      acc[vendorId] = (acc[vendorId] || 0) + commissionCents;
+      return acc;
+    }, {});
 
     const overview = vendors.map(v => {
       const totalEarnedCents = earnedMap[v.id] || 0;
       const totalPaidCents = paidMap[v.id] || 0;
-      const commissionCents = Math.floor(totalEarnedCents * commissionRate);
+      const hasAnyPayoutHistory = totalPaidCents > 0;
+      const commissionCents = hasAnyPayoutHistory
+        ? (commissionMap[v.id] || 0)
+        : Math.floor(totalEarnedCents * commissionRate);
       const netPayableCents = totalEarnedCents - commissionCents;
       const pendingBalanceCents = Math.max(0, netPayableCents - totalPaidCents);
+      const commissionRatePercent = totalEarnedCents > 0
+        ? Number(((commissionCents / totalEarnedCents) * 100).toFixed(2))
+        : commissionRate * 100;
       return {
         vendorId: v.id, companyName: v.companyName, contactPersonName: v.contactPersonName,
-        totalEarnedCents, commissionCents, commissionRatePercent: commissionRate * 100,
+        totalEarnedCents, commissionCents, commissionRatePercent,
         totalPaidCents, pendingBalanceCents, total: totalEarnedCents
       };
     });

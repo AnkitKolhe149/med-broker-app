@@ -581,11 +581,11 @@ const verifyPayment = async (paymentId, verificationData) => {
         await prisma.invoice.upsert({
           where: { orderId: payment.orderId },
           update: { issuedAt: new Date() },
-          create: { 
-            orderId: payment.orderId, 
-            invoiceNumber, 
-            amountCents: payment.amountCents || 0, 
-            taxCents: payment.order?.taxCents || 0 
+          create: {
+            orderId: payment.orderId,
+            invoiceNumber,
+            amountCents: payment.amountCents || 0,
+            taxCents: payment.order?.taxCents || 0
           }
         });
       } catch (e) {
@@ -625,11 +625,11 @@ const verifyPayment = async (paymentId, verificationData) => {
         await prisma.invoice.upsert({
           where: { orderId: payment.orderId },
           update: { issuedAt: new Date() },
-          create: { 
-            orderId: payment.orderId, 
-            invoiceNumber, 
-            amountCents: payment.amountCents || 0, 
-            taxCents: payment.order?.taxCents || 0 
+          create: {
+            orderId: payment.orderId,
+            invoiceNumber,
+            amountCents: payment.amountCents || 0,
+            taxCents: payment.order?.taxCents || 0
           }
         });
       } catch (e) {

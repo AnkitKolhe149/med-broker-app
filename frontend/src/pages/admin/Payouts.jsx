@@ -51,7 +51,7 @@ const AdminPayouts = () => {
 
     const totalUnpaidBalance = payouts.reduce((sum, p) => sum + p.pendingBalanceCents, 0);
     const totalPlatformCommission = payouts.reduce((sum, p) => {
-        const displayAmount = p.persistedFeeAmount ?? (p.total * globalRate);
+        const displayAmount = p.commissionCents ?? (p.total * globalRate);
         return sum + displayAmount;
     }, 0);
 
@@ -80,7 +80,9 @@ const AdminPayouts = () => {
                     <div className="card-info">
                         <h3>Platform Fee</h3>
                         <p className="card-value success">{formatCents(totalPlatformCommission)}</p>
-                        <span className="card-subtitle">Total profit from these vendors</span>
+                        <span className="card-subtitle">
+                            Applied historical fee from paid transactions (Current global: {(globalRate * 100).toFixed(2)}%)
+                        </span>
                     </div>
                 </div>
             </div>
@@ -99,7 +101,7 @@ const AdminPayouts = () => {
                             <tr>
                                 <th>Vendor</th>
                                 <th>Gross Revenue</th>
-                                <th>Platform Fee</th>
+                                <th>Platform Fee (Applied Historical)</th>
                                 <th>Already Paid</th>
                                 <th>Pending Balance</th>
                                 <th>Action</th>
@@ -117,9 +119,9 @@ const AdminPayouts = () => {
                                     <td>{formatCents(payout.totalEarnedCents)}</td>
                                     <td className="commission-text">
                                         {(() => {
-                                            const displayAmount = payout.persistedFeeAmount ?? (payout.total * globalRate);
-                                            const displayRate = payout.persistedFeeRate ?? (globalRate * 100);
-                                            return `${formatCents(displayAmount)} (${displayRate}%)`;
+                                            const displayAmount = payout.commissionCents ?? (payout.total * globalRate);
+                                            const displayRate = payout.commissionRatePercent ?? (globalRate * 100);
+                                            return `${formatCents(displayAmount)} (${displayRate}% applied)`;
                                         })()}
                                     </td>
                                     <td>{formatCents(payout.totalPaidCents)}</td>
