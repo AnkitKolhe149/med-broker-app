@@ -6,6 +6,17 @@ const { prisma } = require("./database/prisma");
 
 const app = express();
 
+// Configure trust proxy for deployments behind reverse proxies/load-balancers.
+// Set TRUST_PROXY=true in environment when running behind a proxy (NGINX, cloud LB).
+const trustProxyEnv = String(process.env.TRUST_PROXY || '').trim();
+if (trustProxyEnv) {
+  // Allow specifying a value for `trust proxy`. If set to 'true', use 'loopback'
+  // to avoid permissive configuration that express-rate-limit warns about.
+  const trustValue = trustProxyEnv.toLowerCase() === 'true' ? 'loopback' : trustProxyEnv;
+  app.set('trust proxy', trustValue);
+  console.info('Express trust proxy set to:', trustValue);
+}
+
 // Enable CORS for frontend.
 // Priority: CORS_ORIGIN (comma-separated) -> FRONTEND_URL -> built-in deployed frontend -> local development defaults.
 // Supports wildcard entries in CORS_ORIGIN such as https://mediq-*.vercel.app

@@ -63,8 +63,6 @@ module.exports = {
             category: true,
             priceCents: true,
             wholesalePriceCents: true,
-            bulkMinQty: true,
-            bulkPriceCents: true,
             brand: true,
             inventory: {
               where: { isActive: true },
