@@ -2,15 +2,15 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useFavorites } from '../../context/FavoritesContext';
-import { formatCurrency } from '../../utils/currency';
+import { formatConvertedCurrency } from '../../utils/currency';
 import styles from './Favorites.module.css';
 
 function Favorites() {
 	const navigate = useNavigate();
-	const { currency } = useCurrency();
+	const { currency, exchangeRates } = useCurrency();
 	const { favorites, removeFavorite } = useFavorites();
-	const currencyCode = currency || 'USD';
-	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
+	const currencyCode = currency || 'INR';
+	const formatPrice = (value, sourceCurrency = currencyCode) => formatConvertedCurrency(value, sourceCurrency, currencyCode, exchangeRates, true);
 
 	return (
 		<main className="page">
@@ -45,7 +45,7 @@ function Favorites() {
 									<p className={styles.category}>{item.category}</p>
 									<h2 className={styles.name}>{item.name}</h2>
 									<p className={styles.vendor}>{item.vendor}</p>
-									<p className={styles.price}>{formatPrice(item.retailPrice)}</p>
+									<p className={styles.price}>{formatPrice(item.retailPrice, item.currencyCode || currencyCode)}</p>
 									<div className={styles.actions}>
 										<button className="button" onClick={() => navigate(`/customer/medicine/${item.inventoryId || item.medicineId}`)}>
 											View details

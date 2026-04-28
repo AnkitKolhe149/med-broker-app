@@ -34,16 +34,28 @@ const pricingService = {
 	 */
 	resolveUnitPrice: ({
 		buyerType = 'RETAIL',
+		quantity = 1,
+		packageType = 'standard',
 		retailPrice = 0,
-		wholesalePrice = retailPrice
+		wholesalePrice = retailPrice,
+		bulkPrice = wholesalePrice,
+		bulkMinQty = 1
 	}) => {
 		// Tier 0: Retail price (base)
 		const retail = toNumber(retailPrice, 0);
 		
 		// Tier 1: Wholesale price (falls back to retail)
 		const wholesale = toNumber(wholesalePrice, retail);
+		const bulk = toNumber(bulkPrice, wholesale);
+		const normalizedQuantity = Math.max(1, toNumber(quantity, 1));
+		const normalizedBulkMinQty = Math.max(1, toNumber(bulkMinQty, 1));
 		
 		const normalizedBuyerType = String(buyerType).toUpperCase();
+		const normalizedPackageType = String(packageType || 'standard').toLowerCase();
+
+		if (normalizedPackageType === 'bulk' && normalizedQuantity >= normalizedBulkMinQty) {
+			return bulk;
+		}
 
 		// RETAIL BUYER: Always use Tier 0
 		if (normalizedBuyerType !== 'WHOLESALE') {
@@ -59,12 +71,25 @@ const pricingService = {
 	 * Normalizes field names and applies fallback chain
 	 */
 	mapMedicinePricing: (medicine = {}) => {
-		const retailPrice = toNumber(medicine.retailPrice || medicine.priceCents, 0);
-		const wholesalePrice = toNumber(medicine.wholesalePrice || medicine.wholesalePriceCents, retailPrice);
+		const retailPrice = toNumber(
+			medicine.retailPrice ?? (medicine.priceCents != null ? Number(medicine.priceCents) / 100 : 0),
+			0
+		);
+		const wholesalePrice = toNumber(
+			medicine.wholesalePrice ?? (medicine.wholesalePriceCents != null ? Number(medicine.wholesalePriceCents) / 100 : retailPrice),
+			retailPrice
+		);
+		const bulkPrice = toNumber(
+			medicine.bulkPrice ?? (medicine.bulkPriceCents != null ? Number(medicine.bulkPriceCents) / 100 : wholesalePrice),
+			wholesalePrice
+		);
+		const bulkMinQty = Math.max(1, toNumber(medicine.bulkMinQty, 1));
 
 		return {
 			retailPrice,
-			wholesalePrice
+			wholesalePrice,
+			bulkPrice,
+			bulkMinQty
 		};
 	},
 

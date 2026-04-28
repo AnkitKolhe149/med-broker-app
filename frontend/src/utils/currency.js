@@ -70,6 +70,33 @@ export const getCurrencyForCountry = (country, fallback = 'USD') => {
 	return COUNTRY_TO_CURRENCY[normalizedCountry] || fallback;
 };
 
+export const normalizeCurrencyCode = (currencyCode, fallback = 'INR') => {
+	const normalized = String(currencyCode || fallback).trim().toUpperCase();
+	return CURRENCIES[normalized] ? normalized : String(fallback || 'INR').trim().toUpperCase();
+};
+
+const CURRENCY_LOCALE_MAP = {
+	INR: 'en-IN',
+	USD: 'en-US',
+	EUR: 'de-DE',
+	GBP: 'en-GB',
+	JPY: 'ja-JP',
+	AUD: 'en-AU',
+	CAD: 'en-CA',
+	SGD: 'en-SG',
+	AED: 'ar-AE',
+	SAR: 'ar-SA',
+	CNY: 'zh-CN',
+	BRL: 'pt-BR',
+	ZAR: 'en-ZA',
+	RUB: 'ru-RU'
+};
+
+export const getCurrencyLocale = (currencyCode) => {
+	const normalized = normalizeCurrencyCode(currencyCode);
+	return CURRENCY_LOCALE_MAP[normalized] || 'en-US';
+};
+
 const getStoredUserContext = () => {
 	try {
 		const rawUser = localStorage.getItem('user');
@@ -89,7 +116,8 @@ const getCurrencyPreferenceKey = (userId) => (userId ? `preferredCurrency:${user
 
 // Get currency symbol
 export const getCurrencySymbol = (currencyCode) => {
-	return CURRENCIES[currencyCode]?.symbol || currencyCode;
+	const normalized = normalizeCurrencyCode(currencyCode);
+	return CURRENCIES[normalized]?.symbol || normalized;
 };
 
 // Get currency name
@@ -99,25 +127,33 @@ export const getCurrencyName = (currencyCode) => {
 
 // Format amount with currency symbol
 export const formatCurrency = (amount, currencyCode = 'INR', showSymbol = true) => {
-	if (amount === null || amount === undefined || isNaN(amount)) {
+	if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
 		return showSymbol ? `${getCurrencySymbol(currencyCode)}0.00` : '0.00';
 	}
 
-	const formatted = Number(amount).toFixed(2);
-	
-	if (!showSymbol) {
-		return formatted;
-	}
+	const normalizedCurrency = normalizeCurrencyCode(currencyCode);
+	const numericAmount = Number(amount);
 
-	const symbol = getCurrencySymbol(currencyCode);
-	
-	// For currencies like USD, EUR, GBP - put symbol before
-	if (['USD', 'EUR', 'GBP', 'AUD', 'CAD', 'SGD', 'BRL', 'ZAR'].includes(currencyCode)) {
-		return `${symbol}${formatted}`;
+	try {
+		return new Intl.NumberFormat(getCurrencyLocale(normalizedCurrency), {
+			style: showSymbol ? 'currency' : 'decimal',
+			currency: normalizedCurrency,
+			currencyDisplay: 'narrowSymbol',
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2
+		}).format(numericAmount);
+	} catch (_error) {
+		const formatted = numericAmount.toLocaleString(undefined, {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2
+		});
+		return showSymbol ? `${getCurrencySymbol(normalizedCurrency)}${formatted}` : formatted;
 	}
-	
-	// For INR, JPY, CNY, etc - put symbol before
-	return `${symbol}${formatted}`;
+};
+
+export const formatConvertedCurrency = (amount, fromCurrency, targetCurrency, exchangeRates, showSymbol = true) => {
+	const convertedAmount = convertPrice(amount, fromCurrency, targetCurrency, exchangeRates);
+	return formatCurrency(convertedAmount, targetCurrency || fromCurrency, showSymbol);
 };
 
 // Convert price from any currency to any target currency

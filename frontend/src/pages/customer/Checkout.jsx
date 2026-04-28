@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
-import { formatCurrency } from '../../utils/currency';
+import { formatConvertedCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import styles from './Checkout.module.css';
 
@@ -13,7 +13,7 @@ function Checkout() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { cartItems, getTotalPrice } = useCart();
-	const { currency, convert } = useCurrency();
+	const { currency, exchangeRates, convert } = useCurrency();
 	const { user, loading: userLoading } = useUser();
 	const { showError } = useNotification();
 
@@ -41,9 +41,9 @@ function Checkout() {
 
 	const discountPercent = location.state?.discountPercent || 0;
 	const appliedCoupon = location.state?.appliedCoupon || '';
-	const currencyCode = location.state?.currencyCode || cartItems[0]?.currencyCode || currency || 'USD';
-	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
-	const toDisplayAmount = (value) => convert(value, 'INR');
+	const currencyCode = currency || location.state?.currencyCode || cartItems[0]?.currencyCode || 'INR';
+	const formatPrice = (value, fromCurrency = currencyCode) => formatConvertedCurrency(value, fromCurrency, currencyCode, exchangeRates, true);
+	const toDisplayAmount = (value, fromCurrency = 'INR') => convert(value, fromCurrency);
 
 	const indianStates = useMemo(() => [
 		'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -184,7 +184,7 @@ function Checkout() {
 		try {
 			const subtotalValue = getTotalPrice();
 			const discountValue = (subtotalValue * discountPercent) / 100;
-			const deliveryChargeValue = deliveryType === 'express' ? 9 : 0;
+			const deliveryChargeValue = deliveryType === 'express' ? convert(9, 'INR') : 0;
 			const taxValue = Number(((subtotalValue - discountValue + deliveryChargeValue) * 0.05).toFixed(2));
 			const totalValue = Number((subtotalValue - discountValue + deliveryChargeValue + taxValue).toFixed(2));
 
@@ -291,7 +291,7 @@ function Checkout() {
 
 	const subtotal = getTotalPrice();
 	const discount = (subtotal * discountPercent) / 100;
-	const deliveryCharge = deliveryType === 'express' ? 9 : 0;
+	const deliveryCharge = deliveryType === 'express' ? convert(9, 'INR') : 0;
 	const tax = Number(((subtotal - discount + deliveryCharge) * 0.05).toFixed(2));
 	const total = Number((subtotal - discount + deliveryCharge + tax).toFixed(2));
 
@@ -379,7 +379,7 @@ function Checkout() {
 											<p className={styles.shippingLabel}>Free Shipping</p>
 											<p className={styles.shippingEta}>5-7 Days</p>
 										</div>
-										<strong>{formatPrice(0)}</strong>
+										<strong>{formatPrice(0, currencyCode)}</strong>
 									</label>
 									<label className={`${styles.shippingCard} ${deliveryType === 'express' ? styles.shippingCardActive : ''}`}>
 										<input type="radio" name="deliveryType" value="express" checked={deliveryType === 'express'} onChange={(e) => setDeliveryType(e.target.value)} />
@@ -387,7 +387,7 @@ function Checkout() {
 											<p className={styles.shippingLabel}>Express Shipping</p>
 											<p className={styles.shippingEta}>1-3 Days</p>
 										</div>
-										<strong>{formatPrice(9)}</strong>
+										<strong>{formatPrice(convert(9, 'INR'), currencyCode)}</strong>
 									</label>
 								</div>
 							</div>
@@ -415,7 +415,7 @@ function Checkout() {
 										<p className={styles.itemName}>{item.name}</p>
 										<p className={styles.itemMeta}>{item.category || 'Medicine'}</p>
 									</div>
-									<p className={styles.itemPrice}>{formatPrice(item.basePrice * item.quantity)}</p>
+									<p className={styles.itemPrice}>{formatPrice(item.basePrice * item.quantity, item.currencyCode || currencyCode)}</p>
 								</div>
 							))}
 						</div>
@@ -438,11 +438,11 @@ function Checkout() {
 						{appliedCoupon ? <p className={styles.couponApplied}>Coupon applied: {appliedCoupon}</p> : null}
 
 						<div className={styles.amountRows}>
-							<div className={styles.amountRow}><span>Subtotal</span><strong>{formatPrice(subtotal)}</strong></div>
-							<div className={styles.amountRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? formatPrice(0) : formatPrice(deliveryCharge)}</strong></div>
-							<div className={styles.amountRow}><span className={styles.taxLabel}>Estimated taxes <CircleHelp size={13} strokeWidth={1.75} /></span><strong>{formatPrice(tax)}</strong></div>
-							{discountPercent > 0 ? <div className={styles.amountRowDiscount}><span>Discount ({discountPercent}%)</span><strong>-{formatPrice(discount)}</strong></div> : null}
-							<div className={styles.totalRow}><span>Total</span><strong>{formatPrice(total)}</strong></div>
+							<div className={styles.amountRow}><span>Subtotal</span><strong>{formatPrice(subtotal, currencyCode)}</strong></div>
+							<div className={styles.amountRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? formatPrice(0, currencyCode) : formatPrice(deliveryCharge, currencyCode)}</strong></div>
+							<div className={styles.amountRow}><span className={styles.taxLabel}>Estimated taxes <CircleHelp size={13} strokeWidth={1.75} /></span><strong>{formatPrice(tax, currencyCode)}</strong></div>
+							{discountPercent > 0 ? <div className={styles.amountRowDiscount}><span>Discount ({discountPercent}%)</span><strong>-{formatPrice(discount, currencyCode)}</strong></div> : null}
+							<div className={styles.totalRow}><span>Total</span><strong>{formatPrice(total, currencyCode)}</strong></div>
 						</div>
 
 						<button type="button" onClick={handlePlaceOrder} className={styles.payButton} disabled={isSubmitting || isUploadingPrescription}>

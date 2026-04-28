@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
-import { convertPrice, formatCurrency } from '../../utils/currency';
+import { convertPrice, formatConvertedCurrency } from '../../utils/currency';
 import styles from './Cart.module.css';
 import { Pill, Trash2, Truck, Check, Lock, ShoppingCart } from 'lucide-react';
 
@@ -16,8 +16,8 @@ function Cart() {
 	const [couponInput, setCouponInput] = useState('');
 	const [orderNotes, setOrderNotes] = useState('');
 	const [discountPercent, setDiscountPercent] = useState(0);
-	const cartCurrency = currency || 'USD';
-	const formatPrice = (value) => formatCurrency(value, cartCurrency, true);
+	const cartCurrency = currency || 'INR';
+	const formatPrice = (value, sourceCurrency = cartCurrency) => formatConvertedCurrency(value, sourceCurrency, cartCurrency, exchangeRates, true);
 
 	const getDisplayLineTotal = (item) => {
 		const sourceCurrency = item.currencyCode || 'INR';
@@ -114,7 +114,7 @@ function Cart() {
 										<p className={styles.itemType}>â— {item.category || 'Medicine'}</p>
 										<h3 className={styles.itemName}>{item.name}</h3>
 										<p className={styles.itemSubline}>{item.vendor || 'Trusted pharmacy partner'}</p>
-										<p className={styles.itemPrice}>{formatPrice(getDisplayUnitPrice(item))}</p>
+										<p className={styles.itemPrice}>{formatPrice(getDisplayUnitPrice(item), item.currencyCode || 'INR')}</p>
 									</div>
 
 									<div className={styles.itemActions}>
@@ -179,21 +179,21 @@ function Cart() {
 							<div className={styles.priceBreakdown}>
 								<div className={styles.priceRow}>
 									<span>Sub-Total</span>
-									<span>{formatPrice(subtotal)}</span>
+									<span>{formatPrice(subtotal, cartCurrency)}</span>
 								</div>
 								<div className={styles.priceRow}>
 									<span>Delivery Fees</span>
-									<span>{formatPrice(deliveryFee)}</span>
+									<span>{formatPrice(deliveryFee, cartCurrency)}</span>
 								</div>
 								{discountPercent > 0 && (
 									<div className={styles.priceRow}>
 										<span>Promo Discount</span>
-										<span>-{formatPrice(discount)}</span>
+										<span>-{formatPrice(discount, cartCurrency)}</span>
 									</div>
 								)}
 								<div className={styles.totalRow}>
 									<span>Total</span>
-									<span>{formatPrice(total)}</span>
+									<span>{formatPrice(total, cartCurrency)}</span>
 								</div>
 							</div>
 
@@ -207,7 +207,7 @@ function Cart() {
 								<span className={styles.infoIcon}><Truck size={18} strokeWidth={1.5} /></span>
 								<div>
 									<h4 className={styles.infoCardTitle}>Free Delivery</h4>
-									<p className={styles.infoCardText}>On orders above {formatPrice(500)}</p>
+									<p className={styles.infoCardText}>On orders above {formatPrice(500, 'INR')}</p>
 								</div>
 							</div>
 						</div>

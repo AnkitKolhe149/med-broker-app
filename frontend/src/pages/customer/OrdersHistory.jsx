@@ -4,7 +4,7 @@ import { FlaskConical } from 'lucide-react';
 import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { convertPrice, formatCurrency, getCurrencyForCountry } from '../../utils/currency';
+import { convertPrice, formatConvertedCurrency, getCurrencyForCountry } from '../../utils/currency';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
@@ -26,7 +26,7 @@ function OrdersHistory() {
 	const [cancellingOrderId, setCancellingOrderId] = useState(null);
 	const ordersListRef = useRef(null);
 	const defaultCurrencyCode = currency || user?.preferredCurrency || 'INR';
-	const formatPrice = (value, currencyCode = defaultCurrencyCode) => formatCurrency(convertPrice(value, 'INR', currencyCode, exchangeRates), currencyCode, true);
+	const formatPrice = (value, sourceCurrency = defaultCurrencyCode) => formatConvertedCurrency(value, sourceCurrency, defaultCurrencyCode, exchangeRates, true);
 
 	const toUiStatus = (status = '') => {
 		const normalized = status.toUpperCase();
@@ -53,11 +53,13 @@ function OrdersHistory() {
 				const mappedOrders = (result.orders || []).map((order) => {
 					const uiStatus = toUiStatus(order.status);
 					const createdAt = order.createdAt ? new Date(order.createdAt) : new Date();
+					const sourceCurrencyCode = order.currencyCode || defaultCurrencyCode;
+					const sourceTotal = Number(((order.totalCents || 0) / 100).toFixed(2));
 					return {
 						orderId: order.id,
 						status: uiStatus,
-						currencyCode: defaultCurrencyCode,
-						total: Number(((order.totalCents || 0) / 100).toFixed(2)),
+						currencyCode: sourceCurrencyCode,
+						total: sourceTotal,
 						items: (order.items || []).map((item) => ({
 							name: item.medicine?.name || 'Medicine',
 							quantity: item.quantity,
@@ -185,7 +187,7 @@ function OrdersHistory() {
 					orderIds: [],
 					status: order.status,
 					currencyCode: order.currencyCode,
-					total: 0,
+							total: 0,
 					items: [],
 					paymentMethod: order.paymentMethod,
 					orderedAgo: order.orderedAgo,
@@ -197,7 +199,7 @@ function OrdersHistory() {
 			const group = groupedMap.get(groupKey);
 			group.orderIds.push(order.orderId);
 			group.orderCount += 1;
-			group.total += Number(order.total || 0);
+				group.total += convertPrice(Number(order.total || 0), order.currencyCode || defaultCurrencyCode, defaultCurrencyCode, exchangeRates);
 
 			const mergedItemsMap = new Map(group.items.map((item) => [item.name, item.quantity]));
 			(order.items || []).forEach((item) => {
@@ -280,7 +282,7 @@ function OrdersHistory() {
 												<div>
 													<p className={styles.orderNo}>{getOrderSummary(order.items)}</p>
 													<p className={styles.orderRef}>Order #{String(order.orderIds?.[0] || '').slice(0, 8)}</p>
-													<p className={styles.orderPrice}>{formatPrice(order.total, order.currencyCode)}</p>
+													<p className={styles.orderPrice}>{formatPrice(order.total, order.currencyCode || defaultCurrencyCode)}</p>
 												</div>
 											</div>
 

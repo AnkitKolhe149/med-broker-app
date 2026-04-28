@@ -190,8 +190,6 @@ module.exports = {
               manufacturer: true,
               priceCents: true,
               wholesalePriceCents: true,
-              bulkPriceCents: true,
-              bulkMinQty: true,
               requiresPrescription: true,
               status: true,
               isActive: true,
@@ -241,7 +239,7 @@ module.exports = {
             name: true,
             description: true,
             priceCents: true,
-            bulkMinQty: true,
+            wholesalePriceCents: true,
             createdAt: true
           }
         },

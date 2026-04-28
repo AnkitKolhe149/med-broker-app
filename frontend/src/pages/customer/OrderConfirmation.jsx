@@ -18,7 +18,7 @@ import {
 import Avatar from '../../components/common/Avatar';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { formatCurrency } from '../../utils/currency';
+import { formatConvertedCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import styles from './OrderConfirmation.module.css';
 
@@ -26,14 +26,15 @@ function OrderConfirmation() {
 	const { orderId } = useParams();
 	const navigate = useNavigate();
 	const { user } = useUser();
-	const { currency, convert } = useCurrency();
+	const { currency, exchangeRates, convert } = useCurrency();
 	const [orderData, setOrderData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
 	const [invoiceError, setInvoiceError] = useState('');
-	const currencyCode = orderData?.currencyCode || currency || 'USD';
-	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
-	const toDisplayAmount = (value) => convert(value, 'INR');
+	const currentCurrency = currency || 'INR';
+	const sourceCurrencyCode = orderData?.currencyCode || currentCurrency;
+	const formatPrice = (value, fromCurrency = sourceCurrencyCode) => formatConvertedCurrency(value, fromCurrency, currentCurrency, exchangeRates, true);
+	const toDisplayAmount = (value, fromCurrency = sourceCurrencyCode) => convert(value, fromCurrency);
 
 	const normalizeOrderData = (source) => {
 		const snapshot = source?.checkoutSnapshot && typeof source.checkoutSnapshot === 'object' ? source.checkoutSnapshot : {};
@@ -59,7 +60,7 @@ function OrderConfirmation() {
 			prescriptionName: snapshot.prescriptionName || '',
 			discountPercent: snapshot.discountPercent ?? 0,
 			appliedCoupon: snapshot.appliedCoupon || '',
-			currencyCode: snapshot.currencyCode || currency || 'USD',
+			currencyCode: snapshot.currencyCode || currentCurrency,
 			subtotalBase: snapshot.subtotalBase ?? snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
 			subtotal: snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
 			discountBase: snapshot.discountBase ?? snapshot.discount ?? ((pricingSummary.discountCents || 0) / 100),
@@ -124,19 +125,20 @@ function OrderConfirmation() {
 	const getSubtotal = () => {
 		if (!orderData) return 0;
 		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
-			return Number(orderData.subtotal || orderData.subtotalBase || 0);
+			return toDisplayAmount(Number(orderData.subtotal || orderData.subtotalBase || 0), sourceCurrencyCode);
 		}
-		return Number(orderData.subtotal || 0);
+		return toDisplayAmount(Number(orderData.subtotal || 0), sourceCurrencyCode);
 	};
 
 	const getDeliveryCharge = () => {
 		if (!orderData) return 0;
-		return orderData.deliveryType === 'express' ? 9 : 0;
+		const rawDelivery = Number(orderData.deliveryCharge ?? orderData.deliveryBase ?? (orderData.deliveryType === 'express' ? 9 : 0));
+		return toDisplayAmount(rawDelivery, sourceCurrencyCode);
 	};
 
 	const calculateTax = () => {
 		if (orderData?.tax !== undefined && orderData?.tax !== null) {
-			return Number(orderData.tax);
+			return toDisplayAmount(Number(orderData.tax), sourceCurrencyCode);
 		}
 		const subtotal = getSubtotal();
 		const discount = Number(orderData?.discount || ((subtotal * (orderData?.discountPercent || 0)) / 100));
@@ -146,10 +148,10 @@ function OrderConfirmation() {
 	const getTotalPaid = () => {
 		if (!orderData) return 0;
 		if (orderData.totalBase !== undefined && orderData.totalBase !== null) {
-			return Number(orderData.total || orderData.totalBase || 0);
+			return toDisplayAmount(Number(orderData.total || orderData.totalBase || 0), sourceCurrencyCode);
 		}
 		if (orderData.total !== undefined && orderData.total !== null) {
-			return Number(orderData.total);
+			return toDisplayAmount(Number(orderData.total), sourceCurrencyCode);
 		}
 		const subtotal = getSubtotal();
 		const discount = (subtotal * (orderData.discountPercent || 0)) / 100;
@@ -202,7 +204,7 @@ function OrderConfirmation() {
 					<div className={styles.heroMeta}>
 						<p><span>Order ID</span><strong>{orderData.orderId || orderId}</strong></p>
 						<p><span>Estimated Delivery</span><strong>{getEstimatedDeliveryText()}</strong></p>
-						<p><span>Total Paid</span><strong>{formatPrice(totalPaid)}</strong></p>
+						<p><span>Total Paid</span><strong>{formatPrice(totalPaid, currentCurrency)}</strong></p>
 					</div>
 				</section>
 
@@ -233,7 +235,7 @@ function OrderConfirmation() {
 									</div>
 									<div className={styles.itemRight}>
 										<p className={styles.itemQty}>Qty {item.quantity}</p>
-										<p className={styles.itemPrice}>{formatPrice(item.basePrice * item.quantity)}</p>
+										<p className={styles.itemPrice}>{formatPrice(item.basePrice * item.quantity, item.currencyCode || sourceCurrencyCode)}</p>
 									</div>
 								</div>
 							))}
@@ -278,13 +280,13 @@ function OrderConfirmation() {
 					<aside className={styles.summaryPanel}>
 						<h2 className={styles.summaryTitle}>Payment Recap</h2>
 						<div className={styles.summaryCard}>
-							<div className={styles.summaryRow}><span>Subtotal</span><strong>{formatPrice(subtotal)}</strong></div>
+							<div className={styles.summaryRow}><span>Subtotal</span><strong>{formatPrice(subtotal, currentCurrency)}</strong></div>
 							{orderData.discountPercent > 0 ? (
-								<div className={styles.summaryDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount)}</strong></div>
+								<div className={styles.summaryDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount, currentCurrency)}</strong></div>
 							) : null}
-							<div className={styles.summaryRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge)}</strong></div>
-							<div className={styles.summaryRow}><span>Tax (5%)</span><strong>{formatPrice(tax)}</strong></div>
-							<div className={styles.summaryTotal}><span>Total Paid</span><strong>{formatPrice(totalPaid)}</strong></div>
+							<div className={styles.summaryRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge, currentCurrency)}</strong></div>
+							<div className={styles.summaryRow}><span>Tax (5%)</span><strong>{formatPrice(tax, currentCurrency)}</strong></div>
+							<div className={styles.summaryTotal}><span>Total Paid</span><strong>{formatPrice(totalPaid, currentCurrency)}</strong></div>
 						</div>
 
 						<div className={styles.statusCard}>

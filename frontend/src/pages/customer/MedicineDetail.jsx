@@ -6,7 +6,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { BadgeCheck, Check, ClipboardList, Heart, Pill, ShieldCheck, Star } from 'lucide-react';
-import { formatCurrency } from '../../utils/currency';
+import { formatConvertedCurrency } from '../../utils/currency';
 import medicineService from '../../services/medicine.service';
 import pricingService from '../../services/pricing.service';
 import styles from './MedicineDetail.module.css';
@@ -19,7 +19,7 @@ function MedicineDetail() {
 	const navigate = useNavigate();
 	const { addToCart } = useCart();
 	const { isFavorited, toggleFavorite } = useFavorites();
-	const { currency } = useCurrency();
+	const { currency, exchangeRates } = useCurrency();
 	const { user } = useUser();
 	const { showError } = useNotification();
 	const [medicine, setMedicine] = useState(null);
@@ -28,8 +28,8 @@ function MedicineDetail() {
 	const [loading, setLoading] = useState(true);
 	const [addedToCart, setAddedToCart] = useState(false);
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-	const displayCurrencyCode = medicine?.currencyCode || currency || 'USD';
-	const formatPrice = (value) => formatCurrency(value, displayCurrencyCode, true);
+	const displayCurrencyCode = medicine?.currencyCode || currency || 'INR';
+	const formatPrice = (value, sourceCurrency = displayCurrencyCode) => formatConvertedCurrency(value, sourceCurrency, currency || displayCurrencyCode, exchangeRates, true);
 	const isWholesaleBuyer = user?.customer?.buyerType === 'WHOLESALE';
 	const canUseBulk = isWholesaleBuyer;
 	const favoriteTargetId = medicine?.medicineId || medicine?.id;
@@ -273,7 +273,7 @@ function MedicineDetail() {
 						<div className={styles.priceBlock}>
 							<div>
 								<div className={styles.priceLabel}>Current price</div>
-								<div className={styles.currentPrice}>{formatPrice(dynamicCurrentPrice || 0)}</div>
+								<div className={styles.currentPrice}>{formatPrice(dynamicCurrentPrice || 0, displayCurrencyCode)}</div>
 							</div>
 							<div className={styles.priceMeta}>
 								{canUseBulk && selectedSize === 'bulk' && (

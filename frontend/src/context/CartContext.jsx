@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import pricingService from '../services/pricing.service';
 import { useUser } from './UserContext';
+import { useCurrency } from './CurrencyContext';
 import cartService from '../services/cart.service';
+import { convertPrice } from '../utils/currency';
 
 const DEFAULT_CART_CONTEXT = {
 	cartItems: [],
@@ -59,6 +61,7 @@ const mapLocalCartItem = (item) => ({
 export const CartProvider = ({ children }) => {
 	const [cartItems, setCartItems] = useState([]);
 	const { user } = useUser();
+	const { currency: preferredCurrency, exchangeRates } = useCurrency();
 
 	const normalizePackageType = (value) => (String(value || 'standard').toLowerCase() === 'bulk' ? 'bulk' : 'standard');
 
@@ -337,7 +340,12 @@ export const CartProvider = ({ children }) => {
 	};
 
 	const getTotalPrice = () => {
-		return cartItems.reduce((total, item) => total + (item.basePrice * item.quantity), 0);
+		const targetCurrency = preferredCurrency || 'INR';
+		return cartItems.reduce((total, item) => {
+			const itemCurrency = item.currencyCode || targetCurrency;
+			const lineTotal = Number(item.basePrice || 0) * Number(item.quantity || 1);
+			return total + convertPrice(lineTotal, itemCurrency, targetCurrency, exchangeRates);
+		}, 0);
 	};
 
 	const value = {

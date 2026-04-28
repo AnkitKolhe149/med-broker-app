@@ -15,7 +15,7 @@ import {
 import { useNotification } from '../../context/NotificationContext';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
-import { formatCurrency } from '../../utils/currency';
+import { formatConvertedCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import paymentService from '../../services/payment.service';
 import styles from './Payment.module.css';
@@ -25,7 +25,7 @@ function Payment() {
 	const location = useLocation();
 	const { showError } = useNotification();
 	const { clearCart } = useCart();
-	const { currency, convert } = useCurrency();
+	const { currency, exchangeRates, convert } = useCurrency();
 	const [orderData, setOrderData] = useState(null);
 	const [paymentMethod, setPaymentMethod] = useState('upi');
 	const [loading, setLoading] = useState(true);
@@ -35,9 +35,10 @@ function Payment() {
 	const [cardNumber, setCardNumber] = useState('');
 	const [expiry, setExpiry] = useState('');
 	const [cvv, setCvv] = useState('');
-	const currencyCode = orderData?.currencyCode || currency || 'USD';
-	const formatPrice = (value) => formatCurrency(value, currencyCode, true);
-	const toDisplayAmount = (value) => (typeof convert === 'function' ? convert(value, 'INR') : value);
+	const currentCurrency = currency || 'INR';
+	const sourceCurrencyCode = orderData?.currencyCode || currentCurrency;
+	const formatPrice = (value, fromCurrency = sourceCurrencyCode) => formatConvertedCurrency(value, fromCurrency, currentCurrency, exchangeRates, true);
+	const toDisplayAmount = (value, fromCurrency = sourceCurrencyCode) => (typeof convert === 'function' ? convert(value, fromCurrency) : value);
 	const queryOrderId = new URLSearchParams(location.search).get('orderId');
 
 	const normalizeOrderData = (source) => {
@@ -64,7 +65,7 @@ function Payment() {
 			prescriptionName: snapshot.prescriptionName || '',
 			discountPercent: snapshot.discountPercent ?? 0,
 			appliedCoupon: snapshot.appliedCoupon || '',
-			currencyCode: snapshot.currencyCode || currency || 'USD',
+				currencyCode: snapshot.currencyCode || currentCurrency,
 			subtotalBase: snapshot.subtotalBase ?? snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
 			subtotal: snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
 			discountBase: snapshot.discountBase ?? snapshot.discount ?? ((pricingSummary.discountCents || 0) / 100),
@@ -117,9 +118,9 @@ function Payment() {
 	const calculateTotal = () => {
 		if (!orderData) return 0;
 		if (orderData.totalBase !== undefined && orderData.totalBase !== null) {
-			return Number(orderData.total || orderData.totalBase || 0);
+			return toDisplayAmount(Number(orderData.total || orderData.totalBase || 0), sourceCurrencyCode);
 		}
-		return Number(orderData.total || 0);
+		return toDisplayAmount(Number(orderData.total || 0), sourceCurrencyCode);
 	};
 
 	const generateUPILink = () => {
@@ -156,19 +157,20 @@ function Payment() {
 	const getSubtotal = () => {
 		if (!orderData) return 0;
 		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
-			return Number(orderData.subtotal || orderData.subtotalBase || 0);
+			return toDisplayAmount(Number(orderData.subtotal || orderData.subtotalBase || 0), sourceCurrencyCode);
 		}
-		return Number(orderData.subtotal || 0);
+		return toDisplayAmount(Number(orderData.subtotal || 0), sourceCurrencyCode);
 	};
 
 	const calculateDelivery = () => {
 		if (!orderData) return 0;
-		return orderData.deliveryType === 'express' ? 9 : 0;
+		const rawDelivery = Number(orderData.deliveryCharge ?? orderData.deliveryBase ?? (orderData.deliveryType === 'express' ? 9 : 0));
+		return toDisplayAmount(rawDelivery, sourceCurrencyCode);
 	};
 
 	const calculateTax = () => {
 		if (orderData?.tax !== undefined && orderData?.tax !== null) {
-			return Number(orderData.tax);
+			return toDisplayAmount(Number(orderData.tax), sourceCurrencyCode);
 		}
 		const subtotal = getSubtotal();
 		const discount = Number(orderData?.discount || ((subtotal * (orderData?.discountPercent || 0)) / 100));
@@ -443,14 +445,14 @@ function Payment() {
 								<div className={styles.methodDetails}>
 									<div className={styles.walletCard}>
 										<p className={styles.walletLabel}>Available Wallet Balance</p>
-										<p className={styles.walletAmount}>{formatPrice(0)}</p>
+										<p className={styles.walletAmount}>{formatPrice(0, currentCurrency)}</p>
 										<button type="button" className={styles.walletButton}>Add Funds</button>
 									</div>
 								</div>
 							)}
 
 							<button type="submit" disabled={isProcessing} className={styles.payButton}>
-								{isProcessing ? 'Processing Payment...' : `Pay ${formatPrice(total)}`}
+								{isProcessing ? 'Processing Payment...' : `Pay ${formatPrice(total, currentCurrency)}`}
 							</button>
 
 							<p className={styles.disclaimer}>By proceeding, you authorize MedIQ to process this transaction securely.</p>
@@ -480,19 +482,19 @@ function Payment() {
 							{orderData.cartItems.map((item, index) => (
 								<div key={`${item.medicineId}-${index}`} className={styles.itemRow}>
 									<span>{item.name} × {item.quantity}</span>
-									<span>{formatPrice(item.basePrice * item.quantity)}</span>
+									<span>{formatPrice(item.basePrice * item.quantity, item.currencyCode || sourceCurrencyCode)}</span>
 								</div>
 							))}
 						</div>
 
 						<div className={styles.amountRows}>
-							<div className={styles.pricingRow}><span>Subtotal</span><strong>{formatPrice(subtotal)}</strong></div>
+							<div className={styles.pricingRow}><span>Subtotal</span><strong>{formatPrice(subtotal, currentCurrency)}</strong></div>
 							{orderData.discountPercent > 0 ? (
-								<div className={styles.pricingRowDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount)}</strong></div>
+								<div className={styles.pricingRowDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount, currentCurrency)}</strong></div>
 							) : null}
-							<div className={styles.pricingRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge)}</strong></div>
-							<div className={styles.pricingRow}><span className={styles.taxLabel}>Estimated Tax <CircleHelp size={13} strokeWidth={1.8} /></span><strong>{formatPrice(tax)}</strong></div>
-							<div className={styles.totalRow}><span>Total Due</span><strong>{formatPrice(total)}</strong></div>
+							<div className={styles.pricingRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge, currentCurrency)}</strong></div>
+							<div className={styles.pricingRow}><span className={styles.taxLabel}>Estimated Tax <CircleHelp size={13} strokeWidth={1.8} /></span><strong>{formatPrice(tax, currentCurrency)}</strong></div>
+							<div className={styles.totalRow}><span>Total Due</span><strong>{formatPrice(total, currentCurrency)}</strong></div>
 						</div>
 
 						<div className={styles.securityCard}>

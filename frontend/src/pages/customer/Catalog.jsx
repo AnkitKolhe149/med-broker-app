@@ -5,7 +5,7 @@ import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { Search, Star } from 'lucide-react';
-import { formatCurrency as formatCurrencyValue, getCurrencySymbol as getCurrencySymbolByCode } from '../../utils/currency';
+import { convertPrice, formatConvertedCurrency, getCurrencySymbol as getCurrencySymbolByCode } from '../../utils/currency';
 import medicineService from '../../services/medicine.service';
 import styles from './Catalog.module.css';
 import { catalogReducer, initialCatalogState, CATALOG_ACTIONS } from './catalogReducer';
@@ -26,8 +26,8 @@ function Catalog() {
 	const { addToCart } = useCart();
 	const { user } = useUser();
 	const { showSuccess, showError } = useNotification();
-	const { currency: userCurrency } = useCurrency();
-	const [viewerCurrency, setViewerCurrency] = useState(userCurrency || 'USD');
+	const { currency: userCurrency, exchangeRates } = useCurrency();
+	const [viewerCurrency, setViewerCurrency] = useState(userCurrency || 'INR');
 	const [apiPagination, setApiPagination] = useState({ totalPages: 1, total: 0 });
 	
 	// Consolidated state management with useReducer
@@ -110,6 +110,17 @@ function Catalog() {
 		return ['all', ...Array.from(unique)].sort();
 	}, [medicines]);
 
+	// Helper functions
+	const buyerType = user?.customer?.buyerType || 'RETAIL';
+	const activeCurrency = userCurrency || viewerCurrency || 'INR';
+	const minPricePercent = (minPrice / 500) * 100;
+	const maxPricePercent = (maxPrice / 500) * 100;
+	const getDisplayPrice = (medicine) => {
+		return buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice;
+	};
+	const getMedicineCurrency = (medicine) => medicine.currencyCode || viewerCurrency || activeCurrency;
+	const getLocalizedPrice = (medicine) => convertPrice(getDisplayPrice(medicine), getMedicineCurrency(medicine), activeCurrency, exchangeRates);
+
 	// Core filtering & sorting logic
 	const filteredMedicines = useMemo(() => {
 		let list = [...medicines];
@@ -132,20 +143,17 @@ function Catalog() {
 		}
 
 		// Price range filtering (buyer-type aware)
-		const buyerType = user?.customer?.buyerType || 'RETAIL';
-		const priceField = buyerType === 'WHOLESALE' ? 'wholesalePrice' : 'retailPrice';
-		
 		// Filter by price range (sliders always have values)
 		list = list.filter(medicine => {
-			const price = medicine[priceField];
+			const price = getLocalizedPrice(medicine);
 			return price >= minPrice && price <= maxPrice;
 		});
 
 		// Sorting logic (never aggressive, always helpful)
 		if (sortBy === 'price-asc') {
-			list.sort((a, b) => a[priceField] - b[priceField]);
+			list.sort((a, b) => getLocalizedPrice(a) - getLocalizedPrice(b));
 		} else if (sortBy === 'price-desc') {
-			list.sort((a, b) => b[priceField] - a[priceField]);
+			list.sort((a, b) => getLocalizedPrice(b) - getLocalizedPrice(a));
 		} else if (sortBy === 'name-asc') {
 			list.sort((a, b) => a.name.localeCompare(b.name));
 		} else if (sortBy === 'popularity') {
@@ -156,18 +164,10 @@ function Catalog() {
 		// 'relevance' is default (no additional sorting)
 
 		return list;
-	}, [medicines, searchQuery, categoryFilter, availabilityFilter, prescriptionFilter, sortBy, minPrice, maxPrice, user?.customer?.buyerType]);
+	}, [medicines, searchQuery, categoryFilter, availabilityFilter, prescriptionFilter, sortBy, minPrice, maxPrice, user?.customer?.buyerType, activeCurrency, exchangeRates, viewerCurrency]);
 
 	// API-driven pagination to avoid double-slicing already paginated results.
 	const totalPages = apiPagination.totalPages;
-
-	// Helper functions
-	const buyerType = user?.customer?.buyerType || 'RETAIL';
-	const minPricePercent = (minPrice / 500) * 100;
-	const maxPricePercent = (maxPrice / 500) * 100;
-	const getDisplayPrice = (medicine) => {
-		return buyerType === 'WHOLESALE' ? medicine.wholesalePrice : medicine.retailPrice;
-	};
 
 	const getStockStatusTone = (medicine) => {
 		if (!medicine.inStock) return 'out';
@@ -176,7 +176,7 @@ function Catalog() {
 		return 'low';
 	};
 
-	const formatDisplayPrice = (value) => formatCurrencyValue(value, viewerCurrency, true);
+	const formatDisplayPrice = (value, sourceCurrency = viewerCurrency) => formatConvertedCurrency(value, sourceCurrency, activeCurrency, exchangeRates, true);
 	// Get pricing tier label for transparency
 	const getPricingTier = () => {
 		if (buyerType === 'WHOLESALE') return '(Wholesale)';
@@ -199,7 +199,7 @@ function Catalog() {
 			medicine.retailPrice,
 			medicine.wholesalePrice,
 			buyerType,
-			medicine.currencyCode || viewerCurrency,
+			getMedicineCurrency(medicine),
 			'standard',
 			medicine.bulkPrice,
 			medicine.bulkMinQty
@@ -588,7 +588,7 @@ function Catalog() {
 											{/* PRICING */}
 										<div className={styles.pricingSection}>
 											<p className={styles.priceLabel}>Price {getPricingTier()}</p>
-											<p className={styles.priceValue}>{formatDisplayPrice(getDisplayPrice(medicine))}</p>
+											<p className={styles.priceValue}>{formatDisplayPrice(getDisplayPrice(medicine), getMedicineCurrency(medicine))}</p>
 											</div>
 
 											{/* ACTIONS */}
