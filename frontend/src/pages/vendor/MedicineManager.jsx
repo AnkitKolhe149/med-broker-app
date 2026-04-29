@@ -529,11 +529,20 @@ function VendorMedicineManager() {
 						<div className={styles.formGrid} style={{ marginBottom: '1.5rem' }}>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Product Name</label>
-								<input type="text" className={styles.input} value={selectedMedicine.name} disabled />
+								<input
+									type="text"
+									className={styles.input}
+									value={selectedMedicine.name}
+									onChange={(e) => setSelectedMedicine({ ...selectedMedicine, name: e.target.value })}
+								/>
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Description</label>
-								<textarea className={styles.textarea} value={selectedMedicine.description || ''} disabled />
+								<textarea
+									className={styles.textarea}
+									value={selectedMedicine.description || ''}
+									onChange={(e) => setSelectedMedicine({ ...selectedMedicine, description: e.target.value })}
+								/>
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Stock</label>
@@ -546,8 +555,23 @@ function VendorMedicineManager() {
 								/>
 							</div>
 							<div className={styles.formGroup}>
-								<label className={styles.label}>Price</label>
-								<input type="number" className={styles.input} value={selectedMedicine.price} disabled />
+								<label className={styles.label}>Price ({currencySymbol})</label>
+								<input
+									type="number"
+									className={styles.input}
+									step="0.01"
+									value={selectedMedicine.price}
+									onChange={(e) => setSelectedMedicine({ ...selectedMedicine, price: e.target.value })}
+								/>
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Category</label>
+								<input
+									type="text"
+									className={styles.input}
+									value={selectedMedicine.category || ''}
+									onChange={(e) => setSelectedMedicine({ ...selectedMedicine, category: e.target.value })}
+								/>
 							</div>
 						</div>
 
@@ -609,6 +633,45 @@ function VendorMedicineManager() {
 								disabled={savingStock}
 							>
 								{savingStock ? 'Saving...' : 'Save Stock'}
+							</button>
+							<button
+								className={`${styles.button} ${styles.primaryButton}`}
+								onClick={async () => {
+									if (!selectedMedicine) return;
+									try {
+										setSubmitting(true);
+										// Convert displayed price to base cents (INR)
+										const retailCents = Math.round(toBaseAmount(Number(selectedMedicine.price)) * 100);
+										const wholesaleCents = selectedMedicine.wholesalePrice !== undefined && selectedMedicine.wholesalePrice !== null
+											? Math.round(toBaseAmount(Number(selectedMedicine.wholesalePrice)) * 100)
+											: undefined;
+										const payload = {
+											name: selectedMedicine.name,
+											description: selectedMedicine.description,
+											category: selectedMedicine.category,
+											priceCents: retailCents
+										};
+										if (typeof wholesaleCents === 'number') payload.wholesalePriceCents = wholesaleCents;
+										await inventoryService.updateInventoryItem(selectedMedicine.id, payload);
+										// Refresh local state
+										setMedicines((prev) => prev.map((m) => (m.id === selectedMedicine.id ? {
+												...m,
+												name: selectedMedicine.name,
+												description: selectedMedicine.description,
+												price: Number(selectedMedicine.price),
+												category: selectedMedicine.category
+											} : m)));
+										showSuccess('Product updated successfully');
+										setSelectedMedicine(null);
+									} catch (err) {
+										console.error('Failed to update product', err);
+										showError(err?.response?.data?.message || 'Failed to update product');
+									} finally {
+										setSubmitting(false);
+									}
+								}}
+							>
+								Save Changes
 							</button>
 							<button className={`${styles.button} ${styles.dangerButton}`} onClick={() => {
 								deleteMedicine(selectedMedicine.id);

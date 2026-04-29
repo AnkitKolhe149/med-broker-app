@@ -105,13 +105,29 @@ module.exports = {
    * Update inventory item (quantity only for now)
    */
   updateInventoryItem: async (userContext, inventoryId, updateData) => {
-    const { quantity } = updateData;
+    const {
+      quantity,
+      name,
+      description,
+      priceCents,
+      wholesalePriceCents,
+      category
+    } = updateData;
 
-    // Validate quantity
+    // Validate quantity if provided
     if (quantity !== undefined) {
       if (!Number.isInteger(quantity) || quantity < 0) {
         throw new ValidationError('Quantity must be a non-negative integer');
       }
+    }
+
+    // Validate price fields if provided
+    if (priceCents !== undefined && (!Number.isInteger(priceCents) || priceCents <= 0)) {
+      throw new ValidationError('priceCents must be a positive integer');
+    }
+
+    if (wholesalePriceCents !== undefined && (!Number.isInteger(wholesalePriceCents) || wholesalePriceCents <= 0)) {
+      throw new ValidationError('wholesalePriceCents must be a positive integer');
     }
 
     const vendor = await resolveVendorContext(userContext);
@@ -132,18 +148,68 @@ module.exports = {
       throw new ForbiddenError('You can only update your own inventory items');
     }
 
-    // Update inventory
-    const updatedItem = await prisma.inventory.update({
-      where: { id: inventoryId },
-      data: {
-        quantity: quantity !== undefined ? quantity : inventoryItem.quantity
-      },
-      include: {
-        medicine: true
+    // If medicine price fields provided, validate pricing logic
+    const medicineUpdatePayload = {};
+    if (name !== undefined) {
+      if (!name || typeof name !== 'string' || !name.trim()) {
+        throw new ValidationError('Medicine name cannot be empty');
       }
+      medicineUpdatePayload.name = name.trim();
+    }
+
+    if (description !== undefined) {
+      medicineUpdatePayload.description = description || null;
+    }
+
+    if (category !== undefined) {
+      medicineUpdatePayload.category = category || null;
+    }
+
+    if (priceCents !== undefined) medicineUpdatePayload.priceCents = priceCents;
+    if (wholesalePriceCents !== undefined) medicineUpdatePayload.wholesalePriceCents = wholesalePriceCents;
+
+    // If prices are present, validate pricing tier logic
+    if (Object.prototype.hasOwnProperty.call(medicineUpdatePayload, 'priceCents') || Object.prototype.hasOwnProperty.call(medicineUpdatePayload, 'wholesalePriceCents')) {
+      const toValidate = {
+        priceCents: medicineUpdatePayload.priceCents ?? inventoryItem.medicine.priceCents,
+        wholesalePriceCents: medicineUpdatePayload.wholesalePriceCents ?? inventoryItem.medicine.wholesalePriceCents
+      };
+
+      try {
+        validatePricingLogic({
+          priceCents: toValidate.priceCents,
+          wholesalePriceCents: toValidate.wholesalePriceCents
+        });
+      } catch (err) {
+        throw new ValidationError('Pricing validation failed. ' + err.message);
+      }
+    }
+
+    // Perform updates in a transaction: medicine (if needed) and inventory
+    const updated = await prisma.$transaction(async (tx) => {
+      let updatedMedicine = inventoryItem.medicine;
+
+      if (Object.keys(medicineUpdatePayload).length > 0) {
+        updatedMedicine = await tx.medicine.update({
+          where: { id: inventoryItem.medicineId },
+          data: medicineUpdatePayload
+        });
+      }
+
+      const updatedInventory = await tx.inventory.update({
+        where: { id: inventoryId },
+        data: {
+          quantity: quantity !== undefined ? quantity : inventoryItem.quantity
+        },
+        include: {
+          medicine: true
+        }
+      });
+
+      return updatedInventory;
     });
 
-    return updatedItem;
+    return updated;
   },
 
   /**
