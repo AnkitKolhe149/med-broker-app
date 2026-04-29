@@ -834,7 +834,3 @@ enum UserActivityType {
   PAYMENT_ACTION
   ADMIN_ACTION
 }
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
