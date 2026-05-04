@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import { useUser } from '../../context/UserContext';
@@ -324,7 +324,7 @@ function CustomerDashboard() {
 					<div className={styles.sectionHeaderMain}>
 						<div>
 							<h3 className={styles.sectionTitleMain}>Open Orders</h3>
-							<p className={styles.sectionSubtitle}>Track current deliveries ({metrics.activeOrders.length} of {metrics.totalOrders}){groupedActiveOrders.length > 3 ? ' â€¢ showing first 3' : ''}</p>
+							<p className={styles.sectionSubtitle}>Track current deliveries ({metrics.activeOrders.length} of {metrics.totalOrders}){groupedActiveOrders.length > 3 ? ' • showing first 3' : ''}</p>
 						</div>
 						<button className="button-outline" onClick={() => navigate('/customer/orders')}>View all</button>
 					</div>
@@ -344,7 +344,7 @@ function CustomerDashboard() {
 											<div>
 												<p className={styles.orderId}>{getOrderDisplayName(group.medicineQuantityMap)}</p>
 												<p className={styles.orderRef}>Combined {group.orderCount} order{group.orderCount > 1 ? 's' : ''}</p>
-												<p className={styles.orderEta}>Status: {getEtaLabel(group.status)} â€¢ Qty {totalQuantity}</p>
+												<p className={styles.orderEta}>Status: {getEtaLabel(group.status)} • Qty {totalQuantity}</p>
 											</div>
 											<span className={`badge badge-success`}>{group.status}</span>
 										</div>
@@ -372,7 +372,7 @@ function CustomerDashboard() {
 					<div className={styles.sectionHeaderMain}>
 						<div>
 							<h3 className={styles.sectionTitleMain}>Recent Purchases</h3>
-							<p className={styles.sectionSubtitle}>Your order history{metrics.recentOrders.length > 3 ? ' â€¢ showing first 3' : ''}</p>
+							<p className={styles.sectionSubtitle}>Your order history{metrics.recentOrders.length > 3 ? ' • showing first 3' : ''}</p>
 						</div>
 						<button className="button-outline" onClick={() => navigate('/customer/orders')}>View all</button>
 					</div>
@@ -390,7 +390,7 @@ function CustomerDashboard() {
 										<p className={styles.purchaseDate}>{order.date ? new Date(order.date).toLocaleDateString('en-IN') : '-'}</p>
 									</div>
 									<div className={styles.purchaseMiddle}>
-										<p className={styles.purchaseItems}>{getTotalQuantity(order.medicineQuantityMap)} units â€¢ Order #{String(order.id).slice(0, 8)}</p>
+										<p className={styles.purchaseItems}>{getTotalQuantity(order.medicineQuantityMap)} units • Order #{String(order.id).slice(0, 8)}</p>
 										<span className={`badge badge-info`}>{order.status}</span>
 									</div>
 									<div className={styles.purchaseRight}>

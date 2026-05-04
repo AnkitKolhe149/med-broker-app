@@ -16,11 +16,13 @@ const BASE_CURRENCY = getEnv('EXCHANGE_RATE_BASE', 'INR').toUpperCase();
 const DEFAULT_CURRENCY = getEnv('DEFAULT_CURRENCY', 'USD').toUpperCase();
 const MAX_MEDICINE_IMAGES = 4;
 const DEFAULT_INVENTORY_WHERE = {
-  quantity: { gt: 0 },
   isActive: true,
   medicine: {
     isActive: true,
     status: 'PUBLISHED'
+  },
+  vendor: {
+    verificationStatus: 'VERIFIED'
   }
 };
 
@@ -76,8 +78,8 @@ const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRa
   const sourceCurrencyCode = BASE_CURRENCY;
   const sourceRetailPrice = Number((inventory.medicine.priceCents / 100).toFixed(2));
   const sourceWholesalePrice = Number((((inventory.medicine.wholesalePriceCents ?? inventory.medicine.priceCents) || 0) / 100).toFixed(2));
-  const sourceBulkPrice = Number((((inventory.medicine.bulkPriceCents ?? inventory.medicine.wholesalePriceCents ?? inventory.medicine.priceCents) || 0) / 100).toFixed(2));
-  const bulkMinQty = inventory.medicine.bulkMinQty || 1;
+  const sourceBulkPrice = sourceWholesalePrice;
+  const bulkMinQty = 1;
 
   const convertedRetail = convertAmount({
     amount: sourceRetailPrice,
@@ -149,11 +151,13 @@ module.exports = {
     const search = String(query.search || '').trim();
 
     const inventoryWhere = {
-      quantity: { gt: 0 },
       isActive: true,
       medicine: {
         isActive: true,
         status: 'PUBLISHED'
+      },
+      vendor: {
+        verificationStatus: 'VERIFIED'
       },
       ...(search
         ? {

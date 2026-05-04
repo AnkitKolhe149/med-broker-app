@@ -1,4 +1,4 @@
-﻿const { prisma } = require('../../database/prisma');
+const { prisma } = require('../../database/prisma');
 const {
   ValidationError,
   NotFoundError,
@@ -456,7 +456,8 @@ module.exports = {
         update: {
           quantity: {
             increment: quantity
-          }
+          },
+          isActive: true
         },
         create: {
           medicineId: medicine.id,

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -248,7 +248,7 @@ function MedicineDetail() {
 						<div className={styles.titleBlock}>
 							<h1 className={styles.productTitle}>{medicine?.name}</h1>
 							<p className={styles.subtitle}>
-								{medicine.category || 'General'}{medicine.dosage ? ` â€¢ ${medicine.dosage}` : ''}
+								{medicine.category || 'General'}{medicine.dosage ? ` • ${medicine.dosage}` : ''}
 							</p>
 						</div>
 
@@ -295,7 +295,7 @@ function MedicineDetail() {
 							))}
 						</div>
 
-						{canUseBulk && (
+						{canUseBulk && medicine.bulkMinQty > 1 && (
 							<div className={styles.optionGroup}>
 								<label className={styles.optionLabel}>Packaging</label>
 								<div className={styles.optionButtons}>
@@ -323,7 +323,7 @@ function MedicineDetail() {
 
 						<div className={styles.cartSection}>
 							<div className={styles.quantityControl}>
-								<button onClick={() => setQuantity((value) => Math.max(1, value - 1))} className={styles.quantityBtn} aria-label="Decrease quantity">âˆ’</button>
+								<button onClick={() => setQuantity((value) => Math.max(1, value - 1))} className={styles.quantityBtn} aria-label="Decrease quantity">−</button>
 								<input
 									type="number"
 									min="1"

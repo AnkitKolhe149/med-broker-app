@@ -172,16 +172,7 @@ function VendorOrders() {
                   <td className={styles.tableCell}>{date} {time}</td>
                   <td className={styles.tableCell}>
                     <button
-                      style={{
-                        padding: '0.4rem 0.8rem',
-                        backgroundColor: 'var(--primary)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: 'var(--radius)',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        fontWeight: '500'
-                      }}
+                      className={styles.viewButton}
                       onClick={() => setSelectedOrder(order)}
                     >
                       View

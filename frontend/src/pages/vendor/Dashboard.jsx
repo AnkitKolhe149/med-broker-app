@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import vendorService from '../../services/vendor.service';
@@ -109,6 +109,23 @@ function VendorDashboard() {
 		);
 	}
 
+	const salesTrend = dashboardData.weeklyTrend || [];
+	const todaySalesVal = salesTrend[salesTrend.length - 1]?.sales || 0;
+	const yesterdaySalesVal = salesTrend[salesTrend.length - 2]?.sales || 0;
+	const salesDiff = todaySalesVal - yesterdaySalesVal;
+	const salesGrowthPercent = yesterdaySalesVal > 0 
+		? ((salesDiff / yesterdaySalesVal) * 100).toFixed(1) 
+		: (todaySalesVal > 0 ? '100' : '0');
+	const salesGrowthText = `${salesDiff >= 0 ? '↑' : '↓'} ${Math.abs(salesGrowthPercent)}% from yesterday`;
+
+	const todayOrdersVal = salesTrend[salesTrend.length - 1]?.orders || 0;
+	const yesterdayOrdersVal = salesTrend[salesTrend.length - 2]?.orders || 0;
+	const ordersDiff = todayOrdersVal - yesterdayOrdersVal;
+	const ordersGrowthPercent = yesterdayOrdersVal > 0 
+		? ((ordersDiff / yesterdayOrdersVal) * 100).toFixed(1) 
+		: (todayOrdersVal > 0 ? '100' : '0');
+	const ordersGrowthText = `${ordersDiff >= 0 ? '↑' : '↓'} ${Math.abs(ordersGrowthPercent)}% from yesterday`;
+
 	return (
 		<div className={styles.container}>
 			<VendorPageShell
@@ -161,12 +178,12 @@ function VendorDashboard() {
 					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Today's Sales</div>
 						<div className={styles.metricValue}>{formatMoney(dashboardData.todaySales)}</div>
-						<div className={styles.metricChange}>â†‘ 12.5% from yesterday</div>
+						<div className={styles.metricChange}>{salesGrowthText}</div>
 					</div>
 					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Today's Orders</div>
 						<div className={styles.metricValue}>{dashboardData.todayOrders}</div>
-						<div className={styles.metricChange}>â†‘ 8.3% from yesterday</div>
+						<div className={styles.metricChange}>{ordersGrowthText}</div>
 					</div>
 					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Pending Orders</div>
@@ -191,16 +208,15 @@ function VendorDashboard() {
 						<div className={styles.chart}>
 							{dashboardData.weeklyTrend.length === 0 && <p>No sales data available.</p>}
 							{dashboardData.weeklyTrend.map((data, idx) => (
-								<div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
+								<div key={idx} className={styles.barContainer}>
+									<div className={styles.barValue}>{formatMoney(data.sales)}</div>
 									<div
 										className={styles.bar}
 										style={{
 											height: `${(data.sales / maxWeeklySales) * 150}px`
 										}}
-									>
-										{formatMoney(data.sales)}
-									</div>
-									<span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{data.day}</span>
+									/>
+									<span className={styles.dayLabel}>{data.day}</span>
 								</div>
 							))}
 						</div>

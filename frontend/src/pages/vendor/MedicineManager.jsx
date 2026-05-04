@@ -23,12 +23,13 @@ function VendorMedicineManager() {
 	const [stockDraft, setStockDraft] = useState('');
 	const [filterStatus, setFilterStatus] = useState('all');
 	const [uploadFiles, setUploadFiles] = useState([]);
-	const [vendorStatus, setVendorStatus] = useState('VERIFIED'); // Default to verified to avoid flicker
+	const [vendorStatus, setVendorStatus] = useState(null); // Set to null to avoid false verified flicker
 	const currencySymbol = getCurrencySymbol(currency);
 	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 	const toBaseAmount = (value) => convertPrice(value, currency, 'INR', exchangeRates);
 	const [newMedicine, setNewMedicine] = useState({
 		name: '',
+		category: '',
 		stock: '',
 		price: '',
 		wholesalePrice: '',
@@ -104,6 +105,7 @@ function VendorMedicineManager() {
 			const wholesalePriceCents = Math.round(toBaseAmount(Number((newMedicine.wholesalePrice || newMedicine.price))) * 100);
 			const payload = {
 				name: newMedicine.name.trim(),
+				category: newMedicine.category?.trim() || null,
 				description: newMedicine.description?.trim() || null,
 				priceCents: retailPriceCents,
 				wholesalePriceCents,
@@ -155,6 +157,7 @@ function VendorMedicineManager() {
 
 			setNewMedicine({
 				name: '',
+				category: '',
 				stock: '',
 				price: '',
 				wholesalePrice: '',
@@ -302,12 +305,14 @@ function VendorMedicineManager() {
 				)}
 			>
 			
-			{vendorStatus !== 'VERIFIED' && (
+			{vendorStatus && vendorStatus !== 'VERIFIED' && (
 				<div className={styles.verificationBanner}>
 					<AlertCircle className={styles.bannerIcon} size={24} />
 					<div className={styles.bannerText}>
-						<h4>Profile Verification Pending</h4>
-						<p>Your products will be visible to customers once your profile is verified by our team. You can still manage your inventory in the meantime.</p>
+						<h4>Profile Verification {vendorStatus === 'REJECTED' ? 'Rejected' : 'Pending'}</h4>
+						<p>{vendorStatus === 'REJECTED' 
+							? 'Your profile was not approved. Please contact support to resolve issues with your documentation.' 
+							: 'Your products will be visible to customers once your profile is verified by our team. You can still manage your inventory in the meantime.'}</p>
 					</div>
 				</div>
 			)}
@@ -429,6 +434,16 @@ function VendorMedicineManager() {
 								placeholder="0"
 								value={newMedicine.stock}
 								onChange={(e) => setNewMedicine({ ...newMedicine, stock: e.target.value })}
+							/>
+						</div>
+						<div className={styles.formGroup}>
+							<label className={styles.label}>Category</label>
+							<input
+								type="text"
+								className={styles.input}
+								placeholder="e.g., Antibiotics"
+								value={newMedicine.category}
+								onChange={(e) => setNewMedicine({ ...newMedicine, category: e.target.value })}
 							/>
 						</div>
 					<div className={styles.formGroup}>

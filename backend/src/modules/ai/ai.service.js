@@ -654,8 +654,8 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', pr
   return uniqueInventoryItems.map((item) => {
     const retailPrice = Number(((item.medicine.priceCents || 0) / 100).toFixed(2));
     const wholesalePrice = Number((((item.medicine.wholesalePriceCents ?? item.medicine.priceCents) || 0) / 100).toFixed(2));
-    const bulkPrice = Number((((item.medicine.bulkPriceCents ?? item.medicine.wholesalePriceCents ?? item.medicine.priceCents) || 0) / 100).toFixed(2));
-    const bulkMinQty = item.medicine.bulkMinQty || 1;
+    const bulkPrice = wholesalePrice;
+    const bulkMinQty = 1;
 
     const defaultPrice = buyerType === 'WHOLESALE' ? wholesalePrice : retailPrice;
     const convertedDisplayPrice = rateRecord?.rates
@@ -679,7 +679,7 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', pr
       retailPrice,
       wholesalePrice,
       bulkPrice,
-      bulkMinQty,
+      bulkMinQty: 1,
       displayPrice,
       displayCurrencyCode,
       baseCurrencyCode: 'INR',
