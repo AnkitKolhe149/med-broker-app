@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FlaskConical } from 'lucide-react';
 import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
@@ -323,13 +323,13 @@ function OrdersHistory() {
 
 										<p className={styles.orderMeta}>
 											{groupedItems.length} medicine{groupedItems.length > 1 ? 's' : ''}
-											<span>â€¢</span>
+											<span>•</span>
 											{totalUnits} unit{totalUnits > 1 ? 's' : ''}
-											<span>â€¢</span>
+											<span>•</span>
 											{order.paymentMethod}
-											<span>â€¢</span>
+											<span>•</span>
 											Ordered {order.orderedAgo}
-											<span>â€¢</span>
+											<span>•</span>
 											{order.etaText}
 										</p>
 									</article>

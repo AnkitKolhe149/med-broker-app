@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -9,7 +9,7 @@ import { Lightbulb } from 'lucide-react';
 
 function buildInsightMessage(analyticsData) {
 	if (!analyticsData.topProducts.length && !analyticsData.salesTrend.length) {
-		return 'No analytics data is available yet. Once orders start flowing, this section will summarize product demand and regional performance.';
+		return <p>No analytics data is available yet. Once orders start flowing, this section will summarize product demand and regional performance.</p>;
 	}
 
 	const topProduct = analyticsData.topProducts[0];
@@ -19,14 +19,18 @@ function buildInsightMessage(analyticsData) {
 		: 0;
 
 	const trendLabel = trendDirection > 0 ? 'rising' : trendDirection < 0 ? 'softening' : 'steady';
-	const productLine = topProduct
-		? `Your strongest product is ${topProduct.name} with ${topProduct.sales} units sold and ${formatCurrency(topProduct.revenue, 'INR', true)} revenue.`
-		: 'No top product signal is available yet.';
-	const regionLine = topRegion
-		? `The strongest region is ${topRegion.region} with ${topRegion.orders} orders.`
-		: 'Regional demand has not accumulated enough data yet.';
 
-	return `${productLine} Sales momentum is ${trendLabel} over the selected range. ${regionLine}`;
+	return (
+		<ul className={styles.insightList}>
+			{topProduct && (
+				<li><strong>Strongest Product:</strong> {topProduct.name} with {topProduct.sales} units sold and {formatCurrency(topProduct.revenue, 'INR', true)} revenue.</li>
+			)}
+			<li><strong>Sales Momentum:</strong> Your sales are currently <strong>{trendLabel}</strong> over the selected range.</li>
+			{topRegion && (
+				<li><strong>Top Region:</strong> {topRegion.region} is your most active market with {topRegion.orders} orders.</li>
+			)}
+		</ul>
+	);
 }
 
 function VendorAnalytics() {
@@ -139,24 +143,13 @@ function VendorAnalytics() {
 						{analyticsData.salesTrend.length === 0 && <p>No trend data available.</p>}
 						{analyticsData.salesTrend.map((data, idx) => (
 							<div key={idx} className={styles.salesBarContainer}>
+								<div className={styles.barValue}>{formatMoney(data.sales)}</div>
 								<div
+									className={styles.bar}
 									style={{
-										...{
-											backgroundColor: 'var(--primary)',
-											borderRadius: 'var(--radius)',
-											minWidth: '40px',
-											display: 'flex',
-											alignItems: 'flex-end',
-											justifyContent: 'center',
-											color: 'white',
-											fontSize: '0.8rem',
-											padding: '0.5rem'
-										},
 										height: `${(data.sales / maxSalesTrend) * 250}px`
 									}}
-								>
-										{formatMoney(data.sales)}
-								</div>
+								/>
 								<span className={styles.monthLabel}>{data.month}</span>
 							</div>
 						))}
@@ -231,7 +224,8 @@ function VendorAnalytics() {
 
 			{/* AI Insights */}
 			<div className={styles.insightBox}>
-				<strong><Lightbulb size={16} strokeWidth={1.5} /> Insights:</strong> {insightMessage}
+				<div className={styles.insightTitle}><Lightbulb size={18} strokeWidth={2} /> AI Performance Insights</div>
+				{insightMessage}
 			</div>
 			</VendorPageShell>
 		</div>

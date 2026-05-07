@@ -124,69 +124,50 @@ const getDashboard = async (userId) => {
     createdAt: { gte: weekStart }
   };
 
-  const [todayOrders, pendingOrders, weeklyOrders, recentOrders, allRecentOrders] = await Promise.all([
+  const [todayOrders, pendingOrders, weeklyOrders, recentOrders] = await Promise.all([
     prisma.order.findMany({
-      where: orderWhere,
-      include: {
-        user: {
-          select: {
-            name: true,
-            customer: {
-              select: { fullName: true }
-            }
+      where: {
+        ...orderWhere,
+        items: {
+          some: {
+            vendorId: vendor.id
           }
-        },
-        items: true
+        }
+      },
+      include: {
+        items: true,
+        user: { select: { name: true, customer: { select: { fullName: true } } } }
       },
       orderBy: { createdAt: 'desc' }
     }),
     prisma.order.count({
       where: {
         createdAt: { gte: weekStart },
-        status: 'PENDING'
+        status: 'PENDING',
+        items: { some: { vendorId: vendor.id } }
       }
     }),
     prisma.order.findMany({
-      where: orderWhere,
+      where: {
+        ...orderWhere,
+        items: { some: { vendorId: vendor.id } }
+      },
       include: { items: true },
       orderBy: { createdAt: 'asc' }
     }),
     prisma.order.findMany({
-      where: orderWhere,
+      where: {
+        ...orderWhere,
+        items: { some: { vendorId: vendor.id } }
+      },
       include: {
         items: true,
-        user: {
-          select: {
-            name: true,
-            customer: {
-              select: { fullName: true }
-            }
-          }
-        }
+        user: { select: { name: true, customer: { select: { fullName: true } } } }
       },
       orderBy: { createdAt: 'desc' },
       take: 5
-    }),
-    prisma.order.findMany({
-      where: orderWhere,
-      include: {
-        items: true,
-        user: {
-          select: {
-            name: true,
-            customer: {
-              select: { fullName: true }
-            }
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
     })
   ]);
-
-  const vendorOrders = allRecentOrders.filter((order) =>
-    order.items.some((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
-  );
 
   const todayOrdersForVendor = todayOrders.filter((order) =>
     order.items.some((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
@@ -233,12 +214,12 @@ const getDashboard = async (userId) => {
     metrics: {
       todaySalesCents: todaySales,
       todayOrders: todayOrdersForVendor.length,
-      pendingOrders: vendorOrders.filter((order) => order.status === 'PENDING').length,
+      pendingOrders,
       totalProducts: inventory.length,
       totalInventoryValueCents
     },
     weeklyTrend,
-    recentOrders: vendorOrders.slice(0, 5).map((order) => formatVendorOrder(order, vendor.id, vendorMedicineIds)),
+    recentOrders: recentOrders.map((order) => formatVendorOrder(order, vendor.id, vendorMedicineIds)),
     lowStockProducts
   };
 };
@@ -262,6 +243,7 @@ const getVendorOrders = async (userId, options = {}) => {
     prisma.order.findMany({
       where: {
         ...(status ? { status } : {}),
+        items: { some: { vendorId: vendor.id } }
       },
       include: {
         user: {
@@ -290,26 +272,23 @@ const getVendorOrders = async (userId, options = {}) => {
     }),
     prisma.order.count({
       where: {
-        ...(status ? { status } : {})
+        ...(status ? { status } : {}),
+        items: { some: { vendorId: vendor.id } }
       }
     })
   ]);
-
-  const vendorOrders = orders.filter((order) =>
-    order.items.some((item) => isVendorOrderItem(item, vendor.id, vendorMedicineIds))
-  );
 
   return {
     vendor: {
       id: vendor.id,
       companyName: vendor.companyName
     },
-    orders: vendorOrders.map((order) => formatVendorOrder(order, vendor.id, vendorMedicineIds)),
+    orders: orders.map((order) => formatVendorOrder(order, vendor.id, vendorMedicineIds)),
     pagination: {
       page,
       limit,
-      total: vendorOrders.length,
-      totalPages: Math.ceil(vendorOrders.length / limit)
+      total,
+      totalPages: Math.ceil(total / limit)
     }
   };
 };
@@ -326,7 +305,8 @@ const getAnalytics = async (userId, timeRange = 'month') => {
 
   const orders = await prisma.order.findMany({
     where: {
-      createdAt: { gte: rangeStart }
+      createdAt: { gte: rangeStart },
+      items: { some: { vendorId: vendor.id } }
     },
     include: {
       items: {
@@ -452,18 +432,28 @@ const getDemandForecast = async (userId) => {
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
   
+  const orderWhere = {
+    createdAt: { gte: threeMonthsAgo },
+    status: { not: 'CANCELLED' },
+    items: {
+      some: {
+        vendorId: vendor.id
+      }
+    }
+  };
+
   const [recentOrders, historicalOrders] = await Promise.all([
     prisma.order.findMany({
       where: {
-        createdAt: { gte: oneMonthAgo },
-        status: { not: 'CANCELLED' }
+        ...orderWhere,
+        createdAt: { gte: oneMonthAgo }
       },
       include: { items: true }
     }),
     prisma.order.findMany({
       where: {
-        createdAt: { gte: threeMonthsAgo, lt: oneMonthAgo },
-        status: { not: 'CANCELLED' }
+        ...orderWhere,
+        createdAt: { gte: threeMonthsAgo, lt: oneMonthAgo }
       },
       include: { items: true }
     })

@@ -23,12 +23,13 @@ function VendorMedicineManager() {
 	const [stockDraft, setStockDraft] = useState('');
 	const [filterStatus, setFilterStatus] = useState('all');
 	const [uploadFiles, setUploadFiles] = useState([]);
-	const [vendorStatus, setVendorStatus] = useState('VERIFIED'); // Default to verified to avoid flicker
+	const [vendorStatus, setVendorStatus] = useState(null); // Set to null to avoid false verified flicker
 	const currencySymbol = getCurrencySymbol(currency);
 	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 	const toBaseAmount = (value) => convertPrice(value, currency, 'INR', exchangeRates);
 	const [newMedicine, setNewMedicine] = useState({
 		name: '',
+		category: '',
 		stock: '',
 		price: '',
 		wholesalePrice: '',
@@ -104,6 +105,7 @@ function VendorMedicineManager() {
 			const wholesalePriceCents = Math.round(toBaseAmount(Number((newMedicine.wholesalePrice || newMedicine.price))) * 100);
 			const payload = {
 				name: newMedicine.name.trim(),
+				category: newMedicine.category?.trim() || null,
 				description: newMedicine.description?.trim() || null,
 				priceCents: retailPriceCents,
 				wholesalePriceCents,
@@ -155,6 +157,7 @@ function VendorMedicineManager() {
 
 			setNewMedicine({
 				name: '',
+				category: '',
 				stock: '',
 				price: '',
 				wholesalePrice: '',
@@ -326,12 +329,14 @@ function VendorMedicineManager() {
 				)}
 			>
 			
-			{vendorStatus !== 'VERIFIED' && (
+			{vendorStatus && vendorStatus !== 'VERIFIED' && (
 				<div className={styles.verificationBanner}>
 					<AlertCircle className={styles.bannerIcon} size={24} />
 					<div className={styles.bannerText}>
-						<h4>Profile Verification Pending</h4>
-						<p>Your products will be visible to customers once your profile is verified by our team. You can still manage your inventory in the meantime.</p>
+						<h4>Profile Verification {vendorStatus === 'REJECTED' ? 'Rejected' : 'Pending'}</h4>
+						<p>{vendorStatus === 'REJECTED' 
+							? 'Your profile was not approved. Please contact support to resolve issues with your documentation.' 
+							: 'Your products will be visible to customers once your profile is verified by our team. You can still manage your inventory in the meantime.'}</p>
 					</div>
 				</div>
 			)}
@@ -455,6 +460,16 @@ function VendorMedicineManager() {
 								onChange={(e) => setNewMedicine({ ...newMedicine, stock: e.target.value })}
 							/>
 						</div>
+						<div className={styles.formGroup}>
+							<label className={styles.label}>Category</label>
+							<input
+								type="text"
+								className={styles.input}
+								placeholder="e.g., Antibiotics"
+								value={newMedicine.category}
+								onChange={(e) => setNewMedicine({ ...newMedicine, category: e.target.value })}
+							/>
+						</div>
 					<div className={styles.formGroup}>
 						<label className={styles.label}>Selling Price ({currencySymbol}) <span style={{ fontSize: '0.85em', color: '#666' }}>Retail</span></label>
 						<input
@@ -553,11 +568,20 @@ function VendorMedicineManager() {
 						<div className={styles.formGrid} style={{ marginBottom: '1.5rem' }}>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Product Name</label>
-								<input type="text" className={styles.input} value={selectedMedicine.name} onChange={(e) => setSelectedMedicine({...selectedMedicine, name: e.target.value})} />
+								<input
+									type="text"
+									className={styles.input}
+									value={selectedMedicine.name}
+									onChange={(e) => setSelectedMedicine({ ...selectedMedicine, name: e.target.value })}
+								/>
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Description</label>
-								<textarea className={styles.textarea} value={selectedMedicine.description || ''} onChange={(e) => setSelectedMedicine({...selectedMedicine, description: e.target.value})} />
+								<textarea
+									className={styles.textarea}
+									value={selectedMedicine.description || ''}
+									onChange={(e) => setSelectedMedicine({ ...selectedMedicine, description: e.target.value })}
+								/>
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Stock</label>
@@ -570,12 +594,23 @@ function VendorMedicineManager() {
 								/>
 							</div>
 							<div className={styles.formGroup}>
-								<label className={styles.label}>Retail Price ({currencySymbol})</label>
-								<input type="number" step="0.01" className={styles.input} value={selectedMedicine.price} onChange={(e) => setSelectedMedicine({...selectedMedicine, price: e.target.value})} />
+								<label className={styles.label}>Price ({currencySymbol})</label>
+								<input
+									type="number"
+									className={styles.input}
+									step="0.01"
+									value={selectedMedicine.price}
+									onChange={(e) => setSelectedMedicine({ ...selectedMedicine, price: e.target.value })}
+								/>
 							</div>
 							<div className={styles.formGroup}>
-								<label className={styles.label}>Wholesale Price ({currencySymbol})</label>
-								<input type="number" step="0.01" className={styles.input} value={selectedMedicine.wholesalePrice} onChange={(e) => setSelectedMedicine({...selectedMedicine, wholesalePrice: e.target.value})} />
+								<label className={styles.label}>Category</label>
+								<input
+									type="text"
+									className={styles.input}
+									value={selectedMedicine.category || ''}
+									onChange={(e) => setSelectedMedicine({ ...selectedMedicine, category: e.target.value })}
+								/>
 							</div>
 						</div>
 
@@ -637,6 +672,45 @@ function VendorMedicineManager() {
 								disabled={savingStock}
 							>
 								{savingStock ? 'Saving...' : 'Save Product'}
+							</button>
+							<button
+								className={`${styles.button} ${styles.primaryButton}`}
+								onClick={async () => {
+									if (!selectedMedicine) return;
+									try {
+										setSubmitting(true);
+										// Convert displayed price to base cents (INR)
+										const retailCents = Math.round(toBaseAmount(Number(selectedMedicine.price)) * 100);
+										const wholesaleCents = selectedMedicine.wholesalePrice !== undefined && selectedMedicine.wholesalePrice !== null
+											? Math.round(toBaseAmount(Number(selectedMedicine.wholesalePrice)) * 100)
+											: undefined;
+										const payload = {
+											name: selectedMedicine.name,
+											description: selectedMedicine.description,
+											category: selectedMedicine.category,
+											priceCents: retailCents
+										};
+										if (typeof wholesaleCents === 'number') payload.wholesalePriceCents = wholesaleCents;
+										await inventoryService.updateInventoryItem(selectedMedicine.id, payload);
+										// Refresh local state
+										setMedicines((prev) => prev.map((m) => (m.id === selectedMedicine.id ? {
+												...m,
+												name: selectedMedicine.name,
+												description: selectedMedicine.description,
+												price: Number(selectedMedicine.price),
+												category: selectedMedicine.category
+											} : m)));
+										showSuccess('Product updated successfully');
+										setSelectedMedicine(null);
+									} catch (err) {
+										console.error('Failed to update product', err);
+										showError(err?.response?.data?.message || 'Failed to update product');
+									} finally {
+										setSubmitting(false);
+									}
+								}}
+							>
+								Save Changes
 							</button>
 							<button className={`${styles.button} ${styles.dangerButton}`} onClick={() => {
 								deleteMedicine(selectedMedicine.id);

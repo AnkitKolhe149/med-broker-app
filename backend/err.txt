@@ -6,4 +6,4 @@ D:\med-broker-app\backend\src\modules\medicines\medicines.service.js:145:24
   143 
   144 const [items, total] = await Promise.all([
 → 145   prisma.inventory.findMany(
-The column `Inventory.bulkMinQty` does not exist in the current database.
+The column `Inventory.bulkMinQty` does not exist in the current database
