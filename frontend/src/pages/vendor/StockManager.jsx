@@ -10,6 +10,7 @@ function VendorStockManager() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [search, setSearch] = useState('');
+  const [filterLowStock, setFilterLowStock] = useState(false);
 
   useEffect(() => {
     const loadInventory = async () => {
@@ -38,10 +39,20 @@ function VendorStockManager() {
 
   const filteredInventory = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return inventory;
+    let result = inventory;
 
-    return inventory.filter((item) => item.medicineName.toLowerCase().includes(q));
-  }, [inventory, search]);
+    // Filter by search query
+    if (q) {
+      result = result.filter((item) => item.medicineName.toLowerCase().includes(q));
+    }
+
+    // Filter by low stock if enabled
+    if (filterLowStock) {
+      result = result.filter((item) => item.stock <= 20);
+    }
+
+    return result;
+  }, [inventory, search, filterLowStock]);
 
   const updateDraftStock = (inventoryId, value) => {
     setInventory((prev) => prev.map((item) => (
@@ -132,6 +143,14 @@ function VendorStockManager() {
             placeholder="Search medicine by name"
             className={styles.searchInput}
           />
+          <div className={styles.filterButtons}>
+            <button
+              className={`${styles.filterButton} ${filterLowStock ? styles.filterButtonActive : ''}`}
+              onClick={() => setFilterLowStock(!filterLowStock)}
+            >
+              {filterLowStock ? '✓ Low Stock Only' : 'Show Low Stock'}
+            </button>
+          </div>
         </div>
 
         <div className={styles.section}>

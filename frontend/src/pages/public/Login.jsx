@@ -96,7 +96,7 @@ function Login() {
 
 						<div>
 							<label className="label">Continue as</label>
-							<div className="auth-care-role-switch" role="group" aria-label="Select user role">
+						<div className="auth-care-role-switch auth-care-role-switch-login" role="group" aria-label="Select user role">
 								<button
 									type="button"
 									className={formData.role === 'CUSTOMER' ? 'auth-care-role-btn active' : 'auth-care-role-btn'}

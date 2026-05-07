@@ -96,6 +96,11 @@ module.exports = {
       throw new ConflictError('Email and password are required');
     }
 
+    // ✅ FIX: ADMIN accounts can only be created by existing admins, not via public registration
+    if (role === 'ADMIN') {
+      throw new ConflictError('Admin accounts cannot be created via public registration. Contact an existing administrator.');
+    }
+
     validateEmail(email);
     validatePassword(password);
     validateMobile(mobile);

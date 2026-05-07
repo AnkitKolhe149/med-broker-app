@@ -1243,5 +1243,48 @@ module.exports = {
 
   clearAllNotifications: async () => {
     return prisma.notification.deleteMany({});
+  },
+
+  // ✅ Create new admin user (admin-only operation)
+  createAdminUser: async (userData) => {
+    const { email, password, name } = userData;
+    
+    if (!email || !password || !name) {
+      throw new ConflictError('Email, password, and name are required');
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      throw new ConflictError('User with this email already exists');
+    }
+
+    // Hash the password using bcrypt
+    const bcrypt = require('bcryptjs');
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create the admin user
+    const newAdmin = await prisma.user.create({
+      data: {
+        email,
+        name,
+        passwordHash,
+        role: 'ADMIN',
+        isProfileComplete: true,
+        isActive: true
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    return newAdmin;
   }
 };

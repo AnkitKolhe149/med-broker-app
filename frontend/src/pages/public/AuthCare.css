@@ -309,12 +309,21 @@
 
 .auth-care-role-switch {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 0.55rem;
   background: rgba(243, 249, 245, 0.86);
   border: 1px solid rgba(21, 115, 71, 0.22);
   padding: 0.34rem;
   border-radius: 999px;
+}
+
+/* ✅ Register page: 2 columns (Customer, Vendor only) */
+.auth-care-role-switch-register {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* ✅ Login page: 3 columns (Customer, Vendor, Admin) */
+.auth-care-role-switch-login {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .auth-care-role-btn {

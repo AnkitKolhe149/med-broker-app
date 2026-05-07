@@ -60,6 +60,7 @@ router.patch('/users/:id/status', adminController.updateUserStatus);
 router.patch('/users/:id/moderation', adminController.updateUserModeration);
 router.patch('/users/:id/role', adminController.updateUserRole);
 router.get('/admin/accounts', adminController.getAdminAccounts);
+router.post('/users', adminController.createAdminUser);  // ✅ Create new admin user
 
 router.patch('/catalog/:id/status', adminController.updateMedicineStatus);
 router.patch('/catalog/:id/admin-override', adminController.adminOverrideMedicine);

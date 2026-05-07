@@ -65,10 +65,20 @@ const AdminDashboard = () => {
 
         const handleSettingsUpdate = () => {
             fetchStats();
+            fetchPayouts();
+        };
+
+        const handleCurrencyChanged = () => {
+            fetchPayouts();
         };
 
         window.addEventListener('settingsUpdated', handleSettingsUpdate);
-        return () => window.removeEventListener('settingsUpdated', handleSettingsUpdate);
+        window.addEventListener('currencyChanged', handleCurrencyChanged);
+
+        return () => {
+            window.removeEventListener('settingsUpdated', handleSettingsUpdate);
+            window.removeEventListener('currencyChanged', handleCurrencyChanged);
+        };
     }, [startDate, endDate]);
 
     const fetchStats = async () => {

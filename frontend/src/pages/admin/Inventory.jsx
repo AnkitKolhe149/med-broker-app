@@ -65,27 +65,30 @@ const AdminInventory = () => {
               <th>Reorder</th>
               <th>Selling / MRP</th>
               <th>Batches</th>
-              <th>State</th>
+              <th>Status</th>
+              <th>Verification</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 ? (
-              <tr><td colSpan="8" className="admin-muted">No inventory records found.</td></tr>
+              <tr><td colSpan="9" className="admin-muted">No inventory records found.</td></tr>
             ) : items.map((item) => {
               const lowStock = item.quantity <= item.reorderLevel;
+              const vendorVerification = item.vendor?.verificationStatus || 'PENDING';
               return (
                 <tr key={item.id}>
                   <td>
                     <strong>{item.medicine?.name || 'Unknown'}</strong>
-                    <div className="admin-muted">{item.medicine?.sku || 'No SKU'} · {item.medicine?.category || 'Uncategorized'}</div>
+                    <div className="admin-muted" style={{ wordBreak: 'break-word' }}>{item.medicine?.sku || 'No SKU'} · {item.medicine?.category || 'Uncategorized'}</div>
                   </td>
-                  <td>{item.vendor?.companyName || 'Unknown vendor'}</td>
+                  <td style={{ wordBreak: 'break-word' }}>{item.vendor?.companyName || 'Unknown vendor'}</td>
                   <td><span className={`admin-pill ${lowStock ? 'failed' : 'succeeded'}`}>{item.quantity}</span></td>
                   <td>{item.reservedQuantity}</td>
                   <td>{item.reorderLevel}</td>
                   <td>{formatCurrency((item.sellingPriceCents || 0) / 100)} / {formatCurrency((item.mrpCents || 0) / 100)}</td>
                   <td>{item._count?.batches || 0}</td>
-                  <td><span className={`admin-pill ${item.isActive ? 'succeeded' : 'failed'}`}>{item.isActive ? 'ACTIVE' : 'INACTIVE'}</span></td>
+                  <td><span className={`admin-pill ${item.isActive ? 'succeeded' : 'failed'}`} style={{ wordBreak: 'normal' }}>{item.isActive ? 'ACTIVE' : 'INACTIVE'}</span></td>
+                  <td><span className={`admin-pill ${vendorVerification === 'VERIFIED' ? 'succeeded' : vendorVerification === 'REJECTED' ? 'failed' : ''}`} style={{ wordBreak: 'normal' }}>{vendorVerification}</span></td>
                 </tr>
               );
             })}

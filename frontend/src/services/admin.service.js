@@ -275,6 +275,12 @@ const adminService = {
     const response = await axios.delete(`${API_URL}/admin/notifications/clear-all`, getAuthHeaders());
     return response.data;
   },
+
+  // ✅ FIX: Create new admin user
+  createAdminUser: async (userData) => {
+    const response = await axios.post(`${API_URL}/admin/users`, userData, getAuthHeaders());
+    return response.data;
+  },
 };
 
 export default adminService;

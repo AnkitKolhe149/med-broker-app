@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import adminService from '../../services/admin.service';
-import { Save, CheckCircle, AlertCircle } from 'lucide-react';
-import { getCurrencySymbol } from '../../utils/currency';
+import { Save, CheckCircle, AlertCircle, Globe, DollarSign, Lock, Bell, Zap, Eye, EyeOff, Copy } from 'lucide-react';
+import { getCurrencySymbol, setUserCurrencyPreference } from '../../utils/currency';
 import './AdminOperations.css';
+import './Settings.css';
 
 const Settings = () => {
   const [originalSettings, setOriginalSettings] = useState({});
@@ -11,17 +12,16 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [rawConfig, setRawConfig] = useState([]);
+  const [copiedKey, setCopiedKey] = useState(null);
 
   useEffect(() => {
     loadSettings();
   }, []);
 
-  // Fetch settings from the database and hydrate local state
   const loadSettings = async () => {
     try {
       setLoading(true);
       const data = await adminService.getSettingsOverview();
-      // Safely extract the raw array depending on backend response structure
       const raw = data?.data?.raw || data?.raw || [];
       setRawConfig(raw);
 
@@ -36,16 +36,13 @@ const Settings = () => {
     }
   };
 
-  // Trigger auto-hiding toast notifications for user feedback
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Handle standard input changes with real-world clamping for percentages
   const handleInputChange = (key, value, type) => {
     let finalValue = value;
-    // Real-world validation: Prevent negative numbers and cap at 100%
     if (type === 'PERCENTAGE' || key.includes('PERCENT')) {
       const num = parseFloat(value);
       if (num < 0) finalValue = '0';
@@ -54,13 +51,11 @@ const Settings = () => {
     setDraftSettings(prev => ({ ...prev, [key]: finalValue }));
   };
 
-  // Handle custom boolean toggle switches
   const handleToggle = (key, currentValue) => {
     const newValue = currentValue === 'true' ? 'false' : 'true';
     setDraftSettings(prev => ({ ...prev, [key]: newValue }));
   };
 
-  // Calculate dirty fields and send PATCH request to backend
   const onSave = async () => {
     const dirty = {};
     Object.keys(draftSettings).forEach(key => {
@@ -78,10 +73,29 @@ const Settings = () => {
       setSaving(true);
       await adminService.updateSettings(dirty);
       setOriginalSettings(draftSettings);
-      showToast('System Settings Synced Successfully!');
+      showToast('✅ System Settings Updated Successfully!');
 
-      // Trigger dashboard update event instantly
       window.dispatchEvent(new Event('settingsUpdated'));
+
+      // ✅ FIX: Update currency both in localStorage and dispatch event
+      if (dirty.PLATFORM_CURRENCY) {
+        const newCurrency = dirty.PLATFORM_CURRENCY;
+        localStorage.setItem('platformCurrency', newCurrency);
+        setUserCurrencyPreference(newCurrency);
+
+        // Update CurrencyContext immediately via event
+        window.dispatchEvent(new CustomEvent('currencyChanged', {
+          detail: { currency: newCurrency }
+        }));
+
+        // Dispatch settingsUpdated event to ensure all components are notified
+        window.dispatchEvent(new Event('settingsUpdated'));
+
+        // Reload page to ensure all components reflect the change
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      }
     } catch (error) {
       showToast(error.response?.data?.message || 'Error saving settings', 'error');
     } finally {
@@ -89,9 +103,14 @@ const Settings = () => {
     }
   };
 
+  const copyToClipboard = (key) => {
+    navigator.clipboard.writeText(draftSettings[key]);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
   if (loading) return <div className="admin-loading"><div className="spinner"></div>Loading settings...</div>;
 
-  // Group by category
   const categories = {};
   rawConfig.forEach(s => {
     const cat = s.category || 'General';
@@ -101,112 +120,165 @@ const Settings = () => {
 
   const getCategoryIcon = (cat) => {
     const lower = cat.toLowerCase();
-    if (lower.includes('pricing') || lower.includes('revenue')) return '💰';
-    if (lower.includes('automation')) return '🤖';
-    if (lower.includes('default') || lower.includes('localization')) return '⚙️';
-    return '🔧';
+    if (lower.includes('pricing') || lower.includes('revenue')) return <DollarSign size={24} />;
+    if (lower.includes('automation')) return <Zap size={24} />;
+    if (lower.includes('default') || lower.includes('localization')) return <Globe size={24} />;
+    if (lower.includes('security')) return <Lock size={24} />;
+    if (lower.includes('notification')) return <Bell size={24} />;
+    return <Zap size={24} />;
+  };
+
+  const getCategoryColor = (cat) => {
+    const lower = cat.toLowerCase();
+    if (lower.includes('pricing')) return { bg: '#fef3c7', border: '#fbbf24', text: '#92400e' };
+    if (lower.includes('automation')) return { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' };
+    if (lower.includes('default')) return { bg: '#dcfce7', border: '#22c55e', text: '#166534' };
+    if (lower.includes('security')) return { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' };
+    return { bg: '#f3f4f6', border: '#d1d5db', text: '#374151' };
   };
 
   return (
-    <section className="admin-ops-page">
-      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1>System Settings</h1>
-          <p>Global defaults and platform controls currently applied in the system.</p>
+    <section className="settings-page">
+      <header className="settings-header">
+        <div className="settings-title">
+          <h1>⚙️ Platform Settings</h1>
+          <p>Manage system configuration, currencies, and platform-wide defaults</p>
         </div>
         <button
-          className="admin-save-btn"
+          className="settings-save-btn"
           onClick={onSave}
           disabled={saving}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#157347', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, opacity: saving ? 0.7 : 1 }}
         >
-          <Save size={16} />
-          {saving ? 'Saving...' : 'Save & Sync'}
+          <Save size={18} />
+          <span>{saving ? 'Saving...' : 'Save All Changes'}</span>
         </button>
       </header>
 
       {toast && (
-        <div style={{ padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', background: toast.type === 'error' ? '#fef2f2' : toast.type === 'info' ? '#f0f9ff' : '#ecfdf5', color: toast.type === 'error' ? '#991b1b' : toast.type === 'info' ? '#075985' : '#065f46', display: 'flex', alignItems: 'center', gap: '8px', border: `1px solid ${toast.type === 'error' ? '#fecaca' : '#a7f3d0'}` }}>
+        <div className={`settings-toast settings-toast-${toast.type}`}>
           {toast.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle size={18} />}
           <strong>{toast.message}</strong>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {rawConfig && rawConfig.length > 0 ? (
-          Object.entries(categories).map(([category, settingsList]) => (
-            <div key={category} className="admin-dash-card" style={{ padding: '24px' }}>
-              <h3 style={{ borderBottom: '1px solid #eaeaea', paddingBottom: '12px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.25rem', color: '#1f2937' }}>
-                <span>{getCategoryIcon(category)}</span> {category}
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
-                {settingsList.map(setting => {
-                  const value = draftSettings[setting.key] !== undefined ? draftSettings[setting.key] : '';
-                  const isBoolean = setting.type === 'BOOLEAN' || setting.key.includes('AUTO_');
-                  const isEnum = setting.key === 'PLATFORM_LOCALE' || setting.key === 'PLATFORM_CURRENCY';
-                  const isNumber = setting.type === 'NUMBER' || setting.key.includes('PERCENT');
+      {rawConfig && rawConfig.length > 0 ? (
+        <div className="settings-grid">
+          {Object.entries(categories).map(([category, settingsList]) => {
+            const colors = getCategoryColor(category);
+            return (
+              <div key={category} className="settings-category-card">
+                <div className="settings-category-header" style={{ borderLeftColor: colors.border }}>
+                  <div className="settings-category-icon" style={{ background: colors.bg, color: colors.text }}>
+                    {getCategoryIcon(category)}
+                  </div>
+                  <div className="settings-category-title">
+                    <h2>{category}</h2>
+                    <p>{settingsList.length} setting{settingsList.length !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
 
-                  return (
-                    <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151' }}>
-                        {setting.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </label>
+                <div className="settings-fields">
+                  {settingsList.map(setting => {
+                    const value = draftSettings[setting.key] !== undefined ? draftSettings[setting.key] : '';
+                    const isBoolean = setting.type === 'BOOLEAN' || setting.key.includes('AUTO_');
+                    const isEnum = setting.key === 'PLATFORM_LOCALE' || setting.key === 'PLATFORM_CURRENCY';
+                    const isNumber = setting.type === 'NUMBER' || setting.key.includes('PERCENT');
+                    const isDirty = draftSettings[setting.key] !== originalSettings[setting.key];
 
-                      {isBoolean ? (
-                        <div
-                          onClick={() => setting.isEditable && handleToggle(setting.key, value)}
-                          style={{ width: '48px', height: '26px', background: value === 'true' ? '#157347' : '#d1d5db', borderRadius: '13px', position: 'relative', cursor: setting.isEditable ? 'pointer' : 'not-allowed', transition: 'background 0.3s' }}
-                        >
-                          <div style={{ width: '22px', height: '22px', background: 'white', borderRadius: '50%', position: 'absolute', top: '2px', left: value === 'true' ? '24px' : '2px', transition: 'left 0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-                        </div>
-                      ) : isEnum ? (
-                        <select
-                          value={value}
-                          onChange={(e) => handleInputChange(setting.key, e.target.value)}
-                          disabled={!setting.isEditable}
-                          style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d1d5db', background: setting.isEditable ? 'white' : '#f3f4f6', outline: 'none', color: '#111827', cursor: setting.isEditable ? 'pointer' : 'not-allowed' }}
-                        >
-                          {setting.key === 'PLATFORM_LOCALE' ? (
-                            <>
-                              <option value="en-IN">en-IN (India)</option>
-                              <option value="en-US">en-US (United States)</option>
-                            </>
-                          ) : setting.key === 'PLATFORM_CURRENCY' ? (
-                            <>
-                              <option value="INR">INR ({getCurrencySymbol('INR')})</option>
-                              <option value="USD">USD ({getCurrencySymbol('USD')})</option>
-                            </>
-                          ) : (
-                            <option value={value}>{value}</option>
+                    return (
+                      <div key={setting.key} className={`settings-field ${isDirty ? 'dirty' : ''}`}>
+                        <div className="settings-field-header">
+                          <label className="settings-field-label">
+                            {setting.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {isDirty && <span className="settings-dirty-badge">●</span>}
+                          </label>
+                          {setting.description && (
+                            <small className="settings-field-description">{setting.description}</small>
                           )}
-                        </select>
-                      ) : (
-                        <input
-                          type={isNumber ? 'number' : 'text'}
-                          value={value}
-                          onChange={(e) => handleInputChange(setting.key, e.target.value, setting.type || (isNumber ? 'PERCENTAGE' : 'STRING'))}
-                          disabled={!setting.isEditable}
-                          style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d1d5db', background: setting.isEditable ? 'white' : '#f3f4f6', outline: 'none', color: '#111827' }}
-                          step={isNumber ? 'any' : undefined}
-                          min={isNumber ? 0 : undefined}
-                          max={isNumber && setting.key.includes('PERCENT') ? 100 : undefined}
-                        />
-                      )}
-                      {setting.description && <small style={{ color: '#6b7280', fontSize: '0.78rem', lineHeight: '1.4' }}>{setting.description}</small>}
-                    </div>
-                  );
-                })}
+                        </div>
+
+                        <div className="settings-field-control">
+                          {isBoolean ? (
+                            <div className="settings-toggle-wrapper">
+                              <div
+                                className={`settings-toggle ${value === 'true' ? 'active' : ''}`}
+                                onClick={() => setting.isEditable && handleToggle(setting.key, value)}
+                                style={{ cursor: setting.isEditable ? 'pointer' : 'not-allowed', opacity: setting.isEditable ? 1 : 0.5 }}
+                              >
+                                <div className="settings-toggle-thumb" />
+                              </div>
+                              <span className="settings-toggle-label">{value === 'true' ? 'Enabled' : 'Disabled'}</span>
+                            </div>
+                          ) : isEnum ? (
+                            <div className="settings-select-wrapper">
+                              <select
+                                value={value}
+                                onChange={(e) => handleInputChange(setting.key, e.target.value)}
+                                disabled={!setting.isEditable}
+                                className="settings-select"
+                              >
+                                {setting.key === 'PLATFORM_LOCALE' ? (
+                                  <>
+                                    <option value="en-IN">🇮🇳 en-IN (India)</option>
+                                    <option value="en-US">🇺🇸 en-US (United States)</option>
+                                  </>
+                                ) : setting.key === 'PLATFORM_CURRENCY' ? (
+                                  <>
+                                    <option value="INR">🇮🇳 INR ({getCurrencySymbol('INR')})</option>
+                                    <option value="USD">🇺🇸 USD ({getCurrencySymbol('USD')})</option>
+                                    <option value="EUR">🇪🇺 EUR ({getCurrencySymbol('EUR')})</option>
+                                    <option value="GBP">🇬🇧 GBP ({getCurrencySymbol('GBP')})</option>
+                                    <option value="JPY">🇯🇵 JPY ({getCurrencySymbol('JPY')})</option>
+                                    <option value="AUD">🇦🇺 AUD ({getCurrencySymbol('AUD')})</option>
+                                    <option value="CAD">🇨🇦 CAD ({getCurrencySymbol('CAD')})</option>
+                                  </>
+                                ) : (
+                                  <option value={value}>{value}</option>
+                                )}
+                              </select>
+                              <Eye size={16} className="settings-select-icon" />
+                            </div>
+                          ) : (
+                            <div className="settings-input-wrapper">
+                              <input
+                                type={isNumber ? 'number' : 'text'}
+                                value={value}
+                                onChange={(e) => handleInputChange(setting.key, e.target.value, setting.type || (isNumber ? 'PERCENTAGE' : 'STRING'))}
+                                disabled={!setting.isEditable}
+                                className="settings-input"
+                                step={isNumber ? 'any' : undefined}
+                                min={isNumber ? 0 : undefined}
+                                max={isNumber && setting.key.includes('PERCENT') ? 100 : undefined}
+                              />
+                              {setting.isEditable && (
+                                <button
+                                  className="settings-copy-btn"
+                                  onClick={() => copyToClipboard(setting.key)}
+                                  title="Copy value"
+                                >
+                                  {copiedKey === setting.key ? <CheckCircle size={16} /> : <Copy size={16} />}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280', background: '#fff', borderRadius: '12px', border: '1px dashed #d1d5db' }}>
-            <p>No configuration settings found in the database.</p>
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="settings-empty">
+          <div className="settings-empty-icon">⚙️</div>
+          <p>No configuration settings found in the database.</p>
+        </div>
+      )}
     </section>
   );
 };
 
 export default Settings;
+

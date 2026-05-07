@@ -331,6 +331,39 @@ function VendorCommunication() {
 						onChange={(e) => setNewMessage(e.target.value)}
 						onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
 					/>
+					<input
+						id="fileInput"
+						type="file"
+						style={{ display: 'none' }}
+						onChange={(e) => {
+							const file = e.target.files?.[0];
+							if (file) {
+								// Add file message
+								const nextMessage = {
+									id: messages.length + 1,
+									sender: 'vendor',
+									text: file.name,
+									timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+									date: new Date().toLocaleDateString(),
+									file: true
+								};
+								const nextMessagesByConversation = {
+									...messagesByConversation,
+									[selectedConversation.id]: [...messages, nextMessage]
+								};
+								setMessagesByConversation(nextMessagesByConversation);
+								showSuccess(`File "${file.name}" attached`);
+								e.target.value = ''; // Reset input
+							}
+						}}
+					/>
+					<button
+						className={styles.attachButton}
+						onClick={() => document.getElementById('fileInput')?.click()}
+						title="Attach file"
+					>
+						<Paperclip size={18} />
+					</button>
 					<button
 						className={styles.sendButton}
 						onClick={sendMessage}

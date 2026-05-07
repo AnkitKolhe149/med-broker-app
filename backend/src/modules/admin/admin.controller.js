@@ -402,5 +402,20 @@ module.exports = {
       const result = await adminService.clearAllNotifications();
       res.json({ success: true, count: result.count });
     } catch (error) { next(error); }
+  },
+
+  // ✅ Create new admin user (admin-only operation)
+  createAdminUser: async (req, res, next) => {
+    try {
+      const { email, password, name } = req.body;
+      const newAdmin = await adminService.createAdminUser({ email, password, name });
+      res.status(201).json({ 
+        success: true, 
+        message: 'Admin user created successfully',
+        data: newAdmin 
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 };

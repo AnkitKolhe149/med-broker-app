@@ -110,8 +110,22 @@ export const CurrencyProvider = ({ children }) => {
 			setCurrencyState(getUserCurrencyPreference());
 		};
 
+		// ✅ FIX: Listen for currency change events from admin settings
+		const handleCurrencyChanged = (event) => {
+			const newCurrency = event?.detail?.currency;
+			if (newCurrency) {
+				setCurrencyState(String(newCurrency).toUpperCase());
+				setUserCurrencyPreference(String(newCurrency).toUpperCase());
+			}
+		};
+
 		window.addEventListener('mediq:auth-changed', handleAuthChanged);
-		return () => window.removeEventListener('mediq:auth-changed', handleAuthChanged);
+		window.addEventListener('currencyChanged', handleCurrencyChanged);
+		
+		return () => {
+			window.removeEventListener('mediq:auth-changed', handleAuthChanged);
+			window.removeEventListener('currencyChanged', handleCurrencyChanged);
+		};
 	}, []);
 
 	// Try to detect currency from stored user data on initial load

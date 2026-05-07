@@ -211,7 +211,7 @@ function VendorAnalytics() {
 								<td className={styles.tableCell}>
 									<button 
 										className={styles.detailsButton}
-										onClick={() => navigate('/vendor/products', { state: { selectedMedicineId: product.id } })}
+										onClick={() => navigate('/vendor/medicine-manager', { state: { highlightMedicineId: product.id } })}
 									>
 										View Details
 									</button>

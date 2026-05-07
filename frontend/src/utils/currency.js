@@ -13,8 +13,8 @@ export const CURRENCIES = {
 	AUD: { symbol: 'A$', name: 'Australian Dollar', country: 'Australia' },
 	CAD: { symbol: 'C$', name: 'Canadian Dollar', country: 'Canada' },
 	SGD: { symbol: 'S$', name: 'Singapore Dollar', country: 'Singapore' },
-	AED: { symbol: 'د.إ', name: 'UAE Dirham', country: 'UAE' },
-	SAR: { symbol: 'ر.س', name: 'Saudi Riyal', country: 'Saudi Arabia' },
+	AED: { symbol: 'AED', name: 'UAE Dirham', country: 'UAE' },
+	SAR: { symbol: 'SAR', name: 'Saudi Riyal', country: 'Saudi Arabia' },
 	CNY: { symbol: '¥', name: 'Chinese Yuan', country: 'China' },
 	BRL: { symbol: 'R$', name: 'Brazilian Real', country: 'Brazil' },
 	ZAR: { symbol: 'R', name: 'South African Rand', country: 'South Africa' },
@@ -146,7 +146,7 @@ export const getCurrencyName = (currencyCode) => {
 };
 
 // Format amount with currency symbol
-export const formatCurrency = (amount, currencyCode = 'INR', showSymbol = true) => {
+export const formatCurrency = (amount, currencyCode = getUserCurrencyPreference() || 'USD', showSymbol = true) => {
 	if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
 		return showSymbol ? `${getCurrencySymbol(currencyCode)}0.00` : '0.00';
 	}
@@ -343,8 +343,18 @@ export const getUserCurrencyPreference = () => {
 			return saved;
 		}
 
+		const savedPreference = localStorage.getItem('userCurrencyPreference');
+		if (savedPreference) {
+			return savedPreference;
+		}
+
 		if (userPreferredCurrency) {
 			return String(userPreferredCurrency).toUpperCase();
+		}
+
+		const platformCurrency = localStorage.getItem('platformCurrency');
+		if (platformCurrency) {
+			return platformCurrency;
 		}
 
 		// Keep the legacy global preference only for anonymous sessions.

@@ -10,7 +10,7 @@ function Register() {
 		mobile: '',
 		password: '',
 		confirmPassword: '',
-		role: 'CUSTOMER'
+		role: 'CUSTOMER'  // ✅ Default to CUSTOMER only (ADMIN can only be added by existing admins)
 	});
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -26,6 +26,11 @@ function Register() {
 	};
 
 	const handleRoleSelect = (role) => {
+		// ✅ PREVENT ADMIN registration - only allow CUSTOMER and VENDOR
+		if (role === 'ADMIN') {
+			setError('Admin accounts can only be created by existing administrators');
+			return;
+		}
 		setFormData({
 			...formData,
 			role
@@ -59,13 +64,11 @@ function Register() {
 				role: formData.role
 			});
 
-			// Redirect to role-specific main page after registration
+			// ✅ Redirect to role-specific main page after registration (ADMIN cannot register publicly)
 			if (result.user.role === 'VENDOR') {
 				navigate('/vendor/dashboard');
 			} else if (result.user.role === 'CUSTOMER') {
 				navigate('/customer/dashboard');
-			} else if (result.user.role === 'ADMIN') {
-				navigate('/admin/dashboard');
 			} else {
 				navigate('/');
 			}
@@ -93,7 +96,7 @@ function Register() {
 
 						<div>
 							<label className="label">Register as</label>
-							<div className="auth-care-role-switch" role="group" aria-label="Select registration role">
+						<div className="auth-care-role-switch auth-care-role-switch-register" role="group" aria-label="Select registration role">
 								<button
 									type="button"
 									className={formData.role === 'CUSTOMER' ? 'auth-care-role-btn active' : 'auth-care-role-btn'}
@@ -108,13 +111,7 @@ function Register() {
 								>
 									Vendor
 								</button>
-								<button
-									type="button"
-									className={formData.role === 'ADMIN' ? 'auth-care-role-btn active' : 'auth-care-role-btn'}
-									onClick={() => handleRoleSelect('ADMIN')}
-								>
-									Admin
-								</button>
+								{/* ✅ ADMIN role disabled from public registration - only existing admins can add new admins */}
 							</div>
 						</div>
 

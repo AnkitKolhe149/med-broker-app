@@ -14,6 +14,8 @@ const AdminUsers = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [pageSize, setPageSize] = useState(25);
 	const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, totalPages: 1 });
+	const [showAddAdmin, setShowAddAdmin] = useState(false);
+	const [newAdmin, setNewAdmin] = useState({ email: '', password: '', name: '' });
 
 	const loadUsers = async () => {
 		try {
@@ -79,6 +81,28 @@ const AdminUsers = () => {
 		}
 	};
 
+	// ✅ FIX: Add new admin handler
+	const handleAddAdmin = async () => {
+		if (!newAdmin.email || !newAdmin.password || !newAdmin.name) {
+			alert('Please fill in all fields');
+			return;
+		}
+
+		try {
+			await adminService.createAdminUser({
+				email: newAdmin.email,
+				password: newAdmin.password,
+				name: newAdmin.name
+			});
+			alert('Admin user created successfully');
+			setNewAdmin({ email: '', password: '', name: '' });
+			setShowAddAdmin(false);
+			loadUsers();
+		} catch (error) {
+			alert(error?.response?.data?.message || 'Failed to create admin user');
+		}
+	};
+
 	if (loading) return <div className="admin-loading"><div className="spinner"></div>Loading users...</div>;
 	if (error) return <div className="admin-error">{error}</div>;
 
@@ -89,7 +113,81 @@ const AdminUsers = () => {
 					<h1>User Management</h1>
 					<p>Monitor all customer, vendor, and admin accounts with lifecycle visibility.</p>
 				</div>
+				<button 
+					className="admin-save-btn"
+					onClick={() => setShowAddAdmin(!showAddAdmin)}
+					style={{ 
+						background: showAddAdmin ? '#dc2626' : '#157347', 
+						color: 'white', 
+						border: 'none', 
+						padding: '12px 20px', 
+						borderRadius: '8px', 
+						cursor: 'pointer',
+						fontSize: '16px',
+						fontWeight: '600',
+						transition: 'all 0.2s ease',
+						boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+						transform: 'scale(1)',
+						minWidth: '140px'
+					}}
+					onMouseEnter={(e) => {
+						e.target.style.transform = 'scale(1.05)';
+						e.target.style.boxShadow = '0 6px 16px rgba(0,0,0,0.25)';
+					}}
+					onMouseLeave={(e) => {
+						e.target.style.transform = 'scale(1)';
+						e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+					}}
+				>
+					{showAddAdmin ? '✕ Close' : '+ Add Admin'}
+				</button>
 			</header>
+
+			{/* Add Admin Form */}
+			{showAddAdmin && (
+				<div className="admin-ops-form" style={{ background: '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #e5e7eb' }}>
+					<h3 style={{ marginBottom: '15px' }}>Register New Admin User</h3>
+					<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
+						<input
+							type="text"
+							placeholder="Full Name"
+							value={newAdmin.name}
+							onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
+							style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }}
+						/>
+						<input
+							type="email"
+							placeholder="Email Address"
+							value={newAdmin.email}
+							onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+							style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }}
+						/>
+						<input
+							type="password"
+							placeholder="Password"
+							value={newAdmin.password}
+							onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+							style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none' }}
+						/>
+					</div>
+					<div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+						<button
+							className="admin-save-btn"
+							onClick={handleAddAdmin}
+							style={{ background: '#157347', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}
+						>
+							Create Admin
+						</button>
+						<button
+							className="admin-cancel-btn"
+							onClick={() => setShowAddAdmin(false)}
+							style={{ background: '#e5e7eb', color: '#374151', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}
+						>
+							Cancel
+						</button>
+					</div>
+				</div>
+			)}
 
 			<div className="admin-ops-summary">
 				<div
