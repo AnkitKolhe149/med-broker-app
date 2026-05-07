@@ -250,87 +250,87 @@ function App() {
                     
                     {/* Admin routes (require authentication and admin role) */}
                     <Route path="/admin" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminDashboard /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/dashboard" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminDashboard /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/vendors" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminVendors /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/users" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminUsers /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/orders" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminOrders /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/payouts" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminPayouts /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/reports" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminReports /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/catalog" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminCatalog /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/inventory" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminInventory /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/prescriptions" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminPrescriptions /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/returns-refunds" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminReturnsRefunds /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/support-tickets" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminSupportTickets /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/disputes" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminDisputes /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/compliance" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminCompliance /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/notifications" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminNotifications /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/integrations" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminIntegrations /></AdminLayout>
                         </AuthGuard>
                     } />
                     <Route path="/admin/settings" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={true}>
+                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
                             <AdminLayout><AdminSettings /></AdminLayout>
                         </AuthGuard>
                     } />

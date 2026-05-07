@@ -250,7 +250,7 @@ function VendorMedicineManager() {
 		}
 	};
 
-	const handleSaveStock = async () => {
+	const handleSaveProduct = async () => {
 		if (!selectedMedicine) return;
 
 		const normalizedQuantity = Number.parseInt(stockDraft, 10);
@@ -259,26 +259,50 @@ function VendorMedicineManager() {
 			return;
 		}
 
+		if (selectedMedicine.wholesalePrice && Number(selectedMedicine.wholesalePrice) > Number(selectedMedicine.price)) {
+			showError('❌ B2B Standard Price cannot be higher than Retail Price.');
+			return;
+		}
+
 		try {
 			setSavingStock(true);
+			const retailPriceCents = Math.round(toBaseAmount(Number(selectedMedicine.price)) * 100);
+			const wholesalePriceCents = selectedMedicine.wholesalePrice ? Math.round(toBaseAmount(Number(selectedMedicine.wholesalePrice)) * 100) : retailPriceCents;
+			
 			const updated = await inventoryService.updateInventoryItem(selectedMedicine.id, {
-				quantity: normalizedQuantity
+				quantity: normalizedQuantity,
+				name: selectedMedicine.name.trim(),
+				description: selectedMedicine.description?.trim() || null,
+				priceCents: retailPriceCents,
+				wholesalePriceCents
 			});
 
 			setMedicines((prev) => prev.map((m) => (
 				m.id === selectedMedicine.id
-					? { ...m, stock: updated.quantity }
+					? { 
+							...m, 
+							stock: updated.quantity,
+							name: updated.medicine?.name || selectedMedicine.name,
+							description: updated.medicine?.description || selectedMedicine.description,
+							price: Number(convert((updated.medicine?.priceCents || retailPriceCents) / 100, 'INR').toFixed(2)),
+							wholesalePrice: Number(convert((updated.medicine?.wholesalePriceCents || wholesalePriceCents) / 100, 'INR').toFixed(2))
+						}
 					: m
 			)));
 
 			setSelectedMedicine((prev) => (
-				prev ? { ...prev, stock: updated.quantity } : prev
+				prev ? { 
+					...prev, 
+					stock: updated.quantity,
+					price: Number(convert((updated.medicine?.priceCents || retailPriceCents) / 100, 'INR').toFixed(2)),
+					wholesalePrice: Number(convert((updated.medicine?.wholesalePriceCents || wholesalePriceCents) / 100, 'INR').toFixed(2))
+				} : prev
 			));
 			setStockDraft(String(updated.quantity));
-			showSuccess('Stock updated successfully');
+			showSuccess('Product updated successfully');
 		} catch (error) {
-			console.error('Failed to update stock', error);
-			showError(error?.response?.data?.message || 'Failed to update stock');
+			console.error('Failed to update product', error);
+			showError(error?.response?.data?.message || 'Failed to update product');
 		} finally {
 			setSavingStock(false);
 		}
@@ -529,11 +553,11 @@ function VendorMedicineManager() {
 						<div className={styles.formGrid} style={{ marginBottom: '1.5rem' }}>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Product Name</label>
-								<input type="text" className={styles.input} value={selectedMedicine.name} disabled />
+								<input type="text" className={styles.input} value={selectedMedicine.name} onChange={(e) => setSelectedMedicine({...selectedMedicine, name: e.target.value})} />
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Description</label>
-								<textarea className={styles.textarea} value={selectedMedicine.description || ''} disabled />
+								<textarea className={styles.textarea} value={selectedMedicine.description || ''} onChange={(e) => setSelectedMedicine({...selectedMedicine, description: e.target.value})} />
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>Stock</label>
@@ -546,8 +570,12 @@ function VendorMedicineManager() {
 								/>
 							</div>
 							<div className={styles.formGroup}>
-								<label className={styles.label}>Price</label>
-								<input type="number" className={styles.input} value={selectedMedicine.price} disabled />
+								<label className={styles.label}>Retail Price ({currencySymbol})</label>
+								<input type="number" step="0.01" className={styles.input} value={selectedMedicine.price} onChange={(e) => setSelectedMedicine({...selectedMedicine, price: e.target.value})} />
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Wholesale Price ({currencySymbol})</label>
+								<input type="number" step="0.01" className={styles.input} value={selectedMedicine.wholesalePrice} onChange={(e) => setSelectedMedicine({...selectedMedicine, wholesalePrice: e.target.value})} />
 							</div>
 						</div>
 
@@ -605,10 +633,10 @@ function VendorMedicineManager() {
 						<div className={styles.actionButtons}>
 							<button
 								className={`${styles.button} ${styles.primaryButton}`}
-								onClick={handleSaveStock}
+								onClick={handleSaveProduct}
 								disabled={savingStock}
 							>
-								{savingStock ? 'Saving...' : 'Save Stock'}
+								{savingStock ? 'Saving...' : 'Save Product'}
 							</button>
 							<button className={`${styles.button} ${styles.dangerButton}`} onClick={() => {
 								deleteMedicine(selectedMedicine.id);

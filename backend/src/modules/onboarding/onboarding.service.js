@@ -130,7 +130,7 @@ module.exports = {
             bankAccountDetails: bankAccountDetails || {},
             contactPersonName,
             contactNumber,
-            verificationStatus: 'VERIFIED'
+            verificationStatus: 'PENDING'
           }
         });
 

@@ -1,4 +1,4 @@
-﻿const { prisma } = require('../../database/prisma');
+const { prisma } = require('../../database/prisma');
 const {
   ValidationError,
   NotFoundError,
@@ -102,10 +102,10 @@ module.exports = {
   },
 
   /**
-   * Update inventory item (quantity only for now)
+   * Update inventory item (quantity and optionally medicine details)
    */
   updateInventoryItem: async (userContext, inventoryId, updateData) => {
-    const { quantity } = updateData;
+    const { quantity, name, description, priceCents, wholesalePriceCents } = updateData;
 
     // Validate quantity
     if (quantity !== undefined) {
@@ -132,15 +132,44 @@ module.exports = {
       throw new ForbiddenError('You can only update your own inventory items');
     }
 
-    // Update inventory
-    const updatedItem = await prisma.inventory.update({
-      where: { id: inventoryId },
-      data: {
-        quantity: quantity !== undefined ? quantity : inventoryItem.quantity
-      },
-      include: {
-        medicine: true
+    const isUpdatingMedicine = name || description || priceCents !== undefined || wholesalePriceCents !== undefined;
+
+    if (isUpdatingMedicine) {
+      const updatedPriceCents = priceCents !== undefined ? priceCents : inventoryItem.medicine.priceCents;
+      const updatedWholesaleCents = wholesalePriceCents !== undefined ? wholesalePriceCents : inventoryItem.medicine.wholesalePriceCents;
+
+      try {
+        validatePricingLogic({
+          priceCents: updatedPriceCents,
+          wholesalePriceCents: updatedWholesaleCents
+        });
+      } catch (error) {
+        throw new ValidationError('Pricing validation failed. ' + error.message);
       }
+    }
+
+    const updatedItem = await prisma.$transaction(async (tx) => {
+      if (isUpdatingMedicine) {
+        await tx.medicine.update({
+          where: { id: inventoryItem.medicine.id },
+          data: {
+            name: name !== undefined ? name.trim() : undefined,
+            description: description !== undefined ? description?.trim() : undefined,
+            priceCents: priceCents !== undefined ? priceCents : undefined,
+            wholesalePriceCents: wholesalePriceCents !== undefined ? wholesalePriceCents : undefined
+          }
+        });
+      }
+
+      return tx.inventory.update({
+        where: { id: inventoryId },
+        data: {
+          quantity: quantity !== undefined ? quantity : inventoryItem.quantity
+        },
+        include: {
+          medicine: true
+        }
+      });
     });
 
     return updatedItem;

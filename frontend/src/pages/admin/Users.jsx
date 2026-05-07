@@ -42,7 +42,7 @@ const AdminUsers = () => {
 	useEffect(() => {
 		adminService.getUsersOverview({ page: 1, limit: 1 })
 			.then(res => setGlobalSummary(res?.summary || { totalUsers: 0, roleCounts: {} }))
-			.catch(() => {});
+			.catch(() => { });
 	}, []);
 
 	useEffect(() => {

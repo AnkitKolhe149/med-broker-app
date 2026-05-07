@@ -72,7 +72,7 @@ module.exports = {
   },
 
   updateVendorStatus: async (vendorId, status) => {
-    const validStatuses = ['VERIFIED', 'REJECTED'];
+    const validStatuses = ['VERIFIED', 'REJECTED', 'PENDING'];
     if (!validStatuses.includes(status)) {
       throw new ConflictError('Invalid verification status');
     }
@@ -544,7 +544,7 @@ module.exports = {
           lastLoginAt: true,
           createdAt: true,
           customer: {
-            select: { buyerType: true, country: true, city: true }
+            select: { fullName: true, buyerType: true, country: true, city: true }
           },
           vendor: {
             select: { companyName: true, contactPersonName: true, country: true, verificationStatus: true }
