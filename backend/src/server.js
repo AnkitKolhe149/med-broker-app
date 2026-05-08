@@ -16,7 +16,7 @@ const port = process.env.PORT || 4005; // Trigger Nodemon Reset Final
 app.listen(port, '::', async () => {
   console.log(`API server listening on port ${port}`);
   
-  // ✅ Initialize system settings on app startup
+  //  Initialize system settings on app startup
   await initializeSettings();
   
   startExchangeRateScheduler();
