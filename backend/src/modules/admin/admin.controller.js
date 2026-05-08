@@ -35,7 +35,7 @@ module.exports = {
   getPayoutOverview: async (req, res, next) => {
     try {
       const overview = await adminService.getPayoutOverview();
-      res.json({ success: true, data: overview.data, globalRate: overview.globalRate });
+      res.json({ success: true, data: overview.data, totalPlatformFeeCents: overview.totalPlatformFeeCents, globalRatePercent: overview.globalRatePercent });
     } catch (error) {
       next(error);
     }

@@ -7,8 +7,8 @@ module.exports = {
     const now = new Date();
     const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // 1. Validate incoming req.query to prevent Prisma crashes
     const rangeStart = options.startDate ? new Date(options.startDate) : startOfCurrentMonth;
     const rangeEnd = options.endDate ? new Date(options.endDate) : now;
 
@@ -16,39 +16,81 @@ module.exports = {
       throw new ConflictError('Invalid startDate or endDate format. Must be ISO 8601.');
     }
 
-    // 2. High-Performance Aggregations (No .filter or .reduce)
-    const [totalVendors, totalCustomers, revenueAgg, currentMonthAgg, lastMonthAgg, commissionSetting] = await Promise.all([
+    // ── Step 1: Fetch global setting ──
+    const commissionSetting = await prisma.systemSetting.findUnique({
+      where: { key: 'PLATFORM_COMMISSION_PERCENT' },
+    }).catch(() => null);
+    const currentGlobalRate = commissionSetting ? parseFloat(commissionSetting.value) : 5;
+
+    // ── Step 2: Fetch data ──
+    const [totalVendors, totalCustomers, revenueAgg, currentMonthAgg, lastMonthAgg, rolling30DayAgg, earnedByVendor, paidByVendor, paidOrderItems] = await Promise.all([
       prisma.vendor.count(),
       prisma.customer.count(),
-
-      // Total revenue & orders across selected range
       prisma.order.aggregate({
         where: { status: 'PAID', createdAt: { gte: rangeStart, lte: rangeEnd } },
         _sum: { totalCents: true },
         _count: { id: true },
       }),
-
-      // Current-month revenue (always fetched for MoM comparisons)
       prisma.order.aggregate({
         where: { status: 'PAID', createdAt: { gte: startOfCurrentMonth } },
         _sum: { totalCents: true },
       }),
-
-      // Last-month revenue
       prisma.order.aggregate({
         where: { status: 'PAID', createdAt: { gte: startOfLastMonth, lt: startOfCurrentMonth } },
         _sum: { totalCents: true },
       }),
-
-      // Fetch dynamic commission percent
-      prisma.systemSetting.findUnique({
-        where: { key: 'PLATFORM_COMMISSION_PERCENT' },
-      }).catch(() => null),
+      prisma.order.aggregate({
+        where: { status: 'PAID', createdAt: { gte: thirtyDaysAgo } },
+        _sum: { totalCents: true },
+        _count: { id: true },
+      }),
+      // Gross revenue per vendor
+      prisma.orderItem.groupBy({
+        by: ['vendorId'],
+        where: { order: { status: 'PAID' } },
+        _sum: { lineTotalCents: true },
+      }),
+      // Total already paid out and realized commission per vendor
+      prisma.payout.groupBy({
+        by: ['vendorId'],
+        where: { status: 'COMPLETED' },
+        _sum: { amountCents: true, commissionCents: true },
+      }),
+      prisma.orderItem.findMany({
+        where: { order: { status: 'PAID' } },
+        select: {
+          vendorId: true,
+          lineTotalCents: true,
+          order: {
+            select: {
+              totalCents: true,
+              persistedFeeAmount: true
+            }
+          }
+        }
+      })
     ]);
 
-    const platformCommissionPercent = commissionSetting ? parseFloat(commissionSetting.value) : 5;
+    const legacyOrderFeeMap = paidOrderItems.reduce((map, item) => {
+      const orderTotal = item.order?.totalCents || 0;
+      const orderFee = item.order?.persistedFeeAmount || 0;
+      const itemFee = orderTotal > 0 ? Math.floor((item.lineTotalCents || 0) * (orderFee / orderTotal)) : 0;
+      map[item.vendorId] = (map[item.vendorId] || 0) + itemFee;
+      return map;
+    }, {});
 
-    // 3. Return structured payload with Real-Time Readiness flag
+    // ── Step 3: Vendor-level PAID/PENDING fee calculation ──
+    // Dashboard "Platform Revenue" = realized profit only (vendors with completed payouts)
+    let totalPlatformFeeCents = 0;
+    for (const row of paidByVendor) {
+      const vendorCommission = row._sum.commissionCents || legacyOrderFeeMap[row.vendorId] || 0;
+      if (vendorCommission <= 0) {
+        continue;
+      }
+      totalPlatformFeeCents += vendorCommission;
+    }
+
+    // ── Step 4: Return ──
     return {
       totalVendors,
       totalCustomers,
@@ -56,10 +98,13 @@ module.exports = {
       totalOrders: revenueAgg._count.id || 0,
       currentMonthRevenueCents: currentMonthAgg._sum.totalCents || 0,
       lastMonthRevenueCents: lastMonthAgg._sum.totalCents || 0,
-      platformCommissionPercent,
+      platformCommissionPercent: currentGlobalRate,
+      totalPlatformFeeCents,
+      rolling30DayRevenueCents: rolling30DayAgg._sum.totalCents || 0,
+      rolling30DayOrderCount: rolling30DayAgg._count.id || 0,
       rangeStart,
       rangeEnd,
-      lastUpdated: now.toISOString() // New requirement for frontend real-time tracking
+      lastUpdated: now.toISOString()
     };
   },
 
@@ -87,28 +132,18 @@ module.exports = {
   },
 
   getPayoutOverview: async () => {
-    // Fetch commission rate from DB; fallback to 5% if not configured yet
+    // ── Step 1: Fetch current global rate from Settings ──
     const commissionSetting = await prisma.systemSetting.findUnique({
       where: { key: 'PLATFORM_COMMISSION_PERCENT' },
     }).catch(() => null);
-    const commissionRate = commissionSetting ? parseFloat(commissionSetting.value) / 100 : 0.05;
+    const currentGlobalRate = commissionSetting ? parseFloat(commissionSetting.value) : 5;
 
+    // ── Step 2: Fetch raw data ──
     const vendors = await prisma.vendor.findMany({
       select: { id: true, companyName: true, contactPersonName: true },
     });
 
-    // Use DB aggregation — no in-memory array processing
-    const [earnedByVendor, paidByVendor, paidOrderItems] = await Promise.all([
-      prisma.orderItem.groupBy({
-        by: ['vendorId'],
-        where: { order: { status: 'PAID' } },
-        _sum: { lineTotalCents: true },
-      }),
-      prisma.payout.groupBy({
-        by: ['vendorId'],
-        where: { status: 'COMPLETED' },
-        _sum: { amountCents: true },
-      }),
+    const [paidOrderItems, completedPayouts] = await Promise.all([
       prisma.orderItem.findMany({
         where: { order: { status: 'PAID' } },
         select: {
@@ -116,45 +151,96 @@ module.exports = {
           lineTotalCents: true,
           order: {
             select: {
-              persistedFeeRate: true,
+              totalCents: true,
+              persistedFeeAmount: true
             }
           }
         }
-      })
+      }),
+      prisma.payout.findMany({
+        where: { status: 'COMPLETED' },
+        select: { vendorId: true, amountCents: true, commissionCents: true },
+      }),
     ]);
 
-    const earnedMap = Object.fromEntries(earnedByVendor.map(r => [r.vendorId, r._sum.lineTotalCents || 0]));
-    const paidMap = Object.fromEntries(paidByVendor.map(r => [r.vendorId, r._sum.amountCents || 0]));
-    const commissionMap = paidOrderItems.reduce((acc, item) => {
-      const vendorId = item.vendorId;
-      const lineTotalCents = Number(item.lineTotalCents || 0);
-      const persistedRate = Number(item.order?.persistedFeeRate);
-      const feeRatePercent = Number.isFinite(persistedRate) ? persistedRate : (commissionRate * 100);
-      const commissionCents = Math.floor(lineTotalCents * (feeRatePercent / 100));
-      acc[vendorId] = (acc[vendorId] || 0) + commissionCents;
-      return acc;
+    const earnedMap = paidOrderItems.reduce((map, item) => {
+      map[item.vendorId] = (map[item.vendorId] || 0) + (item.lineTotalCents || 0);
+      return map;
     }, {});
 
-    const overview = vendors.map(v => {
-      const totalEarnedCents = earnedMap[v.id] || 0;
-      const totalPaidCents = paidMap[v.id] || 0;
-      const hasAnyPayoutHistory = totalPaidCents > 0;
-      const commissionCents = hasAnyPayoutHistory
-        ? (commissionMap[v.id] || 0)
-        : Math.floor(totalEarnedCents * commissionRate);
-      const netPayableCents = totalEarnedCents - commissionCents;
-      const pendingBalanceCents = Math.max(0, netPayableCents - totalPaidCents);
-      const commissionRatePercent = totalEarnedCents > 0
-        ? Number(((commissionCents / totalEarnedCents) * 100).toFixed(2))
-        : commissionRate * 100;
+    const paidMap = completedPayouts.reduce((map, payout) => {
+      map[payout.vendorId] = (map[payout.vendorId] || 0) + (payout.amountCents || 0);
+      return map;
+    }, {});
+
+    const historicalFeeMap = completedPayouts.reduce((map, payout) => {
+      map[payout.vendorId] = (map[payout.vendorId] || 0) + (payout.commissionCents || 0);
+      return map;
+    }, {});
+
+    const legacyOrderFeeMap = paidOrderItems.reduce((map, item) => {
+      const orderTotal = item.order?.totalCents || 0;
+      const orderFee = item.order?.persistedFeeAmount || 0;
+      const itemFee = orderTotal > 0 ? Math.floor((item.lineTotalCents || 0) * (orderFee / orderTotal)) : 0;
+      map[item.vendorId] = (map[item.vendorId] || 0) + itemFee;
+      return map;
+    }, {});
+
+    // ── Step 3: Build raw vendor records, then .map() with PAID/PENDING logic ──
+    const rawRecords = vendors.map(v => ({
+      vendorId: v.id,
+      companyName: v.companyName,
+      contactPersonName: v.contactPersonName,
+      grossRevenue: earnedMap[v.id] || 0,
+      totalPaidCents: paidMap[v.id] || 0,
+      historicalPlatformFee: historicalFeeMap[v.id] || legacyOrderFeeMap[v.id] || 0,
+      payoutStatus: (paidMap[v.id] || 0) > 0 ? 'PAID' : 'PENDING',
+    }));
+
+    const mappedBalances = rawRecords.map(record => {
+      if (record.payoutStatus === 'PENDING') {
+        const dynamicFee = Math.floor(record.grossRevenue * (currentGlobalRate / 100));
+        return {
+          ...record,
+          platformFee: dynamicFee,
+          appliedRate: currentGlobalRate,
+          pendingBalance: Math.max(0, record.grossRevenue - dynamicFee - record.totalPaidCents),
+        };
+      }
+
+      const historicalGross = record.historicalPlatformFee + record.totalPaidCents;
+      const historicalRate = historicalGross > 0
+        ? Math.round((record.historicalPlatformFee / historicalGross) * 100)
+        : currentGlobalRate;
+
       return {
-        vendorId: v.id, companyName: v.companyName, contactPersonName: v.contactPersonName,
-        totalEarnedCents, commissionCents, commissionRatePercent,
-        totalPaidCents, pendingBalanceCents, total: totalEarnedCents
+        ...record,
+        platformFee: record.historicalPlatformFee,
+        appliedRate: historicalRate,
+        pendingBalance: Math.max(0, record.grossRevenue - record.historicalPlatformFee - record.totalPaidCents),
       };
     });
 
-    return { data: overview.filter(item => item.pendingBalanceCents > 0 || item.totalPaidCents > 0), globalRate: commissionRate };
+    // ── Step 4: Shape output for frontend ──
+    const overview = mappedBalances.map(r => ({
+      vendorId: r.vendorId,
+      companyName: r.companyName,
+      contactPersonName: r.contactPersonName,
+      totalEarnedCents: r.grossRevenue,
+      commissionCents: r.platformFee,
+      commissionRatePercent: r.appliedRate,
+      totalPaidCents: r.totalPaidCents,
+      pendingBalanceCents: r.pendingBalance,
+      total: r.grossRevenue,
+    }));
+
+    const totalPlatformFeeCents = mappedBalances.reduce((sum, r) => sum + r.platformFee, 0);
+
+    return {
+      data: overview.filter(item => item.pendingBalanceCents > 0 || item.totalPaidCents > 0),
+      totalPlatformFeeCents,
+      globalRatePercent: currentGlobalRate
+    };
   },
 
   getPayoutRequests: async (options = {}) => {
@@ -301,6 +387,28 @@ module.exports = {
     }).catch(() => null);
     const persistedFeeRate = commissionSetting ? parseFloat(commissionSetting.value) : 5;
     const persistedFeeAmount = normalizedAmount * (persistedFeeRate / 100);
+
+    // Lock-in: freeze the current global rate onto all un-frozen PAID orders for this vendor
+    const unfrozenOrders = await prisma.order.findMany({
+      where: {
+        status: 'PAID',
+        persistedFeeRate: null,
+        items: { some: { vendorId } }
+      },
+      select: { id: true, totalCents: true }
+    });
+
+    if (unfrozenOrders.length > 0) {
+      await Promise.all(unfrozenOrders.map(order =>
+        prisma.order.update({
+          where: { id: order.id },
+          data: {
+            persistedFeeRate,
+            persistedFeeAmount: order.totalCents * (persistedFeeRate / 100)
+          }
+        })
+      ));
+    }
 
     return prisma.payout.create({
       data: {
@@ -1248,7 +1356,7 @@ module.exports = {
   // ✅ Create new admin user (admin-only operation)
   createAdminUser: async (userData) => {
     const { email, password, name } = userData;
-    
+
     if (!email || !password || !name) {
       throw new ConflictError('Email, password, and name are required');
     }

@@ -6,7 +6,8 @@ import './Payouts.css';
 
 const AdminPayouts = () => {
     const [payouts, setPayouts] = useState([]);
-    const [globalRate, setGlobalRate] = useState(0.05);
+    const [totalPlatformFeeCents, setTotalPlatformFeeCents] = useState(0);
+    const [globalRatePercent, setGlobalRatePercent] = useState(5);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState(null);
     const { formatCurrency, currency } = useCurrency();
@@ -19,8 +20,9 @@ const AdminPayouts = () => {
         try {
             const overviewData = await adminService.getPayoutOverview();
             setPayouts(overviewData.data || []);
-            if (overviewData.globalRate !== undefined) {
-                setGlobalRate(overviewData.globalRate);
+            setTotalPlatformFeeCents(overviewData.totalPlatformFeeCents || 0);
+            if (overviewData.globalRatePercent !== undefined) {
+                setGlobalRatePercent(overviewData.globalRatePercent);
             }
             setLoading(false);
         } catch (error) {
@@ -50,10 +52,6 @@ const AdminPayouts = () => {
     const formatCents = (cents) => formatCurrency((cents || 0) / 100);
 
     const totalUnpaidBalance = payouts.reduce((sum, p) => sum + p.pendingBalanceCents, 0);
-    const totalPlatformCommission = payouts.reduce((sum, p) => {
-        const displayAmount = p.commissionCents ?? (p.total * globalRate);
-        return sum + displayAmount;
-    }, 0);
 
     if (loading) return <div className="admin-loading"><div className="spinner"></div>Loading Financials...</div>;
 
@@ -79,9 +77,9 @@ const AdminPayouts = () => {
                     <div className="card-icon success"><TrendingUp /></div>
                     <div className="card-info">
                         <h3>Platform Fee</h3>
-                        <p className="card-value success">{formatCents(totalPlatformCommission)}</p>
+                        <p className="card-value success">{formatCents(totalPlatformFeeCents)}</p>
                         <span className="card-subtitle">
-                            Applied historical fee from paid transactions (Current global: {(globalRate * 100).toFixed(2)}%)
+                            Total fees (realized + pending) · Current rate: {globalRatePercent}%
                         </span>
                     </div>
                 </div>
@@ -101,7 +99,7 @@ const AdminPayouts = () => {
                             <tr>
                                 <th>Vendor</th>
                                 <th>Gross Revenue</th>
-                                <th>Platform Fee (Applied Historical)</th>
+                                <th>Platform Fee (Hybrid)</th>
                                 <th>Already Paid</th>
                                 <th>Pending Balance</th>
                                 <th>Action</th>
@@ -119,8 +117,8 @@ const AdminPayouts = () => {
                                     <td>{formatCents(payout.totalEarnedCents)}</td>
                                     <td className="commission-text">
                                         {(() => {
-                                            const displayAmount = payout.commissionCents ?? (payout.total * globalRate);
-                                            const displayRate = payout.commissionRatePercent ?? (globalRate * 100);
+                                            const displayAmount = payout.commissionCents || 0;
+                                            const displayRate = Math.round(payout.commissionRatePercent || 0);
                                             return `${formatCents(displayAmount)} (${displayRate}% applied)`;
                                         })()}
                                     </td>

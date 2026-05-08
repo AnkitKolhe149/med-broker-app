@@ -121,7 +121,6 @@ const AdminDashboard = () => {
 
     const formatCents = (cents) => formatCurrency((cents || 0) / 100);
     const commissionPercent = stats?.platformCommissionPercent || 5;
-    const platformCommission = (stats?.totalRevenueCents || 0) * (commissionPercent / 100);
     const kycCount = stats?.pendingKycCount || 0;
     const disputeCount = stats?.activeDisputesCount || 0;
     const prescriptionCount = stats?.pendingPrescriptions || 0;
@@ -233,29 +232,20 @@ const AdminDashboard = () => {
                     <div className="admin-dash-card-head">
                         <div>
                             <p className="card-label">Platform Revenue</p>
-                            <p className="card-sub">Commission @ {commissionPercent}%</p>
+                            <p className="card-sub">Realized profit from processed payouts</p>
                         </div>
                         <TrendingUp size={16} className="card-icon" />
                     </div>
 
-                    <p className={`card-value ${platformCommission === 0 ? 'empty' : ''}`}>
-                        {formatCents(platformCommission)}
+                    <p className={`card-value ${(stats?.totalPlatformFeeCents || 0) === 0 ? 'empty' : ''}`}>
+                        {formatCents(stats?.totalPlatformFeeCents || 0)}
                     </p>
 
                     <div style={{ width: '100%', height: '44px', marginTop: '12px' }}>
-                        {stats?.dailyRevenue && stats.dailyRevenue.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={stats.dailyRevenue}>
-                                    <Line type="monotone" dataKey={(d) => (d.revenueCents || 0) * (commissionPercent / 100)} stroke="#00A86B" strokeWidth={2} dot={false} isAnimationActive={false} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                                <small style={{ color: '#9ca3af', fontSize: '0.75rem' }}>No chart data for this period</small>
-                            </div>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                            <small style={{ color: '#6b7280', fontSize: '0.75rem' }}>Fees from completed vendor payouts only</small>
+                        </div>
                     </div>
-                    {stats?.revenueGrowth && <span className="admin-loss" style={{ marginTop: '6px', display: 'block' }}>{stats.revenueGrowth}</span>}
                 </article>
 
                 {/* ── Card 3: Income Statistics (Blue accent) ── */}
@@ -265,28 +255,20 @@ const AdminDashboard = () => {
                 >
                     <div className="admin-dash-card-head">
                         <div>
-                            <p className="card-label">Gross Revenue</p>
-                            <p className="card-sub">Total processed</p>
+                            <p className="card-label">30-Day Sales Volume</p>
+                            <p className="card-sub">Rolling 30-day period</p>
                         </div>
                         <ArrowRight size={16} className="card-icon" />
                     </div>
 
-                    <p className={`card-value ${(stats?.totalRevenueCents || 0) === 0 ? 'empty' : ''}`}>
-                        {formatCents(stats?.totalRevenueCents || 0)}
+                    <p className={`card-value ${(stats?.rolling30DayRevenueCents || 0) === 0 ? 'empty' : ''}`}>
+                        {formatCents(stats?.rolling30DayRevenueCents || 0)}
                     </p>
 
                     <div style={{ width: '100%', height: '52px', marginTop: '10px' }}>
-                        {stats?.dailyRevenue && stats.dailyRevenue.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={stats.dailyRevenue}>
-                                    <Line type="monotone" dataKey="revenueCents" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'rgba(59,130,246,0.04)', borderRadius: '6px' }}>
-                                <small style={{ color: '#9ca3af', fontSize: '0.75rem' }}>{formatCurrency(0)} — no activity this period</small>
-                            </div>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'rgba(59,130,246,0.04)', borderRadius: '6px' }}>
+                            <small style={{ color: '#6b7280', fontSize: '0.75rem' }}>{stats?.rolling30DayOrderCount || 0} orders in last 30 days</small>
+                        </div>
                     </div>
                 </article>
 
