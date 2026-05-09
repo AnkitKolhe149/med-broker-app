@@ -281,6 +281,14 @@ const adminService = {
     const response = await axios.post(`${API_URL}/admin/users`, userData, getAuthHeaders());
     return response.data;
   },
+  
+  getRecentTransactions: async (params = {}) => {
+    const response = await axios.get(`${API_URL}/admin/transactions`, {
+      ...getAuthHeaders(),
+      params
+    });
+    return response.data;
+  },
 };
 
 export default adminService;

@@ -1,5 +1,6 @@
 const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ConflictError } = require('../../utils/errors');
+const { orderWhereVendorRevenue, orderItemVendorLineGrossCents } = require('../../utils/vendorRevenueOrders');
 
 const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
@@ -352,13 +353,13 @@ const getVendorPendingBalanceCents = async (vendorId) => {
     prisma.orderItem.findMany({
       where: {
         vendorId,
-        order: {
-          status: 'PAID'
-        }
+        order: orderWhereVendorRevenue
       },
       select: {
         quantity: true,
-        unitPriceCents: true
+        unitPriceCents: true,
+        discountCents: true,
+        lineTotalCents: true
       }
     }),
     prisma.payout.findMany({
@@ -373,7 +374,7 @@ const getVendorPendingBalanceCents = async (vendorId) => {
   ]);
 
   const grossEarnedCents = paidOrderItems.reduce(
-    (sum, item) => sum + (Math.max(1, Number(item.quantity) || 1) * (Number(item.unitPriceCents) || 0)),
+    (sum, item) => sum + orderItemVendorLineGrossCents(item),
     0
   );
 

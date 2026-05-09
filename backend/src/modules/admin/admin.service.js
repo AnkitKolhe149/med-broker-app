@@ -1,6 +1,7 @@
 const { prisma } = require('../../database/prisma');
 const { NotFoundError, ConflictError } = require('../../utils/errors');
 const { getEnv } = require('../../config/env');
+const { orderWhereVendorRevenue, orderItemVendorLineGrossCents } = require('../../utils/vendorRevenueOrders');
 
 module.exports = {
   getDashboardStats: async (options = {}) => {
@@ -23,32 +24,26 @@ module.exports = {
     const currentGlobalRate = commissionSetting ? parseFloat(commissionSetting.value) : 5;
 
     // ── Step 2: Fetch data ──
-    const [totalVendors, totalCustomers, revenueAgg, currentMonthAgg, lastMonthAgg, rolling30DayAgg, earnedByVendor, paidByVendor, paidOrderItems] = await Promise.all([
+    const [totalVendors, totalCustomers, revenueAgg, currentMonthAgg, lastMonthAgg, rolling30DayAgg, paidByVendor, paidOrderItems] = await Promise.all([
       prisma.vendor.count(),
       prisma.customer.count(),
       prisma.order.aggregate({
-        where: { status: 'PAID', createdAt: { gte: rangeStart, lte: rangeEnd } },
+        where: { ...orderWhereVendorRevenue, createdAt: { gte: rangeStart, lte: rangeEnd } },
         _sum: { totalCents: true },
         _count: { id: true },
       }),
       prisma.order.aggregate({
-        where: { status: 'PAID', createdAt: { gte: startOfCurrentMonth } },
+        where: { ...orderWhereVendorRevenue, createdAt: { gte: startOfCurrentMonth } },
         _sum: { totalCents: true },
       }),
       prisma.order.aggregate({
-        where: { status: 'PAID', createdAt: { gte: startOfLastMonth, lt: startOfCurrentMonth } },
+        where: { ...orderWhereVendorRevenue, createdAt: { gte: startOfLastMonth, lt: startOfCurrentMonth } },
         _sum: { totalCents: true },
       }),
       prisma.order.aggregate({
-        where: { status: 'PAID', createdAt: { gte: thirtyDaysAgo } },
+        where: { ...orderWhereVendorRevenue, createdAt: { gte: thirtyDaysAgo } },
         _sum: { totalCents: true },
         _count: { id: true },
-      }),
-      // Gross revenue per vendor
-      prisma.orderItem.groupBy({
-        by: ['vendorId'],
-        where: { order: { status: 'PAID' } },
-        _sum: { lineTotalCents: true },
       }),
       // Total already paid out and realized commission per vendor
       prisma.payout.groupBy({
@@ -57,12 +52,16 @@ module.exports = {
         _sum: { amountCents: true, commissionCents: true },
       }),
       prisma.orderItem.findMany({
-        where: { order: { status: 'PAID' } },
+        where: { order: orderWhereVendorRevenue },
         select: {
           vendorId: true,
+          quantity: true,
+          unitPriceCents: true,
+          discountCents: true,
           lineTotalCents: true,
           order: {
             select: {
+              id: true,
               totalCents: true,
               persistedFeeAmount: true
             }
@@ -74,7 +73,8 @@ module.exports = {
     const legacyOrderFeeMap = paidOrderItems.reduce((map, item) => {
       const orderTotal = item.order?.totalCents || 0;
       const orderFee = item.order?.persistedFeeAmount || 0;
-      const itemFee = orderTotal > 0 ? Math.floor((item.lineTotalCents || 0) * (orderFee / orderTotal)) : 0;
+      const lineGross = orderItemVendorLineGrossCents(item);
+      const itemFee = orderTotal > 0 ? Math.floor(lineGross * (orderFee / orderTotal)) : 0;
       map[item.vendorId] = (map[item.vendorId] || 0) + itemFee;
       return map;
     }, {});
@@ -145,12 +145,16 @@ module.exports = {
 
     const [paidOrderItems, completedPayouts] = await Promise.all([
       prisma.orderItem.findMany({
-        where: { order: { status: 'PAID' } },
+        where: { order: orderWhereVendorRevenue },
         select: {
           vendorId: true,
+          quantity: true,
+          unitPriceCents: true,
+          discountCents: true,
           lineTotalCents: true,
           order: {
             select: {
+              id: true,
               totalCents: true,
               persistedFeeAmount: true
             }
@@ -164,7 +168,7 @@ module.exports = {
     ]);
 
     const earnedMap = paidOrderItems.reduce((map, item) => {
-      map[item.vendorId] = (map[item.vendorId] || 0) + (item.lineTotalCents || 0);
+      map[item.vendorId] = (map[item.vendorId] || 0) + orderItemVendorLineGrossCents(item);
       return map;
     }, {});
 
@@ -181,7 +185,8 @@ module.exports = {
     const legacyOrderFeeMap = paidOrderItems.reduce((map, item) => {
       const orderTotal = item.order?.totalCents || 0;
       const orderFee = item.order?.persistedFeeAmount || 0;
-      const itemFee = orderTotal > 0 ? Math.floor((item.lineTotalCents || 0) * (orderFee / orderTotal)) : 0;
+      const lineGross = orderItemVendorLineGrossCents(item);
+      const itemFee = orderTotal > 0 ? Math.floor(lineGross * (orderFee / orderTotal)) : 0;
       map[item.vendorId] = (map[item.vendorId] || 0) + itemFee;
       return map;
     }, {});
@@ -237,7 +242,7 @@ module.exports = {
     const totalPlatformFeeCents = mappedBalances.reduce((sum, r) => sum + r.platformFee, 0);
 
     return {
-      data: overview.filter(item => item.pendingBalanceCents > 0 || item.totalPaidCents > 0),
+      data: overview.filter((item) => item.totalEarnedCents > 0 || item.totalPaidCents > 0),
       totalPlatformFeeCents,
       globalRatePercent: currentGlobalRate
     };
@@ -391,7 +396,7 @@ module.exports = {
     // Lock-in: freeze the current global rate onto all un-frozen PAID orders for this vendor
     const unfrozenOrders = await prisma.order.findMany({
       where: {
-        status: 'PAID',
+        ...orderWhereVendorRevenue,
         persistedFeeRate: null,
         items: { some: { vendorId } }
       },
@@ -797,7 +802,16 @@ module.exports = {
       prisma.inventory.findMany({
         where,
         include: {
-          medicine: { select: { id: true, name: true, sku: true, category: true, requiresPrescription: true } },
+          medicine: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              category: true,
+              priceCents: true,
+              requiresPrescription: true
+            }
+          },
           vendor: { select: { id: true, companyName: true, country: true } },
           _count: { select: { batches: true } }
         },
@@ -810,8 +824,17 @@ module.exports = {
 
     const lowStockCount = items.filter((item) => item.quantity <= item.reorderLevel).length;
 
+    // Vendor flows store retail price on Medicine; admin UI reads Inventory.sellingPriceCents/mrpCents.
+    // Coalesce so the dashboard reflects vendor-entered prices even when inventory columns were never set.
+    const itemsForAdmin = items.map((item) => {
+      const fromMedicine = item.medicine?.priceCents;
+      const sellingPriceCents = item.sellingPriceCents ?? fromMedicine ?? null;
+      const mrpCents = item.mrpCents ?? fromMedicine ?? null;
+      return { ...item, sellingPriceCents, mrpCents };
+    });
+
     return {
-      items,
+      items: itemsForAdmin,
       summary: {
         total,
         lowStockCount,
@@ -976,7 +999,7 @@ module.exports = {
         // Monthly trend data via groupBy on year+month is not directly supported;
         // fetch only PAID orders in range with minimal projection
         prisma.order.findMany({
-          where: { status: 'PAID', createdAt: { gte: startDate, lte: endDate } },
+          where: { ...orderWhereVendorRevenue, createdAt: { gte: startDate, lte: endDate } },
           select: { totalCents: true, createdAt: true },
           orderBy: { createdAt: 'asc' },
         }),
@@ -1394,5 +1417,47 @@ module.exports = {
     });
 
     return newAdmin;
+  },
+
+  getRecentTransactions: async (limit = 10) => {
+    const [payouts, payments] = await Promise.all([
+      prisma.payout.findMany({
+        where: { status: 'COMPLETED' },
+        include: { vendor: { select: { companyName: true, contactPersonName: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: limit
+      }),
+      prisma.payment.findMany({
+        where: { status: 'SUCCEEDED' },
+        include: { order: { include: { user: { select: { name: true, email: true } } } } },
+        orderBy: { createdAt: 'desc' },
+        take: limit
+      })
+    ]);
+
+    const formattedPayouts = payouts.map(p => ({
+      id: p.id,
+      type: 'PAYOUT',
+      amountCents: p.amountCents,
+      status: p.status,
+      date: p.processedAt || p.createdAt,
+      receiver: p.vendor?.companyName || p.vendor?.contactPersonName || 'Vendor',
+      meta: p.transactionId
+    }));
+
+    const formattedPayments = payments.map(p => ({
+      id: p.id,
+      type: 'PAYMENT',
+      amountCents: p.amountCents,
+      status: p.status,
+      date: p.createdAt,
+      receiver: 'Platform',
+      sender: p.order?.user?.name || 'Customer',
+      meta: p.transactionRef
+    }));
+
+    return [...formattedPayouts, ...formattedPayments]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, limit);
   }
 };

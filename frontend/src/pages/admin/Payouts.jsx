@@ -19,9 +19,12 @@ const AdminPayouts = () => {
     const fetchPayouts = async () => {
         try {
             const overviewData = await adminService.getPayoutOverview();
-            setPayouts(overviewData.data || []);
-            setTotalPlatformFeeCents(overviewData.totalPlatformFeeCents || 0);
-            if (overviewData.globalRatePercent !== undefined) {
+            const payoutRows = Array.isArray(overviewData?.data)
+                ? overviewData.data
+                : (Array.isArray(overviewData) ? overviewData : []);
+            setPayouts(payoutRows);
+            setTotalPlatformFeeCents(overviewData?.totalPlatformFeeCents ?? 0);
+            if (overviewData?.globalRatePercent !== undefined) {
                 setGlobalRatePercent(overviewData.globalRatePercent);
             }
             setLoading(false);

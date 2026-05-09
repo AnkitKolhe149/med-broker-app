@@ -409,11 +409,21 @@ module.exports = {
     try {
       const { email, password, name } = req.body;
       const newAdmin = await adminService.createAdminUser({ email, password, name });
-      res.status(201).json({ 
-        success: true, 
+      res.status(201).json({
+        success: true,
         message: 'Admin user created successfully',
-        data: newAdmin 
+        data: newAdmin
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getRecentTransactions: async (req, res, next) => {
+    try {
+      const limit = parseInt(req.query.limit) || 10;
+      const transactions = await adminService.getRecentTransactions(limit);
+      res.json({ success: true, data: transactions });
     } catch (error) {
       next(error);
     }

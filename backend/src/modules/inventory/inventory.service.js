@@ -196,11 +196,17 @@ module.exports = {
         });
       }
 
+      const inventoryData = {
+        quantity: quantity !== undefined ? quantity : inventoryItem.quantity
+      };
+      if (Object.prototype.hasOwnProperty.call(medicineUpdatePayload, 'priceCents')) {
+        inventoryData.sellingPriceCents = updatedMedicine.priceCents;
+        inventoryData.mrpCents = updatedMedicine.priceCents;
+      }
+
       const updatedInventory = await tx.inventory.update({
         where: { id: inventoryId },
-        data: {
-          quantity: quantity !== undefined ? quantity : inventoryItem.quantity
-        },
+        data: inventoryData,
         include: {
           medicine: true
         }
@@ -367,6 +373,7 @@ module.exports = {
       medicineId,
       name,
       description,
+      category,
       priceCents,
       quantity,
       wholesalePriceCents
@@ -438,6 +445,7 @@ module.exports = {
           data: {
             name: name.trim(),
             description: description || null,
+            category: typeof category === 'string' && category.trim() ? category.trim() : null,
             priceCents,
             wholesalePriceCents: normalizedWholesalePriceCents
           }
@@ -457,12 +465,16 @@ module.exports = {
           quantity: {
             increment: quantity
           },
-          isActive: true
+          isActive: true,
+          sellingPriceCents: medicine.priceCents,
+          mrpCents: medicine.priceCents
         },
         create: {
           medicineId: medicine.id,
           vendorId: vendor.id,
-          quantity
+          quantity,
+          sellingPriceCents: medicine.priceCents,
+          mrpCents: medicine.priceCents
         },
         include: {
           medicine: true

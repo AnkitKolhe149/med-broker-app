@@ -1,4 +1,4 @@
-﻿const { prisma } = require('../../database/prisma');
+const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
 const { uploadPrescriptionImage } = require('../../services/cloudinary.service');
 const { resolveOrderItemUnitPriceCents } = require('./orderPricing.util');
@@ -326,7 +326,9 @@ const createOrder = async (userId, orderData) => {
       medicineId: inventory.medicineId,
       vendorId: inventory.vendorId,
       quantity: item.quantity,
-      unitPriceCents
+      unitPriceCents,
+      lineTotalCents: itemTotal,
+      discountCents: 0
     };
   });
 

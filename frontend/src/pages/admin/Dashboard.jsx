@@ -10,6 +10,7 @@ import './Dashboard.css';
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
     const [payouts, setPayouts] = useState([]);
+    const [transactions, setTransactions] = useState([]);
     const [pendingPayouts, setPendingPayouts] = useState({ count: 0, latestDate: 'No pending requests' });
     const [loading, setLoading] = useState(true);
     const [startDate, setStartDate] = useState('');
@@ -62,10 +63,12 @@ const AdminDashboard = () => {
     useEffect(() => {
         fetchStats();
         fetchPayouts();
+        fetchTransactions();
 
         const handleSettingsUpdate = () => {
             fetchStats();
             fetchPayouts();
+            fetchTransactions();
         };
 
         const handleCurrencyChanged = () => {
@@ -99,6 +102,7 @@ const AdminDashboard = () => {
     const fetchPayouts = async () => {
         try {
             const data = await adminService.getPayoutOverview();
+            // payouts state is used for some summaries, keep it for now but we'll use transactions for the grid
             setPayouts(data.data || []);
 
             const requestsData = await adminService.getPayoutRequests({ limit: 1 });
@@ -113,6 +117,15 @@ const AdminDashboard = () => {
             setPendingPayouts({ count, latestDate: dateStr });
         } catch (error) {
             console.error('Failed to fetch payouts:', error);
+        }
+    };
+
+    const fetchTransactions = async () => {
+        try {
+            const data = await adminService.getRecentTransactions({ limit: 10 });
+            setTransactions(data.data || []);
+        } catch (error) {
+            console.error('Failed to fetch transactions:', error);
         }
     };
 
@@ -290,15 +303,15 @@ const AdminDashboard = () => {
             <section className="admin-dash-panel">
                 <h2>Recently Payments</h2>
                 <div className="admin-recent-grid">
-                    {payouts.length > 0 ? (
-                        payouts.slice(0, 3).map((payment) => (
-                            <article key={payment.vendorId || payment.id} className="admin-recent-item">
+                    {transactions.filter(t => t.type === 'PAYOUT').length > 0 ? (
+                        transactions.filter(t => t.type === 'PAYOUT').slice(0, 3).map((payment) => (
+                            <article key={payment.id} className="admin-recent-item">
                                 <div className="avatar" />
                                 <div>
-                                    <strong>{payment.vendor?.businessName || payment.companyName || 'Vendor'}</strong>
-                                    <small>{payment.contactPersonName || 'Details'}</small>
+                                    <strong>{payment.receiver}</strong>
+                                    <small>{new Date(payment.date).toLocaleDateString()}</small>
                                 </div>
-                                <strong>{formatCurrency(((payment.amountCents || payment.totalPaidCents || 0) * 0.95) / 100)}</strong>
+                                <strong>{formatCurrency(payment.amountCents / 100)}</strong>
                                 <span className={`status done`}>Paid</span>
                             </article>
                         ))
@@ -330,17 +343,21 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {payouts.length > 0 ? (
-                                payouts.map((payment) => (
-                                    <tr key={payment.vendorId || payment.id}>
-                                        <td>{payment.vendor?.businessName || payment.companyName || 'Vendor'}</td>
-                                        <td>Payout</td>
+                            {transactions.length > 0 ? (
+                                transactions.map((tx) => (
+                                    <tr key={tx.id}>
+                                        <td>{tx.type === 'PAYOUT' ? tx.receiver : tx.sender}</td>
+                                        <td>{tx.type === 'PAYOUT' ? 'Payout' : 'Customer Payment'}</td>
                                         <td>
-                                            <span className="status done">Paid</span>
+                                            <span className={`status ${tx.status === 'COMPLETED' || tx.status === 'SUCCEEDED' ? 'done' : 'pending'}`}>
+                                                {tx.status === 'COMPLETED' || tx.status === 'SUCCEEDED' ? 'Done' : tx.status}
+                                            </span>
                                         </td>
-                                        <td>{payment.createdAt ? new Date(payment.createdAt).toLocaleDateString() : 'N/A'}</td>
-                                        <td>{formatCurrency(((payment.amountCents || payment.totalPaidCents || 0) * 0.95) / 100)}</td>
-                                        <td><button className="admin-detail-btn" onClick={() => navigate('/admin/payouts')}>Details</button></td>
+                                        <td>{new Date(tx.date).toLocaleDateString()}</td>
+                                        <td style={{ color: tx.type === 'PAYOUT' ? '#ef4444' : '#10b981', fontWeight: 600 }}>
+                                            {tx.type === 'PAYOUT' ? '-' : '+'}{formatCurrency(tx.amountCents / 100)}
+                                        </td>
+                                        <td><button className="admin-detail-btn" onClick={() => navigate(tx.type === 'PAYOUT' ? '/admin/payouts' : '/admin/orders')}>Details</button></td>
                                     </tr>
                                 ))
                             ) : (

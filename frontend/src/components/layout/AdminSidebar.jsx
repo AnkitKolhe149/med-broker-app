@@ -53,7 +53,6 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { path: '/admin/disputes', icon: ShieldAlert, label: 'Disputes' },
     { path: '/admin/compliance', icon: FileCheck, label: 'Compliance' },
     { path: '/admin/notifications', icon: Bell, label: 'Notifications' },
-    { path: '/admin/integrations', icon: Plug, label: 'Integrations' },
     { path: '/admin/settings', icon: Settings, label: 'Settings' },
   ];
 

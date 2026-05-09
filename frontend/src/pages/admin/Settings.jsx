@@ -113,6 +113,9 @@ const Settings = () => {
 
   const categories = {};
   rawConfig.forEach(s => {
+    // Hide reprice interval setting as requested
+    if (s.key === 'REPRICE_INTERVAL_MINUTES') return;
+
     const cat = s.category || 'General';
     if (!categories[cat]) categories[cat] = [];
     categories[cat].push(s);

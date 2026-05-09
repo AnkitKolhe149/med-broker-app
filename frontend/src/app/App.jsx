@@ -110,244 +110,244 @@ function App() {
         <NotificationProvider>
             <UserProvider>
                 <CurrencyProvider>
-                        <FavoritesProvider>
+                    <FavoritesProvider>
                         <CartProvider>
-                        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                            {/* Animated background layer */}
-                            <AnimatedBackground />
-                            
-                            <div className="app-content-layer">
-                            <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<Landing />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/support/help-center" element={<HelpCenter />} />
-                    <Route path="/support/contact-us" element={<ContactUs />} />
-                    <Route path="/support/faq" element={<FAQ />} />
-                    <Route path="/support/terms" element={<TermsOfService />} />
-                    <Route path="/support/help-center/:topicId" element={<HelpArticle />} />
-                    <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
-                    
-                    {/* Onboarding routes (require authentication but not complete profile) */}
-                    <Route path="/onboarding/vendor" element={<VendorOnboarding />} />
-                    <Route path="/onboarding/customer" element={<CustomerOnboarding />} />
-                    <Route path="/customer/onboarding" element={<CustomerOnboarding />} />
-                    
-                    {/* Customer routes (require authentication and complete profile) */}
-                    <Route path="/customer/dashboard" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><CustomerDashboard /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/catalog" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><Catalog /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/medicine/:id" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><MedicineDetail /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/favorites" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><Favorites /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/cart" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><Cart /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/checkout" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><Checkout /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/payment" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><Payment /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/order-confirmation/:orderId" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><OrderConfirmation /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/orders" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><OrdersHistory /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/profile" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><CustomerProfile /></AppShell>
-                        </AuthGuard>
-                    } />
-                    <Route path="/customer/prescriptions" element={
-                        <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
-                            <AppShell><CustomerPrescriptions /></AppShell>
-                        </AuthGuard>
-                    } />
-                    
-                    {/* Vendor routes (require authentication and complete profile) */}
-                    <Route path="/vendor/dashboard" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorDashboard /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/orders" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorOrders /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/products" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorMedicineManager /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/stock" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorStockManager /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/shipping" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorShipping /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/payments" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorPayments /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/analytics" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorAnalytics /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/compliance" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorCompliance /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/chat" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorCommunication /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/settings" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorSettings /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/vendor/demand-forecasting" element={
-                        <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
-                            <VendorLayout><VendorDemandForecasting /></VendorLayout>
-                        </AuthGuard>
-                    } />
-                    
-                    {/* Admin routes (require authentication and admin role) */}
-                    <Route path="/admin" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminDashboard /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/dashboard" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminDashboard /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/vendors" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminVendors /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/users" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminUsers /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/orders" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminOrders /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/payouts" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminPayouts /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/reports" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminReports /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/catalog" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminCatalog /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/inventory" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminInventory /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/prescriptions" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminPrescriptions /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/returns-refunds" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminReturnsRefunds /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/support-tickets" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminSupportTickets /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/disputes" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminDisputes /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/compliance" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminCompliance /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/notifications" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminNotifications /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/integrations" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminIntegrations /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    <Route path="/admin/settings" element={
-                        <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
-                            <AdminLayout><AdminSettings /></AdminLayout>
-                        </AuthGuard>
-                    } />
-                    
-                    {/* Fallback route */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                        </Routes>
-                        <ChatbotAccessGate
-                            isChatOpen={isChatOpen}
-                            onClose={() => setIsChatOpen(false)}
-                            onToggle={() => setIsChatOpen((prev) => !prev)}
-                        />
-                        </div>
-                        </Router>
+                            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                                {/* Animated background layer */}
+                                <AnimatedBackground />
+
+                                <div className="app-content-layer">
+                                    <Routes>
+                                        {/* Public routes */}
+                                        <Route path="/" element={<Landing />} />
+                                        <Route path="/login" element={<Login />} />
+                                        <Route path="/register" element={<Register />} />
+                                        <Route path="/support/help-center" element={<HelpCenter />} />
+                                        <Route path="/support/contact-us" element={<ContactUs />} />
+                                        <Route path="/support/faq" element={<FAQ />} />
+                                        <Route path="/support/terms" element={<TermsOfService />} />
+                                        <Route path="/support/help-center/:topicId" element={<HelpArticle />} />
+                                        <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
+
+                                        {/* Onboarding routes (require authentication but not complete profile) */}
+                                        <Route path="/onboarding/vendor" element={<VendorOnboarding />} />
+                                        <Route path="/onboarding/customer" element={<CustomerOnboarding />} />
+                                        <Route path="/customer/onboarding" element={<CustomerOnboarding />} />
+
+                                        {/* Customer routes (require authentication and complete profile) */}
+                                        <Route path="/customer/dashboard" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><CustomerDashboard /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/catalog" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><Catalog /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/medicine/:id" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><MedicineDetail /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/favorites" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><Favorites /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/cart" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><Cart /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/checkout" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><Checkout /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/payment" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><Payment /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/order-confirmation/:orderId" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><OrderConfirmation /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/orders" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><OrdersHistory /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/profile" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><CustomerProfile /></AppShell>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/customer/prescriptions" element={
+                                            <AuthGuard requiredRole="CUSTOMER" requireCompleteProfile={true}>
+                                                <AppShell><CustomerPrescriptions /></AppShell>
+                                            </AuthGuard>
+                                        } />
+
+                                        {/* Vendor routes (require authentication and complete profile) */}
+                                        <Route path="/vendor/dashboard" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorDashboard /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/orders" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorOrders /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/products" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorMedicineManager /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/stock" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorStockManager /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/shipping" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorShipping /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/payments" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorPayments /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/analytics" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorAnalytics /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/compliance" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorCompliance /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/chat" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorCommunication /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/settings" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorSettings /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/vendor/demand-forecasting" element={
+                                            <AuthGuard requiredRole="VENDOR" requireCompleteProfile={true}>
+                                                <VendorLayout><VendorDemandForecasting /></VendorLayout>
+                                            </AuthGuard>
+                                        } />
+
+                                        {/* Admin routes (require authentication and admin role) */}
+                                        <Route path="/admin" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminDashboard /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/dashboard" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminDashboard /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/vendors" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminVendors /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/users" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminUsers /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/orders" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminOrders /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/payouts" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminPayouts /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/reports" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminReports /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/catalog" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminCatalog /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/inventory" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminInventory /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/prescriptions" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminPrescriptions /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/returns-refunds" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminReturnsRefunds /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/support-tickets" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminSupportTickets /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/disputes" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminDisputes /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/compliance" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminCompliance /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/notifications" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminNotifications /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/integrations" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminIntegrations /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+                                        <Route path="/admin/settings" element={
+                                            <AuthGuard requiredRole="ADMIN" requireCompleteProfile={false}>
+                                                <AdminLayout><AdminSettings /></AdminLayout>
+                                            </AuthGuard>
+                                        } />
+
+                                        {/* Fallback route */}
+                                        <Route path="*" element={<Navigate to="/" replace />} />
+                                    </Routes>
+                                    <ChatbotAccessGate
+                                        isChatOpen={isChatOpen}
+                                        onClose={() => setIsChatOpen(false)}
+                                        onToggle={() => setIsChatOpen((prev) => !prev)}
+                                    />
+                                </div>
+                            </Router>
                         </CartProvider>
-                        </FavoritesProvider>
-            </CurrencyProvider>
+                    </FavoritesProvider>
+                </CurrencyProvider>
             </UserProvider>
         </NotificationProvider>
     );
