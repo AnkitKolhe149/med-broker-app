@@ -8,6 +8,9 @@ const isValidGSTIN = (gstin) => {
   return gstinRegex.test(gstin);
 };
 
+const PAYMENT_CONFIG = require('../../config/payment');
+const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
+
 const COUNTRY_TO_CURRENCY = {
   'UNITED STATES': 'USD',
   'UNITED KINGDOM': 'GBP',
@@ -31,9 +34,10 @@ const COUNTRY_TO_CURRENCY = {
 };
 
 const getCurrencyForCountry = (country) => {
-  if (!country) return 'INR';
+  const fallback = normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase();
+  if (!country) return fallback;
   const normalized = String(country).trim().toUpperCase();
-  return COUNTRY_TO_CURRENCY[normalized] || 'INR';
+  return COUNTRY_TO_CURRENCY[normalized] || fallback;
 };
 
 const parseUniqueTarget = (error) => {

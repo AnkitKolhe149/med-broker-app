@@ -30,7 +30,7 @@ const RECEIPT_CURRENCY_FORMATS = {
 
 const centsToCurrency = (amountCents) => {
   const amount = Number(amountCents || 0) / 100;
-  return `$${amount.toFixed(2)}`;
+  return `${amount.toFixed(2)}`;
 };
 
 const safeText = (value, fallback = 'N/A') => {
@@ -69,6 +69,9 @@ const buildOrderReceiptPdf = (order) => {
   doc.y = 120;
   doc.moveDown(0.5);
 
+  const PAYMENT_CONFIG = require('../../config/payment');
+  const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
+
   const checkoutSnapshot = order.checkoutSnapshot && typeof order.checkoutSnapshot === 'object'
     ? order.checkoutSnapshot
     : {};
@@ -76,7 +79,8 @@ const buildOrderReceiptPdf = (order) => {
     ? checkoutSnapshot.pricingSummary
     : {};
   
-  const currencyCode = String(checkoutSnapshot.currencyCode || 'INR').toUpperCase();
+  const fallbackCurrency = normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase();
+  const currencyCode = normalizeCurrencyCode(checkoutSnapshot.currencyCode) || normalizeCurrencyCode(order.currencyCode) || fallbackCurrency;
   const currencyFormat = RECEIPT_CURRENCY_FORMATS[currencyCode] || { symbol: `${currencyCode} `, locale: 'en-US' };
 
   const formatCurrency = (amountCents) => {

@@ -4,6 +4,8 @@ const { prisma } = require('../../database/prisma');
 const { Pinecone } = require('@pinecone-database/pinecone');
 const { loadSessions, persistSessions } = require('./session.store');
 const { getLatestRates, convertFromBase } = require('../exchangeRate/exchangeRate.service');
+const PAYMENT_CONFIG = require('../../config/payment');
+const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
 
 const chatSessions = new Map();
 const MAX_SESSION_MESSAGES = 20;
@@ -500,7 +502,7 @@ const createLLMReply = async ({ userMessage, retrievedDocs, symptoms, products }
   }
 };
 
-const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', preferredCurrency = 'INR' }) => {
+const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', preferredCurrency = null }) => {
   const keywordSet = new Set();
   retrievedDocs.forEach((doc) => {
     (doc.metadata?.productKeywords || []).forEach((keyword) => keywordSet.add(String(keyword).toLowerCase()));
@@ -640,12 +642,13 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', pr
     uniqueInventoryItems.push(item);
   }
 
-  const normalizedTargetCurrency = String(preferredCurrency || 'INR').toUpperCase();
+  const normalizedTargetCurrency = normalizeCurrencyCode(preferredCurrency) || null;
+  const baseCurrency = normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase();
   let rateRecord = null;
 
-  if (normalizedTargetCurrency !== 'INR') {
+  if (normalizedTargetCurrency && normalizedTargetCurrency !== baseCurrency) {
     try {
-      rateRecord = await getLatestRates('INR');
+      rateRecord = await getLatestRates(baseCurrency);
     } catch (_error) {
       rateRecord = null;
     }
@@ -658,12 +661,12 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', pr
     const bulkMinQty = 1;
 
     const defaultPrice = buyerType === 'WHOLESALE' ? wholesalePrice : retailPrice;
-    const convertedDisplayPrice = rateRecord?.rates
+    const convertedDisplayPrice = (rateRecord && normalizedTargetCurrency)
       ? convertFromBase(defaultPrice, normalizedTargetCurrency, rateRecord.rates)
       : null;
 
     const hasConvertedDisplay = Number.isFinite(convertedDisplayPrice);
-    const displayCurrencyCode = hasConvertedDisplay ? normalizedTargetCurrency : 'INR';
+    const displayCurrencyCode = hasConvertedDisplay ? normalizedTargetCurrency : baseCurrency;
     const displayPrice = Number((hasConvertedDisplay ? convertedDisplayPrice : defaultPrice).toFixed(2));
 
     return {
@@ -682,8 +685,8 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', pr
       bulkMinQty: 1,
       displayPrice,
       displayCurrencyCode,
-      baseCurrencyCode: 'INR',
-      currencyCode: 'INR'
+      baseCurrencyCode: baseCurrency,
+      currencyCode: displayCurrencyCode
     };
   });
 };
@@ -742,7 +745,7 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
   const retrievedDocs = await retrieveTopK(query, 4);
 
   const buyerType = user?.customer?.buyerType || context?.buyerType || 'RETAIL';
-  const preferredCurrency = context?.preferredCurrency || user?.preferredCurrency || 'INR';
+  const preferredCurrency = normalizeCurrencyCode(context?.preferredCurrency) || normalizeCurrencyCode(user?.preferredCurrency) || null;
   const products = await mapToProducts({ retrievedDocs, symptoms, buyerType, preferredCurrency });
 
   const requiresIntake = symptoms.length < 2;

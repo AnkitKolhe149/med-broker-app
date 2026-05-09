@@ -18,7 +18,8 @@ const fetchRatesFromApi = async (baseCode) => {
     throw new Error("Global fetch is unavailable. Use Node 18+ or add a fetch polyfill.");
   }
 
-  const normalizedBase = String(baseCode || "INR").toUpperCase();
+  const { getEnv } = require("../../config/env");
+  const normalizedBase = String(baseCode || getEnv("EXCHANGE_RATE_BASE", "INR")).toUpperCase();
   const url = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/${normalizedBase}`;
   const response = await fetch(url);
   if (!response.ok) {

@@ -19,7 +19,10 @@ const resolveMedicineId = async (id) => {
   throw new Error('Medicine not found');
 };
 
-const mapWishlistItem = (item) => {
+const PAYMENT_CONFIG = require('../../config/payment');
+const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
+
+const mapWishlistItem = (item, currencyCode) => {
   const medicine = item?.medicine || {};
   const firstInventory = Array.isArray(medicine.inventory) ? medicine.inventory[0] : null;
 
@@ -33,7 +36,7 @@ const mapWishlistItem = (item) => {
     vendor: firstInventory?.vendor?.companyName || medicine.brand || 'Trusted vendor',
     retailPrice: Number(medicine.priceCents || 0) / 100,
     wholesalePrice: Number(medicine.wholesalePriceCents || medicine.priceCents || 0) / 100,
-    currencyCode: 'INR',
+    currencyCode: currencyCode,
     addedAt: item.createdAt
   };
 };
@@ -42,6 +45,9 @@ module.exports = {
   getFavorites: async (userId) => {
     const customer = await prisma.customer.findUnique({ where: { userId } });
     if (!customer) return [];
+
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { preferredCurrency: true } });
+    const fallback = normalizeCurrencyCode(user?.preferredCurrency) || normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase();
 
     const items = await prisma.wishlistItem.findMany({
       where: { customerId: customer.id },
@@ -74,7 +80,7 @@ module.exports = {
       orderBy: { createdAt: 'desc' }
     });
 
-    return items.map(mapWishlistItem);
+    return items.map((it) => mapWishlistItem(it, fallback));
   },
 
   addFavorite: async (userId, medicineId) => {

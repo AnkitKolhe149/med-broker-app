@@ -57,4 +57,11 @@ router.patch('/:id/status', restrictTo(['VENDOR', 'ADMIN']), orderController.upd
  */
 router.patch('/:id/cancel', orderController.cancelOrder);
 
+/**
+ * @route   POST /api/orders/:id/refund-request
+ * @desc    Request a refund for a paid order
+ * @access  Private (Customer, Admin)
+ */
+router.post('/:id/refund-request', orderController.requestRefund);
+
 module.exports = router;

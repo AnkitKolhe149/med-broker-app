@@ -1,4 +1,6 @@
 const { prisma } = require('../../database/prisma');
+const PAYMENT_CONFIG = require('../../config/payment');
+const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
 
 const resolveCartMedicineIds = async (data = {}) => {
   const inventoryId = data.inventoryId || null;
@@ -91,6 +93,10 @@ module.exports = {
     const customer = await prisma.customer.findUnique({ where: { userId } });
     if (!customer) throw new Error('Customer profile not found');
 
+    // Determine preferred currency from user record when not provided
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { preferredCurrency: true } });
+    const preferredCurrency = normalizeCurrencyCode(user?.preferredCurrency) || normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase();
+
     const resolved = await resolveCartMedicineIds(data);
     const quantity = Math.max(1, Number(data.quantity) || 1);
 
@@ -109,7 +115,7 @@ module.exports = {
           quantity: existing.quantity + quantity,
           selectedSize: data.selectedSize || existing.selectedSize || null,
           priceSnapshotCents: data.priceSnapshotCents || existing.priceSnapshotCents,
-          currencyCode: data.currencyCode || existing.currencyCode || 'INR'
+          currencyCode: data.currencyCode || existing.currencyCode || preferredCurrency
         }
       });
     }
@@ -121,7 +127,7 @@ module.exports = {
       quantity,
       selectedSize: data.selectedSize || null,
       priceSnapshotCents: data.priceSnapshotCents || null,
-      currencyCode: data.currencyCode || 'INR'
+      currencyCode: data.currencyCode || preferredCurrency
     };
     return prisma.cartItem.create({ data: payload });
   },

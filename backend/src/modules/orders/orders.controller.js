@@ -122,6 +122,25 @@ module.exports = {
   },
 
   /**
+   * POST /api/orders/:id/refund-request
+   * Customer requests a refund for a paid order
+   */
+  requestRefund: async (req, res, next) => {
+    try {
+      const orderId = req.params.id;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+      const { reason } = req.body || {};
+
+      const result = await orderService.requestRefund(orderId, userId, userRole, reason);
+
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * POST /api/orders/prescription/upload
    * Upload prescription image to Cloudinary
    */

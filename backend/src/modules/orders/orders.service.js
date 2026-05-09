@@ -2,6 +2,7 @@
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
 const { uploadPrescriptionImage } = require('../../services/cloudinary.service');
 const { resolveOrderItemUnitPriceCents } = require('./orderPricing.util');
+const paymentService = require('../payments/payments.service');
 
 const normalizePackageType = (value) => (String(value || 'standard').toLowerCase() === 'bulk' ? 'bulk' : 'standard');
 
@@ -161,7 +162,7 @@ const createOrder = async (userId, orderData) => {
 
   const customer = await prisma.customer.findUnique({
     where: { userId },
-    select: { buyerType: true }
+    select: { buyerType: true, fullName: true, deliveryAddress: true, contactNumber: true, user: { select: { preferredCurrency: true } } }
   });
 
   const normalizedRequestSignature = buildOrderSignature(items);
@@ -336,6 +337,10 @@ const createOrder = async (userId, orderData) => {
   });
   totalCents = pricingSummary.totalCents;
 
+  const PAYMENT_CONFIG = require('../../config/payment');
+  const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
+  const effectiveCurrency = String(normalizeCurrencyCode(currencyCode) || normalizeCurrencyCode(customer?.user?.preferredCurrency) || normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase()).toUpperCase();
+
   const checkoutSnapshot = {
     ...providedCheckoutSnapshot,
     items,
@@ -346,9 +351,20 @@ const createOrder = async (userId, orderData) => {
     prescriptionName,
     discountPercent: pricingSummary.discountPercent,
     appliedCoupon,
-    currencyCode,
+    currencyCode: effectiveCurrency,
     pricingSummary
   };
+
+  // Prefill checkout snapshot fields from customer profile when not provided
+  if (!checkoutSnapshot.deliveryAddress) {
+    checkoutSnapshot.deliveryAddress = customer?.deliveryAddress || checkoutSnapshot.deliveryAddress || '';
+  }
+  if (!checkoutSnapshot.customerName) {
+    checkoutSnapshot.customerName = customer?.fullName || '';
+  }
+  if (!checkoutSnapshot.contactNumber) {
+    checkoutSnapshot.contactNumber = customer?.contactNumber || '';
+  }
 
   const commissionSetting = await prisma.systemSetting.findUnique({
     where: { key: 'PLATFORM_COMMISSION_PERCENT' },
@@ -361,6 +377,7 @@ const createOrder = async (userId, orderData) => {
       data: {
         userId,
         totalCents,
+        currencyCode: effectiveCurrency,
         checkoutSnapshot,
         status: 'PENDING',
         persistedFeeRate,
@@ -631,6 +648,49 @@ const cancelOrder = async (orderId, userId, userRole) => {
 };
 
 /**
+ * Request refund for a paid order (customer facing)
+ */
+const requestRefund = async (orderId, userId, userRole, reason = '') => {
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { payment: true } });
+  if (!order) throw new NotFoundError('Order not found');
+
+  if (userRole === 'CUSTOMER' && order.userId !== userId) {
+    throw new ForbiddenError('You can only request refunds for your own orders');
+  }
+
+  if (!order.payment || order.payment.status !== 'SUCCEEDED') {
+    throw new ValidationError('Only paid orders can be refunded');
+  }
+
+  // Mark payment as refund requested
+  // Merge existing meta with refund request info
+  const existingMeta = (order.payment && order.payment.meta && typeof order.payment.meta === 'object') ? order.payment.meta : {};
+  const newMeta = {
+    ...(existingMeta || {}),
+    refundRequestedAt: new Date().toISOString(),
+    refundReason: reason
+  };
+
+  await prisma.payment.update({ where: { id: order.payment.id }, data: { status: 'REFUND_REQUESTED', meta: newMeta } });
+
+  // If system setting for auto refunds is enabled, try to process immediately
+  const autoProcessSetting = await prisma.systemSetting.findUnique({ where: { key: 'AUTO_PROCESS_REFUNDS' } }).catch(() => null);
+  const autoProcess = autoProcessSetting ? String(autoProcessSetting.value) === 'true' : false;
+
+  if (autoProcess) {
+    try {
+      const refundResult = await paymentService.processRefundInternal(orderId, { reason });
+      return { success: true, refunded: true, result: refundResult };
+    } catch (err) {
+      // leave payment in REFUND_REQUESTED state for manual processing
+      return { success: true, refunded: false, message: 'Refund requested; awaiting manual processing', error: err.message };
+    }
+  }
+
+  return { success: true, refunded: false, message: 'Refund requested; awaiting manual processing' };
+};
+
+/**
  * Get order data for receipt generation
  */
 const getOrderForReceipt = async (orderId, userId, userRole) => {
@@ -682,4 +742,5 @@ module.exports = {
   cancelOrder,
   getOrderForReceipt,
   uploadPrescription
+  , requestRefund
 };

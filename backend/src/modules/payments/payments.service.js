@@ -3,6 +3,8 @@ const axios = require('axios');
 const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
 const PAYMENT_CONFIG = require('../../config/payment');
+const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
+const FALLBACK_CURRENCY = normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase();
 
 const buildGatewayConfiguration = () => ({
   razorpay: PAYMENT_CONFIG.razorpay.enabled && PAYMENT_CONFIG.razorpay.keyId && PAYMENT_CONFIG.razorpay.keySecret,
@@ -19,7 +21,7 @@ const createRazorpayOrder = async ({ amountCents, order }) => {
     'https://api.razorpay.com/v1/orders',
     {
       amount: amountCents,
-      currency: order.currencyCode || PAYMENT_CONFIG.currency || 'INR',
+      currency: order.currencyCode || FALLBACK_CURRENCY,
       receipt: order.orderNumber || `order_${order.id}`,
       payment_capture: 1,
       notes: {
@@ -244,7 +246,7 @@ const createRazorpayVendorTransfers = async ({ paymentId, gatewayPaymentId }) =>
     transfers: transferCandidates.map((candidate) => ({
       account: candidate.account,
       amount: candidate.amountCents,
-      currency: payment.currencyCode || PAYMENT_CONFIG.currency || 'INR',
+      currency: payment.currencyCode || FALLBACK_CURRENCY,
       notes: {
         orderId: payment.orderId,
         paymentId: payment.id,
@@ -339,7 +341,7 @@ const createRazorpayPayout = async ({ vendor, amountCents, currency, notes = {},
   const payload = {
     account_number: linkedAccountId,
     amount: amountCents,
-    currency: currency || PAYMENT_CONFIG.currency || 'INR',
+    currency: currency || FALLBACK_CURRENCY,
     mode: 'IMPS',
     purpose: 'payout',
     queue_if_low_balance: true,
@@ -425,7 +427,7 @@ const initiatePayment = async (orderId, userId, paymentData) => {
     throw new ValidationError('Payment already completed for this order');
   }
 
-  const paymentCurrency = order.currencyCode || PAYMENT_CONFIG.currency || 'INR';
+  const paymentCurrency = order.currencyCode || FALLBACK_CURRENCY;
 
   // For demo/testing purposes, use mock payment only when explicitly requested or when no gateway is configured.
   if (effectiveProvider === 'mock') {
@@ -841,6 +843,39 @@ const processRefund = async (orderId, userId, userRole, refundData) => {
 };
 
 /**
+ * Internal refund processor used by server workflows (bypasses role check)
+ */
+const processRefundInternal = async (orderId, refundData = {}) => {
+  const { reason, amount } = refundData;
+
+  const payment = await prisma.payment.findUnique({ where: { orderId }, include: { order: true } });
+  if (!payment) throw new NotFoundError('Payment not found for this order');
+  if (payment.status !== 'SUCCEEDED') throw new ValidationError('Can only refund successful payments');
+
+  const refundAmountCents = amount || payment.amountCents;
+  if (refundAmountCents > payment.amountCents) {
+    throw new ValidationError('Refund amount cannot exceed payment amount');
+  }
+
+  if (payment.provider === 'mock' || process.env.NODE_ENV === 'development') {
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.update({ where: { id: payment.id }, data: { status: 'REFUNDED', refundAmountCents } });
+      await tx.order.update({ where: { id: orderId }, data: { status: 'CANCELLED' } });
+    });
+
+    return {
+      success: true,
+      refundId: `refund_mock_${Date.now()}`,
+      amount: refundAmountCents,
+      status: 'REFUNDED',
+      message: 'Refund processed successfully (mock, internal)'
+    };
+  }
+
+  throw new ValidationError('Refund processing not yet implemented for provider');
+};
+
+/**
  * Get all payments (admin only)
  */
 const getAllPayments = async (filters = {}) => {
@@ -897,5 +932,6 @@ module.exports = {
   processRefund,
   getAllPayments,
   createRazorpayPayout
+  , processRefundInternal
 };
 

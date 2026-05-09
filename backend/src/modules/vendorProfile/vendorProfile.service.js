@@ -56,6 +56,7 @@ const mapVendorProfile = (user, vendor) => {
 
   return {
     businessName: vendor.companyName || '',
+    verificationStatus: vendor.verificationStatus || 'PENDING',
     email: user.email || '',
     phone: user.mobile || vendor.contactNumber || '',
     address: vendor.businessAddress || '',
@@ -397,7 +398,8 @@ const requestWithdrawal = async (userContext, data = {}) => {
     where: { userId },
     select: {
       id: true,
-      companyName: true
+      companyName: true,
+      user: { select: { preferredCurrency: true } }
     }
   });
 
@@ -410,6 +412,11 @@ const requestWithdrawal = async (userContext, data = {}) => {
     throw new ValidationError(`Requested amount exceeds available balance of ${pendingBalanceCents} cents`);
   }
 
+  const PAYMENT_CONFIG = require('../../config/payment');
+  const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
+  const fallbackCurrency = normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase();
+  const currencyUsed = normalizeCurrencyCode(data.currencyCode) || normalizeCurrencyCode(vendor?.user?.preferredCurrency) || fallbackCurrency;
+
   const payoutRequest = await prisma.payout.create({
     data: {
       vendorId: vendor.id,
@@ -419,7 +426,8 @@ const requestWithdrawal = async (userContext, data = {}) => {
       meta: {
         requestedByUserId: userId,
         requestedAt: new Date().toISOString(),
-        type: 'WITHDRAWAL_REQUEST'
+        type: 'WITHDRAWAL_REQUEST',
+        currencyCode: currencyUsed
       }
     }
   });
@@ -429,7 +437,8 @@ const requestWithdrawal = async (userContext, data = {}) => {
     availableBalanceAfterRequestCents: pendingBalanceCents - amountCents,
     vendor: {
       id: vendor.id,
-      companyName: vendor.companyName
+      companyName: vendor.companyName,
+      preferredCurrency: vendor?.user?.preferredCurrency || null
     }
   };
 };
