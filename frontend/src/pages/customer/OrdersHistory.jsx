@@ -9,6 +9,7 @@ import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
 
+
 const ORDER_STAGES = ['Confirmed', 'Preparing', 'Picked up', 'Delivered'];
 
 function OrdersHistory() {
@@ -24,6 +25,30 @@ function OrdersHistory() {
 		return ['upcoming', 'previous', 'scheduled'].includes(queryTab) ? queryTab : 'upcoming';
 	});
 	const [cancellingOrderId, setCancellingOrderId] = useState(null);
+	const [selectedOrder, setSelectedOrder] = useState(null);
+	const [modalLoading, setModalLoading] = useState(false);
+	const [receiptDownloading, setReceiptDownloading] = useState(false);
+
+	const handleDownloadReceipt = async (orderId) => {
+		try {
+			setReceiptDownloading(true);
+			const blob = await orderService.downloadOrderReceipt(orderId);
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `receipt_${orderId}.pdf`;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+			showSuccess('Receipt downloaded');
+		} catch (err) {
+			console.error('Failed to download receipt:', err);
+			showError(err?.response?.data?.message || 'Unable to download receipt right now. Please try again.');
+		} finally {
+			setReceiptDownloading(false);
+		}
+	};
 	const ordersListRef = useRef(null);
 	const defaultCurrencyCode = currency || user?.preferredCurrency || 'INR';
 	const formatPrice = (value, sourceCurrency = defaultCurrencyCode) => formatConvertedCurrency(value, sourceCurrency, defaultCurrencyCode, exchangeRates, true);
@@ -239,6 +264,7 @@ function OrdersHistory() {
 	];
 
 	return (
+		<>
 		<CustomerAccountPageLayout
 			user={user}
 			activeItem="my-orders"
@@ -287,7 +313,18 @@ function OrdersHistory() {
 											</div>
 
 											<div className={styles.orderActions}>
-												<button type="button" className={styles.detailsButton}>Order Details</button>
+												<button type="button" className={styles.detailsButton} onClick={async () => {
+													try {
+														setModalLoading(true);
+														const detail = await orderService.getCustomerOrderById(order.orderIds[0]);
+														setSelectedOrder(detail);
+													} catch (err) {
+														console.error('Failed to load order details:', err);
+														showError(err?.response?.data?.message || 'Failed to load order details');
+													} finally {
+														setModalLoading(false);
+													}
+												}}>Order Details</button>
 												{canCancel && (
 													<button
 														type="button"
@@ -338,7 +375,104 @@ function OrdersHistory() {
 						)}
 					</div>
 		</CustomerAccountPageLayout>
+				{selectedOrder && (
+					<OrderDetailsModal
+						order={selectedOrder}
+						onClose={() => setSelectedOrder(null)}
+						onDownload={handleDownloadReceipt}
+						downloading={receiptDownloading}
+					/>
+				)}
+		</>
 	);
 }
+
+// Order Details Modal (rendered outside main layout via selectedOrder state)
+const OrderDetailsModal = ({ order, onClose, onDownload, downloading }) => {
+	if (!order) return null;
+	return (
+		<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+			<div style={{ width: '90%', maxWidth: 820, background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 8px 30px rgba(0,0,0,0.2)' }}>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+					<h3 style={{ margin: 0 }}>Order Details</h3>
+					<div>
+						<button style={{ marginRight: 8 }} onClick={onClose}>Close</button>
+						<button onClick={() => onDownload(order.id)} disabled={downloading} style={{ background: '#218e66', color: 'white', border: 0, padding: '8px 12px', borderRadius: 6 }}>
+							{downloading ? 'Downloading...' : 'Download Receipt'}
+						</button>
+					</div>
+				</div>
+
+				<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+					<div>
+						<div style={{ fontWeight: 700 }}>Order ID</div>
+						<div style={{ marginBottom: 8 }}>{order.id}</div>
+						<div style={{ fontWeight: 700 }}>Customer</div>
+						<div style={{ marginBottom: 8 }}>{order.user?.name || order.user?.email}</div>
+						<div style={{ fontWeight: 700 }}>Status</div>
+						<div style={{ marginBottom: 8 }}>{order.status}</div>
+					</div>
+					<div>
+							<div style={{ fontWeight: 700 }}>Totals</div>
+							{
+								(() => {
+									const pricing = (order.checkoutSnapshot && order.checkoutSnapshot.pricingSummary) || {};
+									const subtotalCents = typeof pricing.subtotalCents === 'number'
+										? pricing.subtotalCents
+										: (typeof order.subtotalCents === 'number' && order.subtotalCents > 0)
+											? order.subtotalCents
+											: (order.items || []).reduce((s, it) => s + ((it.unitPriceCents || 0) * (it.quantity || 1)), 0);
+
+									const taxCents = typeof pricing.taxCents === 'number'
+										? pricing.taxCents
+										: (typeof order.taxCents === 'number' ? order.taxCents : 0);
+
+									const totalCents = typeof pricing.totalCents === 'number'
+										? pricing.totalCents
+										: (typeof order.totalCents === 'number' && order.totalCents > 0)
+											? order.totalCents
+											: subtotalCents + taxCents;
+
+									const fmt = (cents) => (Number(cents || 0) / 100).toFixed(2);
+
+									return (
+										<>
+											<div style={{ marginBottom: 8 }}>Subtotal: {fmt(subtotalCents)}</div>
+											<div style={{ marginBottom: 8 }}>Tax: {fmt(taxCents)}</div>
+											<div style={{ marginBottom: 8 }}>Total: {fmt(totalCents)}</div>
+										</>
+									);
+								})()
+							}
+						</div>
+				</div>
+
+				<div style={{ marginTop: 16 }}>
+					<h4>Items</h4>
+					<table style={{ width: '100%', borderCollapse: 'collapse' }}>
+						<thead>
+							<tr>
+								<th style={{ textAlign: 'left', padding: 8 }}>Name</th>
+								<th style={{ textAlign: 'right', padding: 8 }}>Unit Price</th>
+								<th style={{ textAlign: 'right', padding: 8 }}>Qty</th>
+								<th style={{ textAlign: 'right', padding: 8 }}>Total</th>
+							</tr>
+						</thead>
+						<tbody>
+							{(order.items || []).map((it) => (
+								<tr key={it.id}>
+									<td style={{ padding: 8 }}>{it.medicine?.name || it.medicineId}</td>
+									<td style={{ padding: 8, textAlign: 'right' }}>{((it.unitPriceCents || 0) / 100).toFixed(2)}</td>
+									<td style={{ padding: 8, textAlign: 'right' }}>{it.quantity}</td>
+									<td style={{ padding: 8, textAlign: 'right' }}>{(((it.unitPriceCents || 0) * (it.quantity || 1)) / 100).toFixed(2)}</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	);
+};
 
 export default OrdersHistory;

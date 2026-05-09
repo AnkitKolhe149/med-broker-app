@@ -58,7 +58,25 @@ const uploadPrescriptionImage = async (fileBuffer, mimeType, userId) => {
   return uploadResult.secure_url;
 };
 
+const uploadRawFile = async (fileBuffer, mimeType, options = {}) => {
+  ensureCloudinaryConfigured();
+  const streamifier = require('streamifier');
+
+  const folder = options.folder || (process.env.CLOUDINARY_RECEIPT_FOLDER || 'med-broker/receipts');
+  const publicId = options.publicId || `receipt-${Date.now()}`;
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream({ resource_type: 'raw', folder, public_id: publicId, overwrite: true }, (error, result) => {
+      if (error) return reject(error);
+      resolve(result.secure_url);
+    });
+
+    streamifier.createReadStream(fileBuffer).pipe(uploadStream);
+  });
+};
+
 module.exports = {
   uploadMedicineImage,
   uploadPrescriptionImage
+  , uploadRawFile
 };

@@ -150,13 +150,48 @@ module.exports = {
       const userId = req.user.id;
       const userRole = req.user.role;
 
-      const order = await orderService.getOrderForReceipt(orderId, userId, userRole);
+      // Use getOrderById to include invoice/pdfUrl in the returned order
+      const order = await orderService.getOrderById(orderId, userId, userRole);
+
+      // If invoice already has a stored PDF URL, redirect to it so client can download directly.
+      if (order.invoice && order.invoice.pdfUrl) {
+        return res.redirect(order.invoice.pdfUrl);
+      }
+
+      // Build PDF document in-memory and upload to Cloudinary, then stream to client.
       const doc = buildOrderReceiptPdf(order);
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=receipt_${order.id}.pdf`);
+      // Collect PDF into buffer
+      const chunks = [];
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks);
+          // Upload to Cloudinary (raw)
+          const { uploadRawFile } = require('../../services/cloudinary.service');
+          const secureUrl = await uploadRawFile(buffer, 'application/pdf', { publicId: `receipt-${order.id}` });
 
-      doc.pipe(res);
+          // Save or upsert invoice record
+          try {
+            const { prisma } = require('../../database/prisma');
+            await prisma.invoice.upsert({
+              where: { orderId: order.id },
+              update: { pdfUrl: secureUrl, issuedAt: new Date(), amountCents: order.totalCents || 0 },
+              create: { orderId: order.id, invoiceNumber: `INV-${Date.now()}`, pdfUrl: secureUrl, amountCents: order.totalCents || 0 }
+            });
+          } catch (e) {
+            console.warn('Failed to save invoice pdfUrl:', e?.message || e);
+          }
+
+          // Stream buffer to client with appropriate headers
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename=receipt_${order.id}.pdf`);
+          res.send(buffer);
+        } catch (err) {
+          next(err);
+        }
+      });
+
       doc.end();
     } catch (error) {
       next(error);
