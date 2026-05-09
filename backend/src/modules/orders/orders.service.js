@@ -592,8 +592,62 @@ const cancelOrder = async (orderId, userId, userRole) => {
     throw new ValidationError('Cannot cancel shipped orders. Please contact support for returns.');
   }
 
+  // Cancellation window (minutes) - customers allowed to cancel within this period
+  const cancelWindowSetting = await prisma.systemSetting.findUnique({ where: { key: 'ORDER_CANCELLATION_WINDOW_MINUTES' } }).catch(() => null);
+  const cancelWindowMinutes = cancelWindowSetting ? Number(cancelWindowSetting.value) : (parseInt(process.env.ORDER_CANCELLATION_WINDOW_MINUTES, 10) || 30);
+  const minutesSinceCreation = (Date.now() - new Date(order.createdAt).getTime()) / 60000;
+
+  // If order is paid, allow cancellation only within the cancellation window (unless admin)
   if (order.payment && order.payment.status === 'SUCCEEDED') {
-    throw new ValidationError('Cannot cancel paid orders. Please request a refund instead.');
+    if (userRole !== 'ADMIN' && minutesSinceCreation > cancelWindowMinutes) {
+      throw new ValidationError('Cancellation window expired; cannot cancel paid orders. Please request a refund instead.');
+    }
+
+    // Attempt internal refund processing (will mark payment REFUNDED and order CANCELLED)
+    // We still need to restore inventory after refunding.
+    const itemsToRestore = order.items || [];
+    try {
+      const refundResult = await paymentService.processRefundInternal(orderId, { reason: 'Customer cancellation within allowed window' });
+
+      // Restore inventory quantities for items (best-effort, separate transaction)
+      await prisma.$transaction(async (tx) => {
+        await Promise.all(
+          itemsToRestore.map(async (item) => {
+            if (item.vendorId) {
+              await tx.inventory.update({
+                where: {
+                  medicineId_vendorId: {
+                    medicineId: item.medicineId,
+                    vendorId: item.vendorId
+                  }
+                },
+                data: { quantity: { increment: item.quantity } }
+              });
+              return;
+            }
+
+            const candidateInventories = await tx.inventory.findMany({
+              where: { medicineId: item.medicineId },
+              select: { id: true },
+              take: 2
+            });
+
+            if (candidateInventories.length === 1) {
+              await tx.inventory.update({ where: { id: candidateInventories[0].id }, data: { quantity: { increment: item.quantity } } });
+            }
+          })
+        );
+      });
+
+      const updatedOrder = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true, payment: true } });
+      return { success: true, refunded: true, refund: refundResult, order: updatedOrder };
+    } catch (err) {
+      // If refund processing failed (e.g., non-mock provider), mark payment as REFUND_REQUESTED and surface message
+      const existingMeta = (order.payment && order.payment.meta && typeof order.payment.meta === 'object') ? order.payment.meta : {};
+      const newMeta = { ...(existingMeta || {}), refundRequestedAt: new Date().toISOString(), refundReason: `Auto-refund failed: ${err.message}` };
+      await prisma.payment.update({ where: { id: order.payment.id }, data: { status: 'REFUND_REQUESTED', meta: newMeta } });
+      return { success: true, refunded: false, message: 'Refund requested; awaiting manual processing', error: err.message };
+    }
   }
 
   // Cancel the order and restore inventory stock for each item.
