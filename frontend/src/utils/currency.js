@@ -88,7 +88,7 @@ export const normalizeCurrencyCode = (currencyCode, fallback = 'INR') => {
 const CURRENCY_LOCALE_MAP = {
 	INR: 'en-IN',
 	USD: 'en-US',
-	EUR: 'de-DE',
+	EUR: 'en-IE',
 	GBP: 'en-GB',
 	JPY: 'ja-JP',
 	AUD: 'en-AU',

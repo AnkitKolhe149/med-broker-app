@@ -390,9 +390,9 @@ function VendorMedicineManager() {
 									<strong>{medicine.stock} units</strong>
 								</td>
 								<td className={styles.tableCell}>
-									<strong>{formatMoney(medicine.price)}</strong>
+									<strong>{formatCurrency(medicine.price, currency, true)}</strong>
 									<div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-										Wholesale: {formatMoney(medicine.wholesalePrice)}
+										Wholesale: {formatCurrency(medicine.wholesalePrice, currency, true)}
 									</div>
 								</td>
 								<td className={styles.tableCell}>
