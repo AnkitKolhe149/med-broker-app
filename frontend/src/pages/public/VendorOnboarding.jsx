@@ -30,7 +30,15 @@ function VendorOnboarding() {
 		drugLicenseNumber: '',
 		businessAddress: '',
 		contactPersonName: '',
-		contactNumber: ''
+		bankAccountDetails: {
+			accountHolderName: '',
+			accountNumber: '',
+			bankName: '',
+			ifscCode: '',
+			branchName: '',
+			upiId: '',
+			payoutReferenceId: ''
+		}
 	});
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -57,6 +65,17 @@ function VendorOnboarding() {
 		setFormData({
 			...formData,
 			[e.target.name]: e.target.value
+		});
+		setError('');
+	};
+
+	const handleBankDetailChange = (field, value) => {
+		setFormData({
+			...formData,
+			bankAccountDetails: {
+				...formData.bankAccountDetails,
+				[field]: value
+			}
 		});
 		setError('');
 	};
@@ -100,6 +119,9 @@ function VendorOnboarding() {
 						<div style={{ marginTop: '1rem' }}>
 							<span className="badge">Step 2 of 2: Business Details</span>
 						</div>
+							<p className="section-subtitle" style={{ marginTop: '0.75rem' }}>
+								We'll reuse your account mobile number, so you do not need to enter it again here.
+							</p>
 					</div>
 
 					<form onSubmit={handleSubmit} className="grid">
@@ -249,16 +271,48 @@ function VendorOnboarding() {
 								/>
 							</div>
 							<div>
-								<label className="label">Contact Number *</label>
+								<label className="label">Razorpay Payout Account ID (Optional)</label>
 								<input
 									className="input"
-									type="tel"
-									name="contactNumber"
-									placeholder="+91 98765 43210"
-									value={formData.contactNumber}
-									onChange={handleInputChange}
-									required
+									type="text"
+									value={formData.bankAccountDetails.payoutReferenceId}
+									onChange={(e) => handleBankDetailChange('payoutReferenceId', e.target.value)}
+									placeholder="acc_xxxxxxxx"
 								/>
+							</div>
+						</div>
+
+						<div style={{ marginTop: '1.25rem' }}>
+							<h3 className="section-subtitle" style={{ marginBottom: '0.75rem' }}>Banking details (optional)</h3>
+							<div className="form-row">
+								<div>
+									<label className="label">Account Holder Name</label>
+									<input className="input" type="text" value={formData.bankAccountDetails.accountHolderName} onChange={(e) => handleBankDetailChange('accountHolderName', e.target.value)} placeholder="Business / personal name" />
+								</div>
+								<div>
+									<label className="label">Account Number</label>
+									<input className="input" type="text" value={formData.bankAccountDetails.accountNumber} onChange={(e) => handleBankDetailChange('accountNumber', e.target.value)} placeholder="123456789012" />
+								</div>
+							</div>
+							<div className="form-row">
+								<div>
+									<label className="label">Bank Name</label>
+									<input className="input" type="text" value={formData.bankAccountDetails.bankName} onChange={(e) => handleBankDetailChange('bankName', e.target.value)} placeholder="State Bank of India" />
+								</div>
+								<div>
+									<label className="label">IFSC Code</label>
+									<input className="input" type="text" value={formData.bankAccountDetails.ifscCode} onChange={(e) => handleBankDetailChange('ifscCode', e.target.value.toUpperCase())} placeholder="SBIN0001234" />
+								</div>
+							</div>
+							<div className="form-row">
+								<div>
+									<label className="label">Branch Name</label>
+									<input className="input" type="text" value={formData.bankAccountDetails.branchName} onChange={(e) => handleBankDetailChange('branchName', e.target.value)} placeholder="Main Branch" />
+								</div>
+								<div>
+									<label className="label">UPI ID</label>
+									<input className="input" type="text" value={formData.bankAccountDetails.upiId} onChange={(e) => handleBankDetailChange('upiId', e.target.value)} placeholder="vendor@upi" />
+								</div>
 							</div>
 						</div>
 

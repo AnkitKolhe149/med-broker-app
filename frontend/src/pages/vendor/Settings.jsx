@@ -16,7 +16,16 @@ const DEFAULT_PROFILE_SETTINGS = {
 	pincode: '',
 	gstNumber: '',
 	aboutBusiness: '',
-	contactPersonName: ''
+	contactPersonName: '',
+	bankAccountDetails: {
+		accountHolderName: '',
+		accountNumber: '',
+		bankName: '',
+		ifscCode: '',
+		branchName: '',
+		upiId: '',
+		payoutReferenceId: ''
+	}
 };
 
 const DEFAULT_NOTIFICATION_PREFS = {
@@ -50,6 +59,16 @@ function VendorSettings() {
 		confirm: ''
 	});
 
+	const updateBankDetail = (field, value) => {
+		setTempSettings((prev) => ({
+			...prev,
+			bankAccountDetails: {
+				...(prev.bankAccountDetails || DEFAULT_PROFILE_SETTINGS.bankAccountDetails),
+				[field]: value
+			}
+		}));
+	};
+
 	useEffect(() => {
 		const loadProfile = async () => {
 			try {
@@ -57,7 +76,11 @@ function VendorSettings() {
 				const profile = await vendorService.getProfile();
 				const normalizedProfile = {
 					...DEFAULT_PROFILE_SETTINGS,
-					...profile
+					...profile,
+					bankAccountDetails: {
+						...DEFAULT_PROFILE_SETTINGS.bankAccountDetails,
+						...(profile.bankAccountDetails || {})
+					}
 				};
 
 				setSettings(normalizedProfile);
@@ -86,12 +109,17 @@ function VendorSettings() {
 			setSavingProfile(true);
 			const updatedProfile = await vendorService.updateProfile({
 				...tempSettings,
+				bankAccountDetails: tempSettings.bankAccountDetails,
 				notificationPrefs,
 				securityPrefs
 			});
 			const normalizedProfile = {
 				...DEFAULT_PROFILE_SETTINGS,
-				...updatedProfile
+				...updatedProfile,
+				bankAccountDetails: {
+					...DEFAULT_PROFILE_SETTINGS.bankAccountDetails,
+					...(updatedProfile.bankAccountDetails || {})
+				}
 			};
 
 			setSettings(normalizedProfile);
@@ -251,7 +279,9 @@ function VendorSettings() {
 									value={tempSettings.phone}
 									onChange={(e) => setTempSettings({ ...tempSettings, phone: e.target.value })}
 									disabled={loadingProfile || savingProfile}
+									placeholder="Uses your account mobile"
 								/>
+								<small className={styles.helperText}>This should match the mobile number from your account.</small>
 							</div>
 							<div className={styles.formGroup}>
 								<label className={styles.label}>GST Number</label>
@@ -325,6 +355,41 @@ function VendorSettings() {
 								placeholder="Tell customers about your business..."
 								disabled={loadingProfile || savingProfile}
 							/>
+						</div>
+					</div>
+
+					<div className={styles.section}>
+						<h2 className={styles.sectionTitle}>Banking Details</h2>
+						<p className={styles.helperText}>Optional details for payouts. Leave blank if your account is not finalized yet.</p>
+						<div className={styles.formGrid}>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Account Holder Name</label>
+								<input type="text" className={styles.input} value={tempSettings.bankAccountDetails?.accountHolderName || ''} onChange={(e) => updateBankDetail('accountHolderName', e.target.value)} disabled={loadingProfile || savingProfile} />
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Account Number</label>
+								<input type="text" className={styles.input} value={tempSettings.bankAccountDetails?.accountNumber || ''} onChange={(e) => updateBankDetail('accountNumber', e.target.value)} disabled={loadingProfile || savingProfile} />
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Bank Name</label>
+								<input type="text" className={styles.input} value={tempSettings.bankAccountDetails?.bankName || ''} onChange={(e) => updateBankDetail('bankName', e.target.value)} disabled={loadingProfile || savingProfile} />
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>IFSC Code</label>
+								<input type="text" className={styles.input} value={tempSettings.bankAccountDetails?.ifscCode || ''} onChange={(e) => updateBankDetail('ifscCode', e.target.value.toUpperCase())} disabled={loadingProfile || savingProfile} />
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Branch Name</label>
+								<input type="text" className={styles.input} value={tempSettings.bankAccountDetails?.branchName || ''} onChange={(e) => updateBankDetail('branchName', e.target.value)} disabled={loadingProfile || savingProfile} />
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>UPI ID</label>
+								<input type="text" className={styles.input} value={tempSettings.bankAccountDetails?.upiId || ''} onChange={(e) => updateBankDetail('upiId', e.target.value)} disabled={loadingProfile || savingProfile} />
+							</div>
+							<div className={styles.formGroup}>
+								<label className={styles.label}>Payout Reference ID</label>
+								<input type="text" className={styles.input} value={tempSettings.bankAccountDetails?.payoutReferenceId || ''} onChange={(e) => updateBankDetail('payoutReferenceId', e.target.value)} disabled={loadingProfile || savingProfile} />
+							</div>
 						</div>
 					</div>
 

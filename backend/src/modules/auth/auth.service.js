@@ -45,11 +45,11 @@ const validatePassword = (password) => {
   if (!password || password.length < 8) {
     throw new ConflictError('Password must be at least 8 characters long');
   }
-  
+
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);
   const hasNumbers = /\d/.test(password);
-  
+
   if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
     throw new ConflictError('Password must contain at least one uppercase letter, one lowercase letter, and one number');
   }
@@ -158,23 +158,23 @@ module.exports = {
   },
 
   login: async (data) => {
-      const { email, password, role, mobile } = data;
+    const { email, password, role, mobile } = data;
 
-      // Input validation - allow login by email OR mobile
-      if ((!email && !mobile) || !password) {
-        throw new AuthenticationError('Email or mobile and password are required');
+    // Input validation - allow login by email OR mobile
+    if ((!email && !mobile) || !password) {
+      throw new AuthenticationError('Email or mobile and password are required');
+    }
+
+    if (email) validateEmail(email);
+
+    const findBy = email ? { email } : { mobile };
+    const user = await prisma.user.findFirst({
+      where: findBy,
+      include: {
+        vendor: true,
+        customer: true
       }
-
-      if (email) validateEmail(email);
-
-      const findBy = email ? { email } : { mobile };
-      const user = await prisma.user.findFirst({
-        where: findBy,
-        include: {
-          vendor: true,
-          customer: true
-        }
-      });
+    });
 
     if (!user) {
       throw new AuthenticationError('Invalid credentials');

@@ -10,6 +10,15 @@ const normalizePhone = (value) => {
   return digits;
 };
 
+const normalizeOptionalText = (value) => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  const text = String(value).trim();
+  return text ? text : undefined;
+};
+
 const validateEmail = (email) => {
   if (!email) return;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,6 +63,9 @@ const mapVendorProfile = (user, vendor) => {
   const razorpayLinkedAccountId = vendor?.bankAccountDetails?.razorpayLinkedAccountId
     || vendor?.bankAccountDetails?.razorpayRouteAccountId
     || '';
+  const bankAccountDetails = vendor?.bankAccountDetails && typeof vendor.bankAccountDetails === 'object'
+    ? vendor.bankAccountDetails
+    : {};
 
   return {
     businessName: vendor.companyName || '',
@@ -68,6 +80,15 @@ const mapVendorProfile = (user, vendor) => {
     aboutBusiness: profileMeta.aboutBusiness || '',
     contactPersonName: vendor.contactPersonName || '',
     razorpayLinkedAccountId,
+    bankAccountDetails: {
+      accountHolderName: bankAccountDetails.accountHolderName || '',
+      accountNumber: bankAccountDetails.accountNumber || '',
+      bankName: bankAccountDetails.bankName || '',
+      ifscCode: bankAccountDetails.ifscCode || '',
+      branchName: bankAccountDetails.branchName || '',
+      upiId: bankAccountDetails.upiId || '',
+      payoutReferenceId: bankAccountDetails.payoutReferenceId || bankAccountDetails.razorpayLinkedAccountId || ''
+    },
     notificationPrefs: {
       ...DEFAULT_NOTIFICATION_PREFS,
       ...(profileMeta.notificationPrefs || {})
@@ -175,6 +196,7 @@ const updateVendorProfile = async (userContext, data) => {
     gstNumber,
     aboutBusiness,
     razorpayLinkedAccountId,
+    bankAccountDetails,
     contactPersonName,
     notificationPrefs,
     securityPrefs,
@@ -235,6 +257,20 @@ const updateVendorProfile = async (userContext, data) => {
   const nextCity = typeof city === 'string' ? city : (currentProfileMeta.city || '');
   const nextPincode = typeof pincode === 'string' ? pincode : (currentProfileMeta.pincode || '');
 
+  const nextBankAccountDetails = {
+    ...existingBankDetails,
+    accountHolderName: normalizeOptionalText(bankAccountDetails?.accountHolderName) ?? existingBankDetails.accountHolderName,
+    accountNumber: normalizeOptionalText(bankAccountDetails?.accountNumber) ?? existingBankDetails.accountNumber,
+    bankName: normalizeOptionalText(bankAccountDetails?.bankName) ?? existingBankDetails.bankName,
+    ifscCode: normalizeOptionalText(bankAccountDetails?.ifscCode) ?? existingBankDetails.ifscCode,
+    branchName: normalizeOptionalText(bankAccountDetails?.branchName) ?? existingBankDetails.branchName,
+    upiId: normalizeOptionalText(bankAccountDetails?.upiId) ?? existingBankDetails.upiId,
+    payoutReferenceId: normalizeOptionalText(bankAccountDetails?.payoutReferenceId)
+      ?? normalizeOptionalText(razorpayLinkedAccountId)
+      ?? existingBankDetails.payoutReferenceId
+      ?? existingBankDetails.razorpayLinkedAccountId
+  };
+
   if (!nextBusinessName || !nextAddress || !nextState || !nextContactPersonName) {
     throw new ValidationError('Business name, address, state, and contact person are required');
   }
@@ -282,6 +318,7 @@ const updateVendorProfile = async (userContext, data) => {
 
   const mergedBankAccountDetails = {
     ...existingBankDetails,
+    ...nextBankAccountDetails,
     profileMeta
   };
 

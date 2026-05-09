@@ -18,8 +18,7 @@ function CustomerOnboarding() {
 		gstin: '',
 		country: 'India',
 		city: '',
-		deliveryAddress: '',
-		contactNumber: ''
+		deliveryAddress: ''
 	});
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -105,6 +104,9 @@ function CustomerOnboarding() {
 						<div style={{ marginTop: '1rem' }}>
 							<span className="badge">Step 2 of 2: Personal Details</span>
 						</div>
+							<p className="section-subtitle" style={{ marginTop: '0.75rem' }}>
+								We'll reuse your account mobile number here, so you only enter it once.
+							</p>
 					</div>
 
 					<form onSubmit={handleSubmit} className="grid">
@@ -159,16 +161,8 @@ function CustomerOnboarding() {
 								/>
 							</div>
 							<div>
-								<label className="label">Contact Number *</label>
-								<input
-									className="input"
-									type="tel"
-									name="contactNumber"
-									placeholder="+91 98765 43210"
-									value={formData.contactNumber}
-									onChange={handleInputChange}
-									required
-								/>
+								<label className="label">Account mobile</label>
+								<input className="input" type="tel" value="Uses the mobile number from your account" disabled />
 							</div>
 						</div>
 
