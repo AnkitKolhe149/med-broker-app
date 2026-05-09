@@ -72,12 +72,12 @@ console.info('CORS allowlist initialized:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow server-to-server requests and same-origin requests without Origin header
+    //Allow server-to-server requests and same-origin requests without Origin header
     if (!origin) {
       return callback(null, true);
     }
 
-    // If no explicit origins are configured, allow all origins to avoid hard failures.
+    //If no explicit origins are configured, allow all origins to avoid hard failures.
     if (!hasExplicitOrigins) {
       return callback(null, true);
     }
