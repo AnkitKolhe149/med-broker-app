@@ -23,7 +23,7 @@ function buildInsightMessage(analyticsData) {
 	return (
 		<ul className={styles.insightList}>
 			{topProduct && (
-				<li><strong>Strongest Product:</strong> {topProduct.name} with {topProduct.sales} units sold and {formatCurrency(topProduct.revenue, 'INR', true)} revenue.</li>
+				<li><strong>Strongest Product:</strong> {topProduct.name} with {topProduct.sales} units sold and {formatCurrency(topProduct.revenue, localStorage.getItem('platformCurrency') || 'INR', true)} revenue.</li>
 			)}
 			<li><strong>Sales Momentum:</strong> Your sales are currently <strong>{trendLabel}</strong> over the selected range.</li>
 			{topRegion && (
@@ -86,7 +86,8 @@ function VendorAnalytics() {
 
 	const maxSalesTrend = Math.max(...analyticsData.salesTrend.map((data) => data.sales), 1);
 	const maxRegionOrders = Math.max(...analyticsData.regionData.map((region) => region.orders), 1);
-	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
+	// ✅ FIX: Use platform default currency instead of hardcoded INR
+	const formatMoney = (value) => formatCurrency(convert(value, localStorage.getItem('platformCurrency') || 'INR'), currency, true);
 	const insightMessage = buildInsightMessage(analyticsData);
 
 	return (

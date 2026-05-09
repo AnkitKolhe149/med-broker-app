@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
-import { convertPrice, formatCurrency, getCurrencySymbol } from '../../utils/currency';
+import { convertPrice, formatCurrency, getCurrencySymbol, getCurrencyForCountry } from '../../utils/currency';
 import inventoryService from '../../services/inventory.service';
 import vendorService from '../../services/vendor.service';
 import styles from './MedicineManager.module.css';
@@ -25,8 +25,10 @@ function VendorMedicineManager() {
 	const [uploadFiles, setUploadFiles] = useState([]);
 	const [vendorStatus, setVendorStatus] = useState(null); // Set to null to avoid false verified flicker
 	const currencySymbol = getCurrencySymbol(currency);
-	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
-	const toBaseAmount = (value) => convertPrice(value, currency, 'INR', exchangeRates);
+	// ✅ FIX: Use platform currency or vendor's country currency instead of hardcoded INR
+	const baseCurrency = localStorage.getItem('platformCurrency') || 'INR';
+	const formatMoney = (value) => formatCurrency(convert(value, baseCurrency), currency, true);
+	const toBaseAmount = (value) => convertPrice(value, currency, baseCurrency, exchangeRates);
 	const [newMedicine, setNewMedicine] = useState({
 		name: '',
 		category: '',
@@ -47,8 +49,8 @@ function VendorMedicineManager() {
 					name: item.medicine?.name || 'Unknown medicine',
 					description: item.medicine?.description || '',
 					stock: item.quantity || 0,
-					price: Number(convert((item.medicine?.priceCents || 0) / 100, 'INR').toFixed(2)),
-					wholesalePrice: Number(convert((((item.medicine?.wholesalePriceCents ?? item.medicine?.priceCents) || 0) / 100), 'INR').toFixed(2)),
+					price: Number(convert((item.medicine?.priceCents || 0) / 100, baseCurrency).toFixed(2)),
+					wholesalePrice: Number(convert((((item.medicine?.wholesalePriceCents ?? item.medicine?.priceCents) || 0) / 100), baseCurrency).toFixed(2)),
 					imageUrl: item.imageUrl || item.imageUrls?.[0] || null,
 					imageUrls: Array.isArray(item.imageUrls)
 						? item.imageUrls

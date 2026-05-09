@@ -396,7 +396,20 @@ const initiatePayment = async (orderId, userId, paymentData) => {
       },
       items: {
         include: {
-          medicine: true
+          medicine: {
+            select: {
+              id: true,
+              name: true,
+              priceCents: true,
+              wholesalePriceCents: true,
+              requiresPrescription: true,
+              brand: true,
+              manufacturer: true,
+              description: true,
+              status: true,
+              createdAt: true
+            }
+          }
         }
       },
       payment: true
@@ -581,11 +594,11 @@ const verifyPayment = async (paymentId, verificationData) => {
         await prisma.invoice.upsert({
           where: { orderId: payment.orderId },
           update: { issuedAt: new Date() },
-          create: {
-            orderId: payment.orderId,
-            invoiceNumber,
-            amountCents: payment.amountCents || 0,
-            taxCents: payment.order?.taxCents || 0
+          create: { 
+            orderId: payment.orderId, 
+            invoiceNumber, 
+            amountCents: payment.amountCents || 0, 
+            taxCents: payment.order?.taxCents || 0 
           }
         });
       } catch (e) {
@@ -625,11 +638,11 @@ const verifyPayment = async (paymentId, verificationData) => {
         await prisma.invoice.upsert({
           where: { orderId: payment.orderId },
           update: { issuedAt: new Date() },
-          create: {
-            orderId: payment.orderId,
-            invoiceNumber,
-            amountCents: payment.amountCents || 0,
-            taxCents: payment.order?.taxCents || 0
+          create: { 
+            orderId: payment.orderId, 
+            invoiceNumber, 
+            amountCents: payment.amountCents || 0, 
+            taxCents: payment.order?.taxCents || 0 
           }
         });
       } catch (e) {
@@ -775,13 +788,13 @@ const getPaymentStatus = async (orderId, userId, userRole) => {
 };
 
 /**
- * Process refund for an order
+ * Process refund for an order (internal or admin-triggered)
  */
-const processRefund = async (orderId, userId, userRole, refundData) => {
-  const { reason, amount } = refundData;
+const processRefund = async (orderId, userId, userRole, refundData = {}) => {
+  const { reason = 'Customer cancellation', amount } = refundData;
 
-  // Only admins can process refunds for now
-  if (userRole !== 'ADMIN') {
+  // Only admins or system can process refunds
+  if (userRole !== 'ADMIN' && userRole !== 'SYSTEM') {
     throw new ForbiddenError('Only admins can process refunds');
   }
 
@@ -807,20 +820,20 @@ const processRefund = async (orderId, userId, userRole, refundData) => {
     throw new ValidationError('Refund amount cannot exceed payment amount');
   }
 
-  // For mock payment
+  // For mock payment provider
   if (payment.provider === 'mock' || process.env.NODE_ENV === 'development') {
-    // Update payment status
     const updatedPayment = await prisma.payment.update({
       where: { id: payment.id },
       data: {
-        status: 'REFUNDED'
+        status: 'REFUNDED',
+        refundAmountCents,
+        refundedAt: new Date(),
+        meta: {
+          ...(payment.meta || {}),
+          refundReason: reason,
+          refundedAt: new Date().toISOString()
+        }
       }
-    });
-
-    // Update order status
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: 'CANCELLED' }
     });
 
     return {
@@ -832,12 +845,73 @@ const processRefund = async (orderId, userId, userRole, refundData) => {
     };
   }
 
-  // TODO: Implement actual refund processing
-  // For Razorpay: Create refund
-  // For Stripe: Create refund
-  // For PayPal: Refund captured payment
+  // Razorpay refund implementation
+  if (payment.provider === 'razorpay' || payment.provider === 'Razorpay') {
+    try {
+      const PAYMENT_CONFIG = require('../../config/payment');
+      
+      if (!payment.gatewayPaymentId) {
+        throw new ValidationError('No Razorpay payment ID found for refund');
+      }
 
-  throw new ValidationError('Refund processing not yet implemented. Use mock provider for testing.');
+      const razorpayResponse = await axios.post(
+        `https://api.razorpay.com/v1/payments/${payment.gatewayPaymentId}/refund`,
+        {
+          amount: refundAmountCents,
+          notes: {
+            orderId,
+            reason,
+            refundedAt: new Date().toISOString()
+          }
+        },
+        {
+          auth: {
+            username: PAYMENT_CONFIG.razorpay.keyId,
+            password: PAYMENT_CONFIG.razorpay.keySecret
+          },
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // ✅ Update payment status to REFUNDED after successful Razorpay refund
+      const updatedPayment = await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'REFUNDED',
+          refundAmountCents,
+          refundedAt: new Date(),
+          meta: {
+            ...(payment.meta || {}),
+            razorpayRefundId: razorpayResponse.data?.id,
+            refundReason: reason,
+            refundStatus: razorpayResponse.data?.status,
+            refundedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      return {
+        success: true,
+        refundId: razorpayResponse.data?.id,
+        amount: refundAmountCents,
+        status: razorpayResponse.data?.status,
+        message: 'Refund processed successfully via Razorpay'
+      };
+    } catch (error) {
+      console.error('Razorpay refund error:', error.response?.data || error.message);
+      throw new ValidationError(`Razorpay refund failed: ${error.response?.data?.error?.description || error.message}`);
+    }
+  }
+
+  // Stripe refund implementation
+  if (payment.provider === 'stripe' || payment.provider === 'Stripe') {
+    // TODO: Implement Stripe refund
+    throw new ValidationError('Stripe refund processing not yet implemented. Please use admin panel or contact support.');
+  }
+
+  throw new ValidationError('Refund processing not implemented for this payment provider');
 };
 
 /**

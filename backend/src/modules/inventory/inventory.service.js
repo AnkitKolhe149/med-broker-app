@@ -79,7 +79,20 @@ module.exports = {
       prisma.inventory.findMany({
         where,
         include: {
-          medicine: true
+          medicine: {
+            select: {
+              id: true,
+              name: true,
+              priceCents: true,
+              wholesalePriceCents: true,
+              requiresPrescription: true,
+              brand: true,
+              manufacturer: true,
+              description: true,
+              status: true,
+              createdAt: true
+            }
+          }
         },
         orderBy: {
           updatedAt: 'desc'
@@ -136,7 +149,20 @@ module.exports = {
     const inventoryItem = await prisma.inventory.findUnique({
       where: { id: inventoryId },
       include: {
-        medicine: true
+        medicine: {
+          select: {
+            id: true,
+            name: true,
+            priceCents: true,
+            wholesalePriceCents: true,
+            requiresPrescription: true,
+            brand: true,
+            manufacturer: true,
+            description: true,
+            status: true,
+            createdAt: true
+          }
+        }
       }
     });
 
@@ -202,7 +228,20 @@ module.exports = {
           quantity: quantity !== undefined ? quantity : inventoryItem.quantity
         },
         include: {
-          medicine: true
+          medicine: {
+            select: {
+              id: true,
+              name: true,
+              priceCents: true,
+              wholesalePriceCents: true,
+              requiresPrescription: true,
+              brand: true,
+              manufacturer: true,
+              description: true,
+              status: true,
+              createdAt: true
+            }
+          }
         }
       });
 
@@ -274,7 +313,20 @@ module.exports = {
         imageUrls
       },
       include: {
-        medicine: true
+        medicine: {
+          select: {
+            id: true,
+            name: true,
+            priceCents: true,
+            wholesalePriceCents: true,
+            requiresPrescription: true,
+            brand: true,
+            manufacturer: true,
+            description: true,
+            status: true,
+            createdAt: true
+          }
+        }
       }
     });
 
@@ -465,7 +517,20 @@ module.exports = {
           quantity
         },
         include: {
-          medicine: true
+          medicine: {
+            select: {
+              id: true,
+              name: true,
+              priceCents: true,
+              wholesalePriceCents: true,
+              requiresPrescription: true,
+              brand: true,
+              manufacturer: true,
+              description: true,
+              status: true,
+              createdAt: true
+            }
+          }
         }
       });
 

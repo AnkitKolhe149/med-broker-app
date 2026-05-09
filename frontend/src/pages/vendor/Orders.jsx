@@ -78,7 +78,8 @@ function VendorOrders() {
     };
   };
 
-  const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
+  // ✅ FIX: Detect source currency from order's currency code if available, or use platform default
+  const formatMoney = (value, orderCurrencyCode = 'INR') => formatCurrency(convert(value, orderCurrencyCode || 'INR'), currency, true);
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
