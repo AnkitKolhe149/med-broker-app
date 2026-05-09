@@ -89,18 +89,14 @@ model Customer {
   businessName    String?
   gstin           String?
   country         String
-  state           String?
   city            String
-  zipCode         String?
   deliveryAddress String
   contactNumber   String
-  bio             String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   dateOfBirth     DateTime?
   loyaltyPoints   Int             @default(0)
   profileImage    String?
-  meta            Json?
   cartItems       CartItem[]
   user            User            @relation(fields: [userId], references: [id])
   prescriptions   Prescription[]
