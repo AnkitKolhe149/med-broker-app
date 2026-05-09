@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import Avatar from '../../components/common/Avatar';
@@ -23,11 +23,10 @@ phoneNumber: user?.customer?.contactNumber || '',
 email: user?.email || '',
 address: user?.customer?.deliveryAddress || '',
 city: user?.customer?.city || '',
-state: user?.customer?.state || '',
-zipCode: user?.customer?.zipCode || '',
 country: user?.customer?.country || '',
-bio: user?.customer?.bio || '',
 buyerType: user?.customer?.buyerType || 'RETAIL',
+businessName: user?.customer?.businessName || '',
+gstin: user?.customer?.gstin || '',
 profileImage: user?.customer?.profileImage || ''
 });
 
@@ -118,12 +117,11 @@ fullName: formData.fullName,
 contactNumber: formData.phoneNumber,
 deliveryAddress: formData.address,
 city: formData.city,
-state: formData.state,
-zipCode: formData.zipCode,
 country: formData.country,
 profileImage: formData.profileImage,
 buyerType: formData.buyerType,
-bio: formData.bio
+businessName: formData.businessName,
+gstin: formData.gstin
 };
 await authService.updateProfile(updates);
 await refreshUser();
@@ -285,9 +283,22 @@ Upload
 <label className={styles.fieldLabel}>Email
 <input className={styles.fieldInput} name="email" value={formData.email} disabled />
 </label>
-<label className={styles.fieldLabel}>Bio
-<input className={styles.fieldInput} name="bio" value={formData.bio} onChange={handleInputChange} disabled={!isEditingProfile} />
+<label className={styles.fieldLabel}>Buyer Type
+<select className={styles.fieldInput} name="buyerType" value={formData.buyerType} onChange={handleInputChange} disabled={!isEditingProfile}>
+<option value="RETAIL">Retail</option>
+<option value="WHOLESALE">Wholesale</option>
+</select>
 </label>
+{formData.buyerType === 'WHOLESALE' && (
+<>
+<label className={styles.fieldLabel}>Business Name
+<input className={styles.fieldInput} name="businessName" value={formData.businessName} onChange={handleInputChange} disabled={!isEditingProfile} />
+</label>
+<label className={styles.fieldLabel}>GSTIN
+<input className={styles.fieldInput} name="gstin" value={formData.gstin} onChange={handleInputChange} disabled={!isEditingProfile} />
+</label>
+</>
+)}
 </div>
 </div>
 
@@ -325,12 +336,6 @@ Upload
 </label>
 <label className={styles.fieldLabel}>City
 <input className={styles.fieldInput} name="city" value={formData.city} onChange={handleInputChange} disabled={!isEditingAddress} />
-</label>
-<label className={styles.fieldLabel}>State
-<input className={styles.fieldInput} name="state" value={formData.state} onChange={handleInputChange} disabled={!isEditingAddress} />
-</label>
-<label className={styles.fieldLabel}>ZIP Code
-<input className={styles.fieldInput} name="zipCode" value={formData.zipCode} onChange={handleInputChange} disabled={!isEditingAddress} />
 </label>
 <label className={styles.fieldLabel}>Country
 <input className={styles.fieldInput} name="country" value={formData.country} onChange={handleInputChange} disabled={!isEditingAddress} />

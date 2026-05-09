@@ -272,6 +272,9 @@ module.exports = {
     if (data.city) customerUpdates.city = String(data.city);
     if (data.country) customerUpdates.country = String(data.country);
     if (data.profileImage) customerUpdates.profileImage = String(data.profileImage);
+    if (data.buyerType) customerUpdates.buyerType = data.buyerType;
+    if (data.businessName !== undefined) customerUpdates.businessName = data.businessName ? String(data.businessName) : null;
+    if (data.gstin !== undefined) customerUpdates.gstin = data.gstin ? String(data.gstin) : null;
 
     // Run updates in transaction
     const operations = [];
