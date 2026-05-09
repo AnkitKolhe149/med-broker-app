@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import vendorService from '../../services/vendor.service';
 import { useCurrency } from '../../context/CurrencyContext';
-import { formatCurrency, getCurrencyForCountry } from '../../utils/currency';
+import { formatCurrency } from '../../utils/currency';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Dashboard.module.css';
 import { Pill, Package, Truck, Wallet, Star, Check, Clock, X } from 'lucide-react';
@@ -26,22 +26,10 @@ function VendorDashboard() {
 		recentOrders: [],
 		lowStockProducts: []
 	});
-	// ✅ FIX: Use vendor's actual country/currency instead of hardcoded INR
-	const getSourceCurrency = () => user?.vendor?.country ? getCurrencyForCountry(user.vendor.country, 'INR') : 'INR';
-	const formatMoney = (value) => formatCurrency(convert(value, getSourceCurrency()), currency, true);
+	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 
 	useEffect(() => {
 		loadUserData();
-		
-		// ✅ FIX: Refresh user data when vendor verification status changes
-		const handleAuthStatusUpdate = () => {
-			loadUserData();
-		};
-
-		window.addEventListener('authStatusUpdated', handleAuthStatusUpdate);
-		return () => {
-			window.removeEventListener('authStatusUpdated', handleAuthStatusUpdate);
-		};
 	}, []);
 
 	const loadUserData = async () => {

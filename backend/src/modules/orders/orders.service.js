@@ -189,20 +189,7 @@ const createOrder = async (userId, orderData) => {
       include: {
         items: {
           include: {
-            medicine: {
-              select: {
-                id: true,
-                name: true,
-                priceCents: true,
-                wholesalePriceCents: true,
-                requiresPrescription: true,
-                brand: true,
-                manufacturer: true,
-                description: true,
-                status: true,
-                createdAt: true
-              }
-            }
+            medicine: true
           }
         },
         payment: true
@@ -385,20 +372,7 @@ const createOrder = async (userId, orderData) => {
       include: {
         items: {
           include: {
-            medicine: {
-              select: {
-                id: true,
-                name: true,
-                priceCents: true,
-                wholesalePriceCents: true,
-                requiresPrescription: true,
-                brand: true,
-                manufacturer: true,
-                description: true,
-                status: true,
-                createdAt: true
-              }
-            }
+            medicine: true
           }
         }
       }
@@ -435,20 +409,7 @@ const getUserOrders = async (userId, options = {}) => {
       include: {
         items: {
           include: {
-            medicine: {
-              select: {
-                id: true,
-                name: true,
-                priceCents: true,
-                wholesalePriceCents: true,
-                requiresPrescription: true,
-                brand: true,
-                manufacturer: true,
-                description: true,
-                status: true,
-                createdAt: true
-              }
-            }
+            medicine: true
           }
         },
         payment: true
@@ -480,20 +441,7 @@ const getOrderById = async (orderId, userId, userRole) => {
     include: {
       items: {
         include: {
-          medicine: {
-            select: {
-              id: true,
-              name: true,
-              priceCents: true,
-              wholesalePriceCents: true,
-              requiresPrescription: true,
-              brand: true,
-              manufacturer: true,
-              description: true,
-              status: true,
-              createdAt: true
-            }
-          }
+          medicine: true
         }
       },
       payment: true,
@@ -587,20 +535,7 @@ const updateOrderStatus = async (orderId, newStatus, userId, userRole) => {
     include: {
       items: {
         include: {
-          medicine: {
-            select: {
-              id: true,
-              name: true,
-              priceCents: true,
-              wholesalePriceCents: true,
-              requiresPrescription: true,
-              brand: true,
-              manufacturer: true,
-              description: true,
-              status: true,
-              createdAt: true
-            }
-          }
+          medicine: true
         }
       },
       payment: true
@@ -640,29 +575,10 @@ const cancelOrder = async (orderId, userId, userRole) => {
     throw new ValidationError('Cannot cancel shipped orders. Please contact support for returns.');
   }
 
-  // ✅ FIX: Allow paid orders to be cancelled with automatic refund
-  let refundResult = null;
   if (order.payment && order.payment.status === 'SUCCEEDED') {
-    // Import payment service to process refund
-    const paymentsService = require('../payments/payments.service');
-    try {
-      refundResult = await paymentsService.processRefund(
-        orderId,
-        'SYSTEM', // Use SYSTEM role for automatic refunds
-        'SYSTEM',
-        {
-          reason: 'Customer order cancellation',
-          amount: order.totalCents
-        }
-      );
-      console.log(`[cancelOrder] Refund processed for order ${orderId}:`, refundResult);
-    } catch (refundError) {
-      console.error(`[cancelOrder] Refund failed for order ${orderId}:`, refundError.message);
-      // Don't fail the cancellation if refund fails - log it for admin review
-      // Admin can manually process refund later
-    }
+    throw new ValidationError('Cannot cancel paid orders. Please request a refund instead.');
   }
-  
+
   // Cancel the order and restore inventory stock for each item.
   const cancelledOrder = await prisma.$transaction(async (tx) => {
     const updated = await tx.order.update({
@@ -671,20 +587,7 @@ const cancelOrder = async (orderId, userId, userRole) => {
       include: {
         items: {
           include: {
-            medicine: {
-              select: {
-                id: true,
-                name: true,
-                priceCents: true,
-                wholesalePriceCents: true,
-                requiresPrescription: true,
-                brand: true,
-                manufacturer: true,
-                description: true,
-                status: true,
-                createdAt: true
-              }
-            }
+            medicine: true
           }
         }
       }
@@ -736,20 +639,7 @@ const getOrderForReceipt = async (orderId, userId, userRole) => {
     include: {
       items: {
         include: {
-          medicine: {
-            select: {
-              id: true,
-              name: true,
-              priceCents: true,
-              wholesalePriceCents: true,
-              requiresPrescription: true,
-              brand: true,
-              manufacturer: true,
-              description: true,
-              status: true,
-              createdAt: true
-            }
-          }
+          medicine: true
         }
       },
       payment: true,

@@ -5,7 +5,7 @@ import { useUser } from '../../context/UserContext';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotification } from '../../context/NotificationContext';
-import { convertPrice, formatCurrency, getCurrencyForCountry } from '../../utils/currency';
+import { convertPrice, formatCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import styles from './Dashboard.module.css';
 import { BarChart2, Package, Pill, Settings, ClipboardList, Heart, TrendingUp, Timer, Sparkles, Gift } from 'lucide-react';
@@ -19,9 +19,7 @@ function CustomerDashboard() {
 	const [orders, setOrders] = useState([]);
 	const [loadingOrders, setLoadingOrders] = useState(true);
 	const currencyCode = currency || user?.preferredCurrency || 'INR';
-	// ✅ FIX: Use customer's actual country currency instead of hardcoded INR
-	const getSourceCurrency = () => user?.customer?.country ? getCurrencyForCountry(user.customer.country, 'INR') : 'INR';
-	const formatPrice = (value) => formatCurrency(convertPrice(value, getSourceCurrency(), currencyCode, exchangeRates), currencyCode, true);
+	const formatPrice = (value) => formatCurrency(convertPrice(value, 'INR', currencyCode, exchangeRates), currencyCode, true);
 	const savedAddress = user?.customer
 		? `${user.customer.address || ''}, ${user.customer.city || ''}, ${user.customer.state || ''} ${user.customer.zipCode || ''}`
 		: 'No saved address';

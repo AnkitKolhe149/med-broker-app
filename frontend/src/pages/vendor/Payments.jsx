@@ -27,8 +27,7 @@ function VendorPayments() {
 	const [submittingWithdrawal, setSubmittingWithdrawal] = useState(false);
 	const [withdrawalHistory, setWithdrawalHistory] = useState([]);
 	const [activeTab, setActiveTab] = useState('transactions');
-	// ✅ FIX: Use platform currency instead of hardcoded INR
-	const formatMoney = (value) => formatCurrency(convert(value, localStorage.getItem('platformCurrency') || 'INR'), currency, true);
+	const formatMoney = (value) => formatCurrency(convert(value, 'INR'), currency, true);
 
 	useEffect(() => {
 		const loadVendorPayments = async () => {

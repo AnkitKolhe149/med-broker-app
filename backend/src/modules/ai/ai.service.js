@@ -538,20 +538,7 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', pr
       ...(whereOr.length ? { OR: whereOr } : {})
     },
     include: {
-      medicine: {
-        select: {
-          id: true,
-          name: true,
-          priceCents: true,
-          wholesalePriceCents: true,
-          requiresPrescription: true,
-          brand: true,
-          manufacturer: true,
-          description: true,
-          status: true,
-          createdAt: true
-        }
-      },
+      medicine: true,
       vendor: {
         select: {
           id: true,
