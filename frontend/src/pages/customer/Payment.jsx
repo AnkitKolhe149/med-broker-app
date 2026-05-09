@@ -176,7 +176,7 @@ function Payment() {
 
 	const generateQRCode = () => {
 		const amount = calculateTotal();
-		const merchantUPI = 'mediq@icici';
+		const merchantUPI = '7666846804@ybl';
 		const transactionId = generateTransactionId();
 		const upiString = `upi://pay?pa=${merchantUPI}&pn=MedIQ&am=${amount}&tn=Medicine%20Purchase&tr=${transactionId}`;
 		return upiString;
