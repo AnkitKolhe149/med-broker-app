@@ -64,7 +64,9 @@ async function authenticate(req, res, next) {
 
     req.user = {
       ...user,
-      availableRoles: authService.getAvailableRoles(user)
+      availableRoles: (authService.getAvailableRoles && typeof authService.getAvailableRoles === 'function')
+        ? authService.getAvailableRoles(user)
+        : [user.role]
     };
     next();
   } catch (error) {

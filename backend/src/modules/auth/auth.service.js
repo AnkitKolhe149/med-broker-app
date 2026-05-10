@@ -340,9 +340,9 @@ module.exports = {
     return refreshed;
   },
 
-  generateToken,
-  verifyToken,
-  getAvailableRoles
+  generateToken: generateToken,
+  verifyToken: verifyToken,
+  getAvailableRoles: getAvailableRoles
 };
 
 module.exports.invalidateUserSessions = async (userId) => {
