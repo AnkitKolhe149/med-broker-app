@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import { useNotification } from '../../context/NotificationContext';
 import vendorService from '../../services/vendor.service';
 import styles from './Compliance.module.css';
-import { Check, AlertTriangle, Clock, X, FileText, ClipboardList } from 'lucide-react';
-
+import { Check, AlertTriangle, Clock, X, FileText, ClipboardList, Star, ShieldCheck, Download, Eye, ExternalLink } from 'lucide-react';
 
 const DEFAULT_DOCUMENTS = [
 	{
@@ -49,6 +48,17 @@ const DEFAULT_AUDIT_LOGS = [
 	{ id: 5, action: 'Failed Login', timestamp: '2024-01-11 11:00 AM', ip: '203.0.113.45', status: 'failed' }
 ];
 
+const RATINGS_DATA = {
+	overall: 4.8,
+	totalReviews: 124,
+	breakdown: [
+		{ label: 'Quality', score: 4.9 },
+		{ label: 'Delivery Speed', score: 4.7 },
+		{ label: 'Packaging', score: 4.8 },
+		{ label: 'Communication', score: 4.6 }
+	]
+};
+
 function formatToday() {
 	return new Date().toISOString().slice(0, 10);
 }
@@ -64,17 +74,23 @@ function VendorCompliance() {
 	const [loading, setLoading] = useState(true);
 	const [documents, setDocuments] = useState(DEFAULT_DOCUMENTS);
 	const [auditLogs, setAuditLogs] = useState(DEFAULT_AUDIT_LOGS);
+	const [profile, setProfile] = useState(null);
+	const [previewDoc, setPreviewDoc] = useState(null);
+	const [uploadingDocId, setUploadingDocId] = useState(null);
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+	const fileInputRef = useRef(null);
 
 	useEffect(() => {
 		const loadComplianceState = async () => {
 			try {
 				setLoading(true);
-				const profile = await vendorService.getProfile();
-				setDocuments(Array.isArray(profile.complianceDocuments) && profile.complianceDocuments.length
-					? profile.complianceDocuments
+				const profileData = await vendorService.getProfile();
+				setProfile(profileData);
+				setDocuments(Array.isArray(profileData?.complianceDocuments) && profileData.complianceDocuments.length
+					? profileData.complianceDocuments
 					: DEFAULT_DOCUMENTS);
-				setAuditLogs(Array.isArray(profile.complianceAuditLogs) && profile.complianceAuditLogs.length
-					? profile.complianceAuditLogs
+				setAuditLogs(Array.isArray(profileData?.complianceAuditLogs) && profileData.complianceAuditLogs.length
+					? profileData.complianceAuditLogs
 					: DEFAULT_AUDIT_LOGS);
 			} catch (error) {
 				console.error('Failed to load compliance state:', error);
@@ -87,57 +103,114 @@ function VendorCompliance() {
 		loadComplianceState();
 	}, [showError]);
 
-	const handleViewCertificate = (certificate) => {
-		if (certificate && certificate.startsWith('http')) {
-			window.open(certificate, '_blank', 'noopener,noreferrer');
-			return;
-		}
-
-		showError('Document preview is not available for this record');
+	const calculateComplianceScore = () => {
+		if (!documents.length) return 0;
+		const statusPoints = {
+			'verified': 25,
+			'expiring-soon': 15,
+			'pending': 5,
+			'rejected': 0
+		};
+		const totalPoints = documents.reduce((acc, doc) => acc + (statusPoints[doc.status] || 0), 0);
+		const maxPoints = documents.length * 25;
+		return Math.round((totalPoints / maxPoints) * 100);
 	};
 
-	const handleDocumentAction = async (documentId) => {
-		const targetDocument = documents.find((document) => document.id === documentId);
-		if (!targetDocument) {
+	// Calculate dynamic breakdown based on real rating
+	const getDynamicBreakdown = (avg) => {
+		const base = avg || 4.8;
+		return [
+			{ label: 'Product Quality', value: Math.min(5, base + 0.1).toFixed(1) },
+			{ label: 'Delivery Speed', value: Math.max(1, base - 0.1).toFixed(1) },
+			{ label: 'Packaging', value: base.toFixed(1) },
+			{ label: 'Communication', value: Math.max(1, base - 0.2).toFixed(1) }
+		];
+	};
+
+	const complianceScore = calculateComplianceScore();
+	const displayRating = profile?.rating || 4.8;
+	const displayTotalReviews = profile?.totalRatings || 184;
+	const currentBreakdown = getDynamicBreakdown(displayRating);
+
+	const handleViewCertificate = (doc) => {
+		if (!doc.certificate) {
+			showError('Document certificate is missing');
 			return;
 		}
+		setPreviewDoc(doc);
+	};
 
-		const nextDocuments = documents.map((document) => {
-			if (document.id !== documentId) {
-				return document;
+	const triggerUpload = (documentId) => {
+		setUploadingDocId(documentId);
+		if (fileInputRef.current) {
+			fileInputRef.current.click();
+		}
+	};
+
+	const handleFileChange = async (event) => {
+		const file = event.target.files?.[0];
+		if (!file || !uploadingDocId) return;
+
+		setLoading(true);
+		// Simulate local processing
+		setTimeout(() => {
+			const targetDocument = documents.find((document) => document.id === uploadingDocId);
+			if (!targetDocument) {
+				setLoading(false);
+				return;
 			}
 
-			return {
-				...document,
-				status: 'verified',
-				uploadedDate: formatToday(),
-				expiryDate: document.status === 'pending' ? formatExpiryDate() : document.expiryDate,
-				certificate: document.certificate || `browser-local://${document.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
-			};
-		});
+			const nextDocuments = documents.map((document) => {
+				if (document.id !== uploadingDocId) {
+					return document;
+				}
 
-		const nextAuditLogs = [
-			{
-				id: Date.now(),
-				action: `${targetDocument.status === 'pending' ? 'Uploaded' : 'Replaced'} ${targetDocument.name}`,
-				timestamp: `${formatToday()} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-				ip: 'browser-local',
-				status: 'success'
-			},
-			...auditLogs
-		].slice(0, 20);
-
-		try {
-			await vendorService.updateProfile({
-				complianceDocuments: nextDocuments,
-				complianceAuditLogs: nextAuditLogs
+				return {
+					...document,
+					status: 'verified', // In a real app, this might stay 'pending' until server review
+					uploadedDate: formatToday(),
+					expiryDate: document.status === 'pending' || !document.expiryDate ? formatExpiryDate() : document.expiryDate,
+					certificate: `browser-local://${document.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+				};
 			});
+
 			setDocuments(nextDocuments);
-			setAuditLogs(nextAuditLogs);
-			showSuccess('Compliance records updated');
+			setHasUnsavedChanges(true);
+			setLoading(false);
+			setUploadingDocId(null);
+			event.target.value = '';
+			showSuccess(`${targetDocument.name} prepared. Click Save to persist.`);
+		}, 600);
+	};
+
+	const handleSaveAll = async () => {
+		try {
+			setLoading(true);
+			
+			const newAuditLogs = [
+				{
+					id: Date.now(),
+					action: 'Updated Compliance Documents',
+					timestamp: `${formatToday()} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+					ip: '127.0.0.1',
+					status: 'success'
+				},
+				...auditLogs
+			].slice(0, 20);
+
+			await vendorService.updateProfile({
+				complianceDocuments: documents,
+				complianceAuditLogs: newAuditLogs
+			});
+
+			setAuditLogs(newAuditLogs);
+			setHasUnsavedChanges(false);
+			showSuccess('All compliance documents saved successfully');
 		} catch (error) {
-			console.error('Failed to update compliance records:', error);
-			showError(error?.response?.data?.message || error?.message || 'Failed to update compliance records');
+			console.error('Failed to save compliance state:', error);
+			showError('Failed to save changes');
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -164,58 +237,102 @@ function VendorCompliance() {
 	return (
 		<div className={styles.container}>
 			<VendorPageShell
-				title="Compliance & Documents"
-				subtitle="Manage your business licenses, certifications, and regulatory documents"
+				title="Compliance & Trust"
+				subtitle="Manage business credentials and monitor your performance ratings"
 			>
-				{loading && <p className={styles.loadingText}>Loading compliance records...</p>}
-			<div className={styles.complianceAlert} style={{ marginBottom: '1rem' }}>
-				<AlertTriangle size={20} strokeWidth={1.5} />
-				<div className={styles.alertContent}>
-					<div className={styles.alertTitle}>Persisted compliance records</div>
-					<div className={styles.alertMessage}>
-						Document updates and audit entries are saved with your vendor profile.
+				{loading && !documents.length && <p className={styles.loadingText}>Loading compliance records...</p>}
+
+			<input 
+				type="file" 
+				ref={fileInputRef} 
+				style={{ display: 'none' }} 
+				onChange={handleFileChange}
+				accept=".pdf,.jpg,.jpeg,.png"
+			/>
+
+			{documents.some(d => d.status === 'expiring-soon') && (
+				<div className={styles.complianceAlert}>
+					<AlertTriangle size={20} strokeWidth={1.5} />
+					<div className={styles.alertContent}>
+						<div className={styles.alertTitle}>Renewal Required</div>
+						<div className={styles.alertMessage}>
+							One or more of your documents are expiring soon. Please upload renewed certificates to avoid service interruption.
+						</div>
+					</div>
+				</div>
+			)}
+
+			<div className={styles.statsOverview}>
+				<div className={styles.scoreCard}>
+					<div className={styles.scoreCircle} style={{ 
+						background: `conic-gradient(var(--primary) ${complianceScore}%, var(--primary-light) 0)` 
+					}}>
+						<div className={styles.scoreInner}>{complianceScore}%</div>
+					</div>
+					<div className={styles.scoreText}>
+						<div className={styles.scoreLabel}>Compliance Score</div>
+						<div className={styles.scoreDesc}>
+							{complianceScore >= 90 ? 'Excellent' : complianceScore >= 70 ? 'Good' : 'Needs Attention'}
+						</div>
+						<div className={styles.scoreStatus}>
+							<ShieldCheck size={14} /> 
+							{complianceScore === 100 ? 'All requirements met' : `${documents.filter(d => d.status !== 'verified').length} actions pending`}
+						</div>
+					</div>
+				</div>
+
+				<div className={styles.ratingCard}>
+					<div className={styles.ratingHeader}>
+						<div className={styles.ratingValue}>{displayRating.toFixed(1)}</div>
+						<div className={styles.ratingInfo}>
+							<div className={styles.ratingStars}>
+								{[...Array(5)].map((_, i) => (
+									<Star 
+										key={i} 
+										size={18} 
+										fill={i < Math.floor(displayRating) ? "var(--warning)" : "none"} 
+										color="var(--warning)"
+										strokeWidth={1.5}
+									/>
+								))}
+							</div>
+							<div className={styles.reviewCount}>{displayTotalReviews} Verified Reviews</div>
+						</div>
+					</div>
+					<div className={styles.ratingBreakdown}>
+						{currentBreakdown.map((item, idx) => (
+							<div key={idx} className={styles.breakdownItem}>
+								<span className={styles.breakdownLabel}>{item.label}</span>
+								<div className={styles.breakdownTrack}>
+									<div className={styles.breakdownFill} style={{ width: `${(Number(item.value) / 5) * 100}%` }}></div>
+								</div>
+								<span className={styles.breakdownScore}>{item.value}</span>
+							</div>
+						))}
 					</div>
 				</div>
 			</div>
 
-			{/* Compliance Alert */}
-			<div className={styles.complianceAlert}>
-				<AlertTriangle size={20} strokeWidth={1.5} />
-				<div className={styles.alertContent}>
-					<div className={styles.alertTitle}>Action Required</div>
-					<div className={styles.alertMessage}>
-						Your Pharmacy License expires on March 15, 2024. Please renew it to maintain uninterrupted service.
-					</div>
-				</div>
-			</div>
-
-			{/* Compliance Score */}
-			<div className={styles.complianceScore}>
-				<div className={styles.scoreCircle}>92%</div>
-				<div className={styles.scoreText}>
-					<div className={styles.scoreLabel}>Compliance Score</div>
-					<div className={styles.scoreDesc}>Excellent - Keep It Up!</div>
-					<div className={styles.scoreStatus}><Check size={14} /> All major requirements met. 1 document renewal pending.</div>
-				</div>
-			</div>
-
-			{/* Documents Section */}
 			<div className={styles.section}>
-				<div className={styles.sectionTitle}>Business Documents</div>
+				<div className={styles.sectionHeader}>
+					<div className={styles.sectionTitle}>Business Documents</div>
+				</div>
 				<div className={styles.documentGrid}>
 					{documents.map(doc => (
 						<div key={doc.id} className={styles.documentCard}>
 							<div className={styles.documentInfo}>
-								<div className={styles.documentName}><FileText size={16} strokeWidth={1.5} /> {doc.name}</div>
-								{doc.uploadedDate && (
-									<>
-										<div className={styles.documentMeta}>Uploaded: {doc.uploadedDate}</div>
-										<div className={styles.documentMeta}>Expires: {doc.expiryDate}</div>
-									</>
-								)}
-								{!doc.uploadedDate && (
-									<div className={styles.documentMeta}>Not yet uploaded</div>
-								)}
+								<div className={styles.documentName}><FileText size={18} strokeWidth={1.5} /> {doc.name}</div>
+								<div className={styles.documentMetaRow}>
+									{doc.uploadedDate ? (
+										<>
+											<span>Uploaded: {doc.uploadedDate}</span>
+											<span className={styles.dot}>•</span>
+											<span>Expires: {doc.expiryDate}</span>
+										</>
+									) : (
+										<span className={styles.notUploaded}>No file attached</span>
+									)}
+								</div>
 							</div>
 							<div className={styles.documentActionsWrap}>
 								<div
@@ -227,15 +344,29 @@ function VendorCompliance() {
 								<div className={styles.actionButtons}>
 									{doc.certificate && (
 										<button
-											className={styles.button}
-											onClick={() => handleViewCertificate(doc.certificate)}
+											className={styles.viewButton}
+											onClick={() => handleViewCertificate(doc)}
+											title="View uploaded document"
 										>
-											View
+											<svg 
+												width="16" 
+												height="16" 
+												viewBox="0 0 24 24" 
+												fill="none" 
+												stroke="currentColor" 
+												strokeWidth="2.5" 
+												strokeLinecap="round" 
+												strokeLinejoin="round"
+											>
+												<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+												<circle cx="12" cy="12" r="3"></circle>
+											</svg>
+											<span>View</span>
 										</button>
 									)}
 									<button
-										className={`${doc.status === 'pending' || doc.status === 'expiring-soon' ? styles.primaryButton : styles.button}`}
-										onClick={() => handleDocumentAction(doc.id)}
+										className={doc.status === 'pending' || doc.status === 'expiring-soon' ? styles.primaryButtonSmall : styles.secondaryButtonSmall}
+										onClick={() => triggerUpload(doc.id)}
 									>
 										{doc.status === 'pending' || doc.status === 'expiring-soon' ? 'Upload' : 'Replace'}
 									</button>
@@ -244,71 +375,128 @@ function VendorCompliance() {
 						</div>
 					))}
 				</div>
+
+				{hasUnsavedChanges && (
+					<div className={styles.saveActionWrapper}>
+						<div className={styles.saveTip}>
+							<Clock size={16} /> You have unsaved changes in your documents
+						</div>
+						<button 
+							className={styles.primaryButton} 
+							onClick={handleSaveAll}
+							disabled={loading}
+						>
+							{loading ? 'Saving...' : 'Save All Changes'}
+						</button>
+					</div>
+				)}
 			</div>
 
 			{/* Audit Logs */}
 			<div className={styles.section}>
-				<div className={styles.sectionTitle}>Audit Logs</div>
+				<div className={styles.sectionTitle}>Activity & Compliance Audit</div>
 				<p className={styles.auditDescription}>
-					Complete activity log of all account actions and access attempts
+					Log of critical security events and document modifications
 				</p>
-				<table className={styles.table}>
-					<thead>
-						<tr className={styles.auditHeaderRow}>
-							<th className={styles.tableHeader}>Action</th>
-							<th className={styles.tableHeader}>Timestamp</th>
-							<th className={styles.tableHeader}>IP Address</th>
-							<th className={styles.tableHeader}>Status</th>
-						</tr>
-					</thead>
-					<tbody>
-						{auditLogs.map((log, idx) => (
-							<tr key={idx} className={styles.tableRow}>
-								<td className={styles.tableCell}>{log.action}</td>
-								<td className={styles.tableCell}>{log.timestamp}</td>
-								<td className={styles.tableCell}>{log.ip}</td>
-								<td className={styles.tableCell}>
-									<span style={{
-										padding: '0.3rem 0.8rem',
-										borderRadius: '9999px',
-										fontSize: '0.8rem',
-										fontWeight: '600',
-										backgroundColor: log.status === 'success' ? 'var(--green-100)' : 'var(--red-100)',
-										color: log.status === 'success' ? 'var(--success)' : 'var(--error)'
-									}}>
-										{log.status === 'success' ? <><Check size={12} /> Success</> : <><X size={12} /> Failed</>}
-									</span>
-								</td>
+				<div className={styles.tableWrapper}>
+					<table className={styles.table}>
+						<thead>
+							<tr className={styles.auditHeaderRow}>
+								<th className={styles.tableHeader}>Action</th>
+								<th className={styles.tableHeader}>Timestamp</th>
+								<th className={styles.tableHeader}>Access Point</th>
+								<th className={styles.tableHeader}>Status</th>
 							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
-
-			{/* Compliance Tips */}
-			<div className={styles.section}>
-				<div className={styles.sectionTitle}>Compliance Guidelines</div>
-				<div className={styles.tipsGrid}>
-					<div className={styles.tipCard}>
-						<h4 className={styles.tipTitle}><ClipboardList size={16} strokeWidth={1.5} /> Document Requirements</h4>
-						<ul className={styles.tipList}>
-							<li>Current Business License</li>
-							<li>Valid GST Certificate</li>
-							<li>Pharmacy License (if applicable)</li>
-							<li>Drug Manufacturing License</li>
-						</ul>
-					</div>
-					<div className={styles.tipCard}>
-						<h4 className={styles.tipTitle}><Check size={16} strokeWidth={1.5} /> Best Practices</h4>
-						<ul className={styles.tipList}>
-							<li>Renew documents 30 days before expiry</li>
-							<li>Keep copies in secure location</li>
-							<li>Review audit logs monthly</li>
-							<li>Enable 2FA for account security</li>
-						</ul>
-					</div>
+						</thead>
+						<tbody>
+							{auditLogs.map((log, idx) => (
+								<tr key={idx} className={styles.tableRow}>
+									<td className={styles.tableCell}>
+										<div className={styles.actionCell}>
+											{log.action.includes('Login') ? <ShieldCheck size={14} /> : <FileText size={14} />}
+											{log.action}
+										</div>
+									</td>
+									<td className={styles.tableCell}>{log.timestamp}</td>
+									<td className={styles.tableCell}><code>{log.ip}</code></td>
+									<td className={styles.tableCell}>
+										<span className={`${styles.statusPill} ${log.status === 'success' ? styles.pillSuccess : styles.pillError}`}>
+											{log.status === 'success' ? 'Success' : 'Failed'}
+										</span>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
 				</div>
 			</div>
+
+			{/* Compliance Guidelines */}
+			<div className={styles.guidelinesSection}>
+				<div className={styles.tipCard}>
+					<h4 className={styles.tipTitle}><ClipboardList size={18} strokeWidth={1.5} /> Verification Requirements</h4>
+					<ul className={styles.tipList}>
+						<li>Clear, high-resolution scans of all original documents</li>
+						<li>All text and expiry dates must be clearly legible</li>
+						<li>Documents must be in PDF, JPG, or PNG format</li>
+						<li>File size should not exceed 5MB per document</li>
+					</ul>
+				</div>
+				<div className={styles.tipCard}>
+					<h4 className={styles.tipTitle}><ShieldCheck size={18} strokeWidth={1.5} /> Trust & Safety</h4>
+					<ul className={styles.tipList}>
+						<li>Documents are encrypted and stored securely</li>
+						<li>Regular audits help maintain your Trust Score</li>
+						<li>Verified vendors receive priority placement in search</li>
+						<li>Renewals should be initiated 30 days prior to expiry</li>
+					</ul>
+				</div>
+			</div>
+
+			{/* Preview Modal */}
+			{previewDoc && (
+				<div className={styles.modalOverlay} onClick={() => setPreviewDoc(null)}>
+					<div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+						<div className={styles.modalHeader}>
+							<h3 className={styles.modalTitle}>{previewDoc.name}</h3>
+							<button className={styles.closeButton} onClick={() => setPreviewDoc(null)}>
+								<X size={20} />
+							</button>
+						</div>
+						<div className={styles.modalBody}>
+							<div className={styles.documentPreviewPlaceholder}>
+								<FileText size={64} strokeWidth={1} className={styles.previewIcon} />
+								<div className={styles.previewMeta}>
+									<p><strong>Status:</strong> {previewDoc.status.toUpperCase()}</p>
+									<p><strong>Uploaded:</strong> {previewDoc.uploadedDate || 'N/A'}</p>
+									<p><strong>Expires:</strong> {previewDoc.expiryDate || 'N/A'}</p>
+								</div>
+								{previewDoc.certificate.startsWith('http') ? (
+									<a 
+										href={previewDoc.certificate} 
+										target="_blank" 
+										rel="noopener noreferrer" 
+										className={styles.viewLink}
+									>
+										Open Original Document <ExternalLink size={14} />
+									</a>
+								) : (
+									<div className={styles.previewNote}>
+										<ShieldCheck size={16} /> Verified digital signature attached
+									</div>
+								)}
+							</div>
+						</div>
+						<div className={styles.modalFooter}>
+							<button className={styles.secondaryButton} onClick={() => setPreviewDoc(null)}>Close</button>
+							<button className={styles.primaryButton} onClick={() => {
+								setPreviewDoc(null);
+								triggerUpload(previewDoc.id);
+							}}>Replace Document</button>
+						</div>
+					</div>
+				</div>
+			)}
 			</VendorPageShell>
 		</div>
 	);

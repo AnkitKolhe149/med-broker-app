@@ -6,7 +6,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { formatCurrency } from '../../utils/currency';
 import VendorPageShell from '../../components/layout/VendorPageShell';
 import styles from './Dashboard.module.css';
-import { Pill, Package, Truck, Wallet, Star, Check, Clock, X } from 'lucide-react';
+import { Pill, Package, Truck, Wallet, Star, Check, Clock, X, ShieldCheck } from 'lucide-react';
 
 function VendorDashboard() {
 	const navigate = useNavigate();
@@ -20,7 +20,8 @@ function VendorDashboard() {
 		totalProducts: 0,
 		totalInventoryValue: 0,
 		averageRating: 4.8,
-		totalReviews: 0,
+		totalReviews: 124,
+		complianceScore: 92,
 		conversionRate: 3.45,
 		weeklyTrend: [],
 		recentOrders: [],
@@ -35,35 +36,48 @@ function VendorDashboard() {
 	const loadUserData = async () => {
 		try {
 			setLoading(true);
-			const [userData, dashboard] = await Promise.all([
+			const [userData, dashboard, profile] = await Promise.all([
 				authService.getCurrentUser(),
-				vendorService.getDashboard()
+				vendorService.getDashboard(),
+				vendorService.getProfile()
 			]);
 
+			// Calculate compliance score
+			let score = 92;
+			if (profile?.complianceDocuments) {
+				const statusPoints = { 'verified': 25, 'expiring-soon': 15, 'pending': 5, 'rejected': 0 };
+				const totalPoints = profile.complianceDocuments.reduce((acc, doc) => acc + (statusPoints[doc.status] || 0), 0);
+				const maxPoints = profile.complianceDocuments.length * 25;
+				score = maxPoints > 0 ? Math.round((totalPoints / maxPoints) * 100) : 0;
+			}
+
 			setUser(userData);
-			setDashboardData({
-				todaySales: Math.round((dashboard.metrics?.todaySalesCents || 0) / 100),
-				todayOrders: dashboard.metrics?.todayOrders || 0,
-				pendingOrders: dashboard.metrics?.pendingOrders || 0,
-				totalProducts: dashboard.metrics?.totalProducts || 0,
-				totalInventoryValue: Math.round((dashboard.metrics?.totalInventoryValueCents || 0) / 100),
-				averageRating: 4.8,
-				totalReviews: 0,
-				conversionRate: 3.45,
-				weeklyTrend: (dashboard.weeklyTrend || []).map((item) => ({
-					day: item.day,
-					sales: Math.round((item.salesCents || 0) / 100),
-					orders: item.orders || 0
-				})),
-				recentOrders: (dashboard.recentOrders || []).map((order) => ({
-					id: order.id,
-					customer: order.customer,
-					amount: Math.round((order.amountCents || 0) / 100),
-					status: order.status,
-					time: new Date(order.createdAt).toLocaleString()
-				})),
-				lowStockProducts: dashboard.lowStockProducts || []
-			});
+			if (dashboard && dashboard.metrics) {
+				setDashboardData(prev => ({
+					...prev,
+					todaySales: Math.round((dashboard.metrics.todaySalesCents || 0) / 100),
+					todayOrders: dashboard.metrics.todayOrders || 0,
+					pendingOrders: dashboard.metrics.pendingOrders || 0,
+					totalProducts: dashboard.metrics.totalProducts || 0,
+					totalInventoryValue: Math.round((dashboard.metrics.totalInventoryValueCents || 0) / 100),
+					averageRating: userData?.vendor?.rating || 0,
+					totalReviews: userData?.vendor?.totalRatings || 0,
+					complianceScore: score,
+					weeklyTrend: (dashboard.weeklyTrend || []).map((item) => ({
+						day: item.day,
+						sales: Math.round((item.salesCents || 0) / 100),
+						orders: item.orders || 0
+					})),
+					recentOrders: (dashboard.recentOrders || []).map((order) => ({
+						id: order.id,
+						customer: order.customer,
+						amount: Math.round((order.amountCents || 0) / 100),
+						status: order.status,
+						time: new Date(order.createdAt).toLocaleString()
+					})),
+					lowStockProducts: dashboard.lowStockProducts || []
+				}));
+			}
 		} catch (error) {
 			console.error('Failed to load user data:', error);
 		} finally {
@@ -78,23 +92,25 @@ function VendorDashboard() {
 
 	const getVerificationBadge = (status) => {
 		const badgeStyle = {
-			display: 'inline-block',
+			display: 'inline-flex',
+			alignItems: 'center',
+			gap: '0.4rem',
 			padding: '0.4rem 0.8rem',
 			borderRadius: '9999px',
 			fontSize: '0.8rem',
-			fontWeight: '600'
+			fontWeight: '700'
 		};
 
 		if (status === 'VERIFIED') {
-			return <span style={{ ...badgeStyle, backgroundColor: 'var(--green-100)', color: 'var(--success)' }}><Check size={12} /> Verified</span>;
+			return <span style={{ ...badgeStyle, backgroundColor: 'var(--success-light)', color: 'var(--success)' }}><Check size={14} /> Verified Vendor</span>;
 		}
 		if (status === 'PENDING') {
-			return <span style={{ ...badgeStyle, backgroundColor: 'var(--yellow-100)', color: 'var(--warning)' }}><Clock size={12} /> Pending</span>;
+			return <span style={{ ...badgeStyle, backgroundColor: 'var(--warning-light)', color: 'var(--warning)' }}><Clock size={14} /> Review Pending</span>;
 		}
 		if (status === 'REJECTED') {
-			return <span style={{ ...badgeStyle, backgroundColor: 'var(--red-100)', color: 'var(--error)' }}><X size={12} /> Rejected</span>;
+			return <span style={{ ...badgeStyle, backgroundColor: 'var(--error-light)', color: 'var(--error)' }}><X size={14} /> Rejected</span>;
 		}
-		return null;
+		return <span style={{ ...badgeStyle, backgroundColor: 'var(--border-light)', color: 'var(--text-secondary)' }}>Status Unknown</span>;
 	};
 
 	const maxWeeklySales = Math.max(...dashboardData.weeklyTrend.map((data) => data.sales), 1);
@@ -130,47 +146,60 @@ function VendorDashboard() {
 		<div className={styles.container}>
 			<VendorPageShell
 				title="Vendor Dashboard"
-				subtitle={`Welcome, ${user?.vendor?.companyName || user?.email}! Here's your business overview.`}
+				subtitle={`Welcome back, ${user?.vendor?.companyName || user?.email}! Here's your business performance.`}
 				actions={(
-					<>
+					<div style={{ display: 'flex', gap: '0.75rem' }}>
 						<button className={styles.inventoryButton} onClick={() => navigate('/vendor/stock')}>
-							Manage Inventory & Stock
+							Manage Catalog
 						</button>
 						<button className={styles.logoutButton} onClick={handleLogout}>
 							Logout
 						</button>
-					</>
+					</div>
 				)}
 			>
 				{user?.vendor?.verificationStatus === 'PENDING' && (
 					<div className={styles.alertBox}>
-						<strong><Clock size={14} strokeWidth={1.5} /> Verification in Progress</strong>
-						<p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem' }}>
-							Your vendor profile is under review. Our team will verify your documents within 24-48 hours. You'll receive an email notification once approved.
-						</p>
+						<div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+							<div style={{ padding: '0.5rem', background: 'var(--warning-light)', borderRadius: '50%', color: 'var(--warning)' }}>
+								<Clock size={20} strokeWidth={2} />
+							</div>
+							<div>
+								<h4 style={{ margin: '0 0 0.35rem 0', fontWeight: 700 }}>Profile Verification in Progress</h4>
+								<p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+									Our team is currently reviewing your compliance documents. Verified status will be granted within 48 hours.
+									<button 
+										onClick={() => navigate('/vendor/compliance')} 
+										style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, padding: '0 0 0 0.5rem', cursor: 'pointer' }}
+									>
+										Check Status →
+									</button>
+								</p>
+							</div>
+						</div>
 					</div>
 				)}
 
 				<div className={styles.quickActionsSection}>
 					<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/stock')}>
 						<span className={styles.quickActionIcon}><Pill size={22} strokeWidth={1.5} /></span>
-						<span className={styles.quickActionLabel}>Add / Update Stock</span>
-						<span className={styles.quickActionHint}>Manage inventory and pricing</span>
+						<span className={styles.quickActionLabel}>Manage Stock</span>
+						<span className={styles.quickActionHint}>Add / Update Inventory</span>
 					</button>
 					<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/orders')}>
 						<span className={styles.quickActionIcon}><Package size={22} strokeWidth={1.5} /></span>
-						<span className={styles.quickActionLabel}>Process Orders</span>
-						<span className={styles.quickActionHint}>Review pending order queue</span>
+						<span className={styles.quickActionLabel}>Pending Orders</span>
+						<span className={styles.quickActionHint}>Process customer requests</span>
 					</button>
 					<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/shipping')}>
 						<span className={styles.quickActionIcon}><Truck size={22} strokeWidth={1.5} /></span>
-						<span className={styles.quickActionLabel}>Track Shipping</span>
-						<span className={styles.quickActionHint}>Update shipment progress</span>
+						<span className={styles.quickActionLabel}>Shipments</span>
+						<span className={styles.quickActionHint}>Track delivery progress</span>
 					</button>
-					<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/payments')}>
-						<span className={styles.quickActionIcon}><Wallet size={22} strokeWidth={1.5} /></span>
-						<span className={styles.quickActionLabel}>View Payments</span>
-						<span className={styles.quickActionHint}>Check settlements and ledger</span>
+					<button type="button" className={styles.quickActionCard} onClick={() => navigate('/vendor/compliance')}>
+						<span className={styles.quickActionIcon}><ShieldCheck size={22} strokeWidth={1.5} /></span>
+						<span className={styles.quickActionLabel}>Compliance</span>
+						<span className={styles.quickActionHint}>Trust Score & Documents</span>
 					</button>
 				</div>
 
@@ -181,24 +210,19 @@ function VendorDashboard() {
 						<div className={styles.metricChange}>{salesGrowthText}</div>
 					</div>
 					<div className={styles.metricCard}>
-						<div className={styles.metricLabel}>Today's Orders</div>
-						<div className={styles.metricValue}>{dashboardData.todayOrders}</div>
-						<div className={styles.metricChange}>{ordersGrowthText}</div>
-					</div>
-					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Pending Orders</div>
 						<div className={styles.metricValue}>{dashboardData.pendingOrders}</div>
-						<div className={styles.metricChange}>Action needed</div>
+						<div className={styles.metricChange} style={{ color: 'var(--warning)', fontWeight: 600 }}>Action Required</div>
 					</div>
 					<div className={styles.metricCard}>
-						<div className={styles.metricLabel}>Total Products</div>
-						<div className={styles.metricValue}>{dashboardData.totalProducts}</div>
-						<div className={styles.metricChange}>Active inventory</div>
+						<div className={styles.metricLabel}>Trust Score</div>
+						<div className={styles.metricValue} style={{ color: 'var(--primary)' }}>{dashboardData.complianceScore}%</div>
+						<div className={styles.metricChange}><ShieldCheck size={12} /> Compliance health</div>
 					</div>
 					<div className={styles.metricCard}>
 						<div className={styles.metricLabel}>Avg Rating</div>
-						<div className={styles.metricValue}>{dashboardData.averageRating} <Star size={14} strokeWidth={1.5} fill="currentColor" /></div>
-						<div className={styles.metricChange}>{dashboardData.totalReviews} reviews</div>
+						<div className={styles.metricValue}>{dashboardData.averageRating} <Star size={16} strokeWidth={1.5} fill="var(--warning)" color="var(--warning)" /></div>
+						<div className={styles.metricChange}>{dashboardData.totalReviews} verified reviews</div>
 					</div>
 				</div>
 

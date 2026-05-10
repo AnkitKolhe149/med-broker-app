@@ -103,6 +103,8 @@ const mapVendorProfile = (user, vendor) => {
     complianceAuditLogs: Array.isArray(profileMeta.complianceAuditLogs)
       ? profileMeta.complianceAuditLogs
       : DEFAULT_COMPLIANCE_DATA.complianceAuditLogs,
+    rating: vendor.rating || 0,
+    totalRatings: vendor.totalRatings || 0,
     chatThreads: profileMeta.chatThreads && typeof profileMeta.chatThreads === 'object'
       ? {
         ...DEFAULT_CHAT_THREADS,

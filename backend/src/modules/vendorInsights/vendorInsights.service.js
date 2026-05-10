@@ -40,6 +40,8 @@ const getVendorAndInventory = async (userId) => {
     select: {
       id: true,
       companyName: true,
+      rating: true,
+      totalRatings: true,
       inventory: {
         select: {
           id: true,
@@ -64,7 +66,9 @@ const getVendorAndInventory = async (userId) => {
   return {
     vendor: {
       id: vendorWithInventory.id,
-      companyName: vendorWithInventory.companyName
+      companyName: vendorWithInventory.companyName,
+      rating: vendorWithInventory.rating,
+      totalRatings: vendorWithInventory.totalRatings
     },
     inventory: vendorWithInventory.inventory
   };
@@ -216,7 +220,9 @@ const getDashboard = async (userId) => {
       todayOrders: todayOrdersForVendor.length,
       pendingOrders,
       totalProducts: inventory.length,
-      totalInventoryValueCents
+      totalInventoryValueCents,
+      rating: vendor.rating || 0,
+      totalRatings: vendor.totalRatings || 0
     },
     weeklyTrend,
     recentOrders: recentOrders.map((order) => formatVendorOrder(order, vendor.id, vendorMedicineIds)),
