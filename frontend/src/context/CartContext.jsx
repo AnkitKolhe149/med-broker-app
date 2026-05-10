@@ -352,8 +352,8 @@ export const CartProvider = ({ children }) => {
 		return cartItems.reduce((total, item) => total + item.quantity, 0);
 	};
 
-	const getTotalPrice = () => {
-		const targetCurrency = preferredCurrency || 'INR';
+	const getTotalPrice = (targetCurrency) => {
+		const effectiveTargetCurrency = targetCurrency || preferredCurrency || 'INR';
 		return cartItems.reduce((total, item) => {
 			// ✅ BUG #13: Validate item currency is valid before conversion
 			const itemCurrency = normalizeCurrencyCode(item.currencyCode || item.currency || 'INR');
@@ -361,7 +361,7 @@ export const CartProvider = ({ children }) => {
 				console.warn('[CartContext] Missing item currency, defaulting to INR:', item);
 			}
 			const lineTotal = Number(item.basePrice || 0) * Number(item.quantity || 1);
-			return total + convertPrice(lineTotal, itemCurrency, targetCurrency, exchangeRates);
+			return total + convertPrice(lineTotal, itemCurrency, effectiveTargetCurrency, exchangeRates);
 		}, 0);
 	};
 

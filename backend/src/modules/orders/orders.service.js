@@ -2,6 +2,7 @@ const { prisma } = require('../../database/prisma');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../utils/errors');
 const { uploadPrescriptionImage } = require('../../services/cloudinary.service');
 const { resolveOrderItemUnitPriceCents } = require('./orderPricing.util');
+const shippingService = require('../shipping/shipping.service');
 const paymentService = require('../payments/payments.service');
 
 const normalizePackageType = (value) => (String(value || 'standard').toLowerCase() === 'bulk' ? 'bulk' : 'standard');
@@ -27,7 +28,7 @@ const getPricingSettingMap = async () => {
   }, {});
 };
 
-const buildPricingSummary = async ({ subtotalCents, discountPercent = 0, deliveryType = 'standard' }) => {
+const buildPricingSummary = async ({ subtotalCents, discountPercent = 0, deliveryType = 'standard', deliveryChargeCentsOverride = null }) => {
   const normalizedDiscountPercent = Math.max(0, Math.min(100, Number(discountPercent) || 0));
   const normalizedDeliveryType = normalizeDeliveryType(deliveryType);
   const pricingSettings = await getPricingSettingMap();
@@ -43,7 +44,11 @@ const buildPricingSummary = async ({ subtotalCents, discountPercent = 0, deliver
   const freeDeliveryThresholdCents = Number.isFinite(pricingSettings.FREE_DELIVERY_THRESHOLD_CENTS)
     ? pricingSettings.FREE_DELIVERY_THRESHOLD_CENTS
     : 0;
-  const deliveryChargeCents = normalizedDeliveryType === 'express' ? expressDeliveryChargeCents : standardDeliveryChargeCents;
+  const deliveryChargeCents = Number.isFinite(deliveryChargeCentsOverride)
+    ? (normalizedDeliveryType === 'express'
+      ? deliveryChargeCentsOverride + expressDeliveryChargeCents
+      : deliveryChargeCentsOverride)
+    : (normalizedDeliveryType === 'express' ? expressDeliveryChargeCents : standardDeliveryChargeCents);
   const discountCents = Math.round(subtotalCents * (normalizedDiscountPercent / 100));
   const taxableCents = Math.max(0, subtotalCents - discountCents + deliveryChargeCents);
   const taxCents = Math.round(taxableCents * (taxRatePercent / 100));
@@ -132,6 +137,9 @@ const createOrder = async (userId, orderData) => {
     items,
     deliveryType,
     deliveryAddress,
+    destinationCountry,
+    originCountry,
+    shipments,
     orderNotes,
     prescriptionUrl,
     prescriptionName,
@@ -164,6 +172,27 @@ const createOrder = async (userId, orderData) => {
     where: { userId },
     select: { buyerType: true, fullName: true, deliveryAddress: true, contactNumber: true, user: { select: { preferredCurrency: true } } }
   });
+
+  let deliveryChargeCentsOverride = null;
+  try {
+    const shippingQuotePayload = {};
+    if (Array.isArray(shipments) && shipments.length > 0) {
+      shippingQuotePayload.destinationCountry = destinationCountry;
+      shippingQuotePayload.shipments = shipments;
+    } else if (originCountry) {
+      shippingQuotePayload.destinationCountry = destinationCountry;
+      shippingQuotePayload.originCountry = originCountry;
+      shippingQuotePayload.items = items;
+    } else {
+      shippingQuotePayload.destinationCountry = destinationCountry;
+      shippingQuotePayload.items = items;
+    }
+
+    const shippingQuote = shippingService.calculateShipping(shippingQuotePayload);
+    deliveryChargeCentsOverride = Math.round((shippingQuote.totalShipping || 0) * 100);
+  } catch (error) {
+    console.warn('Shipping quote could not be calculated; falling back to default delivery pricing.', error?.message || error);
+  }
 
   const normalizedRequestSignature = buildOrderSignature(items);
 
@@ -335,7 +364,8 @@ const createOrder = async (userId, orderData) => {
   const pricingSummary = await buildPricingSummary({
     subtotalCents: totalCents,
     discountPercent,
-    deliveryType
+    deliveryType,
+    deliveryChargeCentsOverride
   });
   totalCents = pricingSummary.totalCents;
 
@@ -354,6 +384,8 @@ const createOrder = async (userId, orderData) => {
     discountPercent: pricingSummary.discountPercent,
     appliedCoupon,
     currencyCode: effectiveCurrency,
+    deliveryCharge: pricingSummary.deliveryChargeCents / 100,
+    deliveryBase: pricingSummary.deliveryChargeCents / 100,
     pricingSummary
   };
 

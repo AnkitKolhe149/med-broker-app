@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { parsePhoneNumberFromString } = require('libphonenumber-js');
 const { prisma } = require('../../database/prisma');
 const { ConflictError, AuthenticationError, NotFoundError } = require('../../utils/errors');
 
@@ -90,6 +91,99 @@ const validateMobile = (mobile) => {
   }
 };
 
+const normalizeCountryCode = (countryCode) => {
+  if (!countryCode) return null;
+  return String(countryCode).trim().toUpperCase();
+};
+
+const normalizeStateId = (stateId) => {
+  if (stateId === undefined || stateId === null || stateId === '') {
+    return null;
+  }
+  const parsed = Number(stateId);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new ConflictError('stateId must be a valid positive integer');
+  }
+  return parsed;
+};
+
+const validateCountryAndState = async ({ countryCode, stateId }) => {
+  const normalizedCountryCode = normalizeCountryCode(countryCode);
+  const normalizedStateId = normalizeStateId(stateId);
+
+  let country = null;
+  if (normalizedCountryCode) {
+    country = await prisma.country.findUnique({
+      where: { code: normalizedCountryCode },
+      select: { code: true }
+    });
+    if (!country) {
+      throw new ConflictError('Invalid countryCode');
+    }
+  }
+
+  let state = null;
+  if (normalizedStateId) {
+    state = await prisma.state.findUnique({
+      where: { id: normalizedStateId },
+      select: { id: true, countryCode: true }
+    });
+    if (!state) {
+      throw new ConflictError('Invalid stateId');
+    }
+  }
+
+  if (normalizedCountryCode && state && state.countryCode !== normalizedCountryCode) {
+    throw new ConflictError('stateId does not belong to the selected countryCode');
+  }
+
+  return {
+    countryCode: normalizedCountryCode || state?.countryCode || null,
+    stateId: normalizedStateId
+  };
+};
+
+const normalizePhoneDial = (phoneDial) => {
+  if (!phoneDial) return null;
+  const raw = String(phoneDial).trim();
+  if (!raw) return null;
+  const dial = raw.startsWith('+') ? raw : `+${raw}`;
+  return dial;
+};
+
+const resolvePhoneFields = ({ mobile, phoneDial, phoneE164, countryCode }) => {
+  const normalizedDial = normalizePhoneDial(phoneDial);
+  const providedPhoneE164 = phoneE164 ? String(phoneE164).trim() : '';
+  const normalizedCountryCode = normalizeCountryCode(countryCode);
+  const normalizedMobile = mobile ? String(mobile).trim() : '';
+
+  // Backward compatibility: old clients sending only legacy mobile still work.
+  if (!normalizedDial && !providedPhoneE164 && !normalizedCountryCode) {
+    return {
+      phoneDial: null,
+      phoneE164: null
+    };
+  }
+
+  let parsedPhone = null;
+  if (providedPhoneE164) {
+    parsedPhone = parsePhoneNumberFromString(providedPhoneE164);
+  } else if (normalizedDial && normalizedMobile) {
+    parsedPhone = parsePhoneNumberFromString(`${normalizedDial}${normalizedMobile}`);
+  } else if (normalizedMobile && normalizedCountryCode) {
+    parsedPhone = parsePhoneNumberFromString(normalizedMobile, normalizedCountryCode);
+  }
+
+  if (!parsedPhone || !parsedPhone.isValid()) {
+    throw new ConflictError('Invalid phone number for selected country/dial code');
+  }
+
+  return {
+    phoneDial: parsedPhone.countryCallingCode ? `+${parsedPhone.countryCallingCode}` : (normalizedDial || null),
+    phoneE164: parsedPhone.number || null
+  };
+};
+
 const validatePasswordChange = async (userId, currentPassword, newPassword) => {
   if (!currentPassword || !newPassword) {
     throw new ConflictError('Current password and new password are required');
@@ -118,7 +212,7 @@ const validatePasswordChange = async (userId, currentPassword, newPassword) => {
 // Public API
 module.exports = {
   register: async (data) => {
-    const { email, mobile, password, role } = data;
+    const { email, mobile, password, role, countryCode, stateId, phoneDial, phoneE164 } = data;
 
     // Input validation
     if (!email || !password) {
@@ -133,6 +227,14 @@ module.exports = {
     validateEmail(email);
     validatePassword(password);
     validateMobile(mobile);
+
+    const location = await validateCountryAndState({ countryCode, stateId });
+    const phone = resolvePhoneFields({
+      mobile,
+      phoneDial,
+      phoneE164,
+      countryCode: location.countryCode
+    });
 
     // Single lookup for registration conflicts to avoid duplicate checks.
     const existingAccount = await prisma.user.findFirst({
@@ -166,12 +268,20 @@ module.exports = {
         mobile,
         passwordHash,
         role: role || 'CUSTOMER',
-        isProfileComplete: false
+        isProfileComplete: false,
+        countryCode: location.countryCode,
+        stateId: location.stateId,
+        phoneDial: phone.phoneDial,
+        phoneE164: phone.phoneE164
       },
       select: {
         id: true,
         email: true,
         mobile: true,
+        countryCode: true,
+        stateId: true,
+        phoneDial: true,
+        phoneE164: true,
         role: true,
         isProfileComplete: true,
         createdAt: true
@@ -309,6 +419,31 @@ module.exports = {
     if (data.avatarUrl) userUpdates.avatarUrl = String(data.avatarUrl);
     if (data.preferredCurrency) userUpdates.preferredCurrency = String(data.preferredCurrency);
     if (data.timezone) userUpdates.timezone = String(data.timezone);
+
+    const hasGeoInputs = data.countryCode !== undefined || data.stateId !== undefined;
+    if (hasGeoInputs) {
+      const location = await validateCountryAndState({
+        countryCode: data.countryCode,
+        stateId: data.stateId
+      });
+      userUpdates.countryCode = location.countryCode;
+      userUpdates.stateId = location.stateId;
+    }
+
+    const hasPhoneInputs =
+      data.phoneDial !== undefined ||
+      data.phoneE164 !== undefined ||
+      (data.mobile !== undefined && (data.countryCode !== undefined || data.phoneDial !== undefined || data.phoneE164 !== undefined));
+    if (hasPhoneInputs) {
+      const phone = resolvePhoneFields({
+        mobile: data.mobile,
+        phoneDial: data.phoneDial,
+        phoneE164: data.phoneE164,
+        countryCode: data.countryCode
+      });
+      userUpdates.phoneDial = phone.phoneDial;
+      userUpdates.phoneE164 = phone.phoneE164;
+    }
 
     // Customer-specific
     if (data.fullName) customerUpdates.fullName = String(data.fullName);

@@ -4,12 +4,12 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { formatConvertedCurrency } from '../../utils/currency';
 import styles from './Checkout.module.css';
 
-export function OrderSummary({ cartItems, getTotalPrice, discountPercent, appliedCoupon, deliveryType = 'standard' }) {
+export function OrderSummary({ cartItems, getTotalPrice, discountPercent, appliedCoupon, deliveryType = 'standard', checkoutCurrency }) {
   const { currency, exchangeRates, convert } = useCurrency();
   const currencyCode = currency || 'USD';
   // formatPrice expects values in currencyCode (already converted by getTotalPrice and convert)
   const formatPrice = (value, sourceCurrency = currencyCode) => formatConvertedCurrency(value, sourceCurrency, currencyCode, exchangeRates, true);
-  const subtotal = getTotalPrice();
+  const subtotal = getTotalPrice(checkoutCurrency);
   const discount = (subtotal * discountPercent) / 100;
   // Convert delivery charge from INR to user's currency
   const deliveryCharge = deliveryType === 'express' ? (typeof convert === 'function' ? convert(9, 'INR') : 9) : 0;

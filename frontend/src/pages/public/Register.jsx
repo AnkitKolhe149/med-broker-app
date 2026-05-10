@@ -6,17 +6,29 @@ import './AuthCare.css';
 
 const VENDOR_TYPES = ['MANUFACTURER', 'DISTRIBUTOR', 'PHARMACY'];
 const BUYER_TYPES = ['RETAIL', 'WHOLESALE'];
-const INDIAN_STATES = [
-	'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-	'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
-	'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
-	'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
-	'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
-	'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
-];
-const COUNTRIES = [
-	'India', 'United States', 'United Kingdom', 'Canada', 'Australia',
-	'UAE', 'Singapore', 'Kenya', 'South Africa', 'Germany'
+const COUNTRY_OPTIONS = [
+	{
+		name: 'India',
+		code: 'IN',
+		dialCode: '+91',
+		states: [
+			'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+			'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
+			'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+			'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+			'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+			'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
+		]
+	},
+	{ name: 'United States', code: 'US', dialCode: '+1', states: [] },
+	{ name: 'United Kingdom', code: 'GB', dialCode: '+44', states: [] },
+	{ name: 'Canada', code: 'CA', dialCode: '+1', states: [] },
+	{ name: 'Australia', code: 'AU', dialCode: '+61', states: [] },
+	{ name: 'UAE', code: 'AE', dialCode: '+971', states: [] },
+	{ name: 'Singapore', code: 'SG', dialCode: '+65', states: [] },
+	{ name: 'Kenya', code: 'KE', dialCode: '+254', states: ['Nairobi', 'Mombasa', 'Kisumu'] },
+	{ name: 'South Africa', code: 'ZA', dialCode: '+27', states: [] },
+	{ name: 'Germany', code: 'DE', dialCode: '+49', states: [] }
 ];
 
 function Register() {
@@ -30,6 +42,8 @@ function Register() {
 
 		// Shared Onboarding Fields
 		country: 'India',
+		countryCode: 'IN',
+		phoneDial: '+91',
 		state: '',
 		city: '',
 
@@ -64,9 +78,23 @@ function Register() {
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	const handleInputChange = (e) => {
+		const { name, value } = e.target;
+		if (name === 'country') {
+			const selectedCountry = COUNTRY_OPTIONS.find((country) => country.name === value) || COUNTRY_OPTIONS[0];
+			setFormData({
+				...formData,
+				country: selectedCountry.name,
+				countryCode: selectedCountry.code,
+				phoneDial: selectedCountry.dialCode,
+				state: ''
+			});
+			setError('');
+			return;
+		}
+
 		setFormData({
 			...formData,
-			[e.target.name]: e.target.value
+			[name]: value
 		});
 		setError('');
 	};
@@ -135,7 +163,10 @@ function Register() {
 				email: formData.email,
 				mobile: formData.mobile,
 				password: formData.password,
-				role: formData.role
+				role: formData.role,
+				countryCode: formData.countryCode,
+				phoneDial: formData.phoneDial,
+				phoneE164: formData.mobile ? `${formData.phoneDial}${formData.mobile}` : undefined
 			});
 
 			// Step 2: Complete Profile Setup (Onboarding)
@@ -240,16 +271,26 @@ function Register() {
 								/>
 							</div>
 							<div className="auth-care-field-group">
-								<label className="label">Mobile number *</label>
-								<input
-									className="input"
-									type="tel"
-									name="mobile"
-									placeholder="10 digit number"
-									value={formData.mobile}
-									onChange={handleInputChange}
-									required
-								/>
+								<label className="label">Phone *</label>
+								<div className="form-row auth-care-row" style={{ margin: 0 }}>
+									<input
+										className="input"
+										type="text"
+										name="phoneDial"
+										value={formData.phoneDial}
+										readOnly
+										style={{ maxWidth: '110px' }}
+									/>
+									<input
+										className="input"
+										type="tel"
+										name="mobile"
+										placeholder="Phone number"
+										value={formData.mobile}
+										onChange={handleInputChange}
+										required
+									/>
+								</div>
 							</div>
 						</div>
 
@@ -376,10 +417,37 @@ function Register() {
 											onChange={handleInputChange}
 											required={formData.role === 'CUSTOMER'}
 										>
-											{COUNTRIES.map(country => (
-												<option key={country} value={country}>{country}</option>
+											{COUNTRY_OPTIONS.map((country) => (
+												<option key={country.code} value={country.name}>{country.name}</option>
 											))}
 										</select>
+									</div>
+									<div className="auth-care-field-group">
+										<label className="label">State / Region *</label>
+										{(COUNTRY_OPTIONS.find((country) => country.name === formData.country)?.states || []).length > 0 ? (
+											<select
+												className="select input"
+												name="state"
+												value={formData.state}
+												onChange={handleInputChange}
+												required={formData.role === 'CUSTOMER'}
+											>
+												<option value="">Select state</option>
+												{COUNTRY_OPTIONS.find((country) => country.name === formData.country).states.map((state) => (
+													<option key={state} value={state}>{state}</option>
+												))}
+											</select>
+										) : (
+											<input
+												className="input"
+												type="text"
+												name="state"
+												placeholder="State/Region"
+												value={formData.state}
+												onChange={handleInputChange}
+												required={formData.role === 'CUSTOMER'}
+											/>
+										)}
 									</div>
 									<div className="auth-care-field-group">
 										<label className="label">City *</label>
@@ -494,8 +562,8 @@ function Register() {
 											onChange={handleInputChange}
 											required={formData.role === 'VENDOR'}
 										>
-											{COUNTRIES.map(country => (
-												<option key={country} value={country}>{country}</option>
+											{COUNTRY_OPTIONS.map((country) => (
+												<option key={country.code} value={country.name}>{country.name}</option>
 											))}
 										</select>
 									</div>
@@ -504,7 +572,7 @@ function Register() {
 								<div className="form-row auth-care-row">
 									<div className="auth-care-field-group">
 										<label className="label">State / Region *</label>
-										{formData.country === 'India' ? (
+										{(COUNTRY_OPTIONS.find((country) => country.name === formData.country)?.states || []).length > 0 ? (
 											<select
 												className="select input"
 												name="state"
@@ -513,7 +581,7 @@ function Register() {
 												required={formData.role === 'VENDOR'}
 											>
 												<option value="">Select state</option>
-												{INDIAN_STATES.map(state => (
+												{COUNTRY_OPTIONS.find((country) => country.name === formData.country).states.map((state) => (
 													<option key={state} value={state}>{state}</option>
 												))}
 											</select>

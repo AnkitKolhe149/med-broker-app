@@ -60,6 +60,62 @@ router.get('/config/pricing', async (_req, res, next) => {
   }
 });
 
+const fetchActiveCountries = async () => {
+  return prisma.country.findMany({
+    where: { isActive: true },
+    orderBy: { name: 'asc' }
+  });
+};
+
+const fetchStatesByCountryCode = async (countryCode) => {
+  return prisma.state.findMany({
+    where: { countryCode: String(countryCode || '').toUpperCase() },
+    orderBy: { name: 'asc' }
+  });
+};
+
+// Compatibility geo endpoints
+router.get('/countries', async (_req, res, next) => {
+  try {
+    const data = await fetchActiveCountries();
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/states', async (req, res, next) => {
+  try {
+    const countryCode = String(req.query.countryCode || '').toUpperCase();
+    if (!countryCode) {
+      return res.status(400).json({ success: false, message: 'countryCode query parameter is required' });
+    }
+    const data = await fetchStatesByCountryCode(countryCode);
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Structured geo endpoints
+router.get('/geo/countries', async (_req, res, next) => {
+  try {
+    const data = await fetchActiveCountries();
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/geo/countries/:countryCode/states', async (req, res, next) => {
+  try {
+    const data = await fetchStatesByCountryCode(req.params.countryCode);
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Auth routes
 router.use("/auth", authRoutes);
 
@@ -91,6 +147,7 @@ router.use("/vendor-insights", vendorInsightsRoutes);
 router.use("/vendor", vendorProfileRoutes);
 
 router.use('/addresses', require('../modules/address/address.routes'));
+router.use('/shipping', require('../modules/shipping/shipping.routes'));
 router.use('/shipments', require('../modules/shipments/shipments.routes'));
 router.use('/inventory-batches', require('../modules/inventoryBatch/inventoryBatch.routes'));
 router.use('/notification-preferences', require('../modules/notificationPreference/notificationPreference.routes'));

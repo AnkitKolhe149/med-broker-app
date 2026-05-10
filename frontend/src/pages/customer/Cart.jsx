@@ -40,9 +40,9 @@ function Cart() {
 	};
 
 	const subtotal = cartItems.reduce((sum, item) => sum + getDisplayLineTotal(item), 0);
-	const deliveryFee = 0;
+	const deliveryFee = null;
 	const discount = (subtotal * discountPercent) / 100;
-	const total = subtotal - discount + deliveryFee;
+	const total = subtotal - discount;
 
 	const handleApplyCoupon = () => {
 		const coupon = couponInput.toUpperCase();
@@ -189,7 +189,7 @@ function Cart() {
 								</div>
 								<div className={styles.priceRow}>
 									<span>Delivery Fees</span>
-									<span>{formatPrice(deliveryFee, cartCurrency)}</span>
+									<span>{deliveryFee === null ? 'Calculated at checkout' : formatPrice(deliveryFee, cartCurrency)}</span>
 								</div>
 								{discountPercent > 0 && (
 									<div className={styles.priceRow}>

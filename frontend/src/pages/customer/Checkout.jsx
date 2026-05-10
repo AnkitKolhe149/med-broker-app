@@ -7,8 +7,34 @@ import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { formatConvertedCurrency, getCurrencyForCountry } from '../../utils/currency';
 import orderService from '../../services/order.service';
+import shippingService from '../../services/shipping.service';
 import addressService from '../../services/address.service';
 import styles from './Checkout.module.css';
+
+const COUNTRY_NAME_TO_CODE = {
+	India: 'IN',
+	'United States': 'US',
+	'United Kingdom': 'GB',
+	Canada: 'CA',
+	Australia: 'AU',
+	Germany: 'DE',
+	France: 'FR',
+	UAE: 'AE',
+	Singapore: 'SG',
+	Japan: 'JP',
+	Kenya: 'KE',
+	'South Africa': 'ZA',
+	'Saudi Arabia': 'SA',
+	Russia: 'RU',
+	Brazil: 'BR'
+};
+
+const toCountryCode = (value) => {
+	const raw = String(value || '').trim();
+	if (!raw) return 'IN';
+	if (raw.length === 2) return raw.toUpperCase();
+	return COUNTRY_NAME_TO_CODE[raw] || 'IN';
+};
 
 function Checkout() {
 	const navigate = useNavigate();
@@ -42,6 +68,9 @@ function Checkout() {
 	const [isUploadingPrescription, setIsUploadingPrescription] = useState(false);
 	const [agreeTerms, setAgreeTerms] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [shippingQuote, setShippingQuote] = useState(null);
+	const [shippingLoading, setShippingLoading] = useState(false);
+	const [shippingError, setShippingError] = useState('');
 	const [checkoutCurrency, setCheckoutCurrency] = useState(currency || 'INR');
 
 	const discountPercent = location.state?.discountPercent || 0;
@@ -56,6 +85,58 @@ function Checkout() {
 	}, [location.state?.currencyCode]);
 	const formatPrice = (value, fromCurrency = 'INR') => formatConvertedCurrency(value, fromCurrency, currencyCode, exchangeRates, true);
 	const toDisplayAmount = (value, fromCurrency = 'INR') => convert(value, fromCurrency);
+
+	const quoteShipping = async () => {
+		if (cartItems.length === 0 || !deliveryAddress.country) {
+			setShippingQuote(null);
+			setShippingError('');
+			return;
+		}
+
+		setShippingLoading(true);
+		setShippingError('');
+
+		try {
+			const destinationCountry = toCountryCode(deliveryAddress.country);
+			const shipmentBuckets = cartItems.reduce((acc, item) => {
+				const origin = toCountryCode(item.originCountry || item.vendorCountry || item.countryCode || 'IN');
+				if (!acc[origin]) {
+					acc[origin] = [];
+				}
+				acc[origin].push({
+					medicineId: item.medicineId,
+					vendorId: item.vendorId,
+					quantity: item.quantity,
+					selectedSize: item.selectedSize || 'standard',
+					unitPrice: item.basePrice
+				});
+				return acc;
+			}, {});
+
+			const shipmentOrigins = Object.keys(shipmentBuckets);
+			const hasMixedOrigins = shipmentOrigins.length > 1;
+			const shipments = shipmentOrigins.map((originCountry) => ({
+				originCountry,
+				items: shipmentBuckets[originCountry]
+			}));
+			const payload = hasMixedOrigins
+				? { destinationCountry, shipments }
+				: {
+					destinationCountry,
+					originCountry: shipmentOrigins[0] || 'IN',
+					items: shipmentBuckets[shipmentOrigins[0]] || []
+				};
+
+			const data = await shippingService.getQuote(payload);
+			setShippingQuote(data);
+		} catch (error) {
+			console.error('Shipping quote failed:', error);
+			setShippingQuote(null);
+			setShippingError(error?.response?.data?.message || error?.message || 'Unable to calculate shipping cost');
+		} finally {
+			setShippingLoading(false);
+		}
+	};
 
 	// State/Province lists by country
 	const statesByCountry = useMemo(() => ({
@@ -124,6 +205,10 @@ function Checkout() {
 			fetchAddresses();
 		}
 	}, [user]);
+
+	useEffect(() => {
+		quoteShipping();
+	}, [cartItems, deliveryAddress.country, deliveryAddress.city, deliveryAddress.state, deliveryAddress.zipCode, deliveryAddress.address]);
 
 	// Update checkout currency when delivery country changes
 	useEffect(() => {
@@ -232,9 +317,34 @@ function Checkout() {
 			// Calculate base INR values for backend storage
 			const baseSubtotal = cartItems.reduce((sum, item) => sum + (Number(item.basePrice || 0) * Number(item.quantity || 1)), 0);
 			const baseDiscount = (baseSubtotal * discountPercent) / 100;
-			const baseDelivery = deliveryType === 'express' ? 9 : 0; // 9 INR base
-			const baseTax = Number(((baseSubtotal - baseDiscount + baseDelivery) * 0.05).toFixed(2));
+			const standardBaseDelivery = shippingQuote?.totalShipping ?? 0;
+			const baseDelivery = deliveryType === 'express'
+				? Number((standardBaseDelivery + 9).toFixed(2))
+				: standardBaseDelivery;
+			const baseTax = 0;
 			const baseTotal = Number((baseSubtotal - baseDiscount + baseDelivery + baseTax).toFixed(2));
+
+			const destinationCountry = toCountryCode(deliveryAddress.country);
+			const shipmentBuckets = cartItems.reduce((acc, item) => {
+				const origin = toCountryCode(item.originCountry || item.vendorCountry || item.countryCode || 'IN');
+				if (!acc[origin]) {
+					acc[origin] = [];
+				}
+				acc[origin].push({
+					medicineId: item.medicineId,
+					vendorId: item.vendorId,
+					quantity: item.quantity,
+					selectedSize: item.selectedSize || 'standard'
+				});
+				return acc;
+			}, {});
+			const shipmentOrigins = Object.keys(shipmentBuckets);
+			const hasMixedOrigins = shipmentOrigins.length > 1;
+			const shipments = shipmentOrigins.map((originCountry) => ({
+				originCountry,
+				items: shipmentBuckets[originCountry]
+			}));
+			const originCountry = hasMixedOrigins ? undefined : (shipmentOrigins[0] || 'IN');
 
 			const createdOrder = await orderService.createCustomerOrder({
 				items: cartItems.map((item) => ({
@@ -243,6 +353,9 @@ function Checkout() {
 					quantity: item.quantity,
 					selectedSize: item.selectedSize || 'standard'
 				})),
+				destinationCountry,
+				originCountry,
+				...(hasMixedOrigins ? { shipments } : {}),
 				deliveryType,
 				deliveryAddress,
 				orderNotes,
@@ -253,6 +366,9 @@ function Checkout() {
 				currencyCode,
 				checkoutSnapshot: {
 					cartItems,
+					destinationCountry,
+					originCountry,
+					...(hasMixedOrigins ? { shipments } : {}),
 					deliveryAddress,
 					deliveryType,
 					orderNotes,
@@ -337,9 +453,11 @@ function Checkout() {
 		);
 	}
 
-	const subtotal = getTotalPrice();
+	const subtotal = getTotalPrice(checkoutCurrency);
 	const discount = (subtotal * discountPercent) / 100;
-	const deliveryCharge = deliveryType === 'express' ? convert(9, 'INR') : 0;
+	const standardShippingCharge = shippingQuote ? convert(shippingQuote.totalShipping, 'INR') : 0;
+	const expressShippingCharge = Number((standardShippingCharge + convert(9, 'INR')).toFixed(2));
+	const deliveryCharge = deliveryType === 'express' ? expressShippingCharge : standardShippingCharge;
 	const tax = Number(((subtotal - discount + deliveryCharge) * 0.05).toFixed(2));
 	const total = Number((subtotal - discount + deliveryCharge + tax).toFixed(2));
 
@@ -494,10 +612,10 @@ function Checkout() {
 							<label className={`${styles.shippingCard} ${deliveryType === 'standard' ? styles.shippingCardActive : ''}`}>
 								<input type="radio" name="deliveryType" value="standard" checked={deliveryType === 'standard'} onChange={(e) => setDeliveryType(e.target.value)} />
 								<div>
-									<p className={styles.shippingLabel}>Free Shipping</p>
+									<p className={styles.shippingLabel}>Standard Shipping</p>
 									<p className={styles.shippingEta}>5-7 Days</p>
 								</div>
-								<strong>{formatPrice(0, currencyCode)}</strong>
+								<strong>{shippingLoading ? 'Calculating...' : formatPrice(standardShippingCharge, currencyCode)}</strong>
 							</label>
 							<label className={`${styles.shippingCard} ${deliveryType === 'express' ? styles.shippingCardActive : ''}`}>
 								<input type="radio" name="deliveryType" value="express" checked={deliveryType === 'express'} onChange={(e) => setDeliveryType(e.target.value)} />
@@ -505,7 +623,7 @@ function Checkout() {
 									<p className={styles.shippingLabel}>Express Shipping</p>
 									<p className={styles.shippingEta}>1-3 Days</p>
 								</div>
-								<strong>{formatPrice(convert(9, 'INR'), currencyCode)}</strong>
+								<strong>{shippingLoading ? 'Calculating...' : formatPrice(expressShippingCharge, currencyCode)}</strong>
 							</label>
 						</div>
 					</div>

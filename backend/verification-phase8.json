@@ -1,0 +1,1119 @@
+{
+  "timestamp": "2026-05-10T19:34:33.226Z",
+  "countryListEndpoint": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": [
+        {
+          "code": "AU",
+          "name": "Australia",
+          "dialCode": "+61",
+          "currencyCode": "AUD",
+          "flagEmoji": "🇦🇺",
+          "isActive": true
+        },
+        {
+          "code": "BD",
+          "name": "Bangladesh",
+          "dialCode": "+880",
+          "currencyCode": "BDT",
+          "flagEmoji": "🇧🇩",
+          "isActive": true
+        },
+        {
+          "code": "BT",
+          "name": "Bhutan",
+          "dialCode": "+975",
+          "currencyCode": "BTN",
+          "flagEmoji": "🇧🇹",
+          "isActive": true
+        },
+        {
+          "code": "BR",
+          "name": "Brazil",
+          "dialCode": "+55",
+          "currencyCode": "BRL",
+          "flagEmoji": "🇧🇷",
+          "isActive": true
+        },
+        {
+          "code": "CA",
+          "name": "Canada",
+          "dialCode": "+1",
+          "currencyCode": "CAD",
+          "flagEmoji": "🇨🇦",
+          "isActive": true
+        },
+        {
+          "code": "FR",
+          "name": "France",
+          "dialCode": "+33",
+          "currencyCode": "EUR",
+          "flagEmoji": "🇫🇷",
+          "isActive": true
+        },
+        {
+          "code": "DE",
+          "name": "Germany",
+          "dialCode": "+49",
+          "currencyCode": "EUR",
+          "flagEmoji": "🇩🇪",
+          "isActive": true
+        },
+        {
+          "code": "IN",
+          "name": "India",
+          "dialCode": "+91",
+          "currencyCode": "INR",
+          "flagEmoji": "🇮🇳",
+          "isActive": true
+        },
+        {
+          "code": "IT",
+          "name": "Italy",
+          "dialCode": "+39",
+          "currencyCode": "EUR",
+          "flagEmoji": "🇮🇹",
+          "isActive": true
+        },
+        {
+          "code": "KE",
+          "name": "Kenya",
+          "dialCode": "+254",
+          "currencyCode": "KES",
+          "flagEmoji": "🇰🇪",
+          "isActive": true
+        },
+        {
+          "code": "KW",
+          "name": "Kuwait",
+          "dialCode": "+965",
+          "currencyCode": "KWD",
+          "flagEmoji": "🇰🇼",
+          "isActive": true
+        },
+        {
+          "code": "MY",
+          "name": "Malaysia",
+          "dialCode": "+60",
+          "currencyCode": "MYR",
+          "flagEmoji": "🇲🇾",
+          "isActive": true
+        },
+        {
+          "code": "NP",
+          "name": "Nepal",
+          "dialCode": "+977",
+          "currencyCode": "NPR",
+          "flagEmoji": "🇳🇵",
+          "isActive": true
+        },
+        {
+          "code": "NZ",
+          "name": "New Zealand",
+          "dialCode": "+64",
+          "currencyCode": "NZD",
+          "flagEmoji": "🇳🇿",
+          "isActive": true
+        },
+        {
+          "code": "OM",
+          "name": "Oman",
+          "dialCode": "+968",
+          "currencyCode": "OMR",
+          "flagEmoji": "🇴🇲",
+          "isActive": true
+        },
+        {
+          "code": "QA",
+          "name": "Qatar",
+          "dialCode": "+974",
+          "currencyCode": "QAR",
+          "flagEmoji": "🇶🇦",
+          "isActive": true
+        },
+        {
+          "code": "SA",
+          "name": "Saudi Arabia",
+          "dialCode": "+966",
+          "currencyCode": "SAR",
+          "flagEmoji": "🇸🇦",
+          "isActive": true
+        },
+        {
+          "code": "SG",
+          "name": "Singapore",
+          "dialCode": "+65",
+          "currencyCode": "SGD",
+          "flagEmoji": "🇸🇬",
+          "isActive": true
+        },
+        {
+          "code": "ZA",
+          "name": "South Africa",
+          "dialCode": "+27",
+          "currencyCode": "ZAR",
+          "flagEmoji": "🇿🇦",
+          "isActive": true
+        },
+        {
+          "code": "ES",
+          "name": "Spain",
+          "dialCode": "+34",
+          "currencyCode": "EUR",
+          "flagEmoji": "🇪🇸",
+          "isActive": true
+        },
+        {
+          "code": "LK",
+          "name": "Sri Lanka",
+          "dialCode": "+94",
+          "currencyCode": "LKR",
+          "flagEmoji": "🇱🇰",
+          "isActive": true
+        },
+        {
+          "code": "TH",
+          "name": "Thailand",
+          "dialCode": "+66",
+          "currencyCode": "THB",
+          "flagEmoji": "🇹🇭",
+          "isActive": true
+        },
+        {
+          "code": "AE",
+          "name": "UAE",
+          "dialCode": "+971",
+          "currencyCode": "AED",
+          "flagEmoji": "🇦🇪",
+          "isActive": true
+        },
+        {
+          "code": "GB",
+          "name": "United Kingdom",
+          "dialCode": "+44",
+          "currencyCode": "GBP",
+          "flagEmoji": "🇬🇧",
+          "isActive": true
+        },
+        {
+          "code": "US",
+          "name": "United States",
+          "dialCode": "+1",
+          "currencyCode": "USD",
+          "flagEmoji": "🇺🇸",
+          "isActive": true
+        }
+      ]
+    }
+  },
+  "statesEndpoint": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": [
+        {
+          "id": 34,
+          "countryCode": "IN",
+          "name": "Andaman and Nicobar Islands",
+          "code": "AN"
+        },
+        {
+          "id": 1,
+          "countryCode": "IN",
+          "name": "Andhra Pradesh",
+          "code": "AP"
+        },
+        {
+          "id": 2,
+          "countryCode": "IN",
+          "name": "Arunachal Pradesh",
+          "code": "AR"
+        },
+        {
+          "id": 3,
+          "countryCode": "IN",
+          "name": "Assam",
+          "code": "AS"
+        },
+        {
+          "id": 4,
+          "countryCode": "IN",
+          "name": "Bihar",
+          "code": "BR"
+        },
+        {
+          "id": 33,
+          "countryCode": "IN",
+          "name": "Chandigarh",
+          "code": "CH"
+        },
+        {
+          "id": 5,
+          "countryCode": "IN",
+          "name": "Chhattisgarh",
+          "code": "CG"
+        },
+        {
+          "id": 35,
+          "countryCode": "IN",
+          "name": "Dadra and Nagar Haveli and Daman and Diu",
+          "code": "DN"
+        },
+        {
+          "id": 29,
+          "countryCode": "IN",
+          "name": "Delhi",
+          "code": "DL"
+        },
+        {
+          "id": 6,
+          "countryCode": "IN",
+          "name": "Goa",
+          "code": "GA"
+        },
+        {
+          "id": 7,
+          "countryCode": "IN",
+          "name": "Gujarat",
+          "code": "GJ"
+        },
+        {
+          "id": 8,
+          "countryCode": "IN",
+          "name": "Haryana",
+          "code": "HR"
+        },
+        {
+          "id": 9,
+          "countryCode": "IN",
+          "name": "Himachal Pradesh",
+          "code": "HP"
+        },
+        {
+          "id": 30,
+          "countryCode": "IN",
+          "name": "Jammu and Kashmir",
+          "code": "JK"
+        },
+        {
+          "id": 10,
+          "countryCode": "IN",
+          "name": "Jharkhand",
+          "code": "JH"
+        },
+        {
+          "id": 11,
+          "countryCode": "IN",
+          "name": "Karnataka",
+          "code": "KA"
+        },
+        {
+          "id": 12,
+          "countryCode": "IN",
+          "name": "Kerala",
+          "code": "KL"
+        },
+        {
+          "id": 31,
+          "countryCode": "IN",
+          "name": "Ladakh",
+          "code": "LA"
+        },
+        {
+          "id": 36,
+          "countryCode": "IN",
+          "name": "Lakshadweep",
+          "code": "LD"
+        },
+        {
+          "id": 13,
+          "countryCode": "IN",
+          "name": "Madhya Pradesh",
+          "code": "MP"
+        },
+        {
+          "id": 14,
+          "countryCode": "IN",
+          "name": "Maharashtra",
+          "code": "MH"
+        },
+        {
+          "id": 15,
+          "countryCode": "IN",
+          "name": "Manipur",
+          "code": "MN"
+        },
+        {
+          "id": 16,
+          "countryCode": "IN",
+          "name": "Meghalaya",
+          "code": "ML"
+        },
+        {
+          "id": 17,
+          "countryCode": "IN",
+          "name": "Mizoram",
+          "code": "MZ"
+        },
+        {
+          "id": 18,
+          "countryCode": "IN",
+          "name": "Nagaland",
+          "code": "NL"
+        },
+        {
+          "id": 19,
+          "countryCode": "IN",
+          "name": "Odisha",
+          "code": "OD"
+        },
+        {
+          "id": 32,
+          "countryCode": "IN",
+          "name": "Puducherry",
+          "code": "PY"
+        },
+        {
+          "id": 20,
+          "countryCode": "IN",
+          "name": "Punjab",
+          "code": "PB"
+        },
+        {
+          "id": 21,
+          "countryCode": "IN",
+          "name": "Rajasthan",
+          "code": "RJ"
+        },
+        {
+          "id": 22,
+          "countryCode": "IN",
+          "name": "Sikkim",
+          "code": "SK"
+        },
+        {
+          "id": 23,
+          "countryCode": "IN",
+          "name": "Tamil Nadu",
+          "code": "TN"
+        },
+        {
+          "id": 24,
+          "countryCode": "IN",
+          "name": "Telangana",
+          "code": "TS"
+        },
+        {
+          "id": 25,
+          "countryCode": "IN",
+          "name": "Tripura",
+          "code": "TR"
+        },
+        {
+          "id": 26,
+          "countryCode": "IN",
+          "name": "Uttar Pradesh",
+          "code": "UP"
+        },
+        {
+          "id": 27,
+          "countryCode": "IN",
+          "name": "Uttarakhand",
+          "code": "UK"
+        },
+        {
+          "id": 28,
+          "countryCode": "IN",
+          "name": "West Bengal",
+          "code": "WB"
+        }
+      ]
+    }
+  },
+  "geoCountries": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": [
+        {
+          "code": "AU",
+          "name": "Australia",
+          "dialCode": "+61",
+          "currencyCode": "AUD",
+          "flagEmoji": "🇦🇺",
+          "isActive": true
+        },
+        {
+          "code": "BD",
+          "name": "Bangladesh",
+          "dialCode": "+880",
+          "currencyCode": "BDT",
+          "flagEmoji": "🇧🇩",
+          "isActive": true
+        },
+        {
+          "code": "BT",
+          "name": "Bhutan",
+          "dialCode": "+975",
+          "currencyCode": "BTN",
+          "flagEmoji": "🇧🇹",
+          "isActive": true
+        },
+        {
+          "code": "BR",
+          "name": "Brazil",
+          "dialCode": "+55",
+          "currencyCode": "BRL",
+          "flagEmoji": "🇧🇷",
+          "isActive": true
+        },
+        {
+          "code": "CA",
+          "name": "Canada",
+          "dialCode": "+1",
+          "currencyCode": "CAD",
+          "flagEmoji": "🇨🇦",
+          "isActive": true
+        },
+        {
+          "code": "FR",
+          "name": "France",
+          "dialCode": "+33",
+          "currencyCode": "EUR",
+          "flagEmoji": "🇫🇷",
+          "isActive": true
+        },
+        {
+          "code": "DE",
+          "name": "Germany",
+          "dialCode": "+49",
+          "currencyCode": "EUR",
+          "flagEmoji": "🇩🇪",
+          "isActive": true
+        },
+        {
+          "code": "IN",
+          "name": "India",
+          "dialCode": "+91",
+          "currencyCode": "INR",
+          "flagEmoji": "🇮🇳",
+          "isActive": true
+        },
+        {
+          "code": "IT",
+          "name": "Italy",
+          "dialCode": "+39",
+          "currencyCode": "EUR",
+          "flagEmoji": "🇮🇹",
+          "isActive": true
+        },
+        {
+          "code": "KE",
+          "name": "Kenya",
+          "dialCode": "+254",
+          "currencyCode": "KES",
+          "flagEmoji": "🇰🇪",
+          "isActive": true
+        },
+        {
+          "code": "KW",
+          "name": "Kuwait",
+          "dialCode": "+965",
+          "currencyCode": "KWD",
+          "flagEmoji": "🇰🇼",
+          "isActive": true
+        },
+        {
+          "code": "MY",
+          "name": "Malaysia",
+          "dialCode": "+60",
+          "currencyCode": "MYR",
+          "flagEmoji": "🇲🇾",
+          "isActive": true
+        },
+        {
+          "code": "NP",
+          "name": "Nepal",
+          "dialCode": "+977",
+          "currencyCode": "NPR",
+          "flagEmoji": "🇳🇵",
+          "isActive": true
+        },
+        {
+          "code": "NZ",
+          "name": "New Zealand",
+          "dialCode": "+64",
+          "currencyCode": "NZD",
+          "flagEmoji": "🇳🇿",
+          "isActive": true
+        },
+        {
+          "code": "OM",
+          "name": "Oman",
+          "dialCode": "+968",
+          "currencyCode": "OMR",
+          "flagEmoji": "🇴🇲",
+          "isActive": true
+        },
+        {
+          "code": "QA",
+          "name": "Qatar",
+          "dialCode": "+974",
+          "currencyCode": "QAR",
+          "flagEmoji": "🇶🇦",
+          "isActive": true
+        },
+        {
+          "code": "SA",
+          "name": "Saudi Arabia",
+          "dialCode": "+966",
+          "currencyCode": "SAR",
+          "flagEmoji": "🇸🇦",
+          "isActive": true
+        },
+        {
+          "code": "SG",
+          "name": "Singapore",
+          "dialCode": "+65",
+          "currencyCode": "SGD",
+          "flagEmoji": "🇸🇬",
+          "isActive": true
+        },
+        {
+          "code": "ZA",
+          "name": "South Africa",
+          "dialCode": "+27",
+          "currencyCode": "ZAR",
+          "flagEmoji": "🇿🇦",
+          "isActive": true
+        },
+        {
+          "code": "ES",
+          "name": "Spain",
+          "dialCode": "+34",
+          "currencyCode": "EUR",
+          "flagEmoji": "🇪🇸",
+          "isActive": true
+        },
+        {
+          "code": "LK",
+          "name": "Sri Lanka",
+          "dialCode": "+94",
+          "currencyCode": "LKR",
+          "flagEmoji": "🇱🇰",
+          "isActive": true
+        },
+        {
+          "code": "TH",
+          "name": "Thailand",
+          "dialCode": "+66",
+          "currencyCode": "THB",
+          "flagEmoji": "🇹🇭",
+          "isActive": true
+        },
+        {
+          "code": "AE",
+          "name": "UAE",
+          "dialCode": "+971",
+          "currencyCode": "AED",
+          "flagEmoji": "🇦🇪",
+          "isActive": true
+        },
+        {
+          "code": "GB",
+          "name": "United Kingdom",
+          "dialCode": "+44",
+          "currencyCode": "GBP",
+          "flagEmoji": "🇬🇧",
+          "isActive": true
+        },
+        {
+          "code": "US",
+          "name": "United States",
+          "dialCode": "+1",
+          "currencyCode": "USD",
+          "flagEmoji": "🇺🇸",
+          "isActive": true
+        }
+      ]
+    }
+  },
+  "geoStatesIN": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": [
+        {
+          "id": 34,
+          "countryCode": "IN",
+          "name": "Andaman and Nicobar Islands",
+          "code": "AN"
+        },
+        {
+          "id": 1,
+          "countryCode": "IN",
+          "name": "Andhra Pradesh",
+          "code": "AP"
+        },
+        {
+          "id": 2,
+          "countryCode": "IN",
+          "name": "Arunachal Pradesh",
+          "code": "AR"
+        },
+        {
+          "id": 3,
+          "countryCode": "IN",
+          "name": "Assam",
+          "code": "AS"
+        },
+        {
+          "id": 4,
+          "countryCode": "IN",
+          "name": "Bihar",
+          "code": "BR"
+        },
+        {
+          "id": 33,
+          "countryCode": "IN",
+          "name": "Chandigarh",
+          "code": "CH"
+        },
+        {
+          "id": 5,
+          "countryCode": "IN",
+          "name": "Chhattisgarh",
+          "code": "CG"
+        },
+        {
+          "id": 35,
+          "countryCode": "IN",
+          "name": "Dadra and Nagar Haveli and Daman and Diu",
+          "code": "DN"
+        },
+        {
+          "id": 29,
+          "countryCode": "IN",
+          "name": "Delhi",
+          "code": "DL"
+        },
+        {
+          "id": 6,
+          "countryCode": "IN",
+          "name": "Goa",
+          "code": "GA"
+        },
+        {
+          "id": 7,
+          "countryCode": "IN",
+          "name": "Gujarat",
+          "code": "GJ"
+        },
+        {
+          "id": 8,
+          "countryCode": "IN",
+          "name": "Haryana",
+          "code": "HR"
+        },
+        {
+          "id": 9,
+          "countryCode": "IN",
+          "name": "Himachal Pradesh",
+          "code": "HP"
+        },
+        {
+          "id": 30,
+          "countryCode": "IN",
+          "name": "Jammu and Kashmir",
+          "code": "JK"
+        },
+        {
+          "id": 10,
+          "countryCode": "IN",
+          "name": "Jharkhand",
+          "code": "JH"
+        },
+        {
+          "id": 11,
+          "countryCode": "IN",
+          "name": "Karnataka",
+          "code": "KA"
+        },
+        {
+          "id": 12,
+          "countryCode": "IN",
+          "name": "Kerala",
+          "code": "KL"
+        },
+        {
+          "id": 31,
+          "countryCode": "IN",
+          "name": "Ladakh",
+          "code": "LA"
+        },
+        {
+          "id": 36,
+          "countryCode": "IN",
+          "name": "Lakshadweep",
+          "code": "LD"
+        },
+        {
+          "id": 13,
+          "countryCode": "IN",
+          "name": "Madhya Pradesh",
+          "code": "MP"
+        },
+        {
+          "id": 14,
+          "countryCode": "IN",
+          "name": "Maharashtra",
+          "code": "MH"
+        },
+        {
+          "id": 15,
+          "countryCode": "IN",
+          "name": "Manipur",
+          "code": "MN"
+        },
+        {
+          "id": 16,
+          "countryCode": "IN",
+          "name": "Meghalaya",
+          "code": "ML"
+        },
+        {
+          "id": 17,
+          "countryCode": "IN",
+          "name": "Mizoram",
+          "code": "MZ"
+        },
+        {
+          "id": 18,
+          "countryCode": "IN",
+          "name": "Nagaland",
+          "code": "NL"
+        },
+        {
+          "id": 19,
+          "countryCode": "IN",
+          "name": "Odisha",
+          "code": "OD"
+        },
+        {
+          "id": 32,
+          "countryCode": "IN",
+          "name": "Puducherry",
+          "code": "PY"
+        },
+        {
+          "id": 20,
+          "countryCode": "IN",
+          "name": "Punjab",
+          "code": "PB"
+        },
+        {
+          "id": 21,
+          "countryCode": "IN",
+          "name": "Rajasthan",
+          "code": "RJ"
+        },
+        {
+          "id": 22,
+          "countryCode": "IN",
+          "name": "Sikkim",
+          "code": "SK"
+        },
+        {
+          "id": 23,
+          "countryCode": "IN",
+          "name": "Tamil Nadu",
+          "code": "TN"
+        },
+        {
+          "id": 24,
+          "countryCode": "IN",
+          "name": "Telangana",
+          "code": "TS"
+        },
+        {
+          "id": 25,
+          "countryCode": "IN",
+          "name": "Tripura",
+          "code": "TR"
+        },
+        {
+          "id": 26,
+          "countryCode": "IN",
+          "name": "Uttar Pradesh",
+          "code": "UP"
+        },
+        {
+          "id": 27,
+          "countryCode": "IN",
+          "name": "Uttarakhand",
+          "code": "UK"
+        },
+        {
+          "id": 28,
+          "countryCode": "IN",
+          "name": "West Bengal",
+          "code": "WB"
+        }
+      ]
+    }
+  },
+  "legacyQuote": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": {
+        "mode": "legacy",
+        "originCountry": "IN",
+        "destinationCountry": "IN",
+        "subtotal": 1200,
+        "totalQty": 10,
+        "totalWeightKg": 0.75,
+        "baseFee": 80,
+        "ratePerKg": 70,
+        "distanceMultiplier": 0.85,
+        "minCharge": 95,
+        "shippingCost": 124.63,
+        "totalShipping": 124.63,
+        "grandTotal": 1324.63
+      }
+    }
+  },
+  "singleLaneQuoteUSKE": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": {
+        "mode": "single-lane",
+        "originCountry": "US",
+        "destinationCountry": "KE",
+        "subtotal": 200,
+        "totalQty": 4,
+        "totalWeightKg": 0.3,
+        "baseFee": 727,
+        "ratePerKg": 432,
+        "distanceMultiplier": 2.76,
+        "minCharge": 855,
+        "shippingCost": 1084.7,
+        "totalShipping": 1084.7,
+        "grandTotal": 1284.7
+      }
+    }
+  },
+  "multiOriginQuote": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": {
+        "mode": "multi-origin",
+        "destinationCountry": "KE",
+        "shipments": [
+          {
+            "shipmentIndex": 0,
+            "originCountry": "IN",
+            "destinationCountry": "KE",
+            "subtotal": 500,
+            "totalQty": 5,
+            "totalWeightKg": 0.375,
+            "baseFee": 203,
+            "ratePerKg": 165,
+            "distanceMultiplier": 1.42,
+            "minCharge": 243,
+            "shippingCost": 290.86,
+            "totalShipping": 290.86,
+            "grandTotal": 790.86
+          },
+          {
+            "shipmentIndex": 1,
+            "originCountry": "US",
+            "destinationCountry": "KE",
+            "subtotal": 240,
+            "totalQty": 3,
+            "totalWeightKg": 0.225,
+            "baseFee": 727,
+            "ratePerKg": 432,
+            "distanceMultiplier": 2.76,
+            "minCharge": 855,
+            "shippingCost": 995.27,
+            "totalShipping": 995.27,
+            "grandTotal": 1235.27
+          }
+        ],
+        "subtotal": 740,
+        "totalShipping": 1286.13,
+        "grandTotal": 2026.13
+      }
+    }
+  },
+  "quoteMoneyPrecision": {
+    "legacy": null,
+    "singleLane": null,
+    "multiOrigin": null
+  },
+  "checkoutSingleOriginEquivalent": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": {
+        "mode": "single-lane",
+        "originCountry": "IN",
+        "destinationCountry": "GB",
+        "subtotal": 199.98,
+        "totalQty": 2,
+        "totalWeightKg": 0.15,
+        "baseFee": 231,
+        "ratePerKg": 192,
+        "distanceMultiplier": 1.68,
+        "minCharge": 285,
+        "shippingCost": 279.38,
+        "totalShipping": 285,
+        "grandTotal": 484.98
+      }
+    }
+  },
+  "signupCustomer": {
+    "ok": true,
+    "status": 201,
+    "data": {
+      "success": true,
+      "message": "Registration successful",
+      "data": {
+        "user": {
+          "id": "8e3095b7-343a-4b51-9ed2-0db95bea5a0e",
+          "email": "phase8_customer_1778441677554@example.com",
+          "mobile": "9441677554",
+          "countryCode": "IN",
+          "stateId": 1,
+          "phoneDial": "+91",
+          "phoneE164": "+919441677554",
+          "role": "CUSTOMER",
+          "isProfileComplete": false,
+          "createdAt": "2026-05-10T19:34:38.542Z"
+        },
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjhlMzA5NWI3LTM0M2EtNGI1MS05ZWQyLTBkYjk1YmVhNWEwZSIsImVtYWlsIjoicGhhc2U4X2N1c3RvbWVyXzE3Nzg0NDE2Nzc1NTRAZXhhbXBsZS5jb20iLCJyb2xlIjoiQ1VTVE9NRVIiLCJpc1Byb2ZpbGVDb21wbGV0ZSI6ZmFsc2UsImlhdCI6MTc3ODQ0MTY3OCwiZXhwIjoxNzc5MDQ2NDc4fQ.QMaEkJrjdkuEPXbIz4-lx_oMg7y_hCsCmL0CW6EZiTg"
+      }
+    }
+  },
+  "loginCustomer": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Login successful",
+      "data": {
+        "user": {
+          "id": "8e3095b7-343a-4b51-9ed2-0db95bea5a0e",
+          "email": "phase8_customer_1778441677554@example.com",
+          "mobile": "9441677554",
+          "name": null,
+          "role": "CUSTOMER",
+          "isProfileComplete": false,
+          "createdAt": "2026-05-10T19:34:38.542Z",
+          "updatedAt": "2026-05-10T19:34:38.542Z",
+          "avatarUrl": null,
+          "isActive": true,
+          "lastLoginAt": null,
+          "preferredCurrency": "INR",
+          "timezone": null,
+          "isBanned": false,
+          "moderationNote": null,
+          "tokenInvalidBefore": null,
+          "countryCode": "IN",
+          "stateId": 1,
+          "phoneDial": "+91",
+          "phoneE164": "+919441677554",
+          "vendor": null,
+          "customer": null
+        },
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjhlMzA5NWI3LTM0M2EtNGI1MS05ZWQyLTBkYjk1YmVhNWEwZSIsImVtYWlsIjoicGhhc2U4X2N1c3RvbWVyXzE3Nzg0NDE2Nzc1NTRAZXhhbXBsZS5jb20iLCJyb2xlIjoiQ1VTVE9NRVIiLCJpc1Byb2ZpbGVDb21wbGV0ZSI6ZmFsc2UsImlhdCI6MTc3ODQ0MTY3OSwiZXhwIjoxNzc5MDQ2NDc5fQ.xFUhDm2764W9MwBpmlwrZ2amgqaSaYi6GCD2FUgJChs"
+      }
+    }
+  },
+  "signupVendor": {
+    "ok": true,
+    "status": 201,
+    "data": {
+      "success": true,
+      "message": "Registration successful",
+      "data": {
+        "user": {
+          "id": "1a237767-4f87-4a22-8376-77a675320ca0",
+          "email": "phase8_vendor_1778441677554@example.com",
+          "mobile": "8441677555",
+          "countryCode": "IN",
+          "stateId": 1,
+          "phoneDial": "+91",
+          "phoneE164": "+918441677555",
+          "role": "VENDOR",
+          "isProfileComplete": false,
+          "createdAt": "2026-05-10T19:34:41.068Z"
+        },
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFhMjM3NzY3LTRmODctNGEyMi04Mzc2LTc3YTY3NTMyMGNhMCIsImVtYWlsIjoicGhhc2U4X3ZlbmRvcl8xNzc4NDQxNjc3NTU0QGV4YW1wbGUuY29tIiwicm9sZSI6IlZFTkRPUiIsImlzUHJvZmlsZUNvbXBsZXRlIjpmYWxzZSwiaWF0IjoxNzc4NDQxNjgxLCJleHAiOjE3NzkwNDY0ODF9.WEqutmpPkThmbDE1EtdJcFwY6IT6Y2yegUwDLt28WG4"
+      }
+    }
+  },
+  "loginVendor": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Login successful",
+      "data": {
+        "user": {
+          "id": "1a237767-4f87-4a22-8376-77a675320ca0",
+          "email": "phase8_vendor_1778441677554@example.com",
+          "mobile": "8441677555",
+          "name": null,
+          "role": "VENDOR",
+          "isProfileComplete": false,
+          "createdAt": "2026-05-10T19:34:41.068Z",
+          "updatedAt": "2026-05-10T19:34:41.068Z",
+          "avatarUrl": null,
+          "isActive": true,
+          "lastLoginAt": null,
+          "preferredCurrency": "INR",
+          "timezone": null,
+          "isBanned": false,
+          "moderationNote": null,
+          "tokenInvalidBefore": null,
+          "countryCode": "IN",
+          "stateId": 1,
+          "phoneDial": "+91",
+          "phoneE164": "+918441677555",
+          "vendor": null,
+          "customer": null
+        },
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFhMjM3NzY3LTRmODctNGEyMi04Mzc2LTc3YTY3NTMyMGNhMCIsImVtYWlsIjoicGhhc2U4X3ZlbmRvcl8xNzc4NDQxNjc3NTU0QGV4YW1wbGUuY29tIiwicm9sZSI6IlZFTkRPUiIsImlzUHJvZmlsZUNvbXBsZXRlIjpmYWxzZSwiaWF0IjoxNzc4NDQxNjgyLCJleHAiOjE3NzkwNDY0ODJ9.9dSV9cUa90B4fZ5Qy-MmUj81vSrX0ZV2Mk4NMU-DmYk"
+      }
+    }
+  },
+  "signupPayloadPreview": {
+    "email": "phase8_customer_1778441677554@example.com",
+    "mobile": "9441677554",
+    "password": "***",
+    "role": "CUSTOMER",
+    "countryCode": "IN",
+    "stateId": 1,
+    "phoneDial": "+91",
+    "phoneE164": "+919441677554"
+  },
+  "stateUsed": {
+    "id": 1,
+    "countryCode": "IN",
+    "name": "Andhra Pradesh"
+  }
+}

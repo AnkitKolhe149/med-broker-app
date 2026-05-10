@@ -18,14 +18,18 @@ model User {
   isProfileComplete       Boolean                 @default(false)
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
-  tokenInvalidBefore      DateTime?
   avatarUrl               String?
   isActive                Boolean                 @default(true)
-  isBanned                Boolean                 @default(false)
-  moderationNote          String?
   lastLoginAt             DateTime?
   preferredCurrency       String?                 @default("INR")
   timezone                String?
+  isBanned                Boolean                 @default(false)
+  moderationNote          String?
+  tokenInvalidBefore      DateTime?
+  countryCode             String?                 @db.VarChar(2)
+  stateId                 Int?
+  phoneDial               String?                 @db.VarChar(6)
+  phoneE164               String?
   addresses               Address[]
   auditLogs               AuditLog[]
   couponRedemptions       CouponRedemption[]
@@ -38,14 +42,20 @@ model User {
   orders                  Order[]
   reviewedPrescriptions   Prescription[]          @relation("PrescriptionReviewedBy")
   approvedReturns         ReturnRequest[]         @relation("ReturnApprovedBy")
+  ShippingAddress         ShippingAddress[]
   supportTicketsAssigned  SupportTicket[]         @relation("TicketAssignee")
   supportTicketsRequested SupportTicket[]         @relation("TicketRequester")
   supportTicketMessages   SupportTicketMessage[]
+  Country                 Country?                @relation(fields: [countryCode], references: [code])
+  State                   State?                  @relation(fields: [stateId], references: [id])
   vendor                  Vendor?
   kycVerifiedDocuments    VendorKycDocument[]     @relation("KycVerifiedBy")
 
   @@index([createdAt])
   @@index([role, isActive])
+  @@index([countryCode])
+  @@index([phoneE164])
+  @@index([stateId])
 }
 
 model Vendor {
@@ -127,9 +137,9 @@ model Medicine {
   sku                  String?             @unique
   slug                 String?             @unique
   status               MedicineStatus      @default(PUBLISHED)
-  moderationNote       String?
   strength             String?
   subcategory          String?
+  moderationNote       String?
   cartItems            CartItem[]
   ConditionMedicine    ConditionMedicine[]
   inventory            Inventory[]
@@ -142,25 +152,25 @@ model Medicine {
 }
 
 model Inventory {
-  id                  String           @id @default(uuid())
-  medicineId          String
-  vendorId            String
-  quantity            Int              @default(0)
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  imageUrl            String?
-  imageUrls           Json?
-  costPriceCents      Int?
-  isActive            Boolean          @default(true)
-  lastRestockedAt     DateTime?
-  mrpCents            Int?
-  reorderLevel        Int              @default(10)
-  reservedQuantity    Int              @default(0)
-  sellingPriceCents   Int?
-  cartItems           CartItem[]
-  medicine            Medicine         @relation(fields: [medicineId], references: [id])
-  vendor              Vendor           @relation(fields: [vendorId], references: [id])
-  batches             InventoryBatch[]
+  id                String           @id @default(uuid())
+  medicineId        String
+  vendorId          String
+  quantity          Int              @default(0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  imageUrl          String?
+  imageUrls         Json?
+  costPriceCents    Int?
+  isActive          Boolean          @default(true)
+  lastRestockedAt   DateTime?
+  mrpCents          Int?
+  reorderLevel      Int              @default(10)
+  reservedQuantity  Int              @default(0)
+  sellingPriceCents Int?
+  cartItems         CartItem[]
+  medicine          Medicine         @relation(fields: [medicineId], references: [id])
+  vendor            Vendor           @relation(fields: [vendorId], references: [id])
+  batches           InventoryBatch[]
 
   @@unique([medicineId, vendorId])
   @@index([updatedAt])
@@ -191,8 +201,8 @@ model Order {
   shippingCents      Int                @default(0)
   subtotalCents      Int                @default(0)
   taxCents           Int                @default(0)
-  persistedFeeRate   Float?
   persistedFeeAmount Float?
+  persistedFeeRate   Float?
   couponRedemptions  CouponRedemption[]
   disputeCase        DisputeCase?
   invoice            Invoice?
@@ -211,21 +221,23 @@ model Order {
 }
 
 model OrderItem {
-  id             String          @id @default(uuid())
-  orderId        String
-  medicineId     String
-  quantity       Int             @default(1)
-  unitPriceCents Int
-  vendorId       String
-  batchNumber    String?
-  discountCents  Int             @default(0)
-  lineTotalCents Int             @default(0)
-  selectedPack   String?
-  taxRate        Float?
-  medicine       Medicine        @relation(fields: [medicineId], references: [id])
-  order          Order           @relation(fields: [orderId], references: [id])
-  vendor         Vendor          @relation(fields: [vendorId], references: [id])
-  returnRequests ReturnRequest[]
+  id                 String          @id @default(uuid())
+  orderId            String
+  medicineId         String
+  quantity           Int             @default(1)
+  unitPriceCents     Int
+  vendorId           String
+  batchNumber        String?
+  discountCents      Int             @default(0)
+  lineTotalCents     Int             @default(0)
+  selectedPack       String?
+  taxRate            Float?
+  persistedFeeAmount Float?
+  persistedFeeRate   Float?
+  medicine           Medicine        @relation(fields: [medicineId], references: [id])
+  order              Order           @relation(fields: [orderId], references: [id])
+  vendor             Vendor          @relation(fields: [vendorId], references: [id])
+  returnRequests     ReturnRequest[]
 
   @@index([orderId])
   @@index([medicineId])
@@ -273,10 +285,6 @@ model Payout {
   vendorId           String
   amountCents        Int
   commissionCents    Int          @default(0)
-  persistedFeeRate   Float?
-  persistedFeeAmount Float?
-  appliedFee         Float?
-  appliedRate        Float?
   status             PayoutStatus @default(PENDING)
   periodStart        DateTime?
   periodEnd          DateTime?
@@ -288,6 +296,10 @@ model Payout {
   notes              String?
   processedAt        DateTime?
   scheduledAt        DateTime?
+  persistedFeeAmount Float?
+  persistedFeeRate   Float?
+  appliedFee         Float?
+  appliedRate        Float?
   vendor             Vendor       @relation(fields: [vendorId], references: [id])
 
   @@index([vendorId])
@@ -681,6 +693,60 @@ model Integration {
   meta          Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model Country {
+  code            String            @id @db.VarChar(2)
+  name            String
+  dialCode        String            @db.VarChar(6)
+  currencyCode    String            @db.VarChar(3)
+  flagEmoji       String?
+  isActive        Boolean           @default(true)
+  ShippingAddress ShippingAddress[]
+  State           State[]
+  User            User[]
+}
+
+model FxRate {
+  currencyCode String   @id @db.VarChar(3)
+  rateToBase   Decimal  @db.Decimal(14, 6)
+  fxBuffer     Decimal  @default(1.0200) @db.Decimal(6, 4)
+  updatedAt    DateTime @default(now())
+}
+
+model ShippingAddress {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String
+  label       String?
+  fullName    String
+  phoneE164   String
+  line1       String
+  line2       String?
+  city        String
+  postalCode  String?
+  stateId     Int?
+  countryCode String   @db.VarChar(2)
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  Country     Country  @relation(fields: [countryCode], references: [code])
+  State       State?   @relation(fields: [stateId], references: [id])
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([countryCode])
+  @@index([userId])
+}
+
+model State {
+  id              Int               @id @default(autoincrement())
+  countryCode     String            @db.VarChar(2)
+  name            String
+  code            String?           @db.VarChar(10)
+  ShippingAddress ShippingAddress[]
+  Country         Country           @relation(fields: [countryCode], references: [code], onDelete: Cascade)
+  User            User[]
+
+  @@unique([countryCode, name])
+  @@index([countryCode])
 }
 
 enum UserRole {
