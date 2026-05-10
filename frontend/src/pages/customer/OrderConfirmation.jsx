@@ -19,7 +19,7 @@ import {
 import Avatar from '../../components/common/Avatar';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { formatConvertedCurrency } from '../../utils/currency';
+import { formatCurrency, formatConvertedCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import styles from './OrderConfirmation.module.css';
 
@@ -33,9 +33,9 @@ function OrderConfirmation() {
 	const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
 	const [invoiceError, setInvoiceError] = useState('');
 	const currentCurrency = currency || 'INR';
-	const sourceCurrencyCode = orderData?.currencyCode || currentCurrency;
-	const formatPrice = (value, fromCurrency = sourceCurrencyCode) => formatConvertedCurrency(value, fromCurrency, currentCurrency, exchangeRates, true);
-	const toDisplayAmount = (value, fromCurrency = sourceCurrencyCode) => convert(value, fromCurrency);
+	const orderCurrency = orderData?.currencyCode || currentCurrency;
+	const formatPrice = (value, targetCurrency = orderCurrency) => formatConvertedCurrency(value, 'INR', targetCurrency, exchangeRates, true);
+	const toDisplayAmount = (value) => value;
 
 	// ✅ BUG #10: Add state/province lists for all countries
 	const statesByCountry = useMemo(() => ({
@@ -149,20 +149,20 @@ function OrderConfirmation() {
 	const getSubtotal = () => {
 		if (!orderData) return 0;
 		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
-			return toDisplayAmount(Number(orderData.subtotal || orderData.subtotalBase || 0), sourceCurrencyCode);
+			return Number(orderData.subtotal || orderData.subtotalBase || 0);
 		}
-		return toDisplayAmount(Number(orderData.subtotal || 0), sourceCurrencyCode);
+		return Number(orderData.subtotal || 0);
 	};
 
 	const getDeliveryCharge = () => {
 		if (!orderData) return 0;
 		const rawDelivery = Number(orderData.deliveryCharge ?? orderData.deliveryBase ?? (orderData.deliveryType === 'express' ? 9 : 0));
-		return toDisplayAmount(rawDelivery, sourceCurrencyCode);
+		return rawDelivery;
 	};
 
 	const calculateTax = () => {
 		if (orderData?.tax !== undefined && orderData?.tax !== null) {
-			return toDisplayAmount(Number(orderData.tax), sourceCurrencyCode);
+			return Number(orderData.tax);
 		}
 		const subtotal = getSubtotal();
 		const discount = Number(orderData?.discount || ((subtotal * (orderData?.discountPercent || 0)) / 100));
@@ -172,10 +172,10 @@ function OrderConfirmation() {
 	const getTotalPaid = () => {
 		if (!orderData) return 0;
 		if (orderData.totalBase !== undefined && orderData.totalBase !== null) {
-			return toDisplayAmount(Number(orderData.total || orderData.totalBase || 0), sourceCurrencyCode);
+			return Number(orderData.total || orderData.totalBase || 0);
 		}
 		if (orderData.total !== undefined && orderData.total !== null) {
-			return toDisplayAmount(Number(orderData.total), sourceCurrencyCode);
+			return Number(orderData.total);
 		}
 		const subtotal = getSubtotal();
 		const discount = (subtotal * (orderData.discountPercent || 0)) / 100;
@@ -228,7 +228,7 @@ function OrderConfirmation() {
 					<div className={styles.heroMeta}>
 						<p><span>Order ID</span><strong>{orderData.orderId || orderId}</strong></p>
 						<p><span>Estimated Delivery</span><strong>{getEstimatedDeliveryText()}</strong></p>
-						<p><span>Total Paid</span><strong>{formatPrice(totalPaid, currentCurrency)}</strong></p>
+						<p><span>Total Paid</span><strong>{formatPrice(totalPaid, orderCurrency)}</strong></p>
 					</div>
 				</section>
 
@@ -259,7 +259,7 @@ function OrderConfirmation() {
 									</div>
 									<div className={styles.itemRight}>
 										<p className={styles.itemQty}>Qty {item.quantity}</p>
-										<p className={styles.itemPrice}>{formatPrice(item.basePrice * item.quantity, item.currencyCode || sourceCurrencyCode)}</p>
+										<p className={styles.itemPrice}>{formatPrice(item.basePrice * item.quantity, orderCurrency)}</p>
 									</div>
 								</div>
 							))}
@@ -304,13 +304,13 @@ function OrderConfirmation() {
 					<aside className={styles.summaryPanel}>
 						<h2 className={styles.summaryTitle}>Payment Recap</h2>
 						<div className={styles.summaryCard}>
-							<div className={styles.summaryRow}><span>Subtotal</span><strong>{formatPrice(subtotal, currentCurrency)}</strong></div>
+							<div className={styles.summaryRow}><span>Subtotal</span><strong>{formatPrice(subtotal, orderCurrency)}</strong></div>
 							{orderData.discountPercent > 0 ? (
-								<div className={styles.summaryDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount, currentCurrency)}</strong></div>
+								<div className={styles.summaryDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount, orderCurrency)}</strong></div>
 							) : null}
-							<div className={styles.summaryRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge, currentCurrency)}</strong></div>
-							<div className={styles.summaryRow}><span>Tax (5%)</span><strong>{formatPrice(tax, currentCurrency)}</strong></div>
-							<div className={styles.summaryTotal}><span>Total Paid</span><strong>{formatPrice(totalPaid, currentCurrency)}</strong></div>
+							<div className={styles.summaryRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge, orderCurrency)}</strong></div>
+							<div className={styles.summaryRow}><span>Tax (5%)</span><strong>{formatPrice(tax, orderCurrency)}</strong></div>
+							<div className={styles.summaryTotal}><span>Total Paid</span><strong>{formatPrice(totalPaid, orderCurrency)}</strong></div>
 						</div>
 
 						<div className={styles.statusCard}>

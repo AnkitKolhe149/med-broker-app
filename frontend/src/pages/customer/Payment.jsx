@@ -38,9 +38,9 @@ function Payment() {
 	const [cvv, setCvv] = useState('');
 	const [deliveryAddress, setDeliveryAddress] = useState({});
 	const currentCurrency = currency || 'INR';
-	const sourceItemCurrency = 'INR';
-	const formatPrice = (value, fromCurrency = sourceItemCurrency) => formatConvertedCurrency(value, fromCurrency, currentCurrency, exchangeRates, true);
-	const toDisplayAmount = (value, fromCurrency = sourceItemCurrency) => (typeof convert === 'function' ? convert(value, fromCurrency) : value);
+	const orderCurrency = useMemo(() => orderData?.currencyCode || currentCurrency, [orderData?.currencyCode, currentCurrency]);
+	const formatPrice = (value, sourceCurrency = 'INR') => formatConvertedCurrency(value, sourceCurrency, orderCurrency, exchangeRates, true);
+	const toDisplayAmount = (value) => value;
 
 	// ✅ BUG #10: Add state/province lists for all countries
 	const statesByCountry = useMemo(() => ({
@@ -159,9 +159,9 @@ function Payment() {
 	const calculateTotal = () => {
 		if (!orderData) return 0;
 		if (orderData.totalBase !== undefined && orderData.totalBase !== null) {
-			return toDisplayAmount(Number(orderData.total || orderData.totalBase || 0), sourceItemCurrency);
+			return Number(orderData.total || orderData.totalBase || 0);
 		}
-		return toDisplayAmount(Number(orderData.total || 0), sourceItemCurrency);
+		return Number(orderData.total || 0);
 	};
 
 	const generateUPILink = () => {
@@ -198,20 +198,20 @@ function Payment() {
 	const getSubtotal = () => {
 		if (!orderData) return 0;
 		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
-			return toDisplayAmount(Number(orderData.subtotal || orderData.subtotalBase || 0), sourceItemCurrency);
+			return Number(orderData.subtotal || orderData.subtotalBase || 0);
 		}
-		return toDisplayAmount(Number(orderData.subtotal || 0), sourceItemCurrency);
+		return Number(orderData.subtotal || 0);
 	};
 
 	const calculateDelivery = () => {
 		if (!orderData) return 0;
 		const rawDelivery = Number(orderData.deliveryCharge ?? orderData.deliveryBase ?? (orderData.deliveryType === 'express' ? 9 : 0));
-		return toDisplayAmount(rawDelivery, sourceItemCurrency);
+		return rawDelivery;
 	};
 
 	const calculateTax = () => {
 		if (orderData?.tax !== undefined && orderData?.tax !== null) {
-			return toDisplayAmount(Number(orderData.tax), sourceItemCurrency);
+			return Number(orderData.tax);
 		}
 		const subtotal = getSubtotal();
 		const discount = Number(orderData?.discount || ((subtotal * (orderData?.discountPercent || 0)) / 100));
@@ -532,14 +532,14 @@ function Payment() {
 								<div className={styles.methodDetails}>
 									<div className={styles.walletCard}>
 										<p className={styles.walletLabel}>Available Wallet Balance</p>
-										<p className={styles.walletAmount}>{formatPrice(0, currentCurrency)}</p>
+										<p className={styles.walletAmount}>{formatPrice(0, 'INR')}</p>
 										<button type="button" className={styles.walletButton}>Add Funds</button>
 									</div>
 								</div>
 							)}
 
 							<button type="submit" disabled={isProcessing} className={styles.payButton}>
-								{isProcessing ? 'Processing Payment...' : `Pay ${formatPrice(total, currentCurrency)}`}
+								{isProcessing ? 'Processing Payment...' : `Pay ${formatPrice(total, 'INR')}`}
 							</button>
 
 							<p className={styles.disclaimer}>By proceeding, you authorize MedIQ to process this transaction securely.</p>
@@ -569,19 +569,19 @@ function Payment() {
 							{orderData.cartItems.map((item, index) => (
 								<div key={`${item.medicineId}-${index}`} className={styles.itemRow}>
 									<span>{item.name} × {item.quantity}</span>
-									<span>{formatPrice(item.basePrice * item.quantity, sourceItemCurrency)}</span>
+									<span>{formatPrice(item.basePrice * item.quantity, 'INR')}</span>
 								</div>
 							))}
 						</div>
 
 						<div className={styles.amountRows}>
-							<div className={styles.pricingRow}><span>Subtotal</span><strong>{formatPrice(subtotal, currentCurrency)}</strong></div>
+							<div className={styles.pricingRow}><span>Subtotal</span><strong>{formatPrice(subtotal, 'INR')}</strong></div>
 							{orderData.discountPercent > 0 ? (
-								<div className={styles.pricingRowDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount, currentCurrency)}</strong></div>
+								<div className={styles.pricingRowDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount, 'INR')}</strong></div>
 							) : null}
-							<div className={styles.pricingRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge, currentCurrency)}</strong></div>
-							<div className={styles.pricingRow}><span className={styles.taxLabel}>Estimated Tax <CircleHelp size={13} strokeWidth={1.8} /></span><strong>{formatPrice(tax, currentCurrency)}</strong></div>
-							<div className={styles.totalRow}><span>Total Due</span><strong>{formatPrice(total, currentCurrency)}</strong></div>
+							<div className={styles.pricingRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge, 'INR')}</strong></div>
+							<div className={styles.pricingRow}><span className={styles.taxLabel}>Estimated Tax <CircleHelp size={13} strokeWidth={1.8} /></span><strong>{formatPrice(tax, 'INR')}</strong></div>
+							<div className={styles.totalRow}><span>Total Due</span><strong>{formatPrice(total, 'INR')}</strong></div>
 						</div>
 
 						<div className={styles.securityCard}>

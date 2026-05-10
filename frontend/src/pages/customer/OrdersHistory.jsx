@@ -4,7 +4,7 @@ import { FlaskConical } from 'lucide-react';
 import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { convertPrice, formatConvertedCurrency, getCurrencyForCountry } from '../../utils/currency';
+import { formatConvertedCurrency } from '../../utils/currency';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
@@ -51,7 +51,7 @@ function OrdersHistory() {
 	};
 	const ordersListRef = useRef(null);
 	const defaultCurrencyCode = currency || user?.preferredCurrency || 'INR';
-	const formatPrice = (value, sourceCurrency = defaultCurrencyCode) => formatConvertedCurrency(value, sourceCurrency, defaultCurrencyCode, exchangeRates, true);
+	const formatPrice = (value, targetCurrency = defaultCurrencyCode) => formatConvertedCurrency(value, 'INR', targetCurrency, exchangeRates, true);
 
 	const toUiStatus = (status = '') => {
 		const normalized = status.toUpperCase();
@@ -224,7 +224,7 @@ function OrdersHistory() {
 			const group = groupedMap.get(groupKey);
 			group.orderIds.push(order.orderId);
 			group.orderCount += 1;
-				group.total += convertPrice(Number(order.total || 0), order.currencyCode || defaultCurrencyCode, defaultCurrencyCode, exchangeRates);
+							group.total += Number(order.total || 0);
 
 			const mergedItemsMap = new Map(group.items.map((item) => [item.name, item.quantity]));
 			(order.items || []).forEach((item) => {
@@ -381,6 +381,7 @@ function OrdersHistory() {
 						onClose={() => setSelectedOrder(null)}
 						onDownload={handleDownloadReceipt}
 						downloading={receiptDownloading}
+									formatPrice={formatPrice}
 					/>
 				)}
 		</>
@@ -388,7 +389,7 @@ function OrdersHistory() {
 }
 
 // Order Details Modal (rendered outside main layout via selectedOrder state)
-const OrderDetailsModal = ({ order, onClose, onDownload, downloading }) => {
+const OrderDetailsModal = ({ order, onClose, onDownload, downloading, formatPrice }) => {
 	if (!order) return null;
 	return (
 		<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
@@ -433,7 +434,7 @@ const OrderDetailsModal = ({ order, onClose, onDownload, downloading }) => {
 											? order.totalCents
 											: subtotalCents + taxCents;
 
-									const fmt = (cents) => (Number(cents || 0) / 100).toFixed(2);
+									const fmt = (cents) => formatPrice ? formatPrice(Number(cents || 0) / 100, order.currencyCode || defaultCurrencyCode) : (Number(cents || 0) / 100).toFixed(2);
 
 									return (
 										<>
@@ -462,9 +463,9 @@ const OrderDetailsModal = ({ order, onClose, onDownload, downloading }) => {
 							{(order.items || []).map((it) => (
 								<tr key={it.id}>
 									<td style={{ padding: 8 }}>{it.medicine?.name || it.medicineId}</td>
-									<td style={{ padding: 8, textAlign: 'right' }}>{((it.unitPriceCents || 0) / 100).toFixed(2)}</td>
+										<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((it.unitPriceCents || 0) / 100, order.currencyCode || defaultCurrencyCode) : ((it.unitPriceCents || 0) / 100).toFixed(2)}</td>
 									<td style={{ padding: 8, textAlign: 'right' }}>{it.quantity}</td>
-									<td style={{ padding: 8, textAlign: 'right' }}>{(((it.unitPriceCents || 0) * (it.quantity || 1)) / 100).toFixed(2)}</td>
+										<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((((it.unitPriceCents || 0) * (it.quantity || 1)) / 100), order.currencyCode || defaultCurrencyCode) : (((it.unitPriceCents || 0) * (it.quantity || 1)) / 100).toFixed(2)}</td>
 								</tr>
 							))}
 						</tbody>
