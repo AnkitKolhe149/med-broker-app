@@ -62,7 +62,10 @@ async function authenticate(req, res, next) {
       });
     }
 
-    req.user = user;
+    req.user = {
+      ...user,
+      availableRoles: authService.getAvailableRoles(user)
+    };
     next();
   } catch (error) {
     return res.status(401).json({
@@ -125,7 +128,10 @@ function requireCompleteProfile(req, res, next) {
  */
 function requireRole(...roles) {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    const userRoles = req.user.availableRoles || [req.user.role];
+    const hasRequiredRole = roles.some(role => userRoles.includes(role));
+    
+    if (!hasRequiredRole) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Insufficient permissions.'

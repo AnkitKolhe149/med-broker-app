@@ -153,6 +153,10 @@ function Register() {
 						contactNumber: formData.mobile, // Reuse mobile
 						bankAccountDetails: formData.bankAccountDetails
 					});
+					
+					// Refresh user data to get updated roles and currency
+					await authService.getCurrentUser();
+					
 					navigate('/vendor/dashboard');
 				} else if (result.user.role === 'CUSTOMER') {
 					await authService.completeCustomerOnboarding({

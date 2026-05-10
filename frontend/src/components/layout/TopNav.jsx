@@ -185,6 +185,12 @@ function TopNav() {
 	};
 
 	const profileMenuSections = [
+		...(user?.availableRoles?.includes('VENDOR') ? [{
+			title: 'Switch Role',
+			items: [
+				{ label: 'Switch to Vendor Console', path: '/vendor/dashboard', icon: <Package size={16} strokeWidth={1.5} />, isRoleSwitch: true }
+			]
+		}] : []),
 		{
 			title: 'Account',
 			items: [
@@ -290,6 +296,31 @@ function TopNav() {
 
 					<div className={`topnav-right ${showMobileMenu ? 'show' : ''}`}>
 						<div className="topnav-actions" style={styles.rightSection}>
+							{user?.availableRoles?.includes('VENDOR') && (
+								<button
+									type="button"
+									onClick={() => navigate('/vendor/dashboard')}
+									className="topnav-switch-btn"
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										gap: '0.5rem',
+										padding: '0.5rem 0.85rem',
+										backgroundColor: 'rgba(21, 115, 71, 0.1)',
+										color: 'var(--primary)',
+										border: '1px solid rgba(21, 115, 71, 0.2)',
+										borderRadius: '8px',
+										fontSize: '0.85rem',
+										fontWeight: 600,
+										cursor: 'pointer',
+										marginRight: '0.5rem',
+										transition: 'all 0.2s ease'
+									}}
+								>
+									<Package size={16} />
+									<span className="hide-mobile">Vendor Console</span>
+								</button>
+							)}
 							<button
 								type="button"
 								onClick={() => handleNavigate('/customer/cart')}
@@ -366,13 +397,33 @@ function TopNav() {
 													<div className="topnav-profile-menu-section" style={styles.menuSection}>
 														{profileMenuSections.map((section, idx) => (
 															<React.Fragment key={idx}>
-																{idx > 0 && <div style={{ ...styles.menuDivider, margin: '0.25rem 0' }} />}
+																{idx > 0 && <div style={{ ...styles.menuDivider, margin: '0.5rem 0' }} />}
+																{section.title && (
+																	<p style={{ 
+																		fontSize: '0.7rem', 
+																		textTransform: 'uppercase', 
+																		color: 'var(--text-secondary)', 
+																		padding: '0.5rem 0.85rem 0.25rem',
+																		margin: 0,
+																		fontWeight: 700,
+																		letterSpacing: '0.05em'
+																	}}>
+																		{section.title}
+																	</p>
+																)}
 																{section.items.map((item) => (
 																	<button
 																		type="button"
 																		key={item.path}
 																		className={`topnav-profile-menu-item ${location.pathname === item.path ? 'active' : ''}`}
-																		style={styles.menuItem}
+																		style={{
+																			...styles.menuItem,
+																			...(item.isRoleSwitch ? { 
+																				backgroundColor: 'rgba(21, 115, 71, 0.08)',
+																				color: 'var(--primary)',
+																				fontWeight: 600
+																			} : {})
+																		}}
 																		onClick={() => handleNavigate(item.path)}
 																		role="menuitem"
 																	>

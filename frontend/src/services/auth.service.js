@@ -220,6 +220,10 @@ export default {
     return getUser()?.role || null;
   },
 
+  getUser: () => {
+    return getUser();
+  },
+
   isProfileComplete: () => {
     return getUser()?.isProfileComplete || false;
   }

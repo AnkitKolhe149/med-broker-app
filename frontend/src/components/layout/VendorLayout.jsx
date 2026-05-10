@@ -164,6 +164,15 @@ function VendorLayout({ children }) {
 						<p className="vendor-utility-subtitle">{activeMenuItem?.description || 'Manage your operations, inventory and business performance'}</p>
 					</div>
 					<div className="vendor-utility-actions">
+						{authService.getUser()?.availableRoles?.includes('CUSTOMER') && (
+							<button 
+								type="button" 
+								className="vendor-quick-action vendor-quick-action-secondary" 
+								onClick={() => navigate('/customer/dashboard')}
+							>
+								Switch to Customer View
+							</button>
+						)}
 						<button type="button" className="vendor-quick-action" onClick={() => navigate('/vendor/orders')}>Open Orders</button>
 						<button type="button" className="vendor-quick-action" onClick={() => navigate('/vendor/stock')}>Manage Stock</button>
 						<button

@@ -97,10 +97,24 @@ module.exports = {
       contactNumber
     } = data;
 
-    // Validate required fields
-    if (!companyName || !vendorType || !country || !state || !gstinNumber || 
-        !drugLicenseNumber || !businessAddress || !contactPersonName || !contactNumber) {
-      throw new ValidationError('All required fields must be provided');
+    // Define strictly mandatory fields
+    const requiredFields = {
+      companyName: 'Company Name',
+      vendorType: 'Vendor Type',
+      country: 'Country',
+      state: 'State/Region',
+      gstinNumber: 'GSTIN Number',
+      drugLicenseNumber: 'Drug License Number',
+      businessAddress: 'Business Address',
+      contactPersonName: 'Contact Person Name',
+      contactNumber: 'Contact Number'
+    };
+
+    // Check each field and report the first missing one specifically
+    for (const [field, label] of Object.entries(requiredFields)) {
+      if (!data[field] || String(data[field]).trim() === '') {
+        throw new ValidationError(`${label} is required to complete your vendor profile`);
+      }
     }
 
     // Validate GSTIN format
@@ -135,6 +149,22 @@ module.exports = {
             contactPersonName,
             contactNumber,
             verificationStatus: 'PENDING'
+          }
+        });
+
+        // ✅ Also create a Customer profile for the Vendor so they can buy products too
+        // Use fallback values for mandatory fields to prevent database errors
+        await tx.customer.create({
+          data: {
+            userId,
+            fullName: contactPersonName || companyName || 'Vendor User',
+            buyerType: 'RETAIL', 
+            businessName: companyName || null,
+            gstin: gstinNumber || null,
+            country: country || 'India',
+            city: state || 'Unknown', // Fallback for mandatory city field
+            deliveryAddress: businessAddress || 'N/A', // Fallback for mandatory address field
+            contactNumber: contactNumber || '0000000000'
           }
         });
 

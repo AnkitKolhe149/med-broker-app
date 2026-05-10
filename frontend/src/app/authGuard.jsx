@@ -68,8 +68,11 @@ function AuthGuard({ children, requiredRole, requireCompleteProfile = false }) {
 	}
 
 	// Check role if required
-	if (requiredRole && user.role !== requiredRole) {
-		// Redirect to appropriate dashboard based on user's actual role
+	const userRoles = user?.availableRoles || [user?.role];
+	const hasAccess = !requiredRole || userRoles.includes(requiredRole);
+
+	if (!hasAccess) {
+		// Redirect to appropriate dashboard based on user's primary role
 		if (user.role === 'CUSTOMER') {
 			return <Navigate to="/customer/catalog" replace />;
 		} else if (user.role === 'VENDOR') {

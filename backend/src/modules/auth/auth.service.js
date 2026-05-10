@@ -12,12 +12,41 @@ if (!JWT_SECRET) {
 const JWT_EXPIRES_IN = '7d';
 
 // Helper functions (internal)
+const getAvailableRoles = (user) => {
+  if (user.role === 'ADMIN') {
+    return ['ADMIN'];
+  }
+  
+  const availableRoles = [];
+  
+  // Strictly check for the existence of the linked profile records
+  if (user.customer && user.customer.id) {
+    availableRoles.push('CUSTOMER');
+  }
+  
+  if (user.vendor && user.vendor.id) {
+    availableRoles.push('VENDOR');
+  }
+  
+  // Security fallback: Ensure the primary role is always included 
+  // if the specific profile record exists
+  if (user.role === 'VENDOR' && !availableRoles.includes('VENDOR') && user.vendor) {
+    availableRoles.push('VENDOR');
+  }
+  if (user.role === 'CUSTOMER' && !availableRoles.includes('CUSTOMER') && user.customer) {
+    availableRoles.push('CUSTOMER');
+  }
+  
+  return [...new Set(availableRoles)];
+};
+
 const generateToken = (user) => {
   return jwt.sign(
     {
       id: user.id,
       email: user.email,
       role: user.role,
+      availableRoles: user.availableRoles || getAvailableRoles(user),
       isProfileComplete: user.isProfileComplete
     },
     JWT_SECRET,
@@ -193,11 +222,24 @@ module.exports = {
       throw new AuthenticationError('Invalid credentials');
     }
 
-    if (role && user.role !== role) {
-      throw new AuthenticationError(`You are registered as ${user.role}. Please select the correct role.`);
+    if (role) {
+      if (role === 'VENDOR' && !user.vendor) {
+        throw new AuthenticationError('No vendor profile found for this account. If you just registered, please complete your onboarding.');
+      }
+      if (role === 'CUSTOMER' && !user.customer) {
+        throw new AuthenticationError('No customer profile found for this account. You can create one in your account settings after logging in as a Vendor.');
+      }
+      
+      // Admin check
+      if (role === 'ADMIN' && user.role !== 'ADMIN') {
+        throw new AuthenticationError('Access denied. This account does not have administrator privileges.');
+      }
     }
 
-    const token = generateToken(user);
+    // Determine available roles
+    const availableRoles = getAvailableRoles(user);
+
+    const token = generateToken({ ...user, availableRoles });
     // record last login time
     try {
       await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
@@ -208,7 +250,10 @@ module.exports = {
     delete user.passwordHash;
 
     return {
-      user,
+      user: {
+        ...user,
+        availableRoles
+      },
       token
     };
   },
@@ -296,7 +341,8 @@ module.exports = {
   },
 
   generateToken,
-  verifyToken
+  verifyToken,
+  getAvailableRoles
 };
 
 module.exports.invalidateUserSessions = async (userId) => {

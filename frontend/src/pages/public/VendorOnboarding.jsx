@@ -93,7 +93,19 @@ function VendorOnboarding() {
 		setLoading(true);
 
 		try {
-			await authService.completeVendorOnboarding(formData);
+			// Get user info to retrieve mobile number
+			const user = authService.getUser();
+			
+			// Include contactNumber (mobile) in the submission
+			const submissionData = {
+				...formData,
+				contactNumber: user?.mobile || '' 
+			};
+
+			await authService.completeVendorOnboarding(submissionData);
+			
+			// Refresh user data to get updated roles and currency
+			await authService.getCurrentUser();
 			
 			// Show success message
 			alert('Vendor onboarding completed! Your profile is under verification. You will be notified once approved.');
