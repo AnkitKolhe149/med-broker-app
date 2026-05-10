@@ -308,7 +308,7 @@ function OrdersHistory() {
 												<div>
 													<p className={styles.orderNo}>{getOrderSummary(order.items)}</p>
 													<p className={styles.orderRef}>Order #{String(order.orderIds?.[0] || '').slice(0, 8)}</p>
-													<p className={styles.orderPrice}>{formatPrice(order.total, order.currencyCode || defaultCurrencyCode)}</p>
+													<p className={styles.orderPrice}>{formatPrice(order.total)}</p>
 												</div>
 											</div>
 
@@ -434,7 +434,7 @@ const OrderDetailsModal = ({ order, onClose, onDownload, downloading, formatPric
 											? order.totalCents
 											: subtotalCents + taxCents;
 
-									const fmt = (cents) => formatPrice ? formatPrice(Number(cents || 0) / 100, order.currencyCode || defaultCurrencyCode) : (Number(cents || 0) / 100).toFixed(2);
+									const fmt = (cents) => formatPrice ? formatPrice(Number(cents || 0) / 100) : (Number(cents || 0) / 100).toFixed(2);
 
 									return (
 										<>
@@ -463,9 +463,9 @@ const OrderDetailsModal = ({ order, onClose, onDownload, downloading, formatPric
 							{(order.items || []).map((it) => (
 								<tr key={it.id}>
 									<td style={{ padding: 8 }}>{it.medicine?.name || it.medicineId}</td>
-										<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((it.unitPriceCents || 0) / 100, order.currencyCode || defaultCurrencyCode) : ((it.unitPriceCents || 0) / 100).toFixed(2)}</td>
+										<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((it.unitPriceCents || 0) / 100) : ((it.unitPriceCents || 0) / 100).toFixed(2)}</td>
 									<td style={{ padding: 8, textAlign: 'right' }}>{it.quantity}</td>
-										<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((((it.unitPriceCents || 0) * (it.quantity || 1)) / 100), order.currencyCode || defaultCurrencyCode) : (((it.unitPriceCents || 0) * (it.quantity || 1)) / 100).toFixed(2)}</td>
+										<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((((it.unitPriceCents || 0) * (it.quantity || 1)) / 100)) : (((it.unitPriceCents || 0) * (it.quantity || 1)) / 100).toFixed(2)}</td>
 								</tr>
 							))}
 						</tbody>

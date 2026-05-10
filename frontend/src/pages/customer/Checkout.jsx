@@ -229,11 +229,12 @@ function Checkout() {
 
 		setIsSubmitting(true);
 		try {
-			const subtotalValue = getTotalPrice();
-			const discountValue = (subtotalValue * discountPercent) / 100;
-			const deliveryChargeValue = deliveryType === 'express' ? convert(9, 'INR') : 0;
-			const taxValue = Number(((subtotalValue - discountValue + deliveryChargeValue) * 0.05).toFixed(2));
-			const totalValue = Number((subtotalValue - discountValue + deliveryChargeValue + taxValue).toFixed(2));
+			// Calculate base INR values for backend storage
+			const baseSubtotal = cartItems.reduce((sum, item) => sum + (Number(item.basePrice || 0) * Number(item.quantity || 1)), 0);
+			const baseDiscount = (baseSubtotal * discountPercent) / 100;
+			const baseDelivery = deliveryType === 'express' ? 9 : 0; // 9 INR base
+			const baseTax = Number(((baseSubtotal - baseDiscount + baseDelivery) * 0.05).toFixed(2));
+			const baseTotal = Number((baseSubtotal - baseDiscount + baseDelivery + baseTax).toFixed(2));
 
 			const createdOrder = await orderService.createCustomerOrder({
 				items: cartItems.map((item) => ({
@@ -262,17 +263,17 @@ function Checkout() {
 					currencyCode,
 					paymentProvider: 'razorpay',
 					paymentMethod: 'Razorpay Secure Checkout',
-					subtotal: subtotalValue,
-					discount: discountValue,
-					deliveryCharge: deliveryChargeValue,
-					tax: taxValue,
-					total: totalValue,
+					subtotal: baseSubtotal,
+					discount: baseDiscount,
+					deliveryCharge: baseDelivery,
+					tax: baseTax,
+					total: baseTotal,
 					pricingSummary: {
-						subtotalCents: Math.round(subtotalValue * 100),
-						discountCents: Math.round(discountValue * 100),
-						deliveryChargeCents: Math.round(deliveryChargeValue * 100),
-						taxCents: Math.round(taxValue * 100),
-						totalCents: Math.round(totalValue * 100)
+						subtotalCents: Math.round(baseSubtotal * 100),
+						discountCents: Math.round(baseDiscount * 100),
+						deliveryChargeCents: Math.round(baseDelivery * 100),
+						taxCents: Math.round(baseTax * 100),
+						totalCents: Math.round(baseTotal * 100)
 					}
 				}
 			});
@@ -289,16 +290,16 @@ function Checkout() {
 				appliedCoupon,
 				paymentProvider: 'razorpay',
 				paymentMethod: 'Razorpay Secure Checkout',
-				subtotalBase: subtotalValue,
-				subtotal: subtotalValue,
-				discountBase: discountValue,
-				discount: discountValue,
-				deliveryBase: deliveryChargeValue,
-				deliveryCharge: deliveryChargeValue,
-				taxBase: taxValue,
-				tax: taxValue,
-				totalBase: totalValue,
-				total: totalValue,
+				subtotalBase: baseSubtotal,
+				subtotal: baseSubtotal,
+				discountBase: baseDiscount,
+				discount: baseDiscount,
+				deliveryBase: baseDelivery,
+				deliveryCharge: baseDelivery,
+				taxBase: baseTax,
+				tax: baseTax,
+				totalBase: baseTotal,
+				total: baseTotal,
 				currencyCode,
 				timestamp: new Date().toISOString()
 			};

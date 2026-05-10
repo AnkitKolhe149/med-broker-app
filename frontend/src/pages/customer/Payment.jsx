@@ -16,7 +16,7 @@ import {
 import { useNotification } from '../../context/NotificationContext';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
-import { formatConvertedCurrency } from '../../utils/currency';
+import { formatCurrency, formatConvertedCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import paymentService from '../../services/payment.service';
 import styles from './Payment.module.css';
@@ -39,7 +39,8 @@ function Payment() {
 	const [deliveryAddress, setDeliveryAddress] = useState({});
 	const currentCurrency = currency || 'INR';
 	const orderCurrency = useMemo(() => orderData?.currencyCode || currentCurrency, [orderData?.currencyCode, currentCurrency]);
-	const formatPrice = (value, sourceCurrency = 'INR') => formatConvertedCurrency(value, sourceCurrency, orderCurrency, exchangeRates, true);
+	// Checkout snapshot values are stored as base INR, so we must convert them to the display currency.
+	const formatPrice = (value, displayCurrency = currentCurrency) => formatConvertedCurrency(value, 'INR', displayCurrency, exchangeRates, true);
 	const toDisplayAmount = (value) => value;
 
 	// ✅ BUG #10: Add state/province lists for all countries
@@ -532,14 +533,14 @@ function Payment() {
 								<div className={styles.methodDetails}>
 									<div className={styles.walletCard}>
 										<p className={styles.walletLabel}>Available Wallet Balance</p>
-										<p className={styles.walletAmount}>{formatPrice(0, 'INR')}</p>
+										<p className={styles.walletAmount}>{formatPrice(0, orderCurrency)}</p>
 										<button type="button" className={styles.walletButton}>Add Funds</button>
 									</div>
 								</div>
 							)}
 
 							<button type="submit" disabled={isProcessing} className={styles.payButton}>
-								{isProcessing ? 'Processing Payment...' : `Pay ${formatPrice(total, 'INR')}`}
+								{isProcessing ? 'Processing Payment...' : `Pay ${formatPrice(total, orderCurrency)}`}
 							</button>
 
 							<p className={styles.disclaimer}>By proceeding, you authorize MedIQ to process this transaction securely.</p>
@@ -569,19 +570,19 @@ function Payment() {
 							{orderData.cartItems.map((item, index) => (
 								<div key={`${item.medicineId}-${index}`} className={styles.itemRow}>
 									<span>{item.name} × {item.quantity}</span>
-									<span>{formatPrice(item.basePrice * item.quantity, 'INR')}</span>
+									<span>{formatPrice(item.basePrice * item.quantity, item.currencyCode || orderCurrency)}</span>
 								</div>
 							))}
 						</div>
 
 						<div className={styles.amountRows}>
-							<div className={styles.pricingRow}><span>Subtotal</span><strong>{formatPrice(subtotal, 'INR')}</strong></div>
+							<div className={styles.pricingRow}><span>Subtotal</span><strong>{formatPrice(subtotal, orderCurrency)}</strong></div>
 							{orderData.discountPercent > 0 ? (
-								<div className={styles.pricingRowDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount, 'INR')}</strong></div>
+								<div className={styles.pricingRowDiscount}><span>Discount ({orderData.discountPercent}%)</span><strong>-{formatPrice(discount, orderCurrency)}</strong></div>
 							) : null}
-							<div className={styles.pricingRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge, 'INR')}</strong></div>
-							<div className={styles.pricingRow}><span className={styles.taxLabel}>Estimated Tax <CircleHelp size={13} strokeWidth={1.8} /></span><strong>{formatPrice(tax, 'INR')}</strong></div>
-							<div className={styles.totalRow}><span>Total Due</span><strong>{formatPrice(total, 'INR')}</strong></div>
+							<div className={styles.pricingRow}><span>Shipping</span><strong>{deliveryCharge === 0 ? 'Free' : formatPrice(deliveryCharge, orderCurrency)}</strong></div>
+							<div className={styles.pricingRow}><span className={styles.taxLabel}>Estimated Tax <CircleHelp size={13} strokeWidth={1.8} /></span><strong>{formatPrice(tax, orderCurrency)}</strong></div>
+							<div className={styles.totalRow}><span>Total Due</span><strong>{formatPrice(total, orderCurrency)}</strong></div>
 						</div>
 
 						<div className={styles.securityCard}>

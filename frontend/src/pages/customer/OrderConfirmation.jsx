@@ -34,7 +34,8 @@ function OrderConfirmation() {
 	const [invoiceError, setInvoiceError] = useState('');
 	const currentCurrency = currency || 'INR';
 	const orderCurrency = orderData?.currencyCode || currentCurrency;
-	const formatPrice = (value, targetCurrency = orderCurrency) => formatConvertedCurrency(value, 'INR', targetCurrency, exchangeRates, true);
+	// Checkout snapshot values are stored as base INR, so we must convert them to the display currency.
+	const formatPrice = (value, displayCurrency = currentCurrency) => formatConvertedCurrency(value, 'INR', displayCurrency, exchangeRates, true);
 	const toDisplayAmount = (value) => value;
 
 	// ✅ BUG #10: Add state/province lists for all countries
@@ -259,7 +260,7 @@ function OrderConfirmation() {
 									</div>
 									<div className={styles.itemRight}>
 										<p className={styles.itemQty}>Qty {item.quantity}</p>
-										<p className={styles.itemPrice}>{formatPrice(item.basePrice * item.quantity, orderCurrency)}</p>
+										<p className={styles.itemPrice}>{formatPrice(item.basePrice * item.quantity, item.currencyCode || orderCurrency)}</p>
 									</div>
 								</div>
 							))}
