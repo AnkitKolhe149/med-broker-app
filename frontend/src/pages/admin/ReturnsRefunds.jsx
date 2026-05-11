@@ -75,7 +75,10 @@ const AdminReturnsRefunds = () => {
             </tr>
           </thead>
           <tbody>
-            {refunds.map((payment) => (
+            {refunds.map((payment) => {
+              const refundBd = payment.meta?.refundBreakdown;
+              const refundableAmount = refundBd ? refundBd.refundableCents : payment.amountCents;
+              return (
               <tr key={payment.id}>
                 <td>
                   <strong>{payment.id.slice(0, 8)}</strong>
@@ -84,18 +87,27 @@ const AdminReturnsRefunds = () => {
                 <td>{payment.orderId?.slice(0, 8)}</td>
                 <td>{payment.order?.user?.name || payment.order?.user?.email || 'Customer'}</td>
                 <td><span className={`admin-pill ${String(payment.status || '').toLowerCase()}`}>{payment.status}</span></td>
-                <td>{formatCurrency((payment.amountCents || 0) / 100)}</td>
+                <td>
+                  <div>{formatCurrency((payment.amountCents || 0) / 100)}</div>
+                  {refundBd && (
+                    <div style={{ fontSize: '0.78rem', marginTop: 2 }}>
+                      <span style={{ color: '#15803d', fontWeight: 600 }}>Refundable: {formatCurrency(refundableAmount / 100)}</span>
+                      <span style={{ color: '#94a3b8', marginLeft: 6 }}>(medicine only)</span>
+                    </div>
+                  )}
+                </td>
                 <td>
                   <button
                     className="btn btn-secondary"
                     disabled={!payment.canRefund || processingOrderId === payment.orderId}
-                    onClick={() => handleRefund(payment)}
+                    onClick={() => handleRefund({ ...payment, amountCents: refundableAmount })}
                   >
                     {processingOrderId === payment.orderId ? 'Processing...' : 'Process Refund'}
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -174,6 +174,9 @@ function VendorMedicineManager() {
 	};
 
 	const deleteMedicine = async (id) => {
+		if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+			return;
+		}
 		try {
 			await inventoryService.deleteInventoryItem(id);
 			setMedicines((prev) => prev.filter((m) => m.id !== id));

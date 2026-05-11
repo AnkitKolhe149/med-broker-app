@@ -194,15 +194,23 @@ function Checkout() {
 			}
 		};
 
-		if (user?.customer) {
-			const fullName = user.customer.fullName || '';
-			const parts = fullName.trim().split(/\s+/).filter(Boolean);
-			const initialFirst = parts[0] || '';
-			const initialLast = parts.slice(1).join(' ');
+		const fullName = user?.customer?.fullName || user?.name || '';
+		const parts = fullName.trim().split(/\s+/).filter(Boolean);
+		const initialFirst = parts[0] || '';
+		const initialLast = parts.slice(1).join(' ');
 
-			setFirstName(initialFirst);
-			setLastName(initialLast);
+		setFirstName(initialFirst);
+		setLastName(initialLast);
+
+		if (user) {
 			fetchAddresses();
+		}
+
+		if (user?.customer?.country && !deliveryAddress.country) {
+			setDeliveryAddress((prev) => ({
+				...prev,
+				country: user.customer.country
+			}));
 		}
 	}, [user]);
 

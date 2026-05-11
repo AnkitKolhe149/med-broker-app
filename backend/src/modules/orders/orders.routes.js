@@ -30,6 +30,13 @@ router.get('/', orderController.getUserOrders);
 router.post('/prescription/upload', medicineImageUpload.single('prescription'), orderController.uploadPrescription);
 
 /**
+ * @route   GET /api/orders/:id/refund-eligibility
+ * @desc    Get refund eligibility, timer data, and refund breakdown
+ * @access  Private
+ */
+router.get('/:id/refund-eligibility', orderController.getRefundEligibility);
+
+/**
  * @route   GET /api/orders/:id/receipt
  * @desc    Download order receipt PDF
  * @access  Private

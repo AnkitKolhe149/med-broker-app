@@ -82,11 +82,14 @@ import { useUser } from '../context/UserContext';
 
 function ChatbotAccessGate({ isChatOpen, onToggle, onClose }) {
     const location = useLocation();
-    const { user } = useUser();
+    const { user, loading } = useUser();
 
     const isCustomerRoute = location.pathname.startsWith('/customer');
-    const isCustomerUser = user?.role === 'CUSTOMER';
-    const shouldShowChatbot = isCustomerRoute && isCustomerUser;
+    const isOnboardingRoute = location.pathname.startsWith('/onboarding/customer') || location.pathname === '/customer/onboarding';
+    
+    // Show chatbot for all authenticated users on customer-facing or onboarding routes.
+    // This ensures Vendors acting as Customers also get support.
+    const shouldShowChatbot = (isCustomerRoute || isOnboardingRoute) && !!user && !loading;
 
     if (!shouldShowChatbot) {
         return null;

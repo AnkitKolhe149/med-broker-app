@@ -126,6 +126,33 @@ const orderService = {
     });
 
     return response.data;
+  },
+
+  getRefundEligibility: async (orderId) => {
+    const response = await axios.get(`${API_URL}/orders/${orderId}/refund-eligibility`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to check refund eligibility');
+    }
+
+    return response.data.data;
+  },
+
+  requestRefund: async (orderId, reason = '') => {
+    const response = await axios.post(`${API_URL}/orders/${orderId}/refund-request`, { reason }, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to request refund');
+    }
+
+    return response.data.data;
   }
 };
 

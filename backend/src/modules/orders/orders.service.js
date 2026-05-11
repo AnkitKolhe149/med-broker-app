@@ -512,13 +512,14 @@ const getOrderById = async (orderId, userId, userRole) => {
     throw new NotFoundError('Order not found');
   }
 
-  // Authorization: customers can only see their own orders
-  // Vendors can only see orders containing medicines from their inventory
-  // Admins can see all orders
-  if (userRole === 'CUSTOMER' && order.userId !== userId) {
-    throw new ForbiddenError('You can only access your own orders');
-  }
+  // Authorization:
+  // 1. Admins can see all orders
+  if (userRole === 'ADMIN') return order;
 
+  // 2. Owners (buyers) can always see their own orders, regardless of their current role
+  if (order.userId === userId) return order;
+
+  // 3. Vendors can see orders containing medicines from their inventory
   if (userRole === 'VENDOR') {
     const vendorId = await getVendorIdForUser(userId);
     if (!vendorId) {
@@ -526,9 +527,17 @@ const getOrderById = async (orderId, userId, userRole) => {
     }
 
     const orderVendorIds = await getOrderVendorIds(orderId);
-    if (!orderVendorIds || orderVendorIds.length !== 1 || orderVendorIds[0] !== vendorId) {
-      throw new ForbiddenError('You can only access orders linked to your inventory');
+    // If the vendor is the one who fulfilled the order
+    if (orderVendorIds && orderVendorIds.includes(vendorId)) {
+      return order;
     }
+    
+    throw new ForbiddenError('You can only access orders linked to your inventory');
+  }
+
+  // 4. Customers (who are NOT the owner) are forbidden
+  if (userRole === 'CUSTOMER') {
+    throw new ForbiddenError('You can only access your own orders');
   }
 
   return order;
@@ -554,20 +563,23 @@ const updateOrderStatus = async (orderId, newStatus, userId, userRole) => {
   }
 
   // Authorization check
-  if (userRole === 'CUSTOMER') {
-    throw new ForbiddenError('Only vendors and admins can update order status');
-  }
-
-  if (userRole === 'VENDOR') {
+  if (userRole === 'ADMIN') {
+    // Admin allowed
+  } else if (userRole === 'VENDOR') {
     const vendorId = await getVendorIdForUser(userId);
     if (!vendorId) {
       throw new ForbiddenError('Vendor profile not found');
     }
 
     const orderVendorIds = await getOrderVendorIds(orderId);
-    if (!orderVendorIds || orderVendorIds.length !== 1 || orderVendorIds[0] !== vendorId) {
+    // Vendors can only update status if they are the fulfiller AND NOT the buyer
+    // (A vendor buying from themselves or others shouldn't update their own customer order status via vendor panel usually, 
+    // but the primary check is inventory link)
+    if (!orderVendorIds || !orderVendorIds.includes(vendorId)) {
       throw new ForbiddenError('You can only update orders that belong to your inventory');
     }
+  } else {
+    throw new ForbiddenError('Only vendors and admins can update order status');
   }
 
   // Prevent invalid status transitions
@@ -612,8 +624,10 @@ const cancelOrder = async (orderId, userId, userRole) => {
     throw new NotFoundError('Order not found');
   }
 
-  // Authorization: customers can only cancel their own orders
-  if (userRole === 'CUSTOMER' && order.userId !== userId) {
+  // Authorization: 
+  // 1. Admins can cancel any order
+  // 2. Owners can cancel their own orders (subject to business rules below)
+  if (userRole !== 'ADMIN' && order.userId !== userId) {
     throw new ForbiddenError('You can only cancel your own orders');
   }
 
@@ -736,13 +750,136 @@ const cancelOrder = async (orderId, userId, userRole) => {
 };
 
 /**
+ * Calculate refund breakdown — only medicine cost (subtotal) is refundable.
+ * Shipping, tax, and platform fees are NON-refundable.
+ */
+const calculateRefundBreakdown = (order) => {
+  const snapshot = (order.checkoutSnapshot && typeof order.checkoutSnapshot === 'object') ? order.checkoutSnapshot : {};
+  const pricing = snapshot.pricingSummary || {};
+
+  // Compute subtotal from order items (medicine cost only)
+  const itemsSubtotalCents = (order.items || []).reduce(
+    (sum, item) => sum + ((item.unitPriceCents || 0) * Math.max(1, item.quantity || 1)),
+    0
+  );
+
+  const subtotalCents = typeof pricing.subtotalCents === 'number' && pricing.subtotalCents > 0
+    ? pricing.subtotalCents
+    : (typeof order.subtotalCents === 'number' && order.subtotalCents > 0 ? order.subtotalCents : itemsSubtotalCents);
+
+  const discountCents = typeof pricing.discountCents === 'number' ? pricing.discountCents
+    : (typeof order.discountCents === 'number' ? order.discountCents : 0);
+
+  const shippingCents = typeof pricing.deliveryChargeCents === 'number' ? pricing.deliveryChargeCents
+    : (typeof order.shippingCents === 'number' ? order.shippingCents : 0);
+
+  const taxCents = typeof pricing.taxCents === 'number' ? pricing.taxCents
+    : (typeof order.taxCents === 'number' ? order.taxCents : 0);
+
+  const totalCents = typeof order.totalCents === 'number' ? order.totalCents : (subtotalCents + shippingCents + taxCents - discountCents);
+
+  // Refundable = medicine subtotal minus any discount applied
+  const refundableCents = Math.max(0, subtotalCents - discountCents);
+
+  // Non-refundable = everything else
+  const nonRefundableCents = Math.max(0, totalCents - refundableCents);
+
+  return {
+    totalPaidCents: totalCents,
+    refundableCents,
+    nonRefundableCents,
+    breakdown: {
+      medicineSubtotalCents: subtotalCents,
+      discountCents,
+      shippingCents,
+      taxCents,
+      refundableCents,
+      nonRefundableShippingCents: shippingCents,
+      nonRefundableTaxCents: taxCents
+    }
+  };
+};
+
+/**
+ * Get refund eligibility for an order — returns timer data, refund breakdown, and eligibility status.
+ */
+const getRefundEligibility = async (orderId, userId, userRole) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      payment: true,
+      items: { include: { medicine: true } }
+    }
+  });
+
+  if (!order) throw new NotFoundError('Order not found');
+
+  // Authorization: Admins or Order Owners
+  if (userRole !== 'ADMIN' && order.userId !== userId) {
+    throw new ForbiddenError('You can only check refund eligibility for your own orders');
+  }
+
+  // Fetch cancellation window from system settings
+  const cancelWindowSetting = await prisma.systemSetting.findUnique({ where: { key: 'ORDER_CANCELLATION_WINDOW_MINUTES' } }).catch(() => null);
+  const cancelWindowMinutes = cancelWindowSetting ? Number(cancelWindowSetting.value) : (parseInt(process.env.ORDER_CANCELLATION_WINDOW_MINUTES, 10) || 30);
+
+  const orderCreatedAt = new Date(order.placedAt || order.createdAt);
+  const windowExpiresAt = new Date(orderCreatedAt.getTime() + cancelWindowMinutes * 60 * 1000);
+  const now = new Date();
+  const remainingMs = Math.max(0, windowExpiresAt.getTime() - now.getTime());
+  const isWindowOpen = remainingMs > 0;
+
+  // Order-level eligibility checks
+  const isCancelled = order.status === 'CANCELLED';
+  const isShipped = order.status === 'SHIPPED';
+  const isPaid = order.payment && order.payment.status === 'SUCCEEDED';
+  const isAlreadyRefunded = order.payment && ['REFUNDED', 'REFUND_REQUESTED'].includes(order.payment.status);
+
+  let eligible = false;
+  let reason = '';
+
+  if (isCancelled) {
+    reason = 'Order is already cancelled';
+  } else if (isShipped) {
+    reason = 'Order has been shipped and cannot be cancelled. Please contact support for returns.';
+  } else if (isAlreadyRefunded) {
+    reason = 'Refund has already been requested or processed for this order';
+  } else if (!isWindowOpen && userRole !== 'ADMIN') {
+    reason = `Cancellation window of ${cancelWindowMinutes} minutes has expired`;
+  } else {
+    eligible = true;
+    reason = isPaid
+      ? `Eligible for cancellation with medicine-only refund (window closes in ${Math.ceil(remainingMs / 60000)} min)`
+      : 'Eligible for cancellation (no payment to refund)';
+  }
+
+  const refundBreakdown = isPaid ? calculateRefundBreakdown(order) : null;
+
+  return {
+    orderId: order.id,
+    eligible,
+    reason,
+    isPaid: !!isPaid,
+    cancelWindowMinutes,
+    orderCreatedAt: orderCreatedAt.toISOString(),
+    windowExpiresAt: windowExpiresAt.toISOString(),
+    remainingMs,
+    remainingSeconds: Math.ceil(remainingMs / 1000),
+    isWindowOpen,
+    refund: refundBreakdown,
+    currencyCode: order.currencyCode || 'INR'
+  };
+};
+
+/**
  * Request refund for a paid order (customer facing)
  */
 const requestRefund = async (orderId, userId, userRole, reason = '') => {
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { payment: true } });
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { payment: true, items: true } });
   if (!order) throw new NotFoundError('Order not found');
 
-  if (userRole === 'CUSTOMER' && order.userId !== userId) {
+  // Authorization: Owners or Admins
+  if (userRole !== 'ADMIN' && order.userId !== userId) {
     throw new ForbiddenError('You can only request refunds for your own orders');
   }
 
@@ -750,16 +887,35 @@ const requestRefund = async (orderId, userId, userRole, reason = '') => {
     throw new ValidationError('Only paid orders can be refunded');
   }
 
-  // Mark payment as refund requested
-  // Merge existing meta with refund request info
+  // Check cancellation window
+  const cancelWindowSetting = await prisma.systemSetting.findUnique({ where: { key: 'ORDER_CANCELLATION_WINDOW_MINUTES' } }).catch(() => null);
+  const cancelWindowMinutes = cancelWindowSetting ? Number(cancelWindowSetting.value) : (parseInt(process.env.ORDER_CANCELLATION_WINDOW_MINUTES, 10) || 30);
+  const minutesSinceCreation = (Date.now() - new Date(order.placedAt || order.createdAt).getTime()) / 60000;
+
+  if (userRole !== 'ADMIN' && minutesSinceCreation > cancelWindowMinutes) {
+    throw new ValidationError(`Refund window of ${cancelWindowMinutes} minutes has expired. Please contact support.`);
+  }
+
+  // Calculate refund — only medicine cost is refundable
+  const refundBreakdown = calculateRefundBreakdown(order);
+
+  // Mark payment as refund requested with breakdown details
   const existingMeta = (order.payment && order.payment.meta && typeof order.payment.meta === 'object') ? order.payment.meta : {};
   const newMeta = {
     ...(existingMeta || {}),
     refundRequestedAt: new Date().toISOString(),
-    refundReason: reason
+    refundReason: reason,
+    refundBreakdown: refundBreakdown
   };
 
-  await prisma.payment.update({ where: { id: order.payment.id }, data: { status: 'REFUND_REQUESTED', meta: newMeta } });
+  await prisma.payment.update({
+    where: { id: order.payment.id },
+    data: {
+      status: 'REFUND_REQUESTED',
+      refundAmountCents: refundBreakdown.refundableCents,
+      meta: newMeta
+    }
+  });
 
   // If system setting for auto refunds is enabled, try to process immediately
   const autoProcessSetting = await prisma.systemSetting.findUnique({ where: { key: 'AUTO_PROCESS_REFUNDS' } }).catch(() => null);
@@ -767,15 +923,14 @@ const requestRefund = async (orderId, userId, userRole, reason = '') => {
 
   if (autoProcess) {
     try {
-      const refundResult = await paymentService.processRefundInternal(orderId, { reason });
-      return { success: true, refunded: true, result: refundResult };
+      const refundResult = await paymentService.processRefundInternal(orderId, { reason, amount: refundBreakdown.refundableCents });
+      return { success: true, refunded: true, result: refundResult, refundBreakdown };
     } catch (err) {
-      // leave payment in REFUND_REQUESTED state for manual processing
-      return { success: true, refunded: false, message: 'Refund requested; awaiting manual processing', error: err.message };
+      return { success: true, refunded: false, message: 'Refund requested; awaiting manual processing', error: err.message, refundBreakdown };
     }
   }
 
-  return { success: true, refunded: false, message: 'Refund requested; awaiting manual processing' };
+  return { success: true, refunded: false, message: 'Refund requested; awaiting manual processing', refundBreakdown };
 };
 
 /**
@@ -829,6 +984,7 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   getOrderForReceipt,
-  uploadPrescription
-  , requestRefund
+  uploadPrescription,
+  requestRefund,
+  getRefundEligibility
 };

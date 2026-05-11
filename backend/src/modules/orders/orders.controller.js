@@ -141,6 +141,24 @@ module.exports = {
   },
 
   /**
+   * GET /api/orders/:id/refund-eligibility
+   * Get refund eligibility info (timer, breakdown, status)
+   */
+  getRefundEligibility: async (req, res, next) => {
+    try {
+      const orderId = req.params.id;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+
+      const result = await orderService.getRefundEligibility(orderId, userId, userRole);
+
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * POST /api/orders/prescription/upload
    * Upload prescription image to Cloudinary
    */

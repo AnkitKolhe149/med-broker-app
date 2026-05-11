@@ -223,13 +223,13 @@ export const CartProvider = ({ children }) => {
 					return itemInventoryId === normalizedInventoryId;
 				});
 			if (existingItem) {
-					return prevItems.map(item => {
-						const itemInventoryId = item.inventoryId || item.medicineId;
-						if (itemInventoryId !== normalizedInventoryId) {
-							return item;
-						}
+				return prevItems.map(item => {
+					const itemInventoryId = item.inventoryId || item.medicineId;
+					if (itemInventoryId !== normalizedInventoryId) {
+						return item;
+					}
 
-						const repriced = pricingService.repriceCartItem({
+					const repriced = pricingService.repriceCartItem({
 						cartItem: item,
 						medicinePricing: pricing,
 						buyerType: normalizedBuyerType,
@@ -237,6 +237,10 @@ export const CartProvider = ({ children }) => {
 						packageType: normalizedPackageType
 					});
 
+					return {
+						...repriced,
+						selectedSize: repriced.packageType
+					};
 				});
 			}
 
