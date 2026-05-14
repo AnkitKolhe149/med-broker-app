@@ -710,8 +710,13 @@ const mapToProducts = async ({ retrievedDocs, symptoms, buyerType = 'RETAIL', pr
 
 const buildFollowUpQuestion = (retrievedDocs) => {
   for (const doc of retrievedDocs) {
+    // Support followUp stored either under `metadata.followUp` or as a top-level `followUp` key.
     if (doc.metadata?.followUp) {
       return doc.metadata.followUp;
+    }
+
+    if (doc.followUp) {
+      return doc.followUp;
     }
   }
 
@@ -785,7 +790,7 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
 
   const finalReply = requiresIntake
     ? `${conditionNote}${groundedReply}\n\n${followUpQuestion}`
-    : `${conditionNote}${groundedReply}`;
+    : `${conditionNote}${groundedReply}\n\n${followUpQuestion}`;
 
   await rememberMessage(session, 'assistant', finalReply);
 
