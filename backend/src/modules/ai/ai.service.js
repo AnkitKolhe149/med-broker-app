@@ -768,7 +768,7 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
   // Infer a likely condition label from the top retrieved document (if present),
   // falling back to the captured symptoms list. This helps explain why products
   // were suggested and surfaces a concise condition to the user.
-  const likelyCondition = (retrievedDocs && retrievedDocs.length && retrievedDocs[0].metadata && retrievedDocs[0].metadata.condition)
+  let likelyCondition = (retrievedDocs && retrievedDocs.length && retrievedDocs[0].metadata && retrievedDocs[0].metadata.condition)
     ? retrievedDocs[0].metadata.condition
     : (symptoms.length ? symptoms.join(', ') : null);
 
