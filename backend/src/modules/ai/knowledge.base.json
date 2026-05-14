@@ -148,5 +148,1208 @@
       "rx": false,
       "followUp": "Is the pain after physical activity or sudden?"
     }
+  },
+  
+  {
+    "id": "kb-migraine-headache",
+    "content": "For mild migraine or tension headache, rest in a dark quiet room, hydration and pain relievers may help. Sudden severe headache, vision loss or weakness requires urgent medical care.",
+    "metadata": {
+      "symptoms": ["migraine", "headache", "light sensitivity", "throbbing pain"],
+      "productKeywords": ["sumatriptan", "paracetamol", "ibuprofen", "saridon", "combiflam"],
+      "rx": false,
+      "followUp": "Is the headache one-sided or associated with nausea or light sensitivity?"
+    }
+  },
+  {
+    "id": "kb-insomnia-sleep",
+    "content": "For occasional sleep difficulty, sleep hygiene, reduced caffeine intake and relaxation techniques may help. Persistent insomnia may require medical evaluation.",
+    "metadata": {
+      "symptoms": ["insomnia", "poor sleep", "difficulty sleeping", "sleeplessness"],
+      "productKeywords": ["melatonin", "sleep supplement", "ashwagandha", "calming tea"],
+      "rx": false,
+      "followUp": "How many hours are you sleeping on average each night?"
+    }
+  },
+  {
+    "id": "kb-vitamin-deficiency",
+    "content": "Fatigue, weakness and low energy may sometimes be linked to vitamin deficiencies. Balanced nutrition and supplements may help if advised appropriately.",
+    "metadata": {
+      "symptoms": ["fatigue", "weakness", "low energy", "tiredness"],
+      "productKeywords": ["becosules", "supradyn", "zincovit", "vitamin b12", "multivitamin"],
+      "rx": false,
+      "followUp": "How long have you been experiencing fatigue or weakness?"
+    }
+  },
+  {
+    "id": "kb-ear-pain",
+    "content": "For mild ear pain due to cold or wax buildup, warm compresses and ear drops may help. Ear discharge, fever or hearing loss require medical consultation.",
+    "metadata": {
+      "symptoms": ["ear pain", "earache", "blocked ear"],
+      "productKeywords": ["ear drops", "soliwax", "paracetamol", "ibuprofen"],
+      "rx": false,
+      "followUp": "Do you have fever, discharge or hearing difficulty?"
+    }
+  },
+  {
+    "id": "kb-fungal-infection",
+    "content": "For mild fungal skin infections, antifungal creams and proper hygiene may help. Persistent spreading infections should be evaluated by a doctor.",
+    "metadata": {
+      "symptoms": ["fungal infection", "ringworm", "itching", "skin peeling"],
+      "productKeywords": ["clotrimazole", "terbinafine", "ring guard", "candid cream"],
+      "rx": false,
+      "followUp": "Is the affected area spreading or becoming painful?"
+    }
+  },
+  {
+    "id": "kb-dandruff",
+    "content": "For dandruff and flaky scalp, medicated anti-dandruff shampoos and scalp hygiene can help. Severe itching or redness may need dermatologist advice.",
+    "metadata": {
+      "symptoms": ["dandruff", "itchy scalp", "flaky scalp"],
+      "productKeywords": ["ketoconazole shampoo", "selsun", "scalpe", "head and shoulders"],
+      "rx": false,
+      "followUp": "Do you also notice hair fall or scalp redness?"
+    }
+  },
+  {
+    "id": "kb-hair-fall",
+    "content": "Hair fall can occur due to stress, nutrition deficiency or scalp conditions. Gentle hair care and nutritional support may help mild cases.",
+    "metadata": {
+      "symptoms": ["hair fall", "hair thinning", "excessive hair loss"],
+      "productKeywords": ["biotin", "keraglo", "hair serum", "multivitamin"],
+      "rx": false,
+      "followUp": "Is the hair fall sudden or gradual over time?"
+    }
+  },
+  {
+    "id": "kb-back-pain",
+    "content": "For mild back pain after strain or prolonged sitting, rest, stretching and topical pain relief gels may help. Severe pain with numbness needs medical attention.",
+    "metadata": {
+      "symptoms": ["back pain", "lower back pain", "muscle stiffness"],
+      "productKeywords": ["volini", "moov", "diclofenac", "pain relief spray"],
+      "rx": false,
+      "followUp": "Did the pain start after lifting weight or physical activity?"
+    }
+  },
+  {
+    "id": "kb-joint-pain",
+    "content": "For mild joint pain, rest, warm compresses and anti-inflammatory medicines may provide temporary relief. Persistent swelling requires evaluation.",
+    "metadata": {
+      "symptoms": ["joint pain", "knee pain", "stiff joints"],
+      "productKeywords": ["combiflam", "diclofenac", "volini", "move gel"],
+      "rx": false,
+      "followUp": "Is there swelling, redness or difficulty walking?"
+    }
+  },
+  {
+    "id": "kb-urinary-burning",
+    "content": "Burning urination and frequent urination may suggest urinary irritation or infection. Hydration is important. Fever or blood in urine needs urgent care.",
+    "metadata": {
+      "symptoms": ["burning urination", "frequent urination", "uti symptoms"],
+      "productKeywords": ["cranberry supplement", "alkalizer", "citralka"],
+      "rx": false,
+      "followUp": "Do you also have fever, back pain or blood in urine?"
+    }
+  },
+  {
+    "id": "kb-dehydration",
+    "content": "Mild dehydration can occur after diarrhea, heat exposure or vomiting. Oral fluids and electrolyte solutions are important for recovery.",
+    "metadata": {
+      "symptoms": ["dehydration", "dry mouth", "weakness", "dizziness"],
+      "productKeywords": ["ors", "electral", "electrolyte drink"],
+      "rx": false,
+      "followUp": "Are you able to drink fluids normally?"
+    }
+  },
+  {
+    "id": "kb-motion-sickness",
+    "content": "Motion sickness may cause nausea, dizziness and vomiting during travel. Rest and anti-motion sickness medicines may help.",
+    "metadata": {
+      "symptoms": ["motion sickness", "travel nausea", "travel dizziness"],
+      "productKeywords": ["avomine", "ondansetron", "domperidone"],
+      "rx": false,
+      "followUp": "Does the nausea occur only during travel?"
+    }
+  },
+  {
+    "id": "kb-sore-muscles",
+    "content": "Muscle soreness after exercise or exertion usually improves with hydration, stretching and topical pain relief products.",
+    "metadata": {
+      "symptoms": ["muscle soreness", "body ache", "muscle stiffness"],
+      "productKeywords": ["volini", "moov", "diclofenac gel"],
+      "rx": false,
+      "followUp": "Did symptoms start after exercise or heavy physical work?"
+    }
+  },
+  {
+    "id": "kb-dry-cough",
+    "content": "Dry cough due to allergies or viral infection may improve with hydration, steam inhalation and cough suppressants. Breathing difficulty is a red flag.",
+    "metadata": {
+      "symptoms": ["dry cough", "throat irritation", "tickling throat"],
+      "productKeywords": ["grilinctus", "lozenges", "cough syrup"],
+      "rx": false,
+      "followUp": "How long have you had the cough and is it worse at night?"
+    }
+  },
+  {
+    "id": "kb-productive-cough",
+    "content": "Productive cough with mucus may improve with expectorants and hydration. Persistent fever or shortness of breath needs evaluation.",
+    "metadata": {
+      "symptoms": ["wet cough", "mucus cough", "phlegm"],
+      "productKeywords": ["ascoril", "mucolite", "expectorant syrup"],
+      "rx": false,
+      "followUp": "What color is the mucus and how long have symptoms lasted?"
+    }
+  },
+  {
+    "id": "kb-bloating-gas",
+    "content": "Gas and bloating after meals may improve with dietary adjustments and digestive medicines. Severe abdominal pain requires medical attention.",
+    "metadata": {
+      "symptoms": ["bloating", "gas", "stomach fullness"],
+      "productKeywords": ["eno", "digene", "gelusil", "antacid"],
+      "rx": false,
+      "followUp": "Do symptoms worsen after certain foods or late-night meals?"
+    }
+  },
+  {
+    "id": "kb-sunburn",
+    "content": "For mild sunburn, cool compresses, hydration and soothing lotions may help. Severe blistering should be medically evaluated.",
+    "metadata": {
+      "symptoms": ["sunburn", "skin redness", "burning skin"],
+      "productKeywords": ["aloe vera gel", "moisturizer", "calamine lotion"],
+      "rx": false,
+      "followUp": "Is there blistering or severe skin peeling?"
+    }
+  },
+  {
+    "id": "kb-acne-pimples",
+    "content": "Mild acne and pimples may improve with proper cleansing and topical anti-acne products. Severe painful acne should be assessed by a dermatologist.",
+    "metadata": {
+      "symptoms": ["acne", "pimples", "oily skin"],
+      "productKeywords": ["benzoyl peroxide", "face wash", "clindamycin gel", "niacinamide"],
+      "rx": false,
+      "followUp": "Are the pimples painful, pus-filled or leaving scars?"
+    }
+  },
+  {
+    "id": "kb-lip-dryness",
+    "content": "Dry or cracked lips can improve with hydration and moisturizing lip balms. Persistent cracking may indicate irritation or deficiency.",
+    "metadata": {
+      "symptoms": ["dry lips", "cracked lips", "lip irritation"],
+      "productKeywords": ["lip balm", "vaseline", "boroline"],
+      "rx": false,
+      "followUp": "Do you also have mouth dryness or fever?"
+    }
+  },
+  {
+    "id": "kb-heat-exhaustion",
+    "content": "Heat exhaustion may cause dizziness, weakness and sweating after heat exposure. Cooling, hydration and rest are important.",
+    "metadata": {
+      "symptoms": ["heat exhaustion", "dizziness", "weakness", "excess sweating"],
+      "productKeywords": ["ors", "electral", "cooling drink"],
+      "rx": false,
+      "followUp": "Were you exposed to high temperatures or sunlight recently?"
+    }
+  },
+  
+  {
+    "id": "kb-anxiety-stress",
+    "content": "Mild stress and anxiety may improve with relaxation techniques, proper sleep and reduced caffeine intake. Severe panic attacks or self-harm thoughts require urgent professional help.",
+    "metadata": {
+      "symptoms": ["anxiety", "stress", "restlessness", "panic"],
+      "productKeywords": ["ashwagandha", "melatonin", "stress relief supplement"],
+      "rx": false,
+      "followUp": "Are you also experiencing palpitations or sleep difficulty?"
+    }
+  },
+  {
+    "id": "kb-heartburn-night",
+    "content": "Night-time heartburn may improve by avoiding late meals, spicy food and lying down immediately after eating. Persistent symptoms need evaluation.",
+    "metadata": {
+      "symptoms": ["night heartburn", "acid reflux", "burning chest"],
+      "productKeywords": ["pantoprazole", "digene", "gelusil", "eno"],
+      "rx": false,
+      "followUp": "Do symptoms worsen after dinner or while lying down?"
+    }
+  },
+  {
+    "id": "kb-hand-foot-cramps",
+    "content": "Muscle cramps may occur due to dehydration, exertion or electrolyte imbalance. Stretching and hydration often help mild cases.",
+    "metadata": {
+      "symptoms": ["muscle cramps", "leg cramps", "foot cramps"],
+      "productKeywords": ["electral", "magnesium supplement", "ors"],
+      "rx": false,
+      "followUp": "Did the cramps occur after exercise or dehydration?"
+    }
+  },
+  {
+    "id": "kb-hemorrhoids-piles",
+    "content": "For mild piles or hemorrhoids, fibre intake, hydration and soothing creams may help. Persistent bleeding requires medical consultation.",
+    "metadata": {
+      "symptoms": ["piles", "hemorrhoids", "painful stool", "rectal discomfort"],
+      "productKeywords": ["cremaffin", "isabgol", "pilex", "anusol"],
+      "rx": false,
+      "followUp": "Do you notice bleeding or severe pain during bowel movements?"
+    }
+  },
+  {
+    "id": "kb-indigestion-heavy-meal",
+    "content": "Indigestion after heavy meals may improve with digestive medicines and lighter food intake. Severe persistent pain should be evaluated.",
+    "metadata": {
+      "symptoms": ["indigestion", "fullness", "heavy stomach"],
+      "productKeywords": ["digene", "eno", "antacid", "pantoprazole"],
+      "rx": false,
+      "followUp": "Did symptoms begin after overeating or spicy food?"
+    }
+  },
+  {
+    "id": "kb-throat-pain",
+    "content": "Mild throat pain may improve with warm fluids, lozenges and hydration. Difficulty swallowing or breathing needs urgent care.",
+    "metadata": {
+      "symptoms": ["throat pain", "sore throat", "pain swallowing"],
+      "productKeywords": ["lozenges", "strepsils", "betadine gargle", "cough syrup"],
+      "rx": false,
+      "followUp": "Do you also have fever or swollen glands?"
+    }
+  },
+  {
+    "id": "kb-low-appetite",
+    "content": "Temporary low appetite can occur with stress or mild illness. Small frequent meals and hydration may help. Persistent appetite loss needs evaluation.",
+    "metadata": {
+      "symptoms": ["loss of appetite", "reduced appetite", "not hungry"],
+      "productKeywords": ["multivitamin", "zincovit", "digestive tonic"],
+      "rx": false,
+      "followUp": "How long have you noticed reduced appetite?"
+    }
+  },
+  {
+    "id": "kb-chapped-skin",
+    "content": "Dry or chapped skin may improve with moisturizers and avoiding harsh soaps. Severe cracking or infection requires consultation.",
+    "metadata": {
+      "symptoms": ["dry skin", "cracked skin", "rough skin"],
+      "productKeywords": ["cetaphil", "moisturizer", "vaseline", "boroline"],
+      "rx": false,
+      "followUp": "Is the skin itching, bleeding or painful?"
+    }
+  },
+  {
+    "id": "kb-neck-pain",
+    "content": "Mild neck pain from posture or strain may improve with rest, stretching and topical pain relief. Severe numbness requires evaluation.",
+    "metadata": {
+      "symptoms": ["neck pain", "stiff neck", "muscle stiffness"],
+      "productKeywords": ["volini", "diclofenac", "pain relief spray"],
+      "rx": false,
+      "followUp": "Did the pain begin after poor posture or sleeping awkwardly?"
+    }
+  },
+  {
+    "id": "kb-dizziness",
+    "content": "Mild dizziness may occur due to dehydration, low food intake or fatigue. Persistent dizziness or fainting requires medical attention.",
+    "metadata": {
+      "symptoms": ["dizziness", "lightheadedness", "giddiness"],
+      "productKeywords": ["ors", "electral", "multivitamin"],
+      "rx": false,
+      "followUp": "Did the dizziness occur suddenly or after standing up?"
+    }
+  },
+  {
+    "id": "kb-food-poisoning",
+    "content": "Food poisoning may cause vomiting, diarrhea and stomach cramps. Hydration and oral rehydration are important. Severe dehydration is an emergency.",
+    "metadata": {
+      "symptoms": ["food poisoning", "vomiting", "stomach cramps", "diarrhea"],
+      "productKeywords": ["ors", "electral", "ondansetron", "probiotic"],
+      "rx": false,
+      "followUp": "Did symptoms start after eating outside food or stale food?"
+    }
+  },
+  {
+    "id": "kb-dry-eyes",
+    "content": "Dry eyes due to screen exposure or dust may improve with lubricating eye drops and reducing eye strain.",
+    "metadata": {
+      "symptoms": ["dry eyes", "eye strain", "burning eyes"],
+      "productKeywords": ["refresh tears", "sys tears", "lubricant eye drops"],
+      "rx": false,
+      "followUp": "Do symptoms worsen after long screen time?"
+    }
+  },
+  {
+    "id": "kb-heel-pain",
+    "content": "Heel pain may occur from prolonged standing or strain. Supportive footwear and pain relief gels may help mild discomfort.",
+    "metadata": {
+      "symptoms": ["heel pain", "foot pain", "pain walking"],
+      "productKeywords": ["pain relief gel", "diclofenac", "volini"],
+      "rx": false,
+      "followUp": "Is the pain worse in the morning or after walking?"
+    }
+  },
+  {
+    "id": "kb-cold-weather-cough",
+    "content": "Cold weather may trigger cough and throat irritation. Warm fluids and cough syrups may help mild symptoms.",
+    "metadata": {
+      "symptoms": ["winter cough", "cold cough", "throat irritation"],
+      "productKeywords": ["grilinctus", "lozenges", "cough syrup"],
+      "rx": false,
+      "followUp": "Do symptoms worsen at night or outdoors?"
+    }
+  },
+  {
+    "id": "kb-motion-headache",
+    "content": "Headache after long travel or motion may improve with hydration and rest. Severe vomiting or neurological symptoms need evaluation.",
+    "metadata": {
+      "symptoms": ["travel headache", "motion headache", "headache"],
+      "productKeywords": ["paracetamol", "saridon", "ors"],
+      "rx": false,
+      "followUp": "Did the headache begin during or after travel?"
+    }
+  },
+  {
+    "id": "kb-hand-rash",
+    "content": "Hand rash or irritation may occur from detergents or allergies. Moisturizers and avoiding irritants may help.",
+    "metadata": {
+      "symptoms": ["hand rash", "skin irritation", "itchy hands"],
+      "productKeywords": ["cetaphil", "moisturizer", "calamine lotion"],
+      "rx": false,
+      "followUp": "Did symptoms begin after using soaps or chemicals?"
+    }
+  },
+  {
+    "id": "kb-seasonal-allergy",
+    "content": "Seasonal allergies may cause sneezing, watery eyes and runny nose. Antihistamines can help mild symptoms.",
+    "metadata": {
+      "symptoms": ["seasonal allergy", "watery eyes", "sneezing"],
+      "productKeywords": ["cetirizine", "fexofenadine", "allegra"],
+      "rx": false,
+      "followUp": "Do symptoms worsen outdoors or during weather changes?"
+    }
+  },
+  {
+    "id": "kb-minor-burn",
+    "content": "Minor burns may improve with cool water, soothing gels and keeping the area clean. Severe burns need urgent medical attention.",
+    "metadata": {
+      "symptoms": ["minor burn", "skin burn", "burning skin"],
+      "productKeywords": ["burnol", "silverex", "aloe vera gel"],
+      "rx": false,
+      "followUp": "Is there blistering or severe pain?"
+    }
+  },
+  {
+    "id": "kb-frequent-cold",
+    "content": "Frequent common cold episodes may improve with hydration, rest and supportive care. Persistent symptoms may need further evaluation.",
+    "metadata": {
+      "symptoms": ["frequent cold", "repeated cough", "runny nose"],
+      "productKeywords": ["sinarest", "cetirizine", "lozenges"],
+      "rx": false,
+      "followUp": "How often do these cold symptoms occur?"
+    }
+  },
+  {
+    "id": "kb-travel-fatigue",
+    "content": "Travel fatigue may cause tiredness, dehydration and body aches. Adequate sleep and hydration usually help recovery.",
+    "metadata": {
+      "symptoms": ["travel fatigue", "body ache", "tiredness"],
+      "productKeywords": ["ors", "multivitamin", "paracetamol"],
+      "rx": false,
+      "followUp": "Did symptoms begin after long-distance travel or lack of sleep?"
+    }
+  },
+  
+  {
+    "id": "kb-swelling-feet",
+    "content": "Mild swelling in the feet after prolonged standing or travel may improve with rest and leg elevation. Sudden painful swelling needs medical attention.",
+    "metadata": {
+      "symptoms": ["feet swelling", "leg swelling", "ankle swelling"],
+      "productKeywords": ["pain relief gel", "compression socks"],
+      "rx": false,
+      "followUp": "Is the swelling present in one leg or both legs?"
+    }
+  },
+  {
+    "id": "kb-lactose-intolerance",
+    "content": "Gas, bloating or loose stools after milk products may suggest lactose intolerance. Avoiding dairy temporarily may help.",
+    "metadata": {
+      "symptoms": ["bloating", "gas", "diarrhea after milk"],
+      "productKeywords": ["digestive enzyme", "probiotic", "antacid"],
+      "rx": false,
+      "followUp": "Do symptoms worsen after consuming milk or dairy products?"
+    }
+  },
+  {
+    "id": "kb-sweating-odor",
+    "content": "Excess sweating and body odor may improve with proper hygiene and antiperspirants. Sudden excessive sweating with weakness needs evaluation.",
+    "metadata": {
+      "symptoms": ["body odor", "excess sweating", "sweaty skin"],
+      "productKeywords": ["antiperspirant", "body spray", "dusting powder"],
+      "rx": false,
+      "followUp": "Did the sweating begin recently or occur mainly in heat?"
+    }
+  },
+  {
+    "id": "kb-allergic-cough",
+    "content": "Allergic cough may occur with dust exposure or weather changes. Antihistamines and avoiding triggers may help.",
+    "metadata": {
+      "symptoms": ["allergic cough", "dry cough", "throat irritation"],
+      "productKeywords": ["cetirizine", "levocetirizine", "cough syrup"],
+      "rx": false,
+      "followUp": "Does the cough worsen around dust, smoke or pets?"
+    }
+  },
+  {
+    "id": "kb-hiccups",
+    "content": "Occasional hiccups usually resolve on their own. Persistent hiccups may require medical evaluation.",
+    "metadata": {
+      "symptoms": ["hiccups", "continuous hiccups"],
+      "productKeywords": ["antacid", "digestive syrup"],
+      "rx": false,
+      "followUp": "How long have the hiccups been continuing?"
+    }
+  },
+  {
+    "id": "kb-bad-breath",
+    "content": "Bad breath may occur due to poor oral hygiene, mouth dryness or digestive issues. Maintaining oral hygiene is important.",
+    "metadata": {
+      "symptoms": ["bad breath", "mouth odor", "halitosis"],
+      "productKeywords": ["mouthwash", "tongue cleaner", "oral gel"],
+      "rx": false,
+      "followUp": "Do you also have mouth ulcers or gum bleeding?"
+    }
+  },
+  {
+    "id": "kb-gum-pain",
+    "content": "Mild gum pain or swelling may improve with oral hygiene and antiseptic mouth rinses. Severe swelling or pus requires dental consultation.",
+    "metadata": {
+      "symptoms": ["gum pain", "gum swelling", "bleeding gums"],
+      "productKeywords": ["betadine gargle", "mouthwash", "clove oil"],
+      "rx": false,
+      "followUp": "Do your gums bleed while brushing?"
+    }
+  },
+  {
+    "id": "kb-calf-pain",
+    "content": "Calf pain after exercise or strain may improve with rest and topical pain relief. Sudden swelling or redness requires urgent care.",
+    "metadata": {
+      "symptoms": ["calf pain", "leg pain", "muscle strain"],
+      "productKeywords": ["volini", "pain spray", "diclofenac"],
+      "rx": false,
+      "followUp": "Did the pain start after exercise or prolonged walking?"
+    }
+  },
+  {
+    "id": "kb-knee-stiffness",
+    "content": "Knee stiffness may occur after inactivity or strain. Gentle movement and warm compresses may help.",
+    "metadata": {
+      "symptoms": ["knee stiffness", "joint stiffness", "knee pain"],
+      "productKeywords": ["pain relief gel", "diclofenac", "move spray"],
+      "rx": false,
+      "followUp": "Is the stiffness worse in the morning or after activity?"
+    }
+  },
+  {
+    "id": "kb-screen-headache",
+    "content": "Headache after prolonged screen exposure may improve with eye rest, hydration and reduced screen time.",
+    "metadata": {
+      "symptoms": ["screen headache", "eye strain", "headache"],
+      "productKeywords": ["lubricant eye drops", "paracetamol"],
+      "rx": false,
+      "followUp": "How many hours do you spend on screens daily?"
+    }
+  },
+  {
+    "id": "kb-pollen-allergy",
+    "content": "Pollen allergy may cause sneezing, itchy eyes and runny nose during seasonal changes. Avoiding exposure may help.",
+    "metadata": {
+      "symptoms": ["pollen allergy", "sneezing", "itchy eyes"],
+      "productKeywords": ["cetirizine", "allegra", "eye drops"],
+      "rx": false,
+      "followUp": "Do symptoms worsen outdoors or in windy weather?"
+    }
+  },
+  {
+    "id": "kb-painful-swallowing",
+    "content": "Painful swallowing may occur due to throat irritation or infection. Warm fluids and lozenges may provide relief.",
+    "metadata": {
+      "symptoms": ["pain swallowing", "throat pain", "sore throat"],
+      "productKeywords": ["lozenges", "betadine gargle", "cough syrup"],
+      "rx": false,
+      "followUp": "Do you also have fever or swollen neck glands?"
+    }
+  },
+  {
+    "id": "kb-stomach-cramps",
+    "content": "Mild stomach cramps may improve with hydration and dietary adjustments. Severe persistent pain needs evaluation.",
+    "metadata": {
+      "symptoms": ["stomach cramps", "abdominal pain", "gas pain"],
+      "productKeywords": ["meftal spas", "antacid", "digene"],
+      "rx": false,
+      "followUp": "Did the cramps begin after eating certain foods?"
+    }
+  },
+  {
+    "id": "kb-weakness-after-fever",
+    "content": "Weakness after fever may persist for a few days. Hydration, nutrition and rest are important during recovery.",
+    "metadata": {
+      "symptoms": ["weakness", "fatigue", "post fever tiredness"],
+      "productKeywords": ["electral", "multivitamin", "zincovit"],
+      "rx": false,
+      "followUp": "How long ago did the fever resolve?"
+    }
+  },
+  {
+    "id": "kb-nose-irritation",
+    "content": "Nasal irritation due to dryness or allergies may improve with saline sprays and hydration.",
+    "metadata": {
+      "symptoms": ["nasal irritation", "dry nose", "blocked nose"],
+      "productKeywords": ["saline nasal spray", "o trivin", "nasivion"],
+      "rx": false,
+      "followUp": "Do you also have sneezing or nasal congestion?"
+    }
+  },
+  {
+    "id": "kb-chest-congestion",
+    "content": "Chest congestion with mucus may improve with steam inhalation and expectorants. Breathing difficulty requires urgent evaluation.",
+    "metadata": {
+      "symptoms": ["chest congestion", "mucus cough", "phlegm"],
+      "productKeywords": ["ascoril", "steam inhalation", "mucolite"],
+      "rx": false,
+      "followUp": "Do you also have fever or wheezing?"
+    }
+  },
+  {
+    "id": "kb-dry-throat",
+    "content": "Dry throat may occur due to dehydration, weather changes or prolonged speaking. Warm fluids may help.",
+    "metadata": {
+      "symptoms": ["dry throat", "scratchy throat", "throat irritation"],
+      "productKeywords": ["lozenges", "cough syrup", "warm saline gargle"],
+      "rx": false,
+      "followUp": "Does the dryness worsen at night or after speaking?"
+    }
+  },
+  {
+    "id": "kb-random-body-itching",
+    "content": "Generalized itching without rash may occur due to allergies, dry skin or irritation. Moisturizers and antihistamines may help.",
+    "metadata": {
+      "symptoms": ["body itching", "itching", "skin irritation"],
+      "productKeywords": ["cetirizine", "calamine lotion", "moisturizer"],
+      "rx": false,
+      "followUp": "Do you notice any rash, swelling or new products used recently?"
+    }
+  },
+  {
+    "id": "kb-frequent-urination",
+    "content": "Frequent urination may occur due to increased fluids, urinary irritation or infection. Burning or fever needs evaluation.",
+    "metadata": {
+      "symptoms": ["frequent urination", "urinary urgency", "uti symptoms"],
+      "productKeywords": ["citralka", "cranberry supplement", "alkalizer"],
+      "rx": false,
+      "followUp": "Do you also have burning sensation or lower abdominal pain?"
+    }
+  },
+  {
+    "id": "kb-hot-weather-headache",
+    "content": "Headache during hot weather may be related to dehydration or heat exposure. Hydration and cooling are important.",
+    "metadata": {
+      "symptoms": ["heat headache", "headache", "dizziness"],
+      "productKeywords": ["ors", "electral", "paracetamol"],
+      "rx": false,
+      "followUp": "Were you exposed to sunlight or high temperatures recently?"
+    }
+  },
+  {
+    "id": "kb-lip-allergy",
+    "content": "Lip irritation or mild allergic swelling may occur due to cosmetics, food or weather changes. Severe swelling or breathing difficulty is an emergency.",
+    "metadata": {
+      "symptoms": ["lip irritation", "dry lips", "lip swelling"],
+      "productKeywords": ["lip balm", "cetirizine", "vaseline"],
+      "rx": false,
+      "followUp": "Did symptoms begin after using a cosmetic product or food item?"
+    }
+  },
+  {
+    "id": "kb-water-retention",
+    "content": "Mild water retention may cause puffiness or swelling after salty food or prolonged sitting. Sudden severe swelling requires evaluation.",
+    "metadata": {
+      "symptoms": ["water retention", "puffy feet", "swelling"],
+      "productKeywords": ["electrolyte drink", "compression socks"],
+      "rx": false,
+      "followUp": "Is the swelling worse in the evening or after long sitting?"
+    }
+  },
+  {
+    "id": "kb-morning-headache",
+    "content": "Morning headaches may be linked to poor sleep, stress or dehydration. Persistent severe headaches require medical attention.",
+    "metadata": {
+      "symptoms": ["morning headache", "headache", "fatigue"],
+      "productKeywords": ["paracetamol", "saridon", "ors"],
+      "rx": false,
+      "followUp": "Do you wake up with the headache daily?"
+    }
+  },
+  {
+    "id": "kb-pain-after-workout",
+    "content": "Body pain after intense workout is common and may improve with hydration, stretching and topical pain relief products.",
+    "metadata": {
+      "symptoms": ["muscle pain", "workout soreness", "body ache"],
+      "productKeywords": ["volini", "moov", "diclofenac gel"],
+      "rx": false,
+      "followUp": "Did symptoms begin after unusual physical activity or exercise?"
+    }
+  },
+  {
+    "id": "kb-sneezing-morning",
+    "content": "Morning sneezing may be related to dust allergies or weather changes. Antihistamines and avoiding triggers may help.",
+    "metadata": {
+      "symptoms": ["morning sneezing", "allergy", "runny nose"],
+      "productKeywords": ["cetirizine", "fexofenadine", "allegra"],
+      "rx": false,
+      "followUp": "Do symptoms improve after leaving the bedroom or house?"
+    }
+  },
+  {
+    "id": "kb-low-immunity",
+    "content": "Frequent minor illnesses may be linked to stress, sleep deprivation or nutritional imbalance. Healthy lifestyle and supplements may help.",
+    "metadata": {
+      "symptoms": ["frequent illness", "weak immunity", "fatigue"],
+      "productKeywords": ["multivitamin", "zincovit", "vitamin c"],
+      "rx": false,
+      "followUp": "How often do you fall sick with cold or fever?"
+    }
+  },
+  {
+    "id": "kb-hand-pain",
+    "content": "Mild hand pain from overuse or strain may improve with rest and topical pain relief. Persistent numbness requires evaluation.",
+    "metadata": {
+      "symptoms": ["hand pain", "wrist pain", "joint pain"],
+      "productKeywords": ["volini", "diclofenac", "pain spray"],
+      "rx": false,
+      "followUp": "Did the pain start after typing, lifting or repetitive work?"
+    }
+  },
+  {
+    "id": "kb-foot-blisters",
+    "content": "Foot blisters due to friction or tight footwear usually improve with proper care and avoiding pressure on the area.",
+    "metadata": {
+      "symptoms": ["foot blister", "shoe bite", "foot pain"],
+      "productKeywords": ["bandage", "antiseptic cream", "moisturizer"],
+      "rx": false,
+      "followUp": "Did the blister develop after new footwear or prolonged walking?"
+    }
+  },
+  {
+    "id": "kb-post-meal-sleepiness",
+    "content": "Feeling sleepy after heavy meals can occur due to overeating or high carbohydrate intake. Persistent fatigue needs evaluation.",
+    "metadata": {
+      "symptoms": ["sleepiness", "fatigue after meals", "low energy"],
+      "productKeywords": ["digestive syrup", "multivitamin"],
+      "rx": false,
+      "followUp": "Does this happen after every meal or only large meals?"
+    }
+  },
+  {
+    "id": "kb-acid-reflux-cough",
+    "content": "Acid reflux may sometimes trigger throat irritation and cough, especially after meals or lying down.",
+    "metadata": {
+      "symptoms": ["acid reflux", "heartburn", "dry cough"],
+      "productKeywords": ["pantoprazole", "digene", "gelusil"],
+      "rx": false,
+      "followUp": "Does the cough worsen after eating or while lying flat?"
+    }
+  },
+  {
+    "id": "kb-dry-cough-night",
+    "content": "Night-time dry cough may be related to allergies, cold air or throat irritation. Persistent cough should be evaluated.",
+    "metadata": {
+      "symptoms": ["night cough", "dry cough", "throat irritation"],
+      "productKeywords": ["grilinctus", "cetirizine", "lozenges"],
+      "rx": false,
+      "followUp": "Is the cough worse at night or early morning?"
+    }
+  },
+  {
+    "id": "kb-heavy-head",
+    "content": "A heavy head sensation may occur with sinus congestion, stress or mild viral illness. Rest and hydration may help.",
+    "metadata": {
+      "symptoms": ["heavy head", "head pressure", "sinus congestion"],
+      "productKeywords": ["sinarest", "steam inhalation", "paracetamol"],
+      "rx": false,
+      "followUp": "Do you also have blocked nose or facial pressure?"
+    }
+  },
+  {
+    "id": "kb-random-sneezing",
+    "content": "Frequent sneezing may occur due to dust, pollution or allergy triggers. Antihistamines may help mild symptoms.",
+    "metadata": {
+      "symptoms": ["sneezing", "runny nose", "allergy"],
+      "productKeywords": ["cetirizine", "levocetirizine", "allegra"],
+      "rx": false,
+      "followUp": "Do symptoms worsen in dusty places or outdoors?"
+    }
+  },
+  {
+    "id": "kb-post-cold-weakness",
+    "content": "Weakness after a cold or viral illness may continue briefly during recovery. Adequate hydration and nutrition are important.",
+    "metadata": {
+      "symptoms": ["post viral weakness", "fatigue", "low energy"],
+      "productKeywords": ["multivitamin", "electral", "zincovit"],
+      "rx": false,
+      "followUp": "How long ago did your cold symptoms improve?"
+    }
+  },
+  {
+    "id": "kb-tight-muscles",
+    "content": "Muscle tightness from posture or stress may improve with stretching, hydration and warm compresses.",
+    "metadata": {
+      "symptoms": ["muscle tightness", "muscle stiffness", "neck stiffness"],
+      "productKeywords": ["pain relief gel", "volini", "hot patch"],
+      "rx": false,
+      "followUp": "Which muscle area feels tight or stiff?"
+    }
+  },
+  {
+    "id": "kb-stress-headache",
+    "content": "Stress-related headaches are often linked to tension and fatigue. Rest, hydration and stress reduction may help.",
+    "metadata": {
+      "symptoms": ["stress headache", "tension headache", "head pressure"],
+      "productKeywords": ["paracetamol", "saridon", "ashwagandha"],
+      "rx": false,
+      "followUp": "Have you been under increased stress or lack of sleep recently?"
+    }
+  },
+  {
+    "id": "kb-dry-cough-allergy",
+    "content": "Dry cough with allergy symptoms may improve with antihistamines and avoiding triggers like dust or smoke.",
+    "metadata": {
+      "symptoms": ["dry cough", "allergy", "itchy throat"],
+      "productKeywords": ["cetirizine", "cough syrup", "allegra"],
+      "rx": false,
+      "followUp": "Do symptoms worsen around smoke, pets or dust?"
+    }
+  },
+  {
+    "id": "kb-minor-cut",
+    "content": "Minor cuts and abrasions should be cleaned properly and protected to avoid infection. Deep wounds require medical care.",
+    "metadata": {
+      "symptoms": ["minor cut", "skin injury", "abrasion"],
+      "productKeywords": ["bandage", "antiseptic cream", "betadine"],
+      "rx": false,
+      "followUp": "Is the wound deep, swollen or producing discharge?"
+    }
+  },
+  {
+    "id": "kb-scalp-itching",
+    "content": "Scalp itching may occur due to dandruff, dryness or irritation. Medicated shampoos may help mild symptoms.",
+    "metadata": {
+      "symptoms": ["itchy scalp", "dandruff", "scalp irritation"],
+      "productKeywords": ["ketoconazole shampoo", "scalpe", "anti dandruff shampoo"],
+      "rx": false,
+      "followUp": "Do you also notice flakes or redness on the scalp?"
+    }
+  },
+  {
+    "id": "kb-body-heat",
+    "content": "Feeling excessive body heat may occur due to hot weather, dehydration or spicy foods. Hydration and cooling measures may help.",
+    "metadata": {
+      "symptoms": ["body heat", "burning sensation", "heat discomfort"],
+      "productKeywords": ["ors", "cooling drink", "electral"],
+      "rx": false,
+      "followUp": "Did symptoms begin after heat exposure or spicy meals?"
+    }
+  },
+  {
+    "id": "kb-elderly-joint-pain",
+    "content": "Joint pain and stiffness in older adults may worsen with age-related wear and tear. Gentle movement, topical pain relief and doctor-guided care may help.",
+    "metadata": {
+      "symptoms": ["joint pain", "knee pain", "stiff joints", "arthritis pain"],
+      "productKeywords": ["volini", "diclofenac gel", "moov", "pain balm"],
+      "rx": false,
+      "followUp": "Which joints are most painful and does stiffness improve with movement?"
+    }
+  },
+  {
+    "id": "kb-high-bp-monitoring",
+    "content": "People with high blood pressure should regularly monitor readings, reduce salt intake and continue prescribed medicines without interruption.",
+    "metadata": {
+      "symptoms": ["high blood pressure", "hypertension", "headache"],
+      "productKeywords": ["bp monitor", "low salt supplement"],
+      "rx": false,
+      "followUp": "What was your most recent blood pressure reading?"
+    }
+  },
+  {
+    "id": "kb-diabetes-foot-care",
+    "content": "People with diabetes should inspect their feet regularly for cuts, blisters or infections. Proper footwear and foot hygiene are important.",
+    "metadata": {
+      "symptoms": ["diabetes", "foot pain", "foot wound", "numb feet"],
+      "productKeywords": ["diabetic foot cream", "bandage", "antiseptic cream"],
+      "rx": false,
+      "followUp": "Do you notice numbness, wounds or burning sensation in the feet?"
+    }
+  },
+  {
+    "id": "kb-diabetes-fatigue",
+    "content": "Fatigue in people with diabetes may occur due to fluctuating blood sugar levels, dehydration or inadequate nutrition.",
+    "metadata": {
+      "symptoms": ["diabetes fatigue", "weakness", "low energy"],
+      "productKeywords": ["glucometer", "electral", "multivitamin"],
+      "rx": false,
+      "followUp": "Are your blood sugar readings currently well controlled?"
+    }
+  },
+  {
+    "id": "kb-senior-constipation",
+    "content": "Constipation is common in older adults due to reduced activity, dehydration or medicines. Fibre intake and hydration may help.",
+    "metadata": {
+      "symptoms": ["constipation", "hard stool", "difficulty passing stool"],
+      "productKeywords": ["isabgol", "cremaffin", "softovac", "lactulose"],
+      "rx": false,
+      "followUp": "How many days have you had constipation and are you drinking enough fluids?"
+    }
+  },
+  {
+    "id": "kb-chronic-back-pain",
+    "content": "Chronic back pain may improve with posture correction, physiotherapy and doctor-guided pain management. Sudden weakness or numbness needs evaluation.",
+    "metadata": {
+      "symptoms": ["back pain", "lower back pain", "chronic pain"],
+      "productKeywords": ["volini", "pain patch", "diclofenac gel"],
+      "rx": false,
+      "followUp": "Is the pain constant or does it worsen with movement?"
+    }
+  },
+  {
+    "id": "kb-elderly-sleep-problems",
+    "content": "Sleep difficulties in older adults may be linked to stress, medications or chronic conditions. Good sleep hygiene is important.",
+    "metadata": {
+      "symptoms": ["insomnia", "poor sleep", "sleep disturbance"],
+      "productKeywords": ["melatonin", "sleep support supplement"],
+      "rx": false,
+      "followUp": "How many hours of sleep are you getting each night?"
+    }
+  },
+  {
+    "id": "kb-diabetes-dry-mouth",
+    "content": "Dry mouth may occur in people with diabetes due to dehydration or high blood sugar levels. Hydration and oral care are important.",
+    "metadata": {
+      "symptoms": ["dry mouth", "thirst", "diabetes symptoms"],
+      "productKeywords": ["mouthwash", "oral gel", "hydration salts"],
+      "rx": false,
+      "followUp": "Are you also feeling unusually thirsty or urinating frequently?"
+    }
+  },
+  {
+    "id": "kb-elderly-dizziness",
+    "content": "Dizziness in older adults may occur due to dehydration, low blood pressure or medications. Sudden severe dizziness requires medical attention.",
+    "metadata": {
+      "symptoms": ["dizziness", "lightheadedness", "balance problems"],
+      "productKeywords": ["electral", "bp monitor"],
+      "rx": false,
+      "followUp": "Did the dizziness start suddenly or after standing up?"
+    }
+  },
+  {
+    "id": "kb-osteoporosis-support",
+    "content": "Bone weakness and osteoporosis risk increase with age. Adequate calcium, vitamin D and regular activity are important for bone health.",
+    "metadata": {
+      "symptoms": ["bone weakness", "joint pain", "back pain"],
+      "productKeywords": ["calcium supplement", "vitamin d", "shelcal"],
+      "rx": false,
+      "followUp": "Have you had previous fractures or vitamin D deficiency?"
+    }
+  },
+  {
+    "id": "kb-senior-appetite-loss",
+    "content": "Reduced appetite in older adults may occur due to medications, stress or illness. Persistent weight loss requires medical evaluation.",
+    "metadata": {
+      "symptoms": ["loss of appetite", "weakness", "weight loss"],
+      "productKeywords": ["multivitamin", "protein supplement", "zincovit"],
+      "rx": false,
+      "followUp": "How long have you noticed reduced appetite or weight loss?"
+    }
+  },
+  {
+    "id": "kb-chronic-acidity",
+    "content": "Recurring acidity or heartburn may require dietary changes and doctor-guided management. Persistent symptoms should not be ignored.",
+    "metadata": {
+      "symptoms": ["chronic acidity", "heartburn", "gas"],
+      "productKeywords": ["pantoprazole", "gelusil", "digene", "eno"],
+      "rx": false,
+      "followUp": "How frequently do you experience acidity symptoms each week?"
+    }
+  },
+  {
+    "id": "kb-elderly-leg-cramps",
+    "content": "Leg cramps in older adults may be linked to dehydration, low minerals or prolonged inactivity. Stretching and hydration may help.",
+    "metadata": {
+      "symptoms": ["leg cramps", "muscle cramps", "night cramps"],
+      "productKeywords": ["electral", "magnesium supplement", "pain balm"],
+      "rx": false,
+      "followUp": "Do the cramps occur mainly at night or after walking?"
+    }
+  },
+  {
+    "id": "kb-chronic-cough-smoker",
+    "content": "Persistent cough in smokers or older adults should be medically evaluated, especially if associated with breathing difficulty or weight loss.",
+    "metadata": {
+      "symptoms": ["chronic cough", "smoker cough", "phlegm"],
+      "productKeywords": ["cough syrup", "steam inhalation"],
+      "rx": false,
+      "followUp": "How long have you had the cough and is there mucus production?"
+    }
+  },
+  {
+    "id": "kb-elderly-dehydration",
+    "content": "Older adults are more prone to dehydration due to reduced thirst sensation. Regular fluid intake is important.",
+    "metadata": {
+      "symptoms": ["dehydration", "weakness", "dry mouth", "fatigue"],
+      "productKeywords": ["ors", "electral", "hydration drink"],
+      "rx": false,
+      "followUp": "Are you able to drink enough fluids throughout the day?"
+    }
+  },
+  {
+    "id": "kb-diabetes-skin-care",
+    "content": "People with diabetes may develop dry or itchy skin more easily. Gentle moisturization and skin care are important.",
+    "metadata": {
+      "symptoms": ["dry skin", "itching", "diabetes skin issues"],
+      "productKeywords": ["moisturizer", "cetaphil", "calamine lotion"],
+      "rx": false,
+      "followUp": "Do you notice cracks, wounds or delayed healing on the skin?"
+    }
+  },
+  {
+    "id": "kb-senior-memory-support",
+    "content": "Mild forgetfulness may occur with aging, stress or poor sleep. Persistent confusion or sudden memory changes require medical evaluation.",
+    "metadata": {
+      "symptoms": ["memory issues", "forgetfulness", "confusion"],
+      "productKeywords": ["omega 3", "multivitamin", "brain health supplement"],
+      "rx": false,
+      "followUp": "Have the memory issues been gradually worsening over time?"
+    }
+  },
+  {
+    "id": "kb-chronic-allergy",
+    "content": "Recurring allergies may require avoiding triggers and consistent symptom management. Breathing difficulty is an emergency.",
+    "metadata": {
+      "symptoms": ["allergy", "sneezing", "itching", "runny nose"],
+      "productKeywords": ["cetirizine", "allegra", "levocetirizine"],
+      "rx": false,
+      "followUp": "Do symptoms occur seasonally or throughout the year?"
+    }
+  },
+  {
+    "id": "kb-elderly-urinary-issues",
+    "content": "Frequent urination or urinary urgency may become more common with age. Burning sensation or fever needs evaluation.",
+    "metadata": {
+      "symptoms": ["frequent urination", "urinary urgency", "night urination"],
+      "productKeywords": ["cranberry supplement", "citralka"],
+      "rx": false,
+      "followUp": "Do you also experience burning sensation or abdominal discomfort?"
+    }
+  },
+  {
+    "id": "kb-senior-cold-flu",
+    "content": "Cold and flu symptoms in older adults should be monitored carefully, especially if associated with breathing difficulty or weakness.",
+    "metadata": {
+      "symptoms": ["cold", "cough", "fever", "weakness"],
+      "productKeywords": ["paracetamol", "cough syrup", "electral"],
+      "rx": false,
+      "followUp": "Do you have breathing difficulty, chest pain or worsening weakness?"
+    }
+  },
+  {
+    "id": "kb-child-common-cold",
+    "content": "Mild cold symptoms in children such as runny nose and sneezing often improve with fluids, rest and supportive care. Breathing difficulty needs urgent evaluation.",
+    "metadata": {
+      "symptoms": ["child cold", "runny nose", "sneezing", "cough"],
+      "productKeywords": ["saline drops", "paracetamol syrup", "calpol", "nasoclear"],
+      "rx": false,
+      "followUp": "What is the child's age and how many days have symptoms been present?"
+    }
+  },
+  {
+    "id": "kb-child-fever",
+    "content": "Mild fever in children may improve with hydration and age-appropriate paracetamol. Persistent high fever or lethargy requires medical attention.",
+    "metadata": {
+      "symptoms": ["child fever", "baby fever", "warm body"],
+      "productKeywords": ["calpol", "dolo syrup", "paracetamol syrup"],
+      "rx": false,
+      "followUp": "What is the child's exact temperature and age?"
+    }
+  },
+  {
+    "id": "kb-child-cough",
+    "content": "Mild cough in children may occur with viral infections or throat irritation. Persistent breathing difficulty requires urgent care.",
+    "metadata": {
+      "symptoms": ["child cough", "dry cough", "throat irritation"],
+      "productKeywords": ["honey syrup", "saline drops", "cough syrup pediatric"],
+      "rx": false,
+      "followUp": "Is the cough dry or with mucus and does it worsen at night?"
+    }
+  },
+  {
+    "id": "kb-child-diarrhea",
+    "content": "Loose motions in children can quickly lead to dehydration. Oral rehydration and fluids are important.",
+    "metadata": {
+      "symptoms": ["child diarrhea", "loose motion", "stomach upset"],
+      "productKeywords": ["ors", "electral", "probiotic sachet"],
+      "rx": false,
+      "followUp": "How many loose motions has the child had today?"
+    }
+  },
+  {
+    "id": "kb-child-vomiting",
+    "content": "Vomiting in children may occur due to infections or indigestion. Ensure hydration and seek medical care if persistent.",
+    "metadata": {
+      "symptoms": ["child vomiting", "nausea", "stomach upset"],
+      "productKeywords": ["ors", "electral", "probiotic"],
+      "rx": false,
+      "followUp": "How many times has the child vomited today?"
+    }
+  },
+  {
+    "id": "kb-child-allergy",
+    "content": "Mild allergies in children may cause itching, sneezing or rash. Swelling of lips or breathing difficulty is an emergency.",
+    "metadata": {
+      "symptoms": ["child allergy", "itching", "rash", "sneezing"],
+      "productKeywords": ["cetirizine syrup", "calamine lotion"],
+      "rx": false,
+      "followUp": "Did the symptoms start after any food, dust exposure or new product?"
+    }
+  },
+  {
+    "id": "kb-child-rash",
+    "content": "Mild skin rashes in children may occur due to heat, allergies or irritation. Rapidly spreading rash requires evaluation.",
+    "metadata": {
+      "symptoms": ["child rash", "skin rash", "itching"],
+      "productKeywords": ["calamine lotion", "baby moisturizer", "cetaphil"],
+      "rx": false,
+      "followUp": "Is the rash spreading or associated with fever?"
+    }
+  },
+  {
+    "id": "kb-child-stomach-pain",
+    "content": "Mild stomach pain in children may occur due to gas, constipation or indigestion. Severe persistent pain requires medical care.",
+    "metadata": {
+      "symptoms": ["child stomach pain", "gas", "abdominal pain"],
+      "productKeywords": ["antacid syrup", "probiotic", "ors"],
+      "rx": false,
+      "followUp": "Does the child also have vomiting, fever or constipation?"
+    }
+  },
+  {
+    "id": "kb-child-constipation",
+    "content": "Constipation in children may improve with fluids, fruits and fibre-rich foods. Persistent constipation should be evaluated.",
+    "metadata": {
+      "symptoms": ["child constipation", "hard stool", "pain passing stool"],
+      "productKeywords": ["lactulose syrup", "isabgol"],
+      "rx": false,
+      "followUp": "How many days has the child been constipated?"
+    }
+  },
+  {
+    "id": "kb-child-mouth-ulcer",
+    "content": "Mouth ulcers in children may cause pain while eating. Avoid spicy foods and maintain hydration.",
+    "metadata": {
+      "symptoms": ["mouth ulcer", "oral ulcer", "mouth pain"],
+      "productKeywords": ["orajel", "smyle", "becosules"],
+      "rx": false,
+      "followUp": "Is the child able to eat and drink normally?"
+    }
+  },
+  {
+    "id": "kb-child-ear-pain",
+    "content": "Ear pain in children may occur with infections or colds. Persistent fever or discharge requires medical attention.",
+    "metadata": {
+      "symptoms": ["ear pain", "earache", "child ear pain"],
+      "productKeywords": ["paracetamol syrup", "warm compress"],
+      "rx": false,
+      "followUp": "Does the child also have fever or ear discharge?"
+    }
+  },
+  {
+    "id": "kb-child-tooth-pain",
+    "content": "Tooth pain in children may occur due to cavities or teething. Dental consultation is recommended for persistent pain.",
+    "metadata": {
+      "symptoms": ["tooth pain", "gum pain", "teething pain"],
+      "productKeywords": ["clove oil", "paracetamol syrup"],
+      "rx": false,
+      "followUp": "Is there swelling in the gums or difficulty eating?"
+    }
+  },
+  {
+    "id": "kb-child-eye-irritation",
+    "content": "Mild eye irritation in children may occur due to dust or allergies. Severe redness or pain requires evaluation.",
+    "metadata": {
+      "symptoms": ["red eyes", "eye irritation", "itchy eyes"],
+      "productKeywords": ["lubricant eye drops", "refresh tears"],
+      "rx": false,
+      "followUp": "Is there eye discharge or sensitivity to light?"
+    }
+  },
+  {
+    "id": "kb-child-dehydration",
+    "content": "Children can become dehydrated quickly during fever, diarrhea or vomiting. Encourage fluids and oral rehydration.",
+    "metadata": {
+      "symptoms": ["dehydration", "dry mouth", "weakness", "less urination"],
+      "productKeywords": ["ors", "electral", "hydration drink"],
+      "rx": false,
+      "followUp": "Is the child urinating normally and drinking fluids?"
+    }
+  },
+  {
+    "id": "kb-child-heat-rash",
+    "content": "Heat rash in children may appear during hot weather or sweating. Keep the skin cool and dry.",
+    "metadata": {
+      "symptoms": ["heat rash", "skin rash", "itching"],
+      "productKeywords": ["calamine lotion", "dusting powder"],
+      "rx": false,
+      "followUp": "Did the rash appear after heat exposure or sweating?"
+    }
+  },
+  {
+    "id": "kb-child-loss-appetite",
+    "content": "Temporary loss of appetite in children may occur during mild illness or teething. Persistent refusal to eat requires evaluation.",
+    "metadata": {
+      "symptoms": ["loss of appetite", "reduced eating", "weakness"],
+      "productKeywords": ["multivitamin syrup", "zinc syrup"],
+      "rx": false,
+      "followUp": "How long has the child been eating less than usual?"
+    }
+  },
+  {
+    "id": "kb-child-headache",
+    "content": "Headaches in children may occur due to dehydration, fever or stress. Persistent severe headaches require medical evaluation.",
+    "metadata": {
+      "symptoms": ["child headache", "head pain", "fever"],
+      "productKeywords": ["paracetamol syrup", "electral"],
+      "rx": false,
+      "followUp": "Does the child also have fever, vomiting or vision issues?"
+    }
+  },
+  {
+    "id": "kb-child-motion-sickness",
+    "content": "Motion sickness in children may cause nausea and vomiting during travel. Adequate ventilation and hydration may help.",
+    "metadata": {
+      "symptoms": ["motion sickness", "travel nausea", "vomiting"],
+      "productKeywords": ["ors", "hydration drink"],
+      "rx": false,
+      "followUp": "Does the child feel sick mainly during car or bus travel?"
+    }
+  },
+  {
+    "id": "kb-child-dry-skin",
+    "content": "Dry skin in children may improve with gentle moisturizers and avoiding harsh soaps.",
+    "metadata": {
+      "symptoms": ["dry skin", "itching", "skin irritation"],
+      "productKeywords": ["baby moisturizer", "cetaphil", "calamine lotion"],
+      "rx": false,
+      "followUp": "Is the dryness associated with rash or itching?"
+    }
+  },
+  {
+    "id": "kb-child-sore-throat",
+    "content": "Mild sore throat in children may improve with warm fluids and rest. Difficulty swallowing or breathing requires evaluation.",
+    "metadata": {
+      "symptoms": ["sore throat", "throat pain", "cough"],
+      "productKeywords": ["lozenges pediatric", "warm saline gargle", "paracetamol syrup"],
+      "rx": false,
+      "followUp": "Does the child also have fever or cough?"
+    }
   }
 ]

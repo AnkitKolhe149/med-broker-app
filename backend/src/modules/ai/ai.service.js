@@ -13,29 +13,42 @@ let hasLoadedPersistedSessions = false;
 let loadSessionsPromise = null;
 
 const RED_FLAG_KEYWORDS = [
-  'chest pain',
-  'shortness of breath',
-  'difficulty breathing',
-  'unconscious',
-  'fainting',
-  'blood in stool',
-  'blood in vomit',
-  'severe dehydration',
-  'seizure',
-  'anaphylaxis',
-  'swollen tongue',
-  'swelling lips'
+  'chest pain','shortness of breath',
+  'difficulty breathing','cannot breathe',
+  'trouble breathing','wheezing severe','blue lips','bluish lips',
+  'bluish skin','low oxygen','oxygen dropping','tightness in chest',
+
+  'unconscious','loss of consciousness','fainting',
+  'seizure','convulsion','fits','stroke',
+  'slurred speech','fainting','disorientation',
+  'unresponsive','paralysis','sudden weakness',
+
+  'blood in stool','blood in vomit','heavy bleeding',
+  'internal bleeding','bleeding continuously','blood','bloody diarrhea',
+
+  'severe dehydration','swollen tongue','tongue swelling',
+  'swelling lips','lip swelling','swollen face',
+  'facial swelling','throat swelling','cannot swallow','difficulty swallowing',
+
+  'seizure','anaphylaxis','overdose','poisoning',
+  'drug overdose','swollen tongue','swelling lips',
+
+  'head injury','severe burn','electric shock',
+  'fracture','broken bone','blood',
+
+    'very low sugar','very high sugar',
 ];
 
 const SYMPTOM_KEYWORDS = [
-  'fever',
-  'headache',
+  'fever',  'mild fever','viral fever','child fever','baby fever',
+  'headache',   'migraine',
   'body pain',
   'body ache',
-  'joint pain',
+  'joint pain',  'back pain','neck pain','leg pain',
   'muscle pain',
-  'cough',
-  'cold',
+  'cough',  'back pain','neck pain',
+  'leg pain',
+  'cold',  'flu',  'throat pain','throat irritation',
   'sore throat',
   'runny nose',
   'running nose',
@@ -46,11 +59,20 @@ const SYMPTOM_KEYWORDS = [
   'acidity',
   'heartburn',
   'indigestion',
-  'allergy',
-  'itching',
-  'rash',
-  'vomiting',
-  'diarrhea'
+  'allergy',  'heartburn',
+  'indigestion',
+  'sinus', 'sinus congestion',
+  'itching',  'acne','pimples',
+  'rash',  'hives','eczema','fungal infection','ringworm',
+  'dry skin','skin irritation',
+  'vomiting',  'heartburn','indigestion',
+  'diarrhea',   'fatigue',
+  'weakness',  'dizziness',
+  'vertigo',  'insomnia',  'heat headache',
+  'seasonal viral',
+  'weather allergy',  'irritation',
+  'swelling',
+  'pain',
 ];
 
 const SYMPTOM_ALIASES = {
@@ -60,13 +82,8 @@ const SYMPTOM_ALIASES = {
 };
 
 const GREETING_PATTERNS = [
-  'hello',
-  'hi',
-  'hey',
-  'good morning',
-  'good evening',
-  'thanks',
-  'thank you'
+  'hello','hi','hey','good morning',
+  'good evening','thanks', 'thank you'
 ];
 
 let embedderPipeline = null;
@@ -748,6 +765,13 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
   const preferredCurrency = normalizeCurrencyCode(context?.preferredCurrency) || normalizeCurrencyCode(user?.preferredCurrency) || null;
   const products = await mapToProducts({ retrievedDocs, symptoms, buyerType, preferredCurrency });
 
+  // Infer a likely condition label from the top retrieved document (if present),
+  // falling back to the captured symptoms list. This helps explain why products
+  // were suggested and surfaces a concise condition to the user.
+  const likelyCondition = (retrievedDocs && retrievedDocs.length && retrievedDocs[0].metadata && retrievedDocs[0].metadata.condition)
+    ? retrievedDocs[0].metadata.condition
+    : (symptoms.length ? symptoms.join(', ') : null);
+
   const requiresIntake = symptoms.length < 2;
   const groundedReply = requiresIntake
     ? buildIntakeReply({ symptoms })
@@ -755,9 +779,13 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
 
   const followUpQuestion = buildFollowUpQuestion(retrievedDocs);
 
+  // Prepend a short likely-condition note so the LLM reply and UI show why
+  // the recommendations were produced.
+  const conditionNote = likelyCondition ? `Likely condition: ${likelyCondition}. ` : '';
+
   const finalReply = requiresIntake
-    ? `${groundedReply}\n\n${followUpQuestion}`
-    : groundedReply;
+    ? `${conditionNote}${groundedReply}\n\n${followUpQuestion}`
+    : `${conditionNote}${groundedReply}`;
 
   await rememberMessage(session, 'assistant', finalReply);
 
@@ -767,7 +795,8 @@ const chatWithRag = async ({ message, sessionId, context = {}, user }) => {
     symptomSummary: symptoms,
     followUpQuestion,
     reply: finalReply,
-    products
+    products,
+    likelyCondition
   };
 };
 
