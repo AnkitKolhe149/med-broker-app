@@ -64,13 +64,12 @@ const COUNTRY_TO_CURRENCY = {
 	KE: 'KES'
 };
 
-export const getCurrencyForCountry = (country, fallback = 'USD') => {
+export const getCurrencyForCountry = (country, fallback = 'INR') => {
 	if (!country) {
 		return fallback;
 	}
 
 	const normalizedCountry = String(country).trim().toUpperCase();
-	// ✅ BUG #6: Validate that returned currency exists in CURRENCIES
 	const currency = COUNTRY_TO_CURRENCY[normalizedCountry] || fallback;
 	return normalizeCurrencyCode(currency, fallback);
 };
@@ -115,7 +114,12 @@ const getStoredUserContext = () => {
 		const user = JSON.parse(rawUser);
 		return {
 			id: user?.id || null,
-			country: user?.customer?.country || user?.vendor?.country || null,
+			role: user?.role || null,
+			country: user?.role === 'VENDOR'
+				? (user?.vendor?.country || user?.country || null)
+				: user?.role === 'CUSTOMER'
+					? (user?.customer?.country || user?.country || null)
+					: (user?.customer?.country || user?.vendor?.country || user?.country || null),
 			preferredCurrency: user?.preferredCurrency || null
 		};
 	} catch (_error) {
@@ -128,7 +132,7 @@ const getCurrencyPreferenceKey = (userId) => (userId ? `preferredCurrency:${user
 // Get currency symbol
 export const getCurrencySymbol = (currencyCode) => {
 	const normalized = normalizeCurrencyCode(currencyCode);
-	// ✅ BUG #14: For ambiguous symbols, include currency code to avoid confusion
+	//  #14: For ambiguous symbols, include currency code to avoid confusion
 	const symbol = CURRENCIES[normalized]?.symbol;
 	if (!symbol) return normalized;
 

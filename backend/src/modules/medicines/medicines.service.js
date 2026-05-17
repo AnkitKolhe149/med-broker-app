@@ -75,7 +75,7 @@ const mapInventoryToCatalogMedicine = (inventory, viewerCurrencyCode, exchangeRa
     ...(Array.isArray(inventory.imageUrls) ? inventory.imageUrls : [])
   ].filter(Boolean))].slice(0, MAX_MEDICINE_IMAGES);
 
-  const sourceCurrencyCode = BASE_CURRENCY;
+  const sourceCurrencyCode = exchangeRateRecord?.baseCode || BASE_CURRENCY;
   const sourceRetailPrice = Number((inventory.medicine.priceCents / 100).toFixed(2));
   const sourceWholesalePrice = Number((((inventory.medicine.wholesalePriceCents ?? inventory.medicine.priceCents) || 0) / 100).toFixed(2));
   const sourceBulkPrice = sourceWholesalePrice;

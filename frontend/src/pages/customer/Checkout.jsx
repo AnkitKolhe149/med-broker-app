@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
-import { formatConvertedCurrency, getCurrencyForCountry } from '../../utils/currency';
+import { convertPrice, formatConvertedCurrency, getCurrencyForCountry } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import shippingService from '../../services/shipping.service';
 import addressService from '../../services/address.service';
@@ -40,7 +40,7 @@ function Checkout() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { cartItems, getTotalPrice } = useCart();
-	const { currency, exchangeRates, convert } = useCurrency();
+	const { currency, exchangeRates } = useCurrency();
 	const { user, loading: userLoading } = useUser();
 	const { showError } = useNotification();
 
@@ -84,7 +84,7 @@ function Checkout() {
 		}
 	}, [location.state?.currencyCode]);
 	const formatPrice = (value, fromCurrency = 'INR') => formatConvertedCurrency(value, fromCurrency, currencyCode, exchangeRates, true);
-	const toDisplayAmount = (value, fromCurrency = 'INR') => convert(value, fromCurrency);
+	const toCheckoutCurrency = (value, fromCurrency = 'INR') => convertPrice(value, fromCurrency, currencyCode, exchangeRates);
 
 	const quoteShipping = async () => {
 		if (cartItems.length === 0 || !deliveryAddress.country) {
@@ -159,6 +159,14 @@ function Checkout() {
 
 	const getStatesForCountry = (country) => statesByCountry[country] || [];
 
+	const splitFullName = (fullName) => {
+		const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+		return {
+			first: parts[0] || '',
+			last: parts.slice(1).join(' ') || ''
+		};
+	};
+
 	// Fetch saved addresses and determine user's country
 	useEffect(() => {
 		const fetchAddresses = async () => {
@@ -169,7 +177,10 @@ function Checkout() {
 				// Set default address if available
 				const defaultAddress = addresses.find((addr) => addr.isDefault);
 				if (defaultAddress) {
+					const { first, last } = splitFullName(defaultAddress.fullName);
 					setSelectedAddressId(defaultAddress.id);
+					setFirstName(first);
+					setLastName(last);
 					setDeliveryAddress({
 						fullName: defaultAddress.fullName || '',
 						phone: defaultAddress.phone || '',
@@ -180,12 +191,18 @@ function Checkout() {
 						zipCode: defaultAddress.postalCode || '',
 						country: defaultAddress.country || user?.customer?.country || 'India'
 					});
-				} else if (user?.customer?.country) {
-					// Use customer country from profile
-					setDeliveryAddress((prev) => ({
-						...prev,
-						country: user.customer.country
-					}));
+				} else if (user?.customer) {
+					// Fallback to customer profile data
+					setDeliveryAddress({
+						fullName: user.customer.fullName || user.name || '',
+						phone: user.customer.contactNumber || user.mobile || '',
+						email: user.email || '',
+						address: user.customer.deliveryAddress || '',
+						city: user.customer.city || '',
+						state: user.customer.state || '',
+						zipCode: user.customer.zipCode || '',
+						country: user.customer.country || 'India'
+					});
 				}
 			} catch (error) {
 				console.error('Failed to fetch addresses:', error);
@@ -222,7 +239,7 @@ function Checkout() {
 	useEffect(() => {
 		if (deliveryAddress.country) {
 			const countryFormatted = String(deliveryAddress.country).trim().toUpperCase();
-			const detectedCurrency = getCurrencyForCountry(countryFormatted, 'USD');
+			const detectedCurrency = getCurrencyForCountry(countryFormatted, 'INR');
 			setCheckoutCurrency(detectedCurrency);
 		}
 	}, [deliveryAddress.country]);
@@ -322,16 +339,6 @@ function Checkout() {
 
 		setIsSubmitting(true);
 		try {
-			// Calculate base INR values for backend storage
-			const baseSubtotal = cartItems.reduce((sum, item) => sum + (Number(item.basePrice || 0) * Number(item.quantity || 1)), 0);
-			const baseDiscount = (baseSubtotal * discountPercent) / 100;
-			const standardBaseDelivery = shippingQuote?.totalShipping ?? 0;
-			const baseDelivery = deliveryType === 'express'
-				? Number((standardBaseDelivery + 9).toFixed(2))
-				: standardBaseDelivery;
-			const baseTax = 0;
-			const baseTotal = Number((baseSubtotal - baseDiscount + baseDelivery + baseTax).toFixed(2));
-
 			const destinationCountry = toCountryCode(deliveryAddress.country);
 			const shipmentBuckets = cartItems.reduce((acc, item) => {
 				const origin = toCountryCode(item.originCountry || item.vendorCountry || item.countryCode || 'IN');
@@ -387,17 +394,17 @@ function Checkout() {
 					currencyCode,
 					paymentProvider: 'razorpay',
 					paymentMethod: 'Razorpay Secure Checkout',
-					subtotal: baseSubtotal,
-					discount: baseDiscount,
-					deliveryCharge: baseDelivery,
-					tax: baseTax,
-					total: baseTotal,
+					subtotal,
+					discount,
+					deliveryCharge,
+					tax,
+					total,
 					pricingSummary: {
-						subtotalCents: Math.round(baseSubtotal * 100),
-						discountCents: Math.round(baseDiscount * 100),
-						deliveryChargeCents: Math.round(baseDelivery * 100),
-						taxCents: Math.round(baseTax * 100),
-						totalCents: Math.round(baseTotal * 100)
+						subtotalCents: Math.round(subtotal * 100),
+						discountCents: Math.round(discount * 100),
+						deliveryChargeCents: Math.round(deliveryCharge * 100),
+						taxCents: Math.round(tax * 100),
+						totalCents: Math.round(total * 100)
 					}
 				}
 			});
@@ -414,16 +421,11 @@ function Checkout() {
 				appliedCoupon,
 				paymentProvider: 'razorpay',
 				paymentMethod: 'Razorpay Secure Checkout',
-				subtotalBase: baseSubtotal,
-				subtotal: baseSubtotal,
-				discountBase: baseDiscount,
-				discount: baseDiscount,
-				deliveryBase: baseDelivery,
-				deliveryCharge: baseDelivery,
-				taxBase: baseTax,
-				tax: baseTax,
-				totalBase: baseTotal,
-				total: baseTotal,
+				subtotal,
+				discount,
+				deliveryCharge,
+				tax,
+				total,
 				currencyCode,
 				timestamp: new Date().toISOString()
 			};
@@ -463,8 +465,8 @@ function Checkout() {
 
 	const subtotal = getTotalPrice(checkoutCurrency);
 	const discount = (subtotal * discountPercent) / 100;
-	const standardShippingCharge = shippingQuote ? convert(shippingQuote.totalShipping, 'INR') : 0;
-	const expressShippingCharge = Number((standardShippingCharge + convert(9, 'INR')).toFixed(2));
+	const standardShippingCharge = shippingQuote ? toCheckoutCurrency(shippingQuote.totalShipping, 'INR') : 0;
+	const expressShippingCharge = Number((standardShippingCharge + toCheckoutCurrency(9, 'INR')).toFixed(2));
 	const deliveryCharge = deliveryType === 'express' ? expressShippingCharge : standardShippingCharge;
 	const tax = Number(((subtotal - discount + deliveryCharge) * 0.05).toFixed(2));
 	const total = Number((subtotal - discount + deliveryCharge + tax).toFixed(2));
@@ -492,7 +494,10 @@ function Checkout() {
 										key={addr.id}
 										className={`${styles.savedAddressCard} ${selectedAddressId === addr.id ? styles.selectedAddress : ''}`}
 										onClick={() => {
+											const { first, last } = splitFullName(addr.fullName || '');
 											setSelectedAddressId(addr.id);
+											setFirstName(first);
+											setLastName(last);
 											setDeliveryAddress({
 												fullName: addr.fullName || '',
 												phone: addr.phone || '',
@@ -519,6 +524,8 @@ function Checkout() {
 								className={styles.addNewAddressButton}
 								onClick={() => {
 									setSelectedAddressId(null);
+									setFirstName('');
+									setLastName('');
 									setDeliveryAddress({
 										fullName: '',
 										phone: '',

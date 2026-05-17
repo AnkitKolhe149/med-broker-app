@@ -11,6 +11,29 @@ import {
 	CURRENCIES,
 } from '../utils/currency';
 
+const resolveCurrencyFromUser = (account) => {
+	if (!account) {
+		return getUserCurrencyPreference();
+	}
+
+	const preferredCurrency = account?.preferredCurrency ? String(account.preferredCurrency).toUpperCase() : '';
+	if (preferredCurrency) {
+		return preferredCurrency;
+	}
+
+	const profileCountry = account?.role === 'VENDOR'
+		? (account?.vendor?.country || account?.countryCode || account?.country || null)
+		: account?.role === 'CUSTOMER'
+			? (account?.customer?.country || account?.countryCode || account?.country || null)
+			: (account?.customer?.country || account?.vendor?.country || account?.countryCode || account?.country || null);
+
+	if (profileCountry) {
+		return getCurrencyForCountry(profileCountry, 'INR');
+	}
+
+	return getUserCurrencyPreference();
+};
+
 const CurrencyContext = createContext();
 
 // ✅ BUG #5: Fallback exchange rates for when API is slow
@@ -37,7 +60,7 @@ const FALLBACK_EXCHANGE_RATES = {
 	source: 'fallback'
 };
 
-// ✅ BUG #11: Validate that exchange rates are reasonable
+//  #11: Validate that exchange rates are reasonable
 const validateExchangeRates = (rates) => {
 	if (!rates || !rates.rates || typeof rates.rates !== 'object') {
 		console.warn('Invalid rates structure');
@@ -80,7 +103,7 @@ export const useCurrency = () => {
 
 export const CurrencyProvider = ({ children }) => {
 	const [currency, setCurrencyState] = useState(getUserCurrencyPreference());
-	// ✅ BUG #5: Initialize with fallback rates so prices show correctly while fetching
+	// #5: Initialize with fallback rates so prices show correctly while fetching
 	const [exchangeRates, setExchangeRates] = useState(() => {
 		try {
 			const cached = localStorage.getItem('exchangeRates');
@@ -96,21 +119,10 @@ export const CurrencyProvider = ({ children }) => {
 	useEffect(() => {
 		const handleAuthChanged = (event) => {
 			const nextUser = event?.detail?.user || null;
-			if (nextUser?.preferredCurrency) {
-				setCurrencyState(String(nextUser.preferredCurrency).toUpperCase());
-				return;
-			}
-
-			if (nextUser?.customer?.country || nextUser?.vendor?.country) {
-				const userCountry = nextUser.customer?.country || nextUser.vendor?.country;
-				setCurrencyState(getCurrencyForCountry(userCountry, 'USD'));
-				return;
-			}
-
-			setCurrencyState(getUserCurrencyPreference());
+			setCurrencyState(resolveCurrencyFromUser(nextUser));
 		};
 
-		// ✅ FIX: Listen for currency change events from admin settings
+		//  #12: Listen for currency change events from admin settings
 		const handleCurrencyChanged = (event) => {
 			const newCurrency = event?.detail?.currency;
 			if (newCurrency) {
@@ -134,13 +146,7 @@ export const CurrencyProvider = ({ children }) => {
 			const storedUser = localStorage.getItem('user');
 			if (storedUser) {
 				const user = JSON.parse(storedUser);
-				if (user?.preferredCurrency) {
-					setCurrencyState(String(user.preferredCurrency).toUpperCase());
-				} else if (user?.customer?.country || user?.vendor?.country) {
-					const userCountry = user.customer?.country || user.vendor?.country;
-					const detectedCurrency = getCurrencyForCountry(userCountry, 'USD');
-					setCurrencyState(detectedCurrency);
-				}
+				setCurrencyState(resolveCurrencyFromUser(user));
 			}
 		} catch (err) {
 			console.error('Failed to detect user currency from storage:', err);
@@ -157,7 +163,7 @@ export const CurrencyProvider = ({ children }) => {
 				const rates = await fetchExchangeRates();
 				
 				if (rates) {
-					// ✅ BUG #11: Validate rates are sane before using
+					//  #11: Validate rates are sane before using
 					if (validateExchangeRates(rates)) {
 						setExchangeRates(rates);
 						localStorage.setItem('exchangeRates', JSON.stringify(rates));

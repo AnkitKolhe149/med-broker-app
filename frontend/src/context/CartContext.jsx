@@ -5,11 +5,11 @@ import { useCurrency } from './CurrencyContext';
 import cartService from '../services/cart.service';
 import { convertPrice } from '../utils/currency';
 
-// ✅ BUG #2: Valid currencies for cart items
+// ✅  #2: Valid currencies for cart items
 const VALID_CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'CAD', 'SGD', 'AED', 'SAR', 'JPY', 'CNY', 'BRL', 'ZAR', 'RUB', 'AUD'];
 
 const DEFAULT_CART_CONTEXT = {
-	// ✅ BUG #2: Valid currencies for cart items
+	// ✅ #2: Valid currencies for cart items
 
 	cartItems: [],
 	addToCart: () => {},
@@ -189,7 +189,7 @@ export const CartProvider = ({ children }) => {
 		retailPrice,
 		wholesalePrice,
 		buyerType,
-		currencyCode = 'USD',
+		currencyCode = preferredCurrency || 'INR',
 		packageType = 'standard'
 	) => {
 		const {
@@ -359,7 +359,7 @@ export const CartProvider = ({ children }) => {
 	const getTotalPrice = (targetCurrency) => {
 		const effectiveTargetCurrency = targetCurrency || preferredCurrency || 'INR';
 		return cartItems.reduce((total, item) => {
-			// ✅ BUG #13: Validate item currency is valid before conversion
+			// ✅ #13: Validate item currency is valid before conversion
 			const itemCurrency = normalizeCurrencyCode(item.currencyCode || item.currency || 'INR');
 			if (!item.currencyCode && !item.currency) {
 				console.warn('[CartContext] Missing item currency, defaulting to INR:', item);

@@ -4,13 +4,33 @@ import { FlaskConical, Clock, AlertTriangle } from 'lucide-react';
 import CustomerAccountPageLayout from '../../components/common/CustomerAccountPageLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { formatConvertedCurrency } from '../../utils/currency';
+import { formatCurrency } from '../../utils/currency';
 import { useNotification } from '../../context/NotificationContext';
 import orderService from '../../services/order.service';
 import styles from './OrdersHistory.module.css';
 
 
 const ORDER_STAGES = ['Confirmed', 'Preparing', 'Picked up', 'Delivered'];
+
+const inferLegacyItemScale = (order = {}) => {
+	const pricing = (order.checkoutSnapshot && order.checkoutSnapshot.pricingSummary) || {};
+	const rawSubtotalCents = (order.items || []).reduce(
+		(sum, item) => sum + (Number(item?.unitPriceCents || 0) * Math.max(1, Number(item?.quantity || 1))),
+		0
+	);
+	const authoritativeSubtotalCents = Number.isFinite(pricing.subtotalCents)
+		? Number(pricing.subtotalCents)
+		: Number.isFinite(order.subtotalCents) ? Number(order.subtotalCents) : 0;
+
+	if (rawSubtotalCents > 0 && authoritativeSubtotalCents > 0) {
+		const ratio = authoritativeSubtotalCents / rawSubtotalCents;
+		if (Math.abs(ratio - 1) > 0.15) {
+			return ratio;
+		}
+	}
+
+	return 1;
+};
 
 /* ── Countdown Timer Hook ── */
 function useCountdown(expiresAtISO) {
@@ -21,13 +41,16 @@ function useCountdown(expiresAtISO) {
 
 	useEffect(() => {
 		if (!expiresAtISO) return;
+		
+		let intervalId;
 		const tick = () => {
 			const ms = Math.max(0, new Date(expiresAtISO).getTime() - Date.now());
 			setRemainingMs(ms);
-			if (ms <= 0) clearInterval(intervalId);
+			if (ms <= 0 && intervalId) clearInterval(intervalId);
 		};
+		
 		tick();
-		const intervalId = setInterval(tick, 1000);
+		intervalId = setInterval(tick, 1000);
 		return () => clearInterval(intervalId);
 	}, [expiresAtISO]);
 
@@ -208,7 +231,7 @@ function OrdersHistory() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { user } = useUser();
-	const { currency, exchangeRates } = useCurrency();
+	const { currency } = useCurrency();
 	const { showError, showSuccess } = useNotification();
 	const [orders, setOrders] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -243,18 +266,19 @@ function OrdersHistory() {
 	};
 	const ordersListRef = useRef(null);
 	const defaultCurrencyCode = currency || user?.preferredCurrency || 'INR';
-	const formatPrice = (value, targetCurrency = defaultCurrencyCode) => formatConvertedCurrency(value, 'INR', targetCurrency, exchangeRates, true);
+	const formatPrice = (value, amountCurrency = defaultCurrencyCode) => formatCurrency(value, amountCurrency, true);
 
 	const toUiStatus = (status = '') => {
 		const normalized = status.toUpperCase();
+		if (normalized === 'PENDING') return 'pending_payment';
 		if (normalized === 'SHIPPED') return 'in_transit';
 		if (normalized === 'PAID') return 'processing';
-		if (normalized === 'PENDING') return 'confirmed';
 		if (normalized === 'CANCELLED') return 'cancelled';
 		return 'delivered';
 	};
 
 	const toEtaText = (uiStatus) => {
+		if (uiStatus === 'pending_payment') return 'Awaiting payment';
 		if (uiStatus === 'confirmed') return 'Order confirmed';
 		if (uiStatus === 'processing') return 'Preparing for dispatch';
 		if (uiStatus === 'in_transit') return 'On the way';
@@ -271,11 +295,13 @@ function OrdersHistory() {
 					const uiStatus = toUiStatus(order.status);
 					const createdAt = order.createdAt ? new Date(order.createdAt) : new Date();
 					const sourceCurrencyCode = order.currencyCode || defaultCurrencyCode;
+					const itemMoneyScale = inferLegacyItemScale(order);
 					const sourceTotal = Number(((order.totalCents || 0) / 100).toFixed(2));
 					return {
 						orderId: order.id,
 						status: uiStatus,
 						rawStatus: order.status,
+						cancellationReason: order.cancellationReason,
 						currencyCode: sourceCurrencyCode,
 						total: sourceTotal,
 						createdAt: order.createdAt,
@@ -283,13 +309,24 @@ function OrdersHistory() {
 						items: (order.items || []).map((item) => ({
 							name: item.medicine?.name || 'Medicine',
 							quantity: item.quantity,
-							price: Number(((item.unitPriceCents || 0) / 100).toFixed(2))
+							rawUnitPriceCents: item.unitPriceCents || 0,
+							displayUnitPriceCents: Math.round(Number(item.unitPriceCents || 0) * itemMoneyScale),
+							displayLineTotalCents: Math.round(Number(item.unitPriceCents || 0) * Math.max(1, Number(item.quantity || 1)) * itemMoneyScale),
+							price: Number((Math.round(Number(item.unitPriceCents || 0) * itemMoneyScale) / 100).toFixed(2))
 						})),
+						itemMoneyScale,
 						paymentMethod: order.payment?.provider || 'Pending payment',
 						paymentStatus: order.payment?.status,
 						orderedAgo: createdAt.toLocaleDateString(),
 						etaText: toEtaText(uiStatus)
 					};
+				}).filter((order) => {
+					if (order.rawStatus !== 'CANCELLED') {
+						return true;
+					}
+
+					const reason = String(order.cancellationReason || '').toLowerCase();
+					return !reason.includes('pending payment expired');
 				});
 				setOrders(mappedOrders);
 			} catch (error) {
@@ -330,7 +367,7 @@ function OrdersHistory() {
 	}, []);
 
 	const orderBuckets = useMemo(() => {
-		const upcoming = orders.filter((order) => ['confirmed', 'in_transit', 'processing'].includes(order.status));
+		const upcoming = orders.filter((order) => ['pending_payment', 'confirmed', 'in_transit', 'processing'].includes(order.status));
 		const previous = orders.filter((order) => ['delivered', 'cancelled'].includes(order.status));
 		const scheduled = orders.filter((order) => order.status === 'scheduled');
 		return { upcoming, previous, scheduled };
@@ -351,6 +388,7 @@ function OrdersHistory() {
 
 	const getStageIndex = (status) => {
 		switch (status) {
+			case 'pending_payment': return 0;
 			case 'confirmed': return 0;
 			case 'processing': return 1;
 			case 'in_transit': return 2;
@@ -431,8 +469,8 @@ function OrdersHistory() {
 				) : (
 					visibleOrders.map((order) => {
 						const stageIndex = getStageIndex(order.status);
-						const canCancel = ['confirmed', 'processing'].includes(order.status) && order.paymentStatus !== 'SUCCEEDED';
-						const showRefundSection = ['confirmed', 'processing', 'in_transit'].includes(order.status);
+						const canCancel = ['confirmed', 'processing'].includes(order.status) && order.paymentStatus === 'SUCCEEDED';
+						const showRefundSection = ['confirmed', 'processing', 'in_transit'].includes(order.status) && order.paymentStatus === 'SUCCEEDED';
 						const groupedItems = groupOrderItemsByMedicine(order.items);
 						const totalUnits = groupedItems.reduce((sum, [, qty]) => sum + qty, 0);
 
@@ -444,7 +482,7 @@ function OrdersHistory() {
 										<div>
 											<p className={styles.orderNo}>{getOrderSummary(order.items)}</p>
 											<p className={styles.orderRef}>Order #{String(order.orderId || '').slice(0, 8)}</p>
-											<p className={styles.orderPrice}>{formatPrice(order.total)}</p>
+											<p className={styles.orderPrice}>{formatPrice(order.total, order.currencyCode)}</p>
 										</div>
 									</div>
 									<div className={styles.orderActions}>
@@ -488,7 +526,7 @@ function OrdersHistory() {
 								{showRefundSection && (
 									<OrderRefundSection
 										orderId={order.orderId}
-										formatPrice={formatPrice}
+										formatPrice={(value) => formatPrice(value, order.currencyCode)}
 										onRefundComplete={handleRefundComplete}
 									/>
 								)}
@@ -526,6 +564,8 @@ function OrdersHistory() {
 // Order Details Modal
 const OrderDetailsModal = ({ order, onClose, onDownload, downloading, formatPrice }) => {
 	if (!order) return null;
+	const modalCurrency = order?.currencyCode || order?.checkoutSnapshot?.currencyCode || 'INR';
+	const itemMoneyScale = Number.isFinite(order?.itemMoneyScale) ? order.itemMoneyScale : 1;
 	return (
 		<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
 			<div style={{ width: '90%', maxWidth: 820, background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 8px 30px rgba(0,0,0,0.2)' }}>
@@ -553,12 +593,12 @@ const OrderDetailsModal = ({ order, onClose, onDownload, downloading, formatPric
 							const pricing = (order.checkoutSnapshot && order.checkoutSnapshot.pricingSummary) || {};
 							const subtotalCents = typeof pricing.subtotalCents === 'number' ? pricing.subtotalCents
 								: (typeof order.subtotalCents === 'number' && order.subtotalCents > 0) ? order.subtotalCents
-								: (order.items || []).reduce((s, it) => s + ((it.unitPriceCents || 0) * (it.quantity || 1)), 0);
+								: (order.items || []).reduce((s, it) => s + (((it.rawUnitPriceCents ?? it.unitPriceCents) || 0) * (it.quantity || 1)), 0);
 							const taxCents = typeof pricing.taxCents === 'number' ? pricing.taxCents : (typeof order.taxCents === 'number' ? order.taxCents : 0);
 							const shippingCents = typeof pricing.deliveryChargeCents === 'number' ? pricing.deliveryChargeCents : (typeof order.shippingCents === 'number' ? order.shippingCents : 0);
 							const totalCents = typeof pricing.totalCents === 'number' ? pricing.totalCents
 								: (typeof order.totalCents === 'number' && order.totalCents > 0) ? order.totalCents : subtotalCents + taxCents + shippingCents;
-							const fmt = (cents) => formatPrice ? formatPrice(Number(cents || 0) / 100) : (Number(cents || 0) / 100).toFixed(2);
+							const fmt = (cents) => formatPrice ? formatPrice(Number(cents || 0) / 100, modalCurrency) : (Number(cents || 0) / 100).toFixed(2);
 							return (
 								<>
 									<div style={{ marginBottom: 8 }}>Subtotal: {fmt(subtotalCents)}</div>
@@ -585,9 +625,9 @@ const OrderDetailsModal = ({ order, onClose, onDownload, downloading, formatPric
 							{(order.items || []).map((it) => (
 								<tr key={it.id}>
 									<td style={{ padding: 8 }}>{it.medicine?.name || it.medicineId}</td>
-									<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((it.unitPriceCents || 0) / 100) : ((it.unitPriceCents || 0) / 100).toFixed(2)}</td>
+									<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((((it.displayUnitPriceCents ?? Math.round((it.unitPriceCents || 0) * itemMoneyScale)) || 0) / 100), modalCurrency) : ((((it.displayUnitPriceCents ?? Math.round((it.unitPriceCents || 0) * itemMoneyScale)) || 0) / 100).toFixed(2))}</td>
 									<td style={{ padding: 8, textAlign: 'right' }}>{it.quantity}</td>
-									<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice(((it.unitPriceCents || 0) * (it.quantity || 1)) / 100) : (((it.unitPriceCents || 0) * (it.quantity || 1)) / 100).toFixed(2)}</td>
+									<td style={{ padding: 8, textAlign: 'right' }}>{formatPrice ? formatPrice((((it.displayLineTotalCents ?? Math.round((it.unitPriceCents || 0) * (it.quantity || 1) * itemMoneyScale)) || 0) / 100), modalCurrency) : ((((it.displayLineTotalCents ?? Math.round((it.unitPriceCents || 0) * (it.quantity || 1) * itemMoneyScale)) || 0) / 100).toFixed(2))}</td>
 								</tr>
 							))}
 						</tbody>

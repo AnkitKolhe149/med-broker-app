@@ -88,7 +88,7 @@ const medicineService = {
 				success: true,
 				medicines: data.data || [],
 				pagination: data.pagination || {},
-				currency: data.currency || preferredCurrency || 'USD'
+				currency: data.currency || preferredCurrency || 'INR'
 			};
 
 			medicinesCache.set(cacheKey, {
@@ -103,7 +103,7 @@ const medicineService = {
 				success: false,
 				medicines: [],
 				pagination: {},
-				currency: localStorage.getItem('preferredCurrency') || 'USD',
+				currency: localStorage.getItem('preferredCurrency') || 'INR',
 				error: error.message
 			};
 		}

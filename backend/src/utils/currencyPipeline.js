@@ -33,7 +33,7 @@ const normalizeCurrencyCode = (code, fallback = null) => {
   return normalized.length === 3 ? normalized : fallback;
 };
 
-const getCurrencyForCountry = (country, fallback = 'USD') => {
+const getCurrencyForCountry = (country, fallback = 'INR') => {
   if (!country || typeof country !== 'string') {
     return fallback;
   }

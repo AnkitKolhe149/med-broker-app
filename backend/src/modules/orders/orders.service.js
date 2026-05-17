@@ -4,6 +4,8 @@ const { uploadPrescriptionImage } = require('../../services/cloudinary.service')
 const { resolveOrderItemUnitPriceCents } = require('./orderPricing.util');
 const shippingService = require('../shipping/shipping.service');
 const paymentService = require('../payments/payments.service');
+const { getLatestRates } = require('../exchangeRate/exchangeRate.service');
+const { convertAmount, normalizeCurrencyCode } = require('../../utils/currencyPipeline');
 
 const normalizePackageType = (value) => (String(value || 'standard').toLowerCase() === 'bulk' ? 'bulk' : 'standard');
 
@@ -370,23 +372,87 @@ const createOrder = async (userId, orderData) => {
   totalCents = pricingSummary.totalCents;
 
   const PAYMENT_CONFIG = require('../../config/payment');
-  const { normalizeCurrencyCode } = require('../../utils/currencyPipeline');
-  const effectiveCurrency = String(normalizeCurrencyCode(currencyCode) || normalizeCurrencyCode(customer?.user?.preferredCurrency) || normalizeCurrencyCode(PAYMENT_CONFIG.currency) || String(process.env.EXCHANGE_RATE_BASE || 'INR').toUpperCase()).toUpperCase();
+  const baseCurrency = String(normalizeCurrencyCode(process.env.EXCHANGE_RATE_BASE, 'INR') || 'INR').toUpperCase();
+  const requestedCurrency = String(normalizeCurrencyCode(currencyCode) || normalizeCurrencyCode(customer?.user?.preferredCurrency) || normalizeCurrencyCode(PAYMENT_CONFIG.currency) || baseCurrency).toUpperCase();
+
+  let exchangeRates = null;
+  let effectiveCurrency = requestedCurrency;
+
+  if (requestedCurrency !== baseCurrency) {
+    try {
+      exchangeRates = await getLatestRates(baseCurrency);
+    } catch (error) {
+      console.warn('Could not load exchange rates during order creation, falling back to base currency.', error?.message || error);
+      effectiveCurrency = baseCurrency;
+    }
+  }
+
+  const convertBaseCentsToOrderCurrency = (amountCents) => {
+    const safeCents = Number(amountCents || 0);
+    if (!Number.isFinite(safeCents)) {
+      return 0;
+    }
+
+    if (effectiveCurrency === baseCurrency) {
+      return Math.round(safeCents);
+    }
+
+    const convertedMajor = convertAmount({
+      amount: safeCents / 100,
+      fromCurrency: baseCurrency,
+      toCurrency: effectiveCurrency,
+      baseCurrency: exchangeRates?.baseCode || baseCurrency,
+      rates: exchangeRates?.rates || {}
+    });
+
+    if (!Number.isFinite(convertedMajor)) {
+      throw new ValidationError(`Unable to convert ${baseCurrency} to ${effectiveCurrency} for order pricing`);
+    }
+
+    return Math.round(convertedMajor * 100);
+  };
+
+  const orderItemsInCurrency = orderItems.map((item) => {
+    const convertedUnitPriceCents = convertBaseCentsToOrderCurrency(item.unitPriceCents);
+    const convertedLineTotalCents = convertedUnitPriceCents * item.quantity;
+    return {
+      ...item,
+      unitPriceCents: convertedUnitPriceCents,
+      lineTotalCents: convertedLineTotalCents
+    };
+  });
+
+  const pricingSummaryInCurrency = {
+    ...pricingSummary,
+    subtotalCents: convertBaseCentsToOrderCurrency(pricingSummary.subtotalCents),
+    discountCents: convertBaseCentsToOrderCurrency(pricingSummary.discountCents),
+    deliveryChargeCents: convertBaseCentsToOrderCurrency(pricingSummary.deliveryChargeCents),
+    standardDeliveryChargeCents: convertBaseCentsToOrderCurrency(pricingSummary.standardDeliveryChargeCents),
+    expressDeliveryChargeCents: convertBaseCentsToOrderCurrency(pricingSummary.expressDeliveryChargeCents),
+    freeDeliveryThresholdCents: convertBaseCentsToOrderCurrency(pricingSummary.freeDeliveryThresholdCents),
+    taxCents: convertBaseCentsToOrderCurrency(pricingSummary.taxCents),
+    totalCents: convertBaseCentsToOrderCurrency(pricingSummary.totalCents)
+  };
+
+  totalCents = pricingSummaryInCurrency.totalCents;
 
   const checkoutSnapshot = {
     ...providedCheckoutSnapshot,
     items,
-    deliveryType: pricingSummary.deliveryType,
+    deliveryType: pricingSummaryInCurrency.deliveryType,
     deliveryAddress,
     orderNotes,
     prescriptionUrl,
     prescriptionName,
-    discountPercent: pricingSummary.discountPercent,
+    discountPercent: pricingSummaryInCurrency.discountPercent,
     appliedCoupon,
     currencyCode: effectiveCurrency,
-    deliveryCharge: pricingSummary.deliveryChargeCents / 100,
-    deliveryBase: pricingSummary.deliveryChargeCents / 100,
-    pricingSummary
+    subtotal: pricingSummaryInCurrency.subtotalCents / 100,
+    discount: pricingSummaryInCurrency.discountCents / 100,
+    deliveryCharge: pricingSummaryInCurrency.deliveryChargeCents / 100,
+    tax: pricingSummaryInCurrency.taxCents / 100,
+    total: pricingSummaryInCurrency.totalCents / 100,
+    pricingSummary: pricingSummaryInCurrency
   };
 
   // Prefill checkout snapshot fields from customer profile when not provided
@@ -417,7 +483,7 @@ const createOrder = async (userId, orderData) => {
         persistedFeeRate,
         persistedFeeAmount,
         items: {
-          create: orderItems
+          create: orderItemsInCurrency
         }
       },
       include: {
@@ -636,6 +702,10 @@ const cancelOrder = async (orderId, userId, userRole) => {
     throw new ValidationError('Order is already cancelled');
   }
 
+  if (order.status === 'PENDING' && (!order.payment || order.payment.status !== 'SUCCEEDED') && userRole !== 'ADMIN') {
+    throw new ValidationError('Pending orders cannot be cancelled while payment is pending. They expire automatically if payment is not completed.');
+  }
+
   if (order.status === 'SHIPPED') {
     throw new ValidationError('Cannot cancel shipped orders. Please contact support for returns.');
   }
@@ -844,13 +914,13 @@ const getRefundEligibility = async (orderId, userId, userRole) => {
     reason = 'Order has been shipped and cannot be cancelled. Please contact support for returns.';
   } else if (isAlreadyRefunded) {
     reason = 'Refund has already been requested or processed for this order';
+  } else if (!isPaid) {
+    reason = 'Payment is still pending. No cancellation or refund action is available until the order is paid.';
   } else if (!isWindowOpen && userRole !== 'ADMIN') {
     reason = `Cancellation window of ${cancelWindowMinutes} minutes has expired`;
   } else {
     eligible = true;
-    reason = isPaid
-      ? `Eligible for cancellation with medicine-only refund (window closes in ${Math.ceil(remainingMs / 60000)} min)`
-      : 'Eligible for cancellation (no payment to refund)';
+    reason = `Eligible for cancellation with medicine-only refund (window closes in ${Math.ceil(remainingMs / 60000)} min)`;
   }
 
   const refundBreakdown = isPaid ? calculateRefundBreakdown(order) : null;

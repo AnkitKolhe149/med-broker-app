@@ -58,7 +58,7 @@ const catalogService = {
 		return {
 			medicines: response.data.data || [],
 			pagination: response.data.pagination || {},
-			currency: response.data.currency || localStorage.getItem('preferredCurrency') || 'USD'
+			currency: response.data.currency || localStorage.getItem('preferredCurrency') || 'INR'
 		};
 	},
 
@@ -81,7 +81,7 @@ const catalogService = {
 
 		return {
 			medicine: response.data.data || null,
-			currency: response.data.currency || preferredCurrency || 'USD'
+			currency: response.data.currency || preferredCurrency || 'INR'
 		};
 	}
 };

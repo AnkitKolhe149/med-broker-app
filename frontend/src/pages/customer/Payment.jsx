@@ -16,7 +16,7 @@ import {
 import { useNotification } from '../../context/NotificationContext';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
-import { formatCurrency, formatConvertedCurrency } from '../../utils/currency';
+import { convertPrice, formatCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import paymentService from '../../services/payment.service';
 import styles from './Payment.module.css';
@@ -26,7 +26,7 @@ function Payment() {
 	const location = useLocation();
 	const { showError } = useNotification();
 	const { clearCart } = useCart();
-	const { currency, exchangeRates, convert } = useCurrency();
+	const { currency, exchangeRates } = useCurrency();
 	const [orderData, setOrderData] = useState(null);
 	const [paymentMethod, setPaymentMethod] = useState('upi');
 	const [loading, setLoading] = useState(true);
@@ -39,9 +39,7 @@ function Payment() {
 	const [deliveryAddress, setDeliveryAddress] = useState({});
 	const currentCurrency = currency || 'INR';
 	const orderCurrency = useMemo(() => orderData?.currencyCode || currentCurrency, [orderData?.currencyCode, currentCurrency]);
-	// Checkout snapshot values are stored as base INR, so we must convert them to the display currency.
-	const formatPrice = (value, displayCurrency = currentCurrency) => formatConvertedCurrency(value, 'INR', displayCurrency, exchangeRates, true);
-	const toDisplayAmount = (value) => value;
+	const formatPrice = (value, displayCurrency = orderCurrency) => formatCurrency(value, displayCurrency, true);
 
 	// ✅ BUG #10: Add state/province lists for all countries
 	const statesByCountry = useMemo(() => ({
@@ -102,15 +100,10 @@ function Payment() {
 			discountPercent: snapshot.discountPercent ?? source?.discountPercent ?? 0,
 			appliedCoupon: snapshot.appliedCoupon || source?.appliedCoupon || '',
 			currencyCode: snapshot.currencyCode || source?.currencyCode || currentCurrency,
-			subtotalBase: snapshot.subtotalBase ?? source?.subtotalBase ?? snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
 			subtotal: snapshot.subtotal ?? source?.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
-			discountBase: snapshot.discountBase ?? source?.discountBase ?? snapshot.discount ?? ((pricingSummary.discountCents || 0) / 100),
 			discount: snapshot.discount ?? source?.discount ?? ((pricingSummary.discountCents || 0) / 100),
-			deliveryBase: snapshot.deliveryBase ?? source?.deliveryBase ?? snapshot.deliveryCharge ?? ((pricingSummary.deliveryChargeCents || 0) / 100),
 			deliveryCharge: snapshot.deliveryCharge ?? source?.deliveryCharge ?? ((pricingSummary.deliveryChargeCents || 0) / 100),
-			taxBase: snapshot.taxBase ?? source?.taxBase ?? snapshot.tax ?? ((pricingSummary.taxCents || 0) / 100),
 			tax: snapshot.tax ?? source?.tax ?? ((pricingSummary.taxCents || 0) / 100),
-			totalBase: snapshot.totalBase ?? source?.totalBase ?? snapshot.total ?? ((pricingSummary.totalCents || 0) / 100),
 			total: snapshot.total ?? source?.total ?? ((pricingSummary.totalCents || 0) / 100),
 			paymentProvider: snapshot.paymentProvider || source?.paymentProvider || 'razorpay',
 			paymentMethod: snapshot.paymentMethod || source?.paymentMethod || 'Razorpay Secure Checkout'
@@ -119,19 +112,20 @@ function Payment() {
 
 	useEffect(() => {
 		const pendingOrder = sessionStorage.getItem('pending_order');
+		let hasPendingSnapshot = false;
 		if (pendingOrder) {
 			try {
 				setOrderData(normalizeOrderData(JSON.parse(pendingOrder)));
+				hasPendingSnapshot = true;
 			} catch (error) {
 				console.error('Failed to parse order data:', error);
-				navigate('/customer/cart');
 			}
-			setLoading(false);
-			return;
 		}
 
 		if (!queryOrderId) {
-			navigate('/customer/cart');
+			if (!hasPendingSnapshot) {
+				navigate('/customer/cart');
+			}
 			setLoading(false);
 			return;
 		}
@@ -149,7 +143,7 @@ function Payment() {
 		};
 
 		loadOrder();
-	}, [navigate]);
+	}, [navigate, queryOrderId]);
 
 	useEffect(() => {
 		if (orderData?.deliveryAddress) {
@@ -159,9 +153,6 @@ function Payment() {
 
 	const calculateTotal = () => {
 		if (!orderData) return 0;
-		if (orderData.totalBase !== undefined && orderData.totalBase !== null) {
-			return Number(orderData.total || orderData.totalBase || 0);
-		}
 		return Number(orderData.total || 0);
 	};
 
@@ -198,15 +189,12 @@ function Payment() {
 
 	const getSubtotal = () => {
 		if (!orderData) return 0;
-		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
-			return Number(orderData.subtotal || orderData.subtotalBase || 0);
-		}
 		return Number(orderData.subtotal || 0);
 	};
 
 	const calculateDelivery = () => {
 		if (!orderData) return 0;
-		const rawDelivery = Number(orderData.deliveryCharge ?? orderData.deliveryBase ?? (orderData.deliveryType === 'express' ? 9 : 0));
+		const rawDelivery = Number(orderData.deliveryCharge ?? (orderData.deliveryType === 'express' ? convertPrice(9, 'INR', orderCurrency, exchangeRates) : 0));
 		return rawDelivery;
 	};
 
@@ -337,7 +325,7 @@ function Payment() {
 				orderStatus: 'confirmed',
 				completedAt: new Date().toISOString(),
 				total: totalAmount,
-				totalBase: totalAmount
+				currencyCode: orderCurrency
 			};
 
 			sessionStorage.setItem('completed_order', JSON.stringify(completedOrder));

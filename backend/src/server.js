@@ -3,6 +3,7 @@ loadEnv();
 
 const { databaseConfig } = require("./config/database");
 const { startExchangeRateScheduler } = require("./jobs/exchangeRate.job");
+const { startPendingOrderCleanupScheduler } = require("./jobs/cleanup.job");
 const { initializeSettings } = require("./utils/seedSystemSettings");
 
 databaseConfig.validate();
@@ -20,4 +21,5 @@ app.listen(port, '::', async () => {
   await initializeSettings();
   
   startExchangeRateScheduler();
+  startPendingOrderCleanupScheduler();
 });

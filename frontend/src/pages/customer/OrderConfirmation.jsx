@@ -19,7 +19,7 @@ import {
 import Avatar from '../../components/common/Avatar';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUser } from '../../context/UserContext';
-import { formatCurrency, formatConvertedCurrency } from '../../utils/currency';
+import { convertPrice, formatCurrency } from '../../utils/currency';
 import orderService from '../../services/order.service';
 import styles from './OrderConfirmation.module.css';
 
@@ -27,16 +27,14 @@ function OrderConfirmation() {
 	const { orderId } = useParams();
 	const navigate = useNavigate();
 	const { user } = useUser();
-	const { currency, exchangeRates, convert } = useCurrency();
+	const { currency, exchangeRates } = useCurrency();
 	const [orderData, setOrderData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
 	const [invoiceError, setInvoiceError] = useState('');
 	const currentCurrency = currency || 'INR';
 	const orderCurrency = orderData?.currencyCode || currentCurrency;
-	// Checkout snapshot values are stored as base INR, so we must convert them to the display currency.
-	const formatPrice = (value, displayCurrency = currentCurrency) => formatConvertedCurrency(value, 'INR', displayCurrency, exchangeRates, true);
-	const toDisplayAmount = (value) => value;
+	const formatPrice = (value, displayCurrency = orderCurrency) => formatCurrency(value, displayCurrency, true);
 
 	// ✅ BUG #10: Add state/province lists for all countries
 	const statesByCountry = useMemo(() => ({
@@ -86,15 +84,10 @@ function OrderConfirmation() {
 			discountPercent: snapshot.discountPercent ?? source?.discountPercent ?? 0,
 			appliedCoupon: snapshot.appliedCoupon || source?.appliedCoupon || '',
 			currencyCode: snapshot.currencyCode || source?.currencyCode || currentCurrency,
-			subtotalBase: snapshot.subtotalBase ?? source?.subtotalBase ?? snapshot.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
 			subtotal: snapshot.subtotal ?? source?.subtotal ?? ((pricingSummary.subtotalCents || 0) / 100),
-			discountBase: snapshot.discountBase ?? source?.discountBase ?? snapshot.discount ?? ((pricingSummary.discountCents || 0) / 100),
 			discount: snapshot.discount ?? source?.discount ?? ((pricingSummary.discountCents || 0) / 100),
-			deliveryBase: snapshot.deliveryBase ?? source?.deliveryBase ?? snapshot.deliveryCharge ?? ((pricingSummary.deliveryChargeCents || 0) / 100),
 			deliveryCharge: snapshot.deliveryCharge ?? source?.deliveryCharge ?? ((pricingSummary.deliveryChargeCents || 0) / 100),
-			taxBase: snapshot.taxBase ?? source?.taxBase ?? snapshot.tax ?? ((pricingSummary.taxCents || 0) / 100),
 			tax: snapshot.tax ?? source?.tax ?? ((pricingSummary.taxCents || 0) / 100),
-			totalBase: snapshot.totalBase ?? source?.totalBase ?? snapshot.total ?? ((pricingSummary.totalCents || 0) / 100),
 			total: snapshot.total ?? source?.total ?? ((pricingSummary.totalCents || 0) / 100),
 			paymentMethod: snapshot.paymentMethod || source?.paymentMethod || 'upi'
 		};
@@ -102,14 +95,22 @@ function OrderConfirmation() {
 
 	useEffect(() => {
 		const completedOrder = sessionStorage.getItem('completed_order');
+		let hasSessionSnapshot = false;
 		if (completedOrder) {
 			try {
 				setOrderData(normalizeOrderData(JSON.parse(completedOrder)));
-				setLoading(false);
-				return;
+				hasSessionSnapshot = true;
 			} catch (error) {
 				console.error('Failed to parse order data:', error);
 			}
+		}
+
+		if (!orderId) {
+			if (!hasSessionSnapshot) {
+				navigate('/customer/dashboard');
+			}
+			setLoading(false);
+			return;
 		}
 
 		const loadOrder = async () => {
@@ -149,15 +150,12 @@ function OrderConfirmation() {
 
 	const getSubtotal = () => {
 		if (!orderData) return 0;
-		if (orderData.subtotalBase !== undefined && orderData.subtotalBase !== null) {
-			return Number(orderData.subtotal || orderData.subtotalBase || 0);
-		}
 		return Number(orderData.subtotal || 0);
 	};
 
 	const getDeliveryCharge = () => {
 		if (!orderData) return 0;
-		const rawDelivery = Number(orderData.deliveryCharge ?? orderData.deliveryBase ?? (orderData.deliveryType === 'express' ? 9 : 0));
+		const rawDelivery = Number(orderData.deliveryCharge ?? (orderData.deliveryType === 'express' ? convertPrice(9, 'INR', orderCurrency, exchangeRates) : 0));
 		return rawDelivery;
 	};
 
@@ -172,9 +170,6 @@ function OrderConfirmation() {
 
 	const getTotalPaid = () => {
 		if (!orderData) return 0;
-		if (orderData.totalBase !== undefined && orderData.totalBase !== null) {
-			return Number(orderData.total || orderData.totalBase || 0);
-		}
 		if (orderData.total !== undefined && orderData.total !== null) {
 			return Number(orderData.total);
 		}

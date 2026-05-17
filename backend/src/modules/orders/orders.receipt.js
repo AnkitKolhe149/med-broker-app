@@ -88,6 +88,22 @@ const buildOrderReceiptPdf = (order) => {
     return `${currencyFormat.symbol} ${amount.toLocaleString(currencyFormat.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`.replace(/\s+/g, ' ').trim();
   };
 
+  const inferLegacyItemScale = () => {
+    const rawSubtotalCents = (order.items || []).reduce(
+      (sum, item) => sum + (Number(item?.unitPriceCents || 0) * Math.max(1, Number(item?.quantity || 1))),
+      0
+    );
+
+    if (rawSubtotalCents <= 0 || !Number.isFinite(subtotalCents) || subtotalCents <= 0) {
+      return 1;
+    }
+
+    const ratio = subtotalCents / rawSubtotalCents;
+    return Math.abs(ratio - 1) > 0.15 ? ratio : 1;
+  };
+
+  const itemMoneyScale = inferLegacyItemScale();
+
   const subtotalCents = Number.isFinite(pricingSummary.subtotalCents)
     ? pricingSummary.subtotalCents
     : order.items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
@@ -184,12 +200,13 @@ const buildOrderReceiptPdf = (order) => {
     currentY += 20;
   } else {
     order.items.forEach((item) => {
-      const lineTotal = item.unitPriceCents * item.quantity;
+      const unitPriceCents = Math.round(Number(item.unitPriceCents || 0) * itemMoneyScale);
+      const lineTotal = unitPriceCents * item.quantity;
       const itemName = safeText(item.medicine?.name || item.name);
 
       doc.text(itemName, margin + 10, currentY, { width: 250 });
       doc.text(item.quantity.toString(), margin + 280, currentY);
-      doc.text(formatCurrency(item.unitPriceCents), margin + 330, currentY);
+      doc.text(formatCurrency(unitPriceCents), margin + 330, currentY);
       doc.text(formatCurrency(lineTotal), margin + 420, currentY);
       
       currentY += 20;

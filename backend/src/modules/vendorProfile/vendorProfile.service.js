@@ -70,6 +70,8 @@ const mapVendorProfile = (user, vendor) => {
   return {
     businessName: vendor.companyName || '',
     verificationStatus: vendor.verificationStatus || 'PENDING',
+    preferredCurrency: user.preferredCurrency || null,
+    country: vendor.country || user.countryCode || null,
     email: user.email || '',
     phone: user.mobile || vendor.contactNumber || '',
     address: vendor.businessAddress || '',
